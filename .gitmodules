@@ -1,0 +1,3 @@
+[submodule "modules/PTCGDeckValidator"]
+	path = modules/PTCGDeckValidator
+	url = https://github.com/chribrix/PTCGDeckValidator.git
