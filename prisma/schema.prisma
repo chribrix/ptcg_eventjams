@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  //output          = "../generated/prisma"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public", "conversions"]
+}
+
+enum CardType {
+  ENERGY
+  TRAINER
+  POKEMON
+
+  @@schema("public")
+}
+
+model Card {
+  id           String   @id
+  printedId    String   @map("printed_id")
+  name         String
+  setCode      String   @map("set_code")
+  rarity       String
+  type         CardType
+  legal        Json     @db.JsonB
+  cardNumber   Int?     @map("card_number")
+  imageUrl     String?  @map("image_url")
+  updatedAt    DateTime @default(now()) @map("updated_at")
+  apiUpdatedAt DateTime @map("api_updated_at")
+  trainer      Json?    @db.JsonB
+  energy       Json?    @db.JsonB
+  pokemon      Json?    @db.JsonB
+
+  @@map("cards")
+  @@schema("public")
+}
+
+model CardSet {
+  id          String   @id
+  name        String
+  series      String
+  releaseDate DateTime @map("release_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("card_set")
+  @@schema("public")
+}
+
+model EnergyTypeMap {
+  energyType String @id @map("energy_type")
+  fullText   String @map("full_text")
+
+  @@map("energy_type_map_en")
+  @@schema("conversions")
+}
+
+model EnergyAbbreviationMap {
+  ptcglExport String @id @map("ptcgl_export")
+  fullText    String @map("full_text")
+
+  @@map("energy_abbrv_map")
+  @@schema("conversions")
+}
+
+model EnergyAliasMap {
+  alias     String @id
+  canonical String @map("canonical")
+
+  @@map("energy_alias_map")
+  @@schema("conversions")
+}
+
+model SetCodes {
+  intlCode     String  @id @map("intl_code")
+  japaneseCode String  @map("japanese_code")
+  intlName     String  @map("intl_name")
+  japaneseName String? @map("japanese_name")
+
+  @@map("set_codes_en")
+  @@schema("conversions")
+}
+
+model MetaState {
+  id        String   @id
+  value     Json     @db.JsonB
+  updatedAt DateTime @default(now()) @map("updated_at")
+  info      Json?    @db.JsonB
+
+  @@map("meta_state")
+  @@schema("public")
+}
