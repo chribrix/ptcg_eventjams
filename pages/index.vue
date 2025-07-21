@@ -1,25 +1,20 @@
 <template>
-  <div>hi</div>
+  <template>
+    <div>
+      <div v-if="error">Error loading card</div>
+      <div v-else-if="card">Card: {{ card }}</div>
+      <div v-else>Loading...</div>
+    </div>
+  </template>
 </template>
 
-<script lang="ts">
-import type { Card } from "~/generated/prisma/client";
+<script setup lang="ts">
+const { data: card, error } = await useFetch("/api/getcard");
 
-export default {};
-const response = await $fetch("/api/getcard", {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-  },
-}).catch((error) => {
+if (error) {
   console.error("Error fetching card:", error);
-});
-
-if (response && response.card) {
-  const card = response.card;
-  console.log("Fetched card:", card);
 } else {
-  console.log("No card found or error occurred.");
+  console.log("Fetched card:", card);
 }
 </script>
 
