@@ -8,7 +8,7 @@ CREATE TYPE "public"."CardType" AS ENUM ('ENERGY', 'TRAINER', 'POKEMON');
 CREATE TABLE "public"."cards" (
     "id" TEXT NOT NULL,
     "printed_id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" JSONB NOT NULL,
     "set_code" TEXT NOT NULL,
     "rarity" TEXT NOT NULL,
     "type" "public"."CardType" NOT NULL,

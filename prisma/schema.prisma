@@ -24,7 +24,7 @@ enum CardType {
 model Card {
   id           String   @id
   printedId    String   @map("printed_id")
-  name         String
+  name         Json     @db.JsonB
   setCode      String   @map("set_code")
   rarity       String
   type         CardType
