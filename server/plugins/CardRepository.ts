@@ -1,27 +1,48 @@
-/**
- *  TODO
- *  This repo is connected to the database
- *  - database is filled beforehand with cards
- *  - fill function also handles rulings:
- *     - legality (also for reprints)
- *     - One-Only cards like ace specs
- *  -
- */
-
 import type { Card, CardSet, EnergyAbbreviationMap } from "@prisma/client";
 import prisma from "~/lib/prisma";
+import { loadCards } from "~/stor/util/loadCards";
 
+//import { loadCards } from "~/util/loadCard";
 
 export default defineEventHandler(async (event) => {
   const nitroApp = useNitroApp();
 
   nitroApp.cardRepository = new CardRepository();
 
-})
+  // get metaState
 
+  const metaState = await prisma.metaState.findFirst({
+    where: { id: "db_init" },
+  });
+
+  if (metaState?.value !== "initalized") {
+    console.log("Initializing database...");
+
+    // initialize db
+
+    const initRes = await loadCards(prisma, nitroApp.cardRepository).catch(
+      async (error) => {
+        console.error("Error initializing database:", error);
+        await prisma.metaState.upsert({
+          where: { id: "db_init" },
+          update: { value: "failed" },
+          create: { id: "db_init", value: "failed" },
+        });
+        throw new Error(`Database initialization failed: ${error.message}`);
+      }
+    );
+
+    await prisma.metaState.upsert({
+      where: { id: "db_init" },
+      update: { value: "initalized" },
+      create: { id: "db_init", value: "initalized" },
+    });
+  } else {
+    console.log("Meta state 'db_init' already exists.");
+  }
+});
 
 export class CardRepository {
-
   #energyAbbrvMap: EnergyAbbreviationMap[] | null = null;
   #energyTypeMap: any = null;
   #energyAliasMap: any = null;
@@ -43,15 +64,17 @@ export class CardRepository {
       return this.#energyAbbrvMap;
     }
     //this._energyAbbrvMap ??=
-    const energyAbbrvMap = await prisma.energyAbbreviationMap.findMany(
-    )
+    const energyAbbrvMap = await prisma.energyAbbreviationMap
+      .findMany()
       .catch((error) => {
-        throw new Error(`Failed to fetch energy abbreviation map: ${error.message}`);
-      })
+        throw new Error(
+          `Failed to fetch energy abbreviation map: ${error.message}`
+        );
+      });
 
     this.#energyAbbrvMap = energyAbbrvMap;
 
-    return energyAbbrvMap
+    return energyAbbrvMap;
   }
 
   private async getEnergyTypeMap(): Promise<any> {
@@ -59,13 +82,16 @@ export class CardRepository {
       return this.#energyTypeMap;
     }
 
-    const energyTypeMapEn = await prisma.energyTypeMap.findMany()
+    const energyTypeMapEn = await prisma.energyTypeMap
+      .findMany()
       .catch((error) => {
-        throw new Error(`Failed to fetch energy type map (EN): ${error.message}`);
+        throw new Error(
+          `Failed to fetch energy type map (EN): ${error.message}`
+        );
       });
 
     this.#energyTypeMap = energyTypeMapEn;
-    return energyTypeMapEn
+    return energyTypeMapEn;
   }
 
   private async getEnergyAliasMap(): Promise<any> {
@@ -73,13 +99,14 @@ export class CardRepository {
       return this.#energyAliasMap;
     }
 
-    const energyAliasMap = await prisma.energyAliasMap.findMany()
+    const energyAliasMap = await prisma.energyAliasMap
+      .findMany()
       .catch((error) => {
         throw new Error(`Failed to fetch energy alias map: ${error.message}`);
       });
 
     this.#energyAliasMap = energyAliasMap;
-    return energyAliasMap
+    return energyAliasMap;
   }
 
   private async getSetCodesMap(): Promise<any> {
@@ -87,19 +114,19 @@ export class CardRepository {
       return this.#setCodesMap;
     }
 
-    const setCodesMap = await prisma.setCodes.findMany()
-      .catch((error) => {
-        throw new Error(`Failed to fetch international to Japanese set map: ${error.message}`);
-      });
+    const setCodesMap = await prisma.setCodes.findMany().catch((error) => {
+      throw new Error(
+        `Failed to fetch international to Japanese set map: ${error.message}`
+      );
+    });
 
     this.#setCodesMap = setCodesMap;
-    return setCodesMap
+    return setCodesMap;
   }
 
   public constructor() {
-    this.getConversions()
+    this.getConversions();
   }
-
 
   async init() {
     await prisma.$connect().catch((error) => {
@@ -121,13 +148,12 @@ export class CardRepository {
   async getCardByName(name: string) {
     return await prisma.card
       .findFirst({
-        where:
-        {
+        where: {
           OR: [
-            { name: { path: ['en'], equals: name } },
-            { name: { path: ['de'], equals: name } },
-            { name: { path: ['fr'], equals: name } },
-            { name: { path: ['it'], equals: name } },
+            { name: { path: ["en"], equals: name } },
+            { name: { path: ["de"], equals: name } },
+            { name: { path: ["fr"], equals: name } },
+            { name: { path: ["it"], equals: name } },
           ],
         },
       })
@@ -137,29 +163,27 @@ export class CardRepository {
       });
   }
 
-
   public async getCardsBySetId(setId: string): Promise<Card[]> {
     return prisma.card.findMany({ where: { setCode: setId } });
   }
 
   async getCardByNameAndId(name: string, id: string) {
-    const res = await prisma.card.findFirst({
-      where:
-      {
-        AND:
-          [
-            { setCode: id, },
+    const res = await prisma.card
+      .findFirst({
+        where: {
+          AND: [
+            { setCode: id },
             {
               OR: [
-                { name: { path: ['en'], equals: name } },
-                { name: { path: ['de'], equals: name } },
-                { name: { path: ['fr'], equals: name } },
-                { name: { path: ['it'], equals: name } },
-              ]
-            }
-          ]
-      },
-    })
+                { name: { path: ["en"], equals: name } },
+                { name: { path: ["de"], equals: name } },
+                { name: { path: ["fr"], equals: name } },
+                { name: { path: ["it"], equals: name } },
+              ],
+            },
+          ],
+        },
+      })
       .catch((error) => {
         console.error("Error fetching card by name and set ID:", error);
         return null;
@@ -173,8 +197,4 @@ export class CardRepository {
 
     return prisma.card.findMany({ where: { id: { in: ids } } });
   }
-
-
 }
-
-
