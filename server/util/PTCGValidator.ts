@@ -4,7 +4,7 @@ import {
   energyAliasMap,
   energyTypeMapEn,
   intlToJapaneseSetMap,
-} from "./conversions.js";
+} from "../../stor/util/conversions.js";
 
 export type ValidationResult = {
   isValid: boolean;
@@ -36,7 +36,7 @@ class PTCGDeckValidator {
   }
 
   get cardRepository() {
-    return this.#cardRepo ??= useNitroApp().cardRepository;
+    return (this.#cardRepo ??= useNitroApp().cardRepository);
   }
   parseDeck(deckString: string) {
     const lines = deckString.split(/\r?\n/);
@@ -78,9 +78,10 @@ class PTCGDeckValidator {
 
       if (!isValid) {
         errors.push(
-          `Invalid format in ${currentSection}. Expected format: ${currentSection === "pokemonCards"
-            ? "<count> <name> <setId> <setNum>"
-            : "<count> <name> [setId setNum]"
+          `Invalid format in ${currentSection}. Expected format: ${
+            currentSection === "pokemonCards"
+              ? "<count> <name> <setId> <setNum>"
+              : "<count> <name> [setId setNum]"
           }`
         );
       }
@@ -131,7 +132,7 @@ class PTCGDeckValidator {
     if (cardsInDeck != 60) {
       errors.push(`Must be 60 cards in deck, but found ${cardsInDeck}`);
     }
-
+    
     const { cards: pokemonCards, errors: pkmnErrors } =
       await this.getPokemonCards(deckTokens.pokemonTokens);
     const { cards: trainerCards, errors: trainerErrors } =
@@ -261,39 +262,37 @@ class PTCGDeckValidator {
   }
 
   async getPokemonCards(pokemon: Array<CardToken>) {
-    const results = await Promise.allSettled(
+    const results = (await Promise.allSettled(
       pokemon.map(async (token) => {
         const res = await this.getCardByNameAndId(token);
 
         return { ...token, legal: res.legal, rarity: res.rarity };
       })
-    ) as PromiseSettledResult<CardToken>[];
+    )) as PromiseSettledResult<CardToken>[];
 
     return this.buildValidationResponse(results);
   }
 
   async getTrainerCards(trainers: Array<CardToken>) {
-    const results = await Promise.allSettled(
+    const results = (await Promise.allSettled(
       trainers.map(async (token) => {
         const res = await this.getCardByName(token);
 
         return { ...token, legal: res.legal, rarity: res.rarity };
       })
-    ) as PromiseSettledResult<CardToken>[]
-
-
+    )) as PromiseSettledResult<CardToken>[];
 
     return this.buildValidationResponse(results);
   }
 
   async getEnergyCards(energies: Array<CardToken>) {
-    const results = await Promise.allSettled(
+    const results = (await Promise.allSettled(
       energies.map(async (token) => {
         const res = await this.getCardByName(token);
 
         return { ...token, legal: res.legal, rarity: res.rarity };
       })
-    ) as PromiseSettledResult<CardToken>[]
+    )) as PromiseSettledResult<CardToken>[];
 
     return this.buildValidationResponse(results);
   }
