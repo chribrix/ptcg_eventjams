@@ -1,0 +1,13 @@
+diff --git a/node_modules/@tcgdex/sdk/dist/tcgdex.node.js b/node_modules/@tcgdex/sdk/dist/tcgdex.node.js
+index 1dcc7df..24d98de 100644
+--- a/node_modules/@tcgdex/sdk/dist/tcgdex.node.js
++++ b/node_modules/@tcgdex/sdk/dist/tcgdex.node.js
+@@ -558,7 +558,7 @@ var _TCGdex = class _TCGdex {
+    */
+   encode(str) {
+     return encodeURI(
+-      str.toString().replace("?", "%3F").normalize("NFC").replace(/["'\u0300-\u036f]/gu, "")
++      str.toString().replace("?", "%3F").normalize("NFC").replace(/["\u0300-\u036f]/gu, "")
+     );
+   }
+ };
