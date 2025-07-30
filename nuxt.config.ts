@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   devtools: { enabled: true },
-  modules: ["@nuxtjs/tailwindcss", "@prisma/nuxt"],
+  modules: ["@nuxtjs/tailwindcss", "@prisma/nuxt", "@samk-dev/nuxt-vcalendar"],
   experimental: {
     appManifest: false,
   },

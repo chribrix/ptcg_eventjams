@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p>Product City!</p>
+    <EventCalendar></EventCalendar>
   </div>
 </template>
 
