@@ -1,0 +1,33 @@
+Pokémon: 20
+4 Dreepy TWM 128
+4 Drakloak TWM 129
+2 Dragapult ex TWM 200
+2 Charmander PAF 7
+1 Charmeleon MEW 5
+2 Charizard ex OBF 223
+1 Budew PRE 4
+1 Fezandipiti ex SFA 92
+1 Munkidori PRE 44
+1 Chi-Yu PR-SV 57
+1 Hawlucha SVI 118
+
+Trainer: 31
+4 Arven PAF 235
+4 Iono PR-SV 124
+3 Boss's Orders PAL 265
+2 Professor's Research PR-SW 152
+4 Buddy-Buddy Poffin PRE 101
+3 Ultra Ball PAF 91
+2 Counter Catcher PAR 264
+2 Rare Candy PAF 89
+1 Unfair Stamp TWM 165
+1 Nest Ball PAF 84
+1 Super Rod PAL 188
+1 Night Stretcher SFA 61
+1 Technical Machine: Evolution PAR 178
+1 Rescue Board PRE 126
+1 Jamming Tower DRI 243
+
+Energy: 9
+5 Fire Energy Energy 19
+4 Luminous Energy PAL 191

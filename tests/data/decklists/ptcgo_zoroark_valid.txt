@@ -1,0 +1,38 @@
+Pokémon: 11
+2 N's Reshiram JTG 116
+2 N's Darmanitan JTG 27
+4 N's Zoroark ex JTG 175
+3 N's Zorua PR-SV 189
+1 Cleffa OBF 202
+1 Fezandipiti ex SFA 92
+1 Budew PRE 4
+1 N's Zorua JTG 97 PH
+2 Munkidori PRE 44
+1 Bloodmoon Ursaluna ex TWM 141
+2 N's Darumaka JTG 26
+
+Trainer: 18
+1 Powerglass SFA 63
+1 Ultra Ball PAF 91
+2 Boss's Orders PAL 265
+1 Defiance Band SVI 169
+1 Black Belt's Training JTG 143
+1 Energy Switch SVI 173
+4 Buddy-Buddy Poffin TEF 144
+2 Counter Catcher PAR 160
+2 Artazon PAF 76
+2 Night Stretcher SFA 61
+3 Cyrano SSP 170 PH
+2 N's Castle JTG 152
+2 N's PP Up JTG 153
+3 Iono PAL 254
+1 Secret Box TWM 163
+1 Nest Ball PAF 84
+1 Professor Turo's Scenario PAR 240
+2 Hilda WHT 84
+
+Energy: 2
+6 Basic {D} Energy SVE 7
+2 Reversal Energy PAL 192
+
+Total Cards: 60

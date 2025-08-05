@@ -1,10 +1,5 @@
-import { CardRepository } from "../plugins/CardRepository.js";
-import {
-  energyAbbrvMap,
-  energyAliasMap,
-  energyTypeMapEn,
-  intlToJapaneseSetMap,
-} from "../../stor/util/conversions.js";
+import { writeFileSync } from "node:fs";
+import { CardRepository } from "./repository/CardRepository";
 
 export type ValidationResult = {
   isValid: boolean;
@@ -28,17 +23,18 @@ type DeckSections = {
 
 class PTCGDeckValidator {
   #cardRepo: CardRepository | null = null;
-  constructor() {
-    this.#cardRepo = useNitroApp().cardRepository;
-    if (!this.#cardRepo) {
+
+  constructor(cardRepo: CardRepository) {
+    if (!cardRepo) {
       throw new Error("CardRepository is not initialized.");
     }
+    this.#cardRepo = cardRepo;
   }
 
   get cardRepository() {
     return (this.#cardRepo ??= useNitroApp().cardRepository);
   }
-  parseDeck(deckString: string) {
+  async parseDeck(deckString: string) {
     const lines = deckString.split(/\r?\n/);
 
     const pokemonCards: Array<string> = [];
@@ -98,7 +94,8 @@ class PTCGDeckValidator {
 
     const pokemonTokens = pokemonCards.map((card) => this.toCardToken(card));
     const trainerTokens = trainerCards.map((card) => this.toCardToken(card));
-    const energyTokens = this.sanitizeEnergyTokens(
+
+    const energyTokens = await this.sanitizeEnergyTokens(
       energyCards.map((card) => this.toCardToken(card))
     );
 
@@ -114,7 +111,12 @@ class PTCGDeckValidator {
 
   async check(decklist: string) {
     let errors: Array<string> = [];
-    const { deckTokens, errors: parseErrors } = this.parseDeck(decklist);
+    const { deckTokens, errors: parseErrors } = await this.parseDeck(decklist);
+
+    writeFileSync(
+      "./debug/data/decktokens.json",
+      JSON.stringify(deckTokens, null, 2)
+    );
 
     if (parseErrors.length > 0) {
       return { isValid: false, errors: parseErrors };
@@ -132,7 +134,7 @@ class PTCGDeckValidator {
     if (cardsInDeck != 60) {
       errors.push(`Must be 60 cards in deck, but found ${cardsInDeck}`);
     }
-    
+
     const { cards: pokemonCards, errors: pkmnErrors } =
       await this.getPokemonCards(deckTokens.pokemonTokens);
     const { cards: trainerCards, errors: trainerErrors } =
@@ -202,7 +204,10 @@ class PTCGDeckValidator {
     };
   }
 
-  sanitizeEnergyTokens(energyTokens: Array<CardToken>) {
+  async sanitizeEnergyTokens(energyTokens: Array<CardToken>) {
+    const energyAbbrvMap = await this.cardRepository.getEnergyAbbrvMap();
+    const energyAliasMap = await this.cardRepository.getEnergyAliasMap();
+    const energyTypeMap = await this.cardRepository.getEnergyTypeMap();
     // map energy names from PTGCL exports to match limitless export format
     const energies = energyTokens.map((item) => {
       let name = item.name;
@@ -215,7 +220,7 @@ class PTCGDeckValidator {
       for (const alias of energyAliases) {
         if (name.toLowerCase().includes(alias)) {
           name = energyAliasMap[alias];
-          name = energyTypeMapEn[name] || name; // map to english energy name
+          name = energyTypeMap[name] || name; // map to english energy name
           break;
         }
       }
@@ -233,7 +238,7 @@ class PTCGDeckValidator {
     if (!this.hasSetId(cardToken)) {
       throw new Error("Card Set Info not given.");
     }
-    const id = this.buildCardId(cardToken);
+    const id = await this.buildCardId(cardToken);
 
     const card = await this.cardRepository.getCardByNameAndId(
       cardToken.name,
@@ -338,11 +343,19 @@ class PTCGDeckValidator {
     };
   }
 
-  buildCardId(cardToken: CardToken & { setId: number; set: string }): string {
+  async buildCardId(
+    cardToken: CardToken & { setId: number; set: string }
+  ): Promise<string> {
+    const setCodes = await this.cardRepository.getSetCodesMap();
+
+    if (!setCodes) {
+      throw new Error("Set codes map not available.");
+    }
+
     const lowerName = cardToken.set.toLowerCase();
     let setCode: string;
-    if (intlToJapaneseSetMap.hasOwnProperty(lowerName)) {
-      setCode = intlToJapaneseSetMap[lowerName];
+    if (setCodes.hasOwnProperty(lowerName)) {
+      setCode = setCodes[lowerName];
     } else {
       throw new Error(`${cardToken.name}: "${cardToken.set!}" is not a Set!.`);
     }

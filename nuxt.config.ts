@@ -1,10 +1,23 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+import { createResolver } from "@nuxt/kit";
+
+const resolver = createResolver(import.meta.url);
+
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   devtools: { enabled: true },
-  modules: ["@nuxtjs/tailwindcss", "@prisma/nuxt", "@samk-dev/nuxt-vcalendar"],
+  modules: [
+    "@prisma/nuxt",
+    "@nuxtjs/tailwindcss",
+    "@nuxt/test-utils/module",
+    "@samk-dev/nuxt-vcalendar",
+  ],
   experimental: {
     appManifest: false,
+  },
+  typescript: {
+    strict: true,
   },
   app: {
     head: {
@@ -23,6 +36,16 @@ export default defineNuxtConfig({
           href: "https://fonts.googleapis.com/icons?family=Material+Icons",
         },
       ],
+    },
+  },
+  vite: {
+    resolve: {
+      alias: {
+        ".prisma/client/index-browser":
+          // https://vite.dev/config/shared-options.html#resolve-alias
+          // When aliasing to file system paths, always use absolute paths.
+          resolver.resolve("./node_modules/.prisma/client/index-browser.js"),
+      },
     },
   },
 });
