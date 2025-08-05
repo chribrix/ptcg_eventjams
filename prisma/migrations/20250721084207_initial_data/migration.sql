@@ -236,6 +236,7 @@ INSERT INTO
     conversions.set_codes_en (intl_code, japanese_code, intl_name)
 VALUES
     ('svp', 'svp', 'Scarlet & Violet Promos'),
+    ('pr-sv', 'pr-sv', 'Scarlet & Violet Promos'),
     ('svi', 'sv01', 'Scarlet & Violet Base Set'),
     ('pal', 'sv02', 'Paldea Evolved'),
     ('obf', 'sv03', 'Obsidian Flames'),
