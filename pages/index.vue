@@ -1,4 +1,6 @@
-<template></template>
+<template>
+  <div><EventCalendar /></div>
+</template>
 
 <script setup lang="ts">
 const userName = ref<string | null>(null);
