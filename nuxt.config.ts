@@ -13,6 +13,12 @@ export default defineNuxtConfig({
     "@nuxt/test-utils/module",
     "@samk-dev/nuxt-vcalendar",
   ],
+  runtimeConfig: {
+    public: {
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+    },
+  },
   experimental: {
     appManifest: false,
   },

@@ -1,13 +1,18 @@
-<template>
-  <div>
-    <div v-if="error">Error loading card</div>
-    <div v-else-if="card">Card: {{ card }}</div>
-    <div v-else>Loading...</div>
-  </div>
-</template>
+<template></template>
 
 <script setup lang="ts">
-const { data: card, error } = await useFetch("/api/getcard");
+const { $supabase } = useNuxtApp();
+
+const userName = ref<string | null>(null);
+
+onMounted(async () => {
+  const { data: session } = await $supabase.auth.getSession();
+
+  if (session?.session) {
+    userName.value =
+      session.session.user.user_metadata.name || session.session.user.email;
+  }
+});
 </script>
 
 <style lang="scss" scoped></style>

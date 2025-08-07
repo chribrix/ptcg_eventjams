@@ -13,7 +13,9 @@
   "dependencies": {
     "@prisma/nuxt": "0.3.0",
     "@samk-dev/nuxt-vcalendar": "1.0.4",
+    "@supabase/supabase-js": "^2.53.0",
     "@tcgdex/sdk": "^2.7.0",
+    "nodemailer": "^7.0.5",
     "nuxt": "3.17.7",
     "patch-package": "^8.0.0",
     "pg": "^8.16.3",
