@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 
-const { $supabase } = useNuxtApp();
 const userName = ref<string | null>(null);
 
 onMounted(async () => {
-  const { data: sessionData } = await $supabase.auth.getSession();
+  const { data: sessionData } = await useSupabaseClient().auth.getSession();
   const user = sessionData?.session?.user;
 
   if (user) {

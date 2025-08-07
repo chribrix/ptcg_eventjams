@@ -6,10 +6,9 @@
 
 <script setup lang="ts">
 const router = useRouter();
-const { $supabase } = useNuxtApp();
 
 onMounted(async () => {
-  const { data, error } = await $supabase.auth.getSession();
+  const { data, error } = await useSupabaseClient().auth.getSession();
 
   if (error || !data.session) {
     console.error("Login failed or session missing:", error);

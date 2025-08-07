@@ -1188,6 +1188,16 @@
     vite-plugin-checker "^0.10.0"
     vue-bundle-renderer "^2.1.1"
 
+"@nuxtjs/supabase@^1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@nuxtjs/supabase/-/supabase-1.6.0.tgz#3b17136c990abcab4954678ba24b08d38f7d16e0"
+  integrity sha512-CgOiywRUv2WoXTMincW0ruScYkl/2KuPZr88Me0jGGOpzFnpPIB1sC86bASnZNJ07Dzlvy4UIY7P0tbIb01wVQ==
+  dependencies:
+    "@supabase/ssr" "^0.6.1"
+    "@supabase/supabase-js" "^2.52.0"
+    defu "^6.1.4"
+    pathe "^2.0.3"
+
 "@nuxtjs/tailwindcss@^6.14.0":
   version "6.14.0"
   resolved "https://registry.yarnpkg.com/@nuxtjs/tailwindcss/-/tailwindcss-6.14.0.tgz#c2feffc4ea4f5c4bd8d60218841d8bae84f70271"
@@ -1742,16 +1752,22 @@
   dependencies:
     "@supabase/node-fetch" "^2.6.14"
 
-"@supabase/realtime-js@2.11.15":
-  version "2.11.15"
-  resolved "https://registry.yarnpkg.com/@supabase/realtime-js/-/realtime-js-2.11.15.tgz#74e520eee0dda51fdc83902abaaefacad6f3f0a9"
-  integrity sha512-HQKRnwAqdVqJW/P9TjKVK+/ETpW4yQ8tyDPPtRMKOH4Uh3vQD74vmj353CYs8+YwVBKubeUOOEpI9CT8mT4obw==
+"@supabase/realtime-js@2.15.0":
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/@supabase/realtime-js/-/realtime-js-2.15.0.tgz#ed0c2ad3ab2e76c1d25bc69f75c3fffa50741aec"
+  integrity sha512-SEIWApsxyoAe68WU2/5PCCuBwa11LL4Bb8K3r2FHCt3ROpaTthmDiWEhnLMGayP05N4QeYrMk0kyTZOwid/Hjw==
   dependencies:
     "@supabase/node-fetch" "^2.6.13"
     "@types/phoenix" "^1.6.6"
     "@types/ws" "^8.18.1"
-    isows "^1.0.7"
     ws "^8.18.2"
+
+"@supabase/ssr@^0.6.1":
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@supabase/ssr/-/ssr-0.6.1.tgz#558d5cc99e876b2c5ef3a19c864739944598eb20"
+  integrity sha512-QtQgEMvaDzr77Mk3vZ3jWg2/y+D8tExYF7vcJT+wQ8ysuvOeGGjYbZlvj5bHYsj/SpC0bihcisnwPrM4Gp5G4g==
+  dependencies:
+    cookie "^1.0.1"
 
 "@supabase/storage-js@^2.10.4":
   version "2.10.4"
@@ -1760,16 +1776,16 @@
   dependencies:
     "@supabase/node-fetch" "^2.6.14"
 
-"@supabase/supabase-js@^2.53.0":
-  version "2.53.0"
-  resolved "https://registry.yarnpkg.com/@supabase/supabase-js/-/supabase-js-2.53.0.tgz#ccf1d97e66b47ae4d7e0c7982a5b02b45afb94df"
-  integrity sha512-Vg9sl0oFn55cCPaEOsDsRDbxOVccxRrK/cikjL1XbywHEOfyA5SOOEypidMvQLwgoAfnC2S4D9BQwJDcZs7/TQ==
+"@supabase/supabase-js@^2.52.0":
+  version "2.54.0"
+  resolved "https://registry.yarnpkg.com/@supabase/supabase-js/-/supabase-js-2.54.0.tgz#bb0005a869566f65fb1fbabe9478cf0abf2bcaa4"
+  integrity sha512-DLw83YwBfAaFiL3oWV26+sHRdeCGtxmIKccjh/Pndze3BWM4fZghzYKhk3ElOQU8Bluq4AkkCJ5bM5Szl/sfRg==
   dependencies:
     "@supabase/auth-js" "2.71.1"
     "@supabase/functions-js" "2.4.5"
     "@supabase/node-fetch" "2.6.15"
     "@supabase/postgrest-js" "1.19.4"
-    "@supabase/realtime-js" "2.11.15"
+    "@supabase/realtime-js" "2.15.0"
     "@supabase/storage-js" "^2.10.4"
 
 "@tcgdex/sdk@^2.7.0":
@@ -2974,7 +2990,7 @@ cookie-es@^2.0.0:
   resolved "https://registry.yarnpkg.com/cookie-es/-/cookie-es-2.0.0.tgz#ca6163d7ef8686ea6bbdd551f1de575569c1ed69"
   integrity sha512-RAj4E421UYRgqokKUmotqAwuplYw15qtdXfY+hGzgCJ/MBjCVZcSoHK/kH9kocfjRjcDME7IiDWR/1WX1TM2Pg==
 
-cookie@^1.0.2:
+cookie@^1.0.1, cookie@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/cookie/-/cookie-1.0.2.tgz#27360701532116bd3f1f9416929d176afe1e4610"
   integrity sha512-9Kr/j4O16ISv8zBBhJoi4bXOYNTkFLOqSL3UDB0njXxCXNezjeyVrJyGOWtgfs/q2km1gwBcfH8q1yEGoMYunA==
@@ -4700,11 +4716,6 @@ isomorphic-unfetch@^3:
   dependencies:
     node-fetch "^2.6.1"
     unfetch "^4.2.0"
-
-isows@^1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/isows/-/isows-1.0.7.tgz#1c06400b7eed216fbba3bcbd68f12490fc342915"
-  integrity sha512-I1fSfDCZL5P0v33sVqeTDSpcstAg/N+wF5HS033mogOVIp4B+oHC7oOCsA3axAbBSGTJ8QubbNmnIRN/h8U7hg==
 
 jackspeak@^3.1.2:
   version "3.4.3"

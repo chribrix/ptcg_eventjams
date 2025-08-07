@@ -53,10 +53,8 @@ const name = ref("");
 const playerId = ref("");
 const linkSent = ref(false);
 
-const { $supabase } = useNuxtApp();
-
 const submitForm = async () => {
-  const { error } = await $supabase.auth.signInWithOtp({
+  const { error } = await useSupabaseClient().auth.signInWithOtp({
     email: email.value,
     options: {
       data: {
