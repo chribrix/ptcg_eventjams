@@ -1,9 +1,6 @@
-import { defineEventHandler } from "h3";
 import puppeteer from "puppeteer";
-import { JSDOM } from "jsdom";
-
-const eventTypes = ["external", "cup", "local"] as const;
-type EventType = (typeof eventTypes)[number];
+import fs from "fs";
+import path from "path";
 
 interface ParsedEvent {
   id: string;
@@ -14,187 +11,141 @@ interface ParsedEvent {
   location: string;
   country: string;
   link: string;
-  icon?: string;
 }
 
 interface CalendarEvent {
-  id: number;
+  id: string;
   title: string;
-  start: string; // ISO format e.g. 2025-08-10
-  end?: string;
-  type: "external" | "cup" | "local" | "challenge";
-}
-
-function stripHtmlTags(html: string): string {
-  if (!html) return "";
-  return html.replace(/<[^>]*>/g, "").trim();
-}
-
-function decodeHtmlEntities(text: string): string {
-  if (!text) return "";
-  return text
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+  dateTime: string;
+  type: string;
+  venue: string;
+  location: string;
+  country: string;
+  link: string;
+  icon: string;
 }
 
 function parseEventsFromHtml(html: string): ParsedEvent[] {
-  const dom = new JSDOM(html);
-  const document = dom.window.document;
-
-  // Find the grid canvas element
-  const gridCanvas = document.querySelector(
-    ".grid-canvas.grid-canvas-top.grid-canvas-left"
-  );
-  if (!gridCanvas) {
-    console.warn("Grid canvas not found");
-    return [];
-  }
-
   const events: ParsedEvent[] = [];
-  const rows = gridCanvas.querySelectorAll(".slick-row");
 
-  rows.forEach((row: Element, index: number) => {
-    const eventLink = row.querySelector(".eventlink");
-    if (!eventLink) return;
+  // Match all event links and their content
+  const eventRegex =
+    /<a[^>]*class="eventlink"[^>]*href="([^"]*)"[^>]*>[\s\S]*?<div[^>]*>([\s\S]*?)<\/div>[\s\S]*?<\/a>/g;
+  let match;
 
-    const href = eventLink.getAttribute("href");
-    if (!href || href === "//") return;
+  while ((match = eventRegex.exec(html)) !== null) {
+    const href = match[1];
+    const content = match[2];
 
-    const eventContent = eventLink.querySelector("div");
-    if (!eventContent) return;
+    if (!href || href === "//") continue;
 
-    const textContent = eventContent.innerHTML;
+    // Extract event details from the content
+    const dateTimeMatch = content.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2})/);
+    const typeMatch = content.match(
+      /- (TCG [^@]*|VG [^@]*|GO [^@]*|Pre Release)/
+    );
+    const venueMatch = content.match(/@\s*([^<\n]*?)(?:<br|$)/);
+    const locationMatch = content.match(
+      /(?:<br\s*\/?>|<\/br>)\s*([^<\n]*?)\s*-\s*([A-Z]{2})\s*(?:<|$)/
+    );
 
-    // Extract the bold title (datetime and event type)
-    const boldMatch = textContent.match(/<b>([^<]+)<\/b>/);
-    const title = boldMatch ? boldMatch[1].trim() : "";
+    if (dateTimeMatch && typeMatch && venueMatch) {
+      const dateTime = dateTimeMatch[1];
+      const type = typeMatch[1].trim();
+      const venue = venueMatch[1].trim();
+      const location = locationMatch ? locationMatch[1].trim() : "";
+      const country = locationMatch ? locationMatch[2] : "DE";
 
-    // Parse datetime and event type from title (format: "2025-08-30 12:00 - TCG Friendly")
-    const dateTimeMatch = title.match(/^(.+?) - (.+)$/);
-    const dateTime = dateTimeMatch ? dateTimeMatch[1].trim() : "";
-    const eventType = dateTimeMatch ? dateTimeMatch[2].trim() : "";
+      // Extract event ID from href
+      const idMatch = href.match(/\/([^\/]+)\/?$/);
+      const id = idMatch
+        ? idMatch[1]
+        : `${dateTime}-${venue}`.replace(/[^a-zA-Z0-9-]/g, "-");
 
-    // Extract venue, city, and country from the remaining text
-    const textAfterBold = textContent.replace(/<b>[^<]+<\/b><br\s*\/?>/, "");
-    const lines = textAfterBold
-      .split(/<br\s*\/?>/)
-      .map((line: string) => stripHtmlTags(decodeHtmlEntities(line.trim())))
-      .filter((line) => line.length > 0);
-
-    let venue = "";
-    let location = "";
-    let country = "";
-
-    // Parse according to the HTML structure:
-    // Line 0: @ VENUE_NAME
-    // Line 1: City - Region
-    // Line 2: Country
-    if (lines.length >= 1) {
-      // First line after bold: venue name with "@" prefix
-      venue = lines[0].replace(/^@\s*/, "").trim(); // Remove "@ " prefix
+      events.push({
+        id,
+        title: `${dateTime} - ${type}`,
+        dateTime,
+        type,
+        venue,
+        location,
+        country,
+        link: href.startsWith("http")
+          ? href
+          : `https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments${href}`,
+      });
     }
-
-    if (lines.length >= 2) {
-      // Second line: city and region, keep only city (everything before "-")
-      const cityRegion = lines[1];
-      const cityMatch = cityRegion.split(" - ")[0]; // Take everything before " - "
-      location = cityMatch.trim();
-    }
-
-    if (lines.length >= 3) {
-      // Third line: country
-      country = lines[2].trim();
-    }
-
-    // Extract icon if present
-    const iconImg = row.querySelector(".slick-cell img");
-    let icon = "";
-    if (iconImg) {
-      const src = iconImg.getAttribute("src");
-      if (src) {
-        icon = src.split("/").pop()?.replace(".png", "") || "";
-      }
-    }
-
-    // Extract ID from URL
-    const urlParts = href.split("/");
-    const id = urlParts[urlParts.length - 2] || `event-${index}`;
-
-    const event: ParsedEvent = {
-      id,
-      title,
-      dateTime,
-      type: eventType,
-      venue,
-      location,
-      country,
-      link: href,
-      ...(icon && { icon }),
-    };
-
-    events.push(event);
-  });
+  }
 
   return events;
 }
 
 function convertToCalendarEvents(parsedEvents: ParsedEvent[]): CalendarEvent[] {
-  return parsedEvents.map((event, index) => {
-    // The dateTime is in format "YYYY-MM-DD HH:MM"
-    let start = new Date().toISOString().split("T")[0]; // fallback to today
-
-    if (event.dateTime) {
-      const datePart = event.dateTime.split(" ")[0];
-
-      if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
-        const date = new Date(datePart + "T00:00:00");
-        // Check if the date is valid
-        if (!isNaN(date.getTime())) {
-          start = datePart; // Use the date part directly as it's already in ISO format
-        }
-      }
-    }
-
-    // Map event types based on the event type string
-    let type: CalendarEvent["type"] = "local";
-    const eventTypeStr = event.type.toLowerCase();
-
-    if (eventTypeStr.includes("challenge")) {
-      type = "challenge";
-    } else if (
-      eventTypeStr.includes("cup") ||
-      eventTypeStr.includes("tournament")
-    ) {
-      type = "cup";
-    } else if (eventTypeStr.includes("championship")) {
-      type = "external";
-    }
+  return parsedEvents.map((event) => {
+    let icon = "friendly";
+    if (event.type.toLowerCase().includes("cup")) icon = "cup";
+    else if (event.type.toLowerCase().includes("challenge")) icon = "chall";
+    else if (event.type.toLowerCase().includes("pre release")) icon = "pre";
 
     return {
-      id: index + 1,
-      title: `${event.type}${
-        event.venue && event.location
-          ? ` @ ${event.venue} - ${event.location}`
-          : event.venue
-          ? ` @ ${event.venue}`
-          : event.location
-          ? ` @ ${event.location}`
-          : ""
-      }`,
-      start,
-      type,
+      ...event,
+      icon,
     };
   });
 }
 
+function createEventResponse(
+  calendarEvents: CalendarEvent[],
+  totalFound: number
+) {
+  // Save events to out folder
+  const outDir = path.join(process.cwd(), "out");
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true });
+  }
+
+  const eventsPath = path.join(outDir, "events.json");
+  fs.writeFileSync(eventsPath, JSON.stringify(calendarEvents, null, 2));
+
+  const rawEventsPath = path.join(outDir, "events-raw.json");
+  fs.writeFileSync(rawEventsPath, JSON.stringify(calendarEvents, null, 2));
+
+  console.log("Events saved to files");
+
+  // Convert CalendarEvents to the format expected by the calendar component
+  const calendarFormatEvents = calendarEvents.map((event) => {
+    // Extract date from dateTime (YYYY-MM-DD HH:MM -> YYYY-MM-DD)
+    const dateOnly = event.dateTime.split(" ")[0];
+
+    // Map our event types to calendar types
+    let calendarType: "external" | "cup" | "local" | "challenge" = "local";
+    if (event.type.toLowerCase().includes("cup")) {
+      calendarType = "cup";
+    } else if (event.type.toLowerCase().includes("challenge")) {
+      calendarType = "challenge";
+    } else if (event.type.toLowerCase().includes("friendly")) {
+      calendarType = "local";
+    } else {
+      calendarType = "external";
+    }
+
+    return {
+      id: parseInt(event.id.replace(/[^0-9]/g, "")) || Math.random() * 10000,
+      title: event.title,
+      start: dateOnly,
+      type: calendarType,
+    };
+  });
+
+  return calendarFormatEvents;
+}
+
 export default defineEventHandler(async () => {
+  console.log("Starting event scraping...");
   const browser = await puppeteer.launch();
 
   try {
-    // Yay cookie based search params
+    // Cookie based search params - Bayern only
     await browser.setCookie(
       {
         name: "country",
@@ -218,17 +169,225 @@ export default defineEventHandler(async () => {
 
     await page.waitForSelector(".ui-widget-content", { timeout: 5000 });
 
-    const pageContent = await page.content();
-    const events = parseEventsFromHtml(pageContent);
-    const calendarEvents = convertToCalendarEvents(events);
+    console.log("Collecting all events by simple scroll-to-bottom approach...");
+
+    const allEventsData = await page.evaluate(async () => {
+      // First, let's inspect what we're working with
+      const viewport = document.querySelector(".slick-viewport") as HTMLElement;
+      const canvas = document.querySelector(".grid-canvas") as HTMLElement;
+
+      if (!viewport || !canvas) {
+        return { success: false, error: "Grid elements not found" };
+      }
+
+      // Try to access SlickGrid data directly first
+      let slickGridData = null;
+      try {
+        // SlickGrid usually exposes data through window or grid instances
+        const gridElements = document.querySelectorAll('[id*="grid"]');
+        for (const element of gridElements) {
+          const elementId = element.id;
+          if (
+            (window as any)[elementId] &&
+            (window as any)[elementId].getData
+          ) {
+            slickGridData = (window as any)[elementId].getData();
+            console.log(
+              `Found SlickGrid data via ${elementId}:`,
+              slickGridData.length,
+              "items"
+            );
+            break;
+          }
+        }
+      } catch (e) {
+        console.log("Could not access SlickGrid data directly:", e);
+      }
+
+      const allEvents: Array<{
+        href: string;
+        content: string;
+        dateStr: string;
+      }> = [];
+
+      // Helper function to collect events from current view
+      const collectCurrentEvents = () => {
+        const currentRows = document.querySelectorAll(".slick-row");
+        let newEventsCount = 0;
+
+        currentRows.forEach((row) => {
+          const eventLink = row.querySelector(".eventlink");
+          if (eventLink) {
+            const href = eventLink.getAttribute("href");
+            if (
+              href &&
+              href !== "//" &&
+              !allEvents.find((e) => e.href === href)
+            ) {
+              const eventContent = eventLink.querySelector("div");
+              if (eventContent) {
+                const dateMatch =
+                  eventContent.innerHTML.match(/(\d{4}-\d{2}-\d{2})/);
+                const dateStr = dateMatch ? dateMatch[0] : "9999-12-31";
+
+                allEvents.push({
+                  href: href,
+                  content: eventContent.innerHTML,
+                  dateStr: dateStr,
+                });
+
+                newEventsCount++;
+              }
+            }
+          }
+        });
+
+        return newEventsCount;
+      };
+
+      // If we have direct access to SlickGrid data, use it
+      if (slickGridData && slickGridData.length > 20) {
+        console.log("Using direct SlickGrid data access");
+
+        // Extract events from SlickGrid data
+        slickGridData.forEach((item: any, index: number) => {
+          if (item.link && item.link !== "//") {
+            const dateStr = item.dateTime || item.date || "9999-12-31";
+            allEvents.push({
+              href: item.link,
+              content: `${item.dateTime || ""} - ${item.type || ""} @ ${
+                item.venue || ""
+              }<br>${item.location || ""}`,
+              dateStr: dateStr,
+            });
+          }
+        });
+
+        console.log(`Collected ${allEvents.length} events from SlickGrid data`);
+      } else {
+        // Fall back to simple 2-strategy scrolling approach with large steps
+        console.log("Using 2-strategy scrolling with large step sizes");
+
+        // Get all measurements
+        const canvasHeight = parseInt((canvas as any).style.height) || 0;
+        const viewportHeight = viewport.clientHeight || 500;
+        
+        console.log(
+          `Measurements: Canvas=${canvasHeight}px, Viewport=${viewportHeight}px`
+        );
+
+        // Strategy 1: Large step scrolling to cover maximum ground quickly
+        console.log("Strategy 1: Large step scrolling");
+        const largeStep = 2000; // 2000px steps - much larger!
+        const maxScrollHeight = 100000; // Scroll up to 100k pixels to ensure we get everything
+        
+        for (let pos = 0; pos <= maxScrollHeight; pos += largeStep) {
+          viewport.scrollTop = pos;
+          await new Promise((resolve) => setTimeout(resolve, 300)); // Wait for rendering
+          collectCurrentEvents();
+          
+          // Log progress every 10000px
+          if (pos % 10000 === 0) {
+            console.log(`Large step scroll to ${pos}px: found ${allEvents.length} events total`);
+          }
+        }
+
+        console.log(`After strategy 1: ${allEvents.length} events`);
+
+        // Strategy 2: Jump to specific large positions to catch any missed sections
+        console.log("Strategy 2: Large position jumping");
+        const jumpPositions = [
+          0, 5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000,
+          60000, 70000, 80000, 90000, 100000, 120000, 150000, 200000
+        ];
+        
+        for (const pos of jumpPositions) {
+          viewport.scrollTop = pos;
+          await new Promise((resolve) => setTimeout(resolve, 500)); // Longer wait for large jumps
+          collectCurrentEvents();
+          
+          console.log(`Jump to ${pos}px: total events = ${allEvents.length}`);
+        }
+
+        console.log(`After strategy 2: ${allEvents.length} events`);
+      }
+
+      // Sort events by date to ensure chronological order
+      allEvents.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+
+      console.log(`FINAL RESULT: ${allEvents.length} unique events collected`);
+      if (allEvents.length > 0) {
+        console.log(
+          `Date range: ${allEvents[0].dateStr} to ${
+            allEvents[allEvents.length - 1].dateStr
+          }`
+        );
+      }
+
+      if (allEvents.length < 25) {
+        console.log(
+          `WARNING: Only found ${allEvents.length} events, expected 30+`
+        );
+        console.log("Canvas info:", {
+          canvasHeight: parseInt((canvas as any).style.height) || 0,
+          viewportHeight: viewport.clientHeight,
+          scrollHeight: viewport.scrollHeight,
+          totalRows: document.querySelectorAll(".slick-row").length,
+          visibleRows: document.querySelectorAll(
+            '.slick-row:not([style*="display: none"])'
+          ).length,
+        });
+      }
+
+      return {
+        success: true,
+        count: allEvents.length,
+        data: allEvents,
+        method: "two_strategy_large_steps",
+      };
+    });
+
+    if (!allEventsData.success) {
+      throw new Error(allEventsData.error || "Failed to collect events");
+    }
+
+    console.log(
+      `SUCCESS: Found ${allEventsData.count} events using ${allEventsData.method}`
+    );
+
+    // Convert the collected event data to HTML-like format for parsing
+    const htmlContent = (allEventsData.data || [])
+      .map(
+        (event: any) =>
+          `<a class="eventlink" href="${event.href}"><div>${event.content}</div></a>`
+      )
+      .join("\n");
+
+    const events = parseEventsFromHtml(htmlContent);
+    console.log(`Parsed ${events.length} events`);
+
+    // Remove duplicates by ID and datetime+venue combination
+    const uniqueEvents = events.filter((event, index, self) => {
+      const duplicateById = self.findIndex((e) => e.id === event.id) === index;
+      const key = `${event.dateTime}-${event.venue}`;
+      const duplicateByKey =
+        self.findIndex((e) => `${e.dateTime}-${e.venue}` === key) === index;
+      return duplicateById && duplicateByKey;
+    });
+
+    console.log(`After removing duplicates: ${uniqueEvents.length} events`);
+
+    const calendarEvents = convertToCalendarEvents(uniqueEvents);
+    console.log(`Converted to ${calendarEvents.length} calendar events`);
 
     await browser.close();
-
-    return calendarEvents;
-  } catch (error) {
-    await browser.close();
+    return createEventResponse(calendarEvents, allEventsData.count || 0);
+  } catch (error: any) {
     console.error("Error scraping events:", error);
-
-    return [];
+    await browser.close();
+    return {
+      error: "Failed to fetch events",
+      details: error?.message || "Unknown error",
+    };
   }
 });

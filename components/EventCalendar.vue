@@ -1,8 +1,51 @@
 <template>
   <div class="calendar-wrapper">
-    <div v-if="pending" class="loading">Loading events...</div>
-    <div v-else-if="error" class="error">Error loading events: {{ error }}</div>
-    <div v-else class="calendar-container">
+    <div v-if="eventStore.error.value" class="error">
+      Error loading events: {{ eventStore.error.value }}
+    </div>
+
+    <!-- Event Stats Display -->
+    <div v-if="eventStats" class="event-stats">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Total Events:</span>
+          <span class="stat-value">{{ eventStats.totalEvents }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Date Range:</span>
+          <span class="stat-value">{{ eventStats.dateRange.span }} days</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Free Events:</span>
+          <span class="stat-value text-green-600">{{
+            eventStats.pricing.free
+          }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Paid Events:</span>
+          <span class="stat-value text-blue-600">{{
+            eventStats.pricing.paid
+          }}</span>
+        </div>
+      </div>
+      <button
+        @click="refreshEvents"
+        :disabled="eventStore.isLoading.value"
+        class="refresh-button"
+      >
+        {{ eventStore.isLoading.value ? "Refreshing..." : "Refresh Events" }}
+      </button>
+    </div>
+
+    <div class="calendar-container">
+      <!-- Loading indicator overlay -->
+      <div v-if="eventStore.isLoading.value" class="loading-overlay">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <span>Loading events...</span>
+        </div>
+      </div>
+
       <VCalendar
         expanded
         :attributes="calendarAttributes"
@@ -132,7 +175,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useFetch } from "#app";
 
 interface CalendarEvent {
   id: number;
@@ -174,26 +216,43 @@ const typeLabels: Record<CalendarEvent["type"], string> = {
 // State for event details modal
 const selectedDate = ref<string | null>(null);
 const selectedDateEvents = ref<ParsedEvent[]>([]);
-const originalEvents = ref<ParsedEvent[]>([]);
 
-const {
-  data: fetchedEvents,
-  pending,
-  error,
-} = await useAsyncData("events", () => $fetch<CalendarEvent[]>("/api/events"));
+// Use the event store composable
+const eventStore = useEventStore();
 
-// Also fetch the original parsed events for detailed information
-const { data: fetchedOriginalEvents } = await useAsyncData(
-  "originalEvents",
-  () => $fetch<ParsedEvent[]>("/api/events/detailed")
-);
+// Load events on mount
+onMounted(async () => {
+  try {
+    await eventStore.fetchEvents();
+  } catch (error) {
+    console.error("Failed to load events:", error);
+  }
+});
 
-const events = computed(() => fetchedEvents.value || []);
+const events = computed(() => {
+  // Convert ParsedEvents to CalendarEvents for the calendar display
+  return eventStore.events.value.map((event: any) => {
+    // Determine event type based on the original type
+    let type: CalendarEvent["type"] = "local";
+    if (event.type?.toLowerCase().includes("cup")) {
+      type = "cup";
+    } else if (event.type?.toLowerCase().includes("challenge")) {
+      type = "challenge";
+    } else if (
+      event.type?.toLowerCase().includes("tournament") &&
+      !event.type?.toLowerCase().includes("friendly")
+    ) {
+      type = "external";
+    }
 
-// Store original events for detailed view
-if (fetchedOriginalEvents.value) {
-  originalEvents.value = fetchedOriginalEvents.value;
-}
+    return {
+      id: parseInt(event.id.replace(/[^0-9]/g, "")) || Math.random(),
+      title: event.title || event.type || "Event",
+      start: event.dateTime ? event.dateTime.split(" ")[0] : "", // Extract date part
+      type,
+    };
+  });
+});
 
 const calendarAttributes = computed(() => {
   const eventsByDate = new Map<string, CalendarEvent[]>();
@@ -256,8 +315,8 @@ const onDayClick = (day: any) => {
   const clickedDate = day.id; // This should be in YYYY-MM-DD format
   selectedDate.value = clickedDate;
 
-  // Find original events for this date
-  const eventsForDate = originalEvents.value.filter((event) => {
+  // Find original events for this date using the store
+  const eventsForDate = eventStore.events.value.filter((event: any) => {
     if (event.dateTime) {
       const eventDate = event.dateTime.split(" ")[0]; // Extract YYYY-MM-DD part
       return eventDate === clickedDate;
@@ -301,6 +360,18 @@ const stripHtmlTags = (html: string) => {
   if (!html) return "";
   return html.replace(/<[^>]*>/g, "").trim();
 };
+
+// Get stats for display
+const eventStats = computed(() => eventStore.getEventStats());
+
+// Refresh events function
+const refreshEvents = async () => {
+  try {
+    await eventStore.fetchEvents(true); // Force refresh
+  } catch (error) {
+    console.error("Failed to refresh events:", error);
+  }
+};
 </script>
 
 <style scoped>
@@ -309,8 +380,77 @@ const stripHtmlTags = (html: string) => {
   height: 50vh;
   overflow: auto;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 1rem;
+}
+
+.event-stats {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.text-green-600 {
+  color: #16a34a !important;
+}
+
+.text-blue-600 {
+  color: #2563eb !important;
+}
+
+.refresh-button {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.refresh-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
 }
 
 .calendar-container {
@@ -326,6 +466,51 @@ const stripHtmlTags = (html: string) => {
   height: 200px;
   font-size: 1.2rem;
   color: #6b7280;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 0.5rem;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner span {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .error {
