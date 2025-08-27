@@ -1,5 +1,8 @@
 <template>
-  <div><EventCalendar /></div>
+  <div class="flex">
+    <EventCalendar />
+    <EventList />
+  </div>
 </template>
 
 <script setup lang="ts">
