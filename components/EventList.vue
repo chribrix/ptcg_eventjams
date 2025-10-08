@@ -1,13 +1,11 @@
 <template>
   <div class="event-list-wrapper">
-    <div v-if="error" class="error">
-      Error loading events: {{ error }}
-    </div>
+    <div v-if="error" class="error">Error loading events: {{ error }}</div>
 
     <!-- Header with filters and search -->
     <div class="event-list-header">
       <h2 class="list-title">All Events</h2>
-      
+
       <!-- Search and Filter Controls -->
       <div class="controls">
         <div class="search-container">
@@ -17,11 +15,21 @@
             placeholder="Search events..."
             class="search-input"
           />
-          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          <svg
+            class="search-icon"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            ></path>
           </svg>
         </div>
-        
+
         <select v-model="selectedType" class="type-filter">
           <option value="">All Types</option>
           <option value="League Cup">League Cup</option>
@@ -44,8 +52,18 @@
     <!-- Event List -->
     <div v-else class="event-list-container">
       <div v-if="filteredEvents.length === 0" class="no-events">
-        <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        <svg
+          class="empty-icon"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          ></path>
         </svg>
         <p>No events found matching your criteria</p>
       </div>
@@ -75,33 +93,76 @@
                 </div>
                 <div class="event-time" v-if="event.time">{{ event.time }}</div>
               </div>
-              
+
               <div class="event-location">
-                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m0 0H9"></path>
+                <svg
+                  class="icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m0 0H9"
+                  ></path>
                 </svg>
                 <span>{{ stripHtmlTags(event.venue) }}</span>
               </div>
 
               <div class="event-location" v-if="event.location">
-                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <svg
+                  class="icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  ></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  ></path>
                 </svg>
-                <span>{{ stripHtmlTags(event.location) }}{{ event.country ? `, ${stripHtmlTags(event.country)}` : '' }}</span>
+                <span
+                  >{{ stripHtmlTags(event.location)
+                  }}{{
+                    event.country ? `, ${stripHtmlTags(event.country)}` : ""
+                  }}</span
+                >
               </div>
             </div>
 
             <!-- Event details row -->
             <div class="event-details">
               <div class="event-cost" v-if="event.cost !== undefined">
-                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                <svg
+                  class="icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                  ></path>
                 </svg>
-                <span>{{ event.cost || '?' }}</span>
+                <span>{{ event.cost || "?" }}</span>
               </div>
 
-              <div v-if="event.link && event.link !== '//'" class="event-register">
+              <div
+                v-if="event.link && event.link !== '//'"
+                class="event-register"
+              >
                 <a
                   :href="event.link"
                   target="_blank"
@@ -109,8 +170,18 @@
                   class="register-button"
                   @click.stop
                 >
-                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  <svg
+                    class="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    ></path>
                   </svg>
                   Register
                 </a>
@@ -120,8 +191,18 @@
 
           <!-- Expand arrow -->
           <div class="expand-arrow">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            <svg
+              class="icon"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              ></path>
             </svg>
           </div>
         </div>
@@ -152,8 +233,18 @@
               </div>
               <div class="event-header-right">
                 <div v-if="selectedEvent.cost !== undefined" class="event-cost">
-                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                  <svg
+                    class="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                    ></path>
                   </svg>
                   {{ selectedEvent.cost || "?" }}
                 </div>
@@ -166,36 +257,91 @@
             <div class="event-content-grid">
               <div class="event-column">
                 <div v-if="selectedEvent.venue" class="event-detail">
-                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m0 0H9"></path>
+                  <svg
+                    class="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m0 0H9"
+                    ></path>
                   </svg>
                   <span>{{ stripHtmlTags(selectedEvent.venue) }}</span>
                 </div>
                 <div v-if="selectedEvent.streetAddress" class="event-detail">
-                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <svg
+                    class="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    ></path>
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    ></path>
                   </svg>
                   <span>{{ stripHtmlTags(selectedEvent.streetAddress) }}</span>
                 </div>
                 <div v-if="selectedEvent.location" class="event-detail">
-                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  <svg
+                    class="icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
                   </svg>
-                  <span>{{ stripHtmlTags(selectedEvent.location) }}{{ selectedEvent.country ? `, ${stripHtmlTags(selectedEvent.country)}` : '' }}</span>
+                  <span
+                    >{{ stripHtmlTags(selectedEvent.location)
+                    }}{{
+                      selectedEvent.country
+                        ? `, ${stripHtmlTags(selectedEvent.country)}`
+                        : ""
+                    }}</span
+                  >
                 </div>
               </div>
 
               <div class="event-column">
-                <div v-if="selectedEvent.link && selectedEvent.link !== '//'" class="event-detail">
+                <div
+                  v-if="selectedEvent.link && selectedEvent.link !== '//'"
+                  class="event-detail"
+                >
                   <a
                     :href="selectedEvent.link"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="link-button"
                   >
-                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    <svg
+                      class="icon"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      ></path>
                     </svg>
                     <span>Register</span>
                   </a>
@@ -210,7 +356,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from "vue";
 
 interface ParsedEvent {
   id: string;
@@ -228,8 +374,8 @@ interface ParsedEvent {
 }
 
 // Reactive state
-const searchQuery = ref('');
-const selectedType = ref('');
+const searchQuery = ref("");
+const selectedType = ref("");
 const selectedEvent = ref<ParsedEvent | null>(null);
 const events = ref<ParsedEvent[]>([]);
 const isLoading = ref(false);
@@ -243,15 +389,15 @@ onMounted(async () => {
 const fetchEvents = async () => {
   isLoading.value = true;
   error.value = null;
-  
+
   try {
-    console.log('Fetching events from /api/events...');
-    const response = await $fetch<{events: ParsedEvent[]}>('/api/events');
+    console.log("Fetching events from /api/events...");
+    const response = await $fetch<{ events: ParsedEvent[] }>("/api/events");
     events.value = response.events || [];
     console.log(`Loaded ${events.value.length} events`);
   } catch (err) {
-    console.error('Failed to load events:', err);
-    error.value = err instanceof Error ? err.message : 'Failed to load events';
+    console.error("Failed to load events:", err);
+    error.value = err instanceof Error ? err.message : "Failed to load events";
   } finally {
     isLoading.value = false;
   }
@@ -264,23 +410,26 @@ const filteredEvents = computed(() => {
   // Apply search filter
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase();
-    filteredEvents = filteredEvents.filter((event: ParsedEvent) => 
-      event.title?.toLowerCase().includes(query) ||
-      event.type?.toLowerCase().includes(query) ||
-      event.venue?.toLowerCase().includes(query) ||
-      event.location?.toLowerCase().includes(query)
+    filteredEvents = filteredEvents.filter(
+      (event: ParsedEvent) =>
+        event.title?.toLowerCase().includes(query) ||
+        event.type?.toLowerCase().includes(query) ||
+        event.venue?.toLowerCase().includes(query) ||
+        event.location?.toLowerCase().includes(query)
     );
   }
 
   // Apply type filter
   if (selectedType.value) {
-    filteredEvents = filteredEvents.filter((event: ParsedEvent) => event.type === selectedType.value);
+    filteredEvents = filteredEvents.filter(
+      (event: ParsedEvent) => event.type === selectedType.value
+    );
   }
 
   // Sort by date and time
   return filteredEvents.sort((a: ParsedEvent, b: ParsedEvent) => {
-    const dateTimeA = new Date(a.dateTime + (a.time ? ` ${a.time}` : ''));
-    const dateTimeB = new Date(b.dateTime + (b.time ? ` ${b.time}` : ''));
+    const dateTimeA = new Date(a.dateTime + (a.time ? ` ${a.time}` : ""));
+    const dateTimeB = new Date(b.dateTime + (b.time ? ` ${b.time}` : ""));
     return dateTimeA.getTime() - dateTimeB.getTime();
   });
 });
@@ -293,12 +442,12 @@ const formatDay = (dateString: string) => {
 
 const formatMonth = (dateString: string) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { month: 'short' });
+  return date.toLocaleDateString("en-US", { month: "short" });
 };
 
 const stripHtmlTags = (html: string) => {
-  if (!html) return '';
-  return html.replace(/<[^>]*>/g, '').trim();
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, "").trim();
 };
 
 const openEventDetails = (event: ParsedEvent) => {
@@ -412,8 +561,12 @@ const closeEventDetails = () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-spinner span {
@@ -648,7 +801,8 @@ const closeEventDetails = () => {
 .event-details-panel {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   max-width: 600px;
   max-height: 80vh;
   width: 90%;
