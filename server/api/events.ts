@@ -1,6 +1,3 @@
-import fs from "fs";
-import path from "path";
-
 interface ParsedEvent {
   id: string;
   title: string;
@@ -131,17 +128,6 @@ function createEventResponse(
   calendarEvents: CalendarEvent[],
   totalFound: number
 ) {
-  // Save events to out folder
-  const outDir = path.join(process.cwd(), "out");
-  if (!fs.existsSync(outDir)) {
-    fs.mkdirSync(outDir, { recursive: true });
-  }
-
-  const eventsFilePath = path.join(outDir, "events.json");
-  fs.writeFileSync(eventsFilePath, JSON.stringify(calendarEvents, null, 2));
-
-  console.log(`Events saved to ${eventsFilePath}`);
-
   return {
     success: true,
     totalFound,
