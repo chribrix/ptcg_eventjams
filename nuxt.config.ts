@@ -18,7 +18,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: "/",
       callback: "/magic-login",
-      exclude: ["/", "/login", "/register"],
+      exclude: ["/", "/login", "/register", "/eventlist", "/events"],
     },
   },
   runtimeConfig: {

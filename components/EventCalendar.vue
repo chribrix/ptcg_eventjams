@@ -75,16 +75,24 @@
               v-for="event in selectedDateEvents"
               :key="event.id"
               class="event-item"
+              :class="{ 'custom-event-item': isCustomEvent(event) }"
             >
               <div class="event-header">
                 <div
                   class="event-type-badge"
-                  :class="`badge-${event.icon || 'friendly'}`"
+                  :class="
+                    isCustomEvent(event)
+                      ? 'badge-custom'
+                      : `badge-${event.icon || 'friendly'}`
+                  "
                 >
-                  {{ event.type }}
+                  {{ isCustomEvent(event) ? "Custom Event" : event.type }}
                 </div>
                 <div class="event-header-right">
-                  <div v-if="event.cost !== undefined" class="event-cost">
+                  <div
+                    v-if="getEventCost(event) !== undefined"
+                    class="event-cost"
+                  >
                     <svg
                       class="icon"
                       fill="none"
@@ -98,10 +106,10 @@
                         d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
                       ></path>
                     </svg>
-                    {{ event.cost || "?" }}
+                    {{ formatEventCost(event) }}
                   </div>
-                  <div v-if="event.time" class="event-time-header">
-                    {{ event.time }}
+                  <div v-if="getEventTime(event)" class="event-time-header">
+                    {{ getEventTime(event) }}
                   </div>
                 </div>
               </div>
@@ -210,26 +218,56 @@
 import { ref, computed, onMounted } from "vue";
 
 interface CalendarEvent {
-  id: number;
+  id: number | string;
   title: string;
   start: string; // ISO format e.g. 2025-08-10
   end?: string;
-  type: "external" | "cup" | "local" | "challenge";
+  type: "external" | "cup" | "local" | "challenge" | "custom";
+  isCustom?: boolean;
+  customEventData?: any;
 }
 
 interface ParsedEvent {
   id: string;
   title: string;
   dateTime: string;
-  time?: string; // Add separate time field
+  time?: string;
   type: string;
   venue: string;
   location: string;
   country: string;
   link: string;
-  cost?: string; // Add cost field
-  streetAddress?: string; // Add street address field
+  cost?: string;
+  streetAddress?: string;
   icon?: string;
+  isCustomEvent?: boolean;
+}
+
+interface CustomEvent {
+  id: string | number;
+  name: string;
+  eventDate: string;
+  venue: string;
+  maxParticipants: number;
+  participationFee: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ExternalEvent {
+  id: string;
+  title: string;
+  dateTime: string;
+  type: string;
+  venue: string;
+  location: string;
+  country: string;
+  link: string;
+  cost?: string;
+  streetAddress?: string;
+  icon?: string;
+  time?: string;
 }
 
 const today = new Date();
@@ -240,6 +278,7 @@ const typeColors: Record<CalendarEvent["type"], string> = {
   cup: "#dc2626", // red-600 (cups get red dots)
   local: "#16a34a", // green-600 (friendly tournaments get green dots)
   challenge: "#2563eb", // blue-600 (challenges get blue dots)
+  custom: "#9333ea", // purple-600 (custom events get purple dots)
 };
 
 const typeLabels: Record<CalendarEvent["type"], string> = {
@@ -247,6 +286,7 @@ const typeLabels: Record<CalendarEvent["type"], string> = {
   cup: "Cup Tournament",
   local: "Local Event",
   challenge: "Challenge",
+  custom: "Custom Event",
 };
 
 // State for event details modal
@@ -256,10 +296,30 @@ const selectedDateEvents = ref<ParsedEvent[]>([]);
 // Use the event store composable
 const eventStore = useEventStore();
 
-// Load events on mount
-onMounted(async () => {
+// Custom events data
+const customEvents = ref<CustomEvent[]>([]);
+const customEventsLoading = ref<boolean>(false);
+
+// Fetch custom events
+const fetchCustomEvents = async (): Promise<void> => {
   try {
-    await eventStore.fetchEvents();
+    customEventsLoading.value = true;
+    const response = await $fetch<{ events: CustomEvent[] }>(
+      "/api/admin/custom-events"
+    );
+    customEvents.value = response.events || [];
+  } catch (error) {
+    console.error("Failed to load custom events:", error);
+    customEvents.value = [];
+  } finally {
+    customEventsLoading.value = false;
+  }
+};
+
+// Load events on mount
+onMounted(async (): Promise<void> => {
+  try {
+    await Promise.all([eventStore.fetchEvents(), fetchCustomEvents()]);
   } catch (error) {
     console.error("Failed to load events:", error);
   }
@@ -267,7 +327,7 @@ onMounted(async () => {
 
 const events = computed(() => {
   // Convert ParsedEvents to CalendarEvents for the calendar display
-  return eventStore.events.value.map((event: any) => {
+  const regularEvents = eventStore.events.value.map((event: ExternalEvent) => {
     // Determine event type based on the original type
     let type: CalendarEvent["type"] = "local";
     if (event.type?.toLowerCase().includes("cup")) {
@@ -286,8 +346,26 @@ const events = computed(() => {
       title: event.title || event.type || "Event",
       start: event.dateTime ? event.dateTime.split(" ")[0] : "", // Extract date part
       type,
+      isCustom: false,
     };
   });
+
+  // Convert custom events to CalendarEvents
+  const customCalendarEvents = customEvents.value.map((event: CustomEvent) => {
+    const eventDate = new Date(event.eventDate);
+    const dateString = eventDate.toISOString().split("T")[0]; // Get YYYY-MM-DD format
+
+    return {
+      id: event.id,
+      title: event.name,
+      start: dateString,
+      type: "custom" as CalendarEvent["type"],
+      isCustom: true,
+      customEventData: event, // Store full custom event data for popover
+    };
+  });
+
+  return [...regularEvents, ...customCalendarEvents];
 });
 
 const calendarAttributes = computed(() => {
@@ -302,7 +380,7 @@ const calendarAttributes = computed(() => {
     eventsByDate.get(dateKey)!.push(event);
   });
 
-  const attributes: any[] = [];
+  const attributes: Array<Record<string, any>> = [];
 
   // Create attributes for each date with events
   eventsByDate.forEach((dayEvents, dateKey) => {
@@ -331,13 +409,16 @@ const calendarAttributes = computed(() => {
 
     // Add a highlight for the entire day if there are events
     if (dayEvents.length > 0) {
+      // Check if there are custom events on this day
+      const hasCustomEvents = dayEvents.some((event) => event.isCustom);
+
       attributes.push({
         key: `${dateKey}-highlight`,
         dates: date,
         highlight: {
-          color: "blue",
+          color: hasCustomEvents ? "purple" : "blue",
           fillMode: "light",
-          class: "has-events",
+          class: hasCustomEvents ? "has-custom-events" : "has-events",
         },
       });
     }
@@ -346,25 +427,58 @@ const calendarAttributes = computed(() => {
   return attributes;
 });
 
+interface DayClickEvent {
+  id: string;
+  date: Date;
+}
+
 // Handle day click
-const onDayClick = (day: any) => {
+const onDayClick = (day: DayClickEvent) => {
   const clickedDate = day.id; // This should be in YYYY-MM-DD format
   selectedDate.value = clickedDate;
 
-  // Find original events for this date using the store
-  const eventsForDate = eventStore.events.value.filter((event: any) => {
-    if (event.dateTime) {
-      const eventDate = event.dateTime.split(" ")[0]; // Extract YYYY-MM-DD part
-      return eventDate === clickedDate;
-    }
-    return false;
-  });
+  // Find original events for this date using the store and mark them as regular events
+  const regularEventsForDate = eventStore.events.value
+    .filter((event: ExternalEvent) => {
+      if (event.dateTime) {
+        const eventDate = event.dateTime.split(" ")[0]; // Extract YYYY-MM-DD part
+        return eventDate === clickedDate;
+      }
+      return false;
+    })
+    .map(
+      (event: ExternalEvent): ParsedEvent => ({
+        ...event,
+        isCustomEvent: false, // Explicitly mark as regular event
+      })
+    );
 
-  selectedDateEvents.value = eventsForDate;
+  // Find custom events for this date and mark them as custom events
+  const customEventsForDate = customEvents.value
+    .filter((event: CustomEvent) => {
+      const eventDate = new Date(event.eventDate).toISOString().split("T")[0];
+      return eventDate === clickedDate;
+    })
+    .map(
+      (event: CustomEvent): ParsedEvent => ({
+        id: String(event.id),
+        title: event.name,
+        dateTime: event.eventDate,
+        type: "Custom Event",
+        venue: event.venue,
+        location: "",
+        country: "",
+        link: "",
+        isCustomEvent: true, // Explicitly mark as custom event
+      })
+    );
+
+  // Combine all events for the selected date - custom events first
+  selectedDateEvents.value = [...customEventsForDate, ...regularEventsForDate];
 };
 
 // Close event details modal
-const closeEventDetails = () => {
+const closeEventDetails = (): void => {
   selectedDate.value = null;
   selectedDateEvents.value = [];
 };
@@ -382,7 +496,7 @@ const formatSelectedDate = computed(() => {
 });
 
 // Format event time
-const formatEventTime = (event: ParsedEvent) => {
+const formatEventTime = (event: ParsedEvent): string => {
   // First try to use the separate time field if available
   if (event.time) {
     return event.time;
@@ -408,7 +522,7 @@ const formatEventTime = (event: ParsedEvent) => {
 };
 
 // Strip HTML tags from text
-const stripHtmlTags = (html: string) => {
+const stripHtmlTags = (html: string): string => {
   if (!html) return "";
   return html.replace(/<[^>]*>/g, "").trim();
 };
@@ -417,12 +531,61 @@ const stripHtmlTags = (html: string) => {
 const eventStats = computed(() => eventStore.getEventStats());
 
 // Refresh events function
-const refreshEvents = async () => {
+const refreshEvents = async (): Promise<void> => {
   try {
-    await eventStore.fetchEvents(true); // Force refresh
+    await Promise.all([
+      eventStore.fetchEvents(true), // Force refresh
+      fetchCustomEvents(), // Refresh custom events too
+    ]);
   } catch (error) {
     console.error("Failed to refresh events:", error);
   }
+};
+
+// Helper functions for event display
+const isCustomEvent = (event: ParsedEvent): boolean => {
+  // Use the explicit flag we set in onDayClick
+  return event.isCustomEvent === true;
+};
+
+const getEventCost = (event: ParsedEvent): number | string | undefined => {
+  if (isCustomEvent(event)) {
+    // For custom events, we need to find the original event to get participationFee
+    const customEvent = customEvents.value.find(
+      (ce) => String(ce.id) === event.id
+    );
+    return customEvent?.participationFee;
+  }
+  return event.cost;
+};
+
+const formatEventCost = (event: ParsedEvent): string => {
+  const cost = getEventCost(event);
+  if (cost === undefined || cost === null) return "?";
+  if (isCustomEvent(event)) {
+    const numericCost = typeof cost === "string" ? parseFloat(cost) : cost;
+    return numericCost > 0 ? `€${numericCost}` : "Free";
+  }
+  return String(cost) || "?";
+};
+
+const getEventTime = (event: ParsedEvent): string => {
+  if (isCustomEvent(event)) {
+    // For custom events, we need to find the original event to get the eventDate
+    const customEvent = customEvents.value.find(
+      (ce) => String(ce.id) === event.id
+    );
+    if (customEvent) {
+      const eventDate = new Date(customEvent.eventDate);
+      return eventDate.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    }
+    return "All Day";
+  }
+  return formatEventTime(event);
 };
 </script>
 
@@ -661,6 +824,16 @@ const refreshEvents = async () => {
   margin-bottom: 0;
 }
 
+.custom-event-item {
+  border-left: 4px solid #9333ea;
+  background: linear-gradient(to right, #f3e8ff, #ffffff);
+}
+
+.custom-event-item:hover {
+  border-color: #7c3aed;
+  background: linear-gradient(to right, #e9d5ff, #f9fafb);
+}
+
 .event-header {
   display: flex;
   justify-content: space-between;
@@ -757,6 +930,12 @@ const refreshEvents = async () => {
   color: #ca8a04;
 }
 
+.badge-custom {
+  background-color: #f3e8ff;
+  color: #9333ea;
+  font-weight: 600;
+}
+
 .link-button {
   display: flex;
   align-items: center;
@@ -817,6 +996,12 @@ const refreshEvents = async () => {
   border-radius: 0.5rem;
 }
 
+:deep(.has-custom-events) {
+  border: 2px solid #9333ea;
+  border-radius: 0.5rem;
+  background-color: #f3e8ff !important;
+}
+
 :deep(.event-dot) {
   width: 8px;
   height: 8px;
@@ -840,6 +1025,10 @@ const refreshEvents = async () => {
   background-color: #2563eb !important;
 }
 
+:deep(.event-custom) {
+  background-color: #9333ea !important;
+}
+
 /* Alternative selectors in case VCalendar uses different structure */
 :deep(.event-external .vc-dot) {
   background-color: #dc2626 !important;
@@ -855,6 +1044,10 @@ const refreshEvents = async () => {
 
 :deep(.event-challenge .vc-dot) {
   background-color: #2563eb !important;
+}
+
+:deep(.event-custom .vc-dot) {
+  background-color: #9333ea !important;
 }
 
 /* Multiple dots arrangement */
