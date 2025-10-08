@@ -106,6 +106,7 @@ model User {
   updatedAt    DateTime       @updatedAt @map("updated_at")
   UserDeck     UserDeck[]
   Participants Participants[]
+  CustomEvents CustomEvent[]
 
   @@map("users")
   @@schema("users")
@@ -155,5 +156,74 @@ model Participants {
   userDeck   UserDeck? @relation(fields: [userDeckId], references: [id])
 
   @@map("participants")
+  @@schema("public")
+}
+
+model CustomEvent {
+  id                   String                   @id @default(cuid())
+  name                 String
+  venue                String
+  maxParticipants      Int                      @map("max_participants")
+  participationFee     Decimal?                 @map("participation_fee") @db.Decimal(10, 2)
+  description          String?
+  eventDate            DateTime                 @map("event_date")
+  registrationDeadline DateTime?                @map("registration_deadline")
+  status               String                   @default("upcoming") // upcoming, ongoing, completed, cancelled
+  createdBy            String                   @map("created_by")
+  createdAt            DateTime                 @default(now()) @map("created_at")
+  updatedAt            DateTime                 @updatedAt @map("updated_at")
+  creator              User                     @relation(fields: [createdBy], references: [id])
+  registrations        EventRegistration[]
+  customParticipants   CustomEventParticipant[]
+
+  @@map("custom_events")
+  @@schema("public")
+}
+
+model Player {
+  id                      String                   @id @default(cuid())
+  playerId                String                   @unique @map("player_id") // External player ID provided by player
+  name                    String
+  birthDate               DateTime                 @map("birth_date")
+  email                   String?
+  phone                   String?
+  emergencyContact        String?                  @map("emergency_contact")
+  emergencyPhone          String?                  @map("emergency_phone")
+  createdAt               DateTime                 @default(now()) @map("created_at")
+  updatedAt               DateTime                 @updatedAt @map("updated_at")
+  registrations           EventRegistration[]
+  customEventParticipants CustomEventParticipant[]
+
+  @@map("players")
+  @@schema("public")
+}
+
+model EventRegistration {
+  id            String      @id @default(cuid())
+  customEventId String      @map("custom_event_id")
+  playerId      String      @map("player_id")
+  registeredAt  DateTime    @default(now()) @map("registered_at")
+  status        String      @default("registered") // registered, attended, no-show, cancelled
+  notes         String?
+  customEvent   CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
+  player        Player      @relation(fields: [playerId], references: [id])
+
+  @@unique([customEventId, playerId])
+  @@map("event_registrations")
+  @@schema("public")
+}
+
+model CustomEventParticipant {
+  id            String      @id @default(cuid())
+  customEventId String      @map("custom_event_id")
+  playerId      String      @map("player_id")
+  placement     Int? // Final tournament placement
+  points        Int? // Tournament points earned
+  createdAt     DateTime    @default(now()) @map("created_at")
+  customEvent   CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
+  player        Player      @relation(fields: [playerId], references: [id])
+
+  @@unique([customEventId, playerId])
+  @@map("custom_event_participants")
   @@schema("public")
 }

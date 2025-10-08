@@ -29,7 +29,7 @@ onMounted(async () => {
         <ul class="flex gap-4 items-center">
           <li><NuxtLink to="/">Home</NuxtLink></li>
           <li><NuxtLink to="/about">About</NuxtLink></li>
-          <li><NuxtLink to="/products">Products</NuxtLink></li>
+          <li><NuxtLink to="/eventlist">Event List</NuxtLink></li>
           <li v-if="userName">
             <NuxtLink to="/importer" class="text-blue-600 hover:underline"
               >Importer</NuxtLink
