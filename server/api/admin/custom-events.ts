@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import { verifyAdmin } from "../../middleware/admin";
 
 const prisma = new PrismaClient();
 
@@ -126,31 +127,8 @@ export default defineEventHandler(async (event) => {
         const body = await readBody(event);
         const validatedData = createCustomEventSchema.parse(body);
 
-        // TODO: Get user ID from session/auth
-        // For now, get the first available user or create a default admin user
-        let userId: string;
-        try {
-          const existingUser = await prisma.user.findFirst();
-          if (existingUser) {
-            userId = existingUser.id;
-          } else {
-            // Create a default admin user if none exists
-            const adminUser = await prisma.user.create({
-              data: {
-                id: "admin-user",
-                email: "admin@example.com",
-                name: "Admin User",
-              },
-            });
-            userId = adminUser.id;
-          }
-        } catch (error) {
-          console.error("Error getting/creating user:", error);
-          throw createError({
-            statusCode: 500,
-            statusMessage: "Failed to get user information",
-          });
-        }
+        // Get authenticated admin user from middleware verification
+        const adminUser = await verifyAdmin(event);
 
         const newEvent = await prisma.customEvent.create({
           data: {
@@ -161,7 +139,7 @@ export default defineEventHandler(async (event) => {
               validatedData.registrationDeadline.trim() !== ""
                 ? new Date(validatedData.registrationDeadline)
                 : null,
-            createdBy: userId,
+            createdBy: adminUser.id,
           },
           include: {
             creator: {
