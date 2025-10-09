@@ -32,13 +32,25 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error("Admin check error:", error);
+    // Handle auth session missing errors specifically
+    if (
+      error &&
+      typeof error === "object" &&
+      "statusMessage" in error &&
+      error.statusMessage === "Auth session missing!"
+    ) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: "Authentication required",
+      });
+    }
 
     // If it's already a createError, re-throw it
     if (error && typeof error === "object" && "statusCode" in error) {
       throw error;
     }
 
+    console.error("Admin check error:", error);
     throw createError({
       statusCode: 500,
       statusMessage: "Internal server error",

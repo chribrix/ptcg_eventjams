@@ -1,8 +1,9 @@
 export default defineNuxtRouteMiddleware(async (to, from) => {
+  // Only run on admin pages
   if (to.path.startsWith("/admin")) {
     try {
-      const { checkAdminAccess } = useAdmin();
-      await checkAdminAccess();
+      // Check admin access via server API - this works in both SSR and client contexts
+      await $fetch("/api/admin/check");
     } catch (error: unknown) {
       const errorObj = error as { statusCode?: number };
       if (errorObj.statusCode === 401) {
@@ -15,8 +16,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
           statusMessage: "Access denied - Admin privileges required",
         });
       } else {
-        // Other errors - redirect to home
-        return navigateTo("/");
+        // Other errors (including 500 from missing auth) - redirect to login
+        return navigateTo("/login");
       }
     }
   }

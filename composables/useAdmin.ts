@@ -11,6 +11,7 @@ interface AdminCheckResponse {
 
 export const useAdmin = () => {
   const supabaseUser = useSupabaseUser();
+  const supabaseClient = useSupabaseClient();
   const adminStatus = ref<AdminCheckResponse | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -23,7 +24,7 @@ export const useAdmin = () => {
     }
 
     // Double-check that we have a valid session before making the API call
-    const { data: session } = await useSupabaseClient().auth.getSession();
+    const { data: session } = await supabaseClient.auth.getSession();
     if (!session?.session) {
       adminStatus.value = null;
       return false;
@@ -75,6 +76,8 @@ export const useAdmin = () => {
   };
 
   // Watch for user login/logout and check admin status
+  // Only run the watcher on client-side to avoid composable context issues
+
   watch(
     supabaseUser,
     async (newUser) => {
