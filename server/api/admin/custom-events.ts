@@ -35,6 +35,7 @@ const createCustomEventSchema = z.object({
     .string()
     .refine(validateDatetimeLocal, "Invalid datetime format")
     .optional(),
+  requiresDecklist: z.boolean().default(false),
 });
 
 const updateCustomEventSchema = z.object({
@@ -51,6 +52,7 @@ const updateCustomEventSchema = z.object({
     .string()
     .refine(validateDatetimeLocal, "Invalid datetime format")
     .optional(),
+  requiresDecklist: z.boolean().optional(),
   status: z.enum(["upcoming", "ongoing", "completed", "cancelled"]).optional(),
 });
 
