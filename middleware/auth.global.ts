@@ -1,7 +1,7 @@
 // middleware/auth.global.ts
 export default defineNuxtRouteMiddleware((to) => {
   const user = useSupabaseUser();
-  const isClient = process.client;
+  const isClient = import.meta.client;
 
   const publicPages = ["/", "/login", "/register", "/events", "/eventlist"];
 
