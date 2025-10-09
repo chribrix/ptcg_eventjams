@@ -363,9 +363,11 @@ const fetchEventDetails = async (): Promise<void> => {
     } else {
       error.value = "Event not found";
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Failed to fetch event:", err);
-    error.value = err.message || "Failed to load event details";
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to load event details";
+    error.value = errorMessage;
   } finally {
     loading.value = false;
   }
@@ -383,11 +385,12 @@ const submitRegistration = async (): Promise<void> => {
 
     registrationSuccess.value = true;
     registrationCount.value += 1;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Registration failed:", err);
+    const errorObj = err as { data?: { message?: string }; message?: string };
     formError.value =
-      err.data?.message ||
-      err.message ||
+      errorObj.data?.message ||
+      errorObj.message ||
       "Registration failed. Please try again.";
   } finally {
     submitting.value = false;

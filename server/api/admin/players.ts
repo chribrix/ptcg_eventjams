@@ -164,26 +164,30 @@ export default defineEventHandler(async (event) => {
           statusMessage: "Method not allowed",
         });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Players API error:", error);
 
-    if (error.code === "P2002") {
-      throw createError({
-        statusCode: 409,
-        statusMessage: "Player with this ID already exists",
-      });
+    // Handle Prisma errors
+    if (error && typeof error === "object" && "code" in error) {
+      if (error.code === "P2002") {
+        throw createError({
+          statusCode: 409,
+          statusMessage: "Player with this name already exists",
+        });
+      }
+
+      if (error.code === "P2025") {
+        throw createError({
+          statusCode: 404,
+          statusMessage: "Player not found",
+        });
+      }
     }
 
-    if (error.code === "P2025") {
-      throw createError({
-        statusCode: 404,
-        statusMessage: "Player not found",
-      });
-    }
-
+    // Handle generic errors
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
     throw createError({
       statusCode: 500,
-      statusMessage: error.message || "Internal server error",
+      statusMessage: errorMessage,
     });
-  }
 });

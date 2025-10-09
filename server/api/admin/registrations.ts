@@ -165,26 +165,32 @@ export default defineEventHandler(async (event) => {
           statusMessage: "Method not allowed",
         });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Event registrations API error:", error);
 
-    if (error.code === "P2002") {
-      throw createError({
-        statusCode: 409,
-        statusMessage: "Player already registered for this event",
-      });
+    // Handle Prisma errors
+    if (error && typeof error === "object" && "code" in error) {
+      if (error.code === "P2002") {
+        throw createError({
+          statusCode: 409,
+          statusMessage: "Player already registered for this event",
+        });
+      }
+
+      if (error.code === "P2025") {
+        throw createError({
+          statusCode: 404,
+          statusMessage: "Registration not found",
+        });
+      }
     }
 
-    if (error.code === "P2025") {
-      throw createError({
-        statusCode: 404,
-        statusMessage: "Registration not found",
-      });
-    }
-
+    // Handle generic errors
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
     throw createError({
       statusCode: 500,
-      statusMessage: error.message || "Internal server error",
+      statusMessage: errorMessage,
     });
   }
 });

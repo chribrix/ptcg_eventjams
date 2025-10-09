@@ -120,18 +120,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 
-// Admin authentication using server-side verification
-const { isAdmin, user, loading, checkAdminAccess } = useAdmin();
-
-// Check admin access on page load
-onMounted(async () => {
-  try {
-    await checkAdminAccess();
-  } catch (error) {
-    // Redirect to login if not authenticated or not admin
-    await navigateTo("/login");
-  }
-});
+// Admin user info - middleware handles access control
+const { user } = useAdmin();
 
 // Page metadata
 definePageMeta({
@@ -191,19 +181,19 @@ const loadRecentActivity = async () => {
     recentActivity.value = [
       {
         id: "1",
-        type: "event_created",
+        type: "eventCreated",
         description: 'New event "Weekly Tournament" created',
         createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
       },
       {
         id: "2",
-        type: "player_registered",
+        type: "playerRegistered",
         description: 'Player "John Doe" registered for "Monthly Challenge"',
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
       },
       {
         id: "3",
-        type: "event_updated",
+        type: "eventUpdated",
         description: 'Event "Spring Championship" updated',
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
       },
@@ -217,14 +207,14 @@ const loadRecentActivity = async () => {
 
 const getActivityIcon = (type: string): string => {
   switch (type) {
-    case "event_created":
-      return "📅";
-    case "player_registered":
-      return "👥";
-    case "event_updated":
-      return "✏️";
+    case "eventCreated":
+      return "calendar-plus";
+    case "playerRegistered":
+      return "user-plus";
+    case "eventUpdated":
+      return "calendar-edit";
     default:
-      return "📋";
+      return "activity";
   }
 };
 

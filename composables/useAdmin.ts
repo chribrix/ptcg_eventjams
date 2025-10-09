@@ -36,15 +36,16 @@ export const useAdmin = () => {
       const data = await $fetch<AdminCheckResponse>("/api/admin/check");
       adminStatus.value = data;
       return data.isAdmin;
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorObj = err as { statusCode?: number; statusMessage?: string };
       // Only log actual errors, not auth session missing (which is expected for logged out users)
-      if (err.statusCode !== 401) {
+      if (errorObj.statusCode !== 401) {
         console.error("Admin check failed:", err);
       }
       error.value =
-        err.statusCode === 401
+        errorObj.statusCode === 401
           ? null
-          : err.statusMessage || "Failed to check admin status";
+          : errorObj.statusMessage || "Failed to check admin status";
       adminStatus.value = null;
       return false;
     } finally {

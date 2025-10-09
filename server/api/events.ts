@@ -27,6 +27,25 @@ interface CalendarEvent {
   icon: string;
 }
 
+interface ExternalAPIEvent {
+  when?: string;
+  date?: string;
+  type?: string;
+  shop?: string;
+  name?: string;
+  city?: string;
+  country_code?: string;
+  tournament_type?: string;
+  tournament_type_id?: string;
+  player_count?: number;
+  link?: string;
+  cost?: string;
+  shop_address?: string;
+  pokemon_url?: string;
+  street_address?: string;
+  guid?: string;
+}
+
 function parseEventsFromHtml(html: string): ParsedEvent[] {
   const events: ParsedEvent[] = [];
 
@@ -201,9 +220,9 @@ export default defineEventHandler(async (event) => {
     console.log(`API returned ${apiData.length} events`);
 
     // Sort events chronologically
-    apiData.sort((a: any, b: any) => {
-      const dateA = new Date(a.when || a.date);
-      const dateB = new Date(b.when || b.date);
+    apiData.sort((a: ExternalAPIEvent, b: ExternalAPIEvent) => {
+      const dateA = new Date(a.when || a.date || "1970-01-01");
+      const dateB = new Date(b.when || b.date || "1970-01-01");
       const today = new Date("2025-08-27");
 
       const diffA = dateA.getTime() - today.getTime();
@@ -225,52 +244,54 @@ export default defineEventHandler(async (event) => {
     );
 
     // Convert API events directly to our format using structured data
-    const events: ParsedEvent[] = apiData.map((event: any, index: number) => {
-      // Use the structured data from the API
-      const fullDateTime = event.when || `${event.date} 00:00:00`;
-      const dateOnly = fullDateTime.split(" ")[0];
-      const timeOnly = fullDateTime.split(" ")[1] || "00:00:00";
+    const events: ParsedEvent[] = apiData.map(
+      (event: ExternalAPIEvent, index: number) => {
+        // Use the structured data from the API
+        const fullDateTime = event.when || `${event.date} 00:00:00`;
+        const dateOnly = fullDateTime.split(" ")[0];
+        const timeOnly = fullDateTime.split(" ")[1] || "00:00:00";
 
-      // Format time to HH:MM for display
-      const displayTime = timeOnly.substring(0, 5); // Get HH:MM from HH:MM:SS
+        // Format time to HH:MM for display
+        const displayTime = timeOnly.substring(0, 5); // Get HH:MM from HH:MM:SS
 
-      const type = event.type || "TCG Event";
-      const venue = event.shop || event.name || "Unknown Venue";
-      const location = event.city || "";
-      const country = event.country_code || "DE";
-      const href = event.pokemon_url || "";
-      const streetAddress = event.street_address || "";
+        const type = event.type || "TCG Event";
+        const venue = event.shop || event.name || "Unknown Venue";
+        const location = event.city || "";
+        const country = event.country_code || "DE";
+        const href = event.pokemon_url || "";
+        const streetAddress = event.street_address || "";
 
-      // Format cost - add € for numeric values if not already present
-      let formattedCost = "";
-      if (event.cost && event.cost.trim() !== "") {
-        const cost = event.cost.trim();
-        // Check if it's a number and doesn't already contain currency symbols
-        if (/^\d+$/.test(cost)) {
-          formattedCost = `${cost}€`;
-        } else {
-          formattedCost = cost;
+        // Format cost - add € for numeric values if not already present
+        let formattedCost = "";
+        if (event.cost && event.cost.trim() !== "") {
+          const cost = event.cost.trim();
+          // Check if it's a number and doesn't already contain currency symbols
+          if (/^\d+$/.test(cost)) {
+            formattedCost = `${cost}€`;
+          } else {
+            formattedCost = cost;
+          }
         }
+
+        const id =
+          event.guid ||
+          `event-${index}-${fullDateTime.replace(/[^a-zA-Z0-9]/g, "-")}`;
+
+        return {
+          id,
+          title: `${dateOnly} ${displayTime} - ${type}`,
+          dateTime: dateOnly, // Keep date-only for calendar grouping
+          time: displayTime, // Add separate time field for display
+          type,
+          venue,
+          location,
+          country,
+          link: href,
+          cost: formattedCost, // Include formatted cost field
+          streetAddress, // Include street address field
+        };
       }
-
-      const id =
-        event.guid ||
-        `event-${index}-${fullDateTime.replace(/[^a-zA-Z0-9]/g, "-")}`;
-
-      return {
-        id,
-        title: `${dateOnly} ${displayTime} - ${type}`,
-        dateTime: dateOnly, // Keep date-only for calendar grouping
-        time: displayTime, // Add separate time field for display
-        type,
-        venue,
-        location,
-        country,
-        link: href,
-        cost: formattedCost, // Include formatted cost field
-        streetAddress, // Include street address field
-      };
-    });
+    );
 
     console.log(`Parsed ${events.length} events from API response`);
 
@@ -278,11 +299,13 @@ export default defineEventHandler(async (event) => {
     const calendarEvents = groupEventsByDate(events);
 
     return createEventResponse(calendarEvents, apiData.length);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Failed to scrape events:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to scrape events";
     throw createError({
       statusCode: 500,
-      statusMessage: "Failed to scrape events",
+      statusMessage: errorMessage,
     });
   }
 });

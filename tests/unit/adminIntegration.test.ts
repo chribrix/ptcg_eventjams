@@ -5,9 +5,25 @@ import {
   mockDatabaseResponses,
 } from "../mocks/adminMocks";
 
+// Type definitions for better type safety
+interface MockPrisma {
+  adminUser: {
+    create: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+    findMany: ReturnType<typeof vi.fn>;
+  };
+  $disconnect: ReturnType<typeof vi.fn>;
+}
+
+interface MockError extends Error {
+  statusCode?: number;
+  statusMessage?: string;
+  code?: string;
+}
+
 describe("Admin Access Integration Tests", () => {
   describe("Admin Script Tests", () => {
-    let mockPrisma: any;
+    let mockPrisma: MockPrisma;
 
     beforeEach(() => {
       // Mock Prisma client for admin script
@@ -22,12 +38,10 @@ describe("Admin Access Integration Tests", () => {
     });
 
     it("should create admin user with valid data", async () => {
-      // Arrange
       mockPrisma.adminUser.create.mockResolvedValue(
         mockDatabaseResponses.adminUserFound
       );
 
-      // Act
       const result = await mockPrisma.adminUser.create({
         data: {
           id: mockUsers.adminUser.id,
@@ -36,7 +50,6 @@ describe("Admin Access Integration Tests", () => {
         },
       });
 
-      // Assert
       expect(result).toEqual(mockDatabaseResponses.adminUserFound);
       expect(mockPrisma.adminUser.create).toHaveBeenCalledWith({
         data: {
@@ -48,12 +61,10 @@ describe("Admin Access Integration Tests", () => {
     });
 
     it("should handle duplicate admin creation", async () => {
-      // Arrange
-      const duplicateError = new Error("Unique constraint failed") as any;
+      const duplicateError = new Error("Unique constraint failed") as MockError;
       duplicateError.code = "P2002";
       mockPrisma.adminUser.create.mockRejectedValue(duplicateError);
 
-      // Act & Assert
       await expect(
         mockPrisma.adminUser.create({
           data: {
@@ -68,17 +79,14 @@ describe("Admin Access Integration Tests", () => {
     });
 
     it("should delete admin user by ID", async () => {
-      // Arrange
       mockPrisma.adminUser.delete.mockResolvedValue(
         mockDatabaseResponses.adminUserFound
       );
 
-      // Act
       const result = await mockPrisma.adminUser.delete({
         where: { id: mockUsers.adminUser.id },
       });
 
-      // Assert
       expect(result).toEqual(mockDatabaseResponses.adminUserFound);
       expect(mockPrisma.adminUser.delete).toHaveBeenCalledWith({
         where: { id: mockUsers.adminUser.id },
@@ -86,11 +94,9 @@ describe("Admin Access Integration Tests", () => {
     });
 
     it("should list all admin users", async () => {
-      // Arrange
       const adminList = [mockDatabaseResponses.adminUserFound];
       mockPrisma.adminUser.findMany.mockResolvedValue(adminList);
 
-      // Act
       const result = await mockPrisma.adminUser.findMany({
         select: {
           id: true,
@@ -100,7 +106,6 @@ describe("Admin Access Integration Tests", () => {
         },
       });
 
-      // Assert
       expect(result).toEqual(adminList);
       expect(mockPrisma.adminUser.findMany).toHaveBeenCalledWith({
         select: {
@@ -115,7 +120,6 @@ describe("Admin Access Integration Tests", () => {
 
   describe("API Response Format Tests", () => {
     it("should return correct format for admin user response", () => {
-      // Assert
       expect(mockApiResponses.adminCheckSuccess).toHaveProperty(
         "isAdmin",
         true
@@ -131,7 +135,6 @@ describe("Admin Access Integration Tests", () => {
     });
 
     it("should return correct format for regular user response", () => {
-      // Assert
       expect(mockApiResponses.adminCheckNotAdmin).toHaveProperty(
         "isAdmin",
         false
@@ -144,7 +147,6 @@ describe("Admin Access Integration Tests", () => {
     });
 
     it("should have consistent user object structure", () => {
-      // Assert
       const adminUserKeys = Object.keys(
         mockApiResponses.adminCheckSuccess.user
       );
@@ -162,7 +164,6 @@ describe("Admin Access Integration Tests", () => {
 
   describe("Database Schema Tests", () => {
     it("should validate admin user data structure", () => {
-      // Assert
       const adminUser = mockDatabaseResponses.adminUserFound;
 
       expect(adminUser).toHaveProperty("id");
@@ -179,13 +180,11 @@ describe("Admin Access Integration Tests", () => {
     });
 
     it("should handle optional name field", () => {
-      // Arrange
       const adminWithoutName = {
         ...mockDatabaseResponses.adminUserFound,
         name: null,
       };
 
-      // Assert
       expect(adminWithoutName.name).toBe(null);
       expect(adminWithoutName.email).toBeTruthy();
       expect(adminWithoutName.id).toBeTruthy();
@@ -194,7 +193,6 @@ describe("Admin Access Integration Tests", () => {
 
   describe("Security Tests", () => {
     it("should not expose sensitive data in API responses", () => {
-      // Assert
       expect(mockApiResponses.adminCheckSuccess.user).not.toHaveProperty(
         "password"
       );
@@ -210,14 +208,12 @@ describe("Admin Access Integration Tests", () => {
     });
 
     it("should return proper HTTP status codes", () => {
-      // Assert
       expect(mockApiResponses.unauthenticatedResponse.statusCode).toBe(401);
       expect(mockApiResponses.forbiddenResponse.statusCode).toBe(403);
       expect(mockApiResponses.serverErrorResponse.statusCode).toBe(500);
     });
 
     it("should have descriptive error messages", () => {
-      // Assert
       expect(mockApiResponses.unauthenticatedResponse.statusMessage).toBe(
         "Authentication required"
       );
@@ -232,30 +228,24 @@ describe("Admin Access Integration Tests", () => {
 
   describe("Edge Cases", () => {
     it("should handle user without metadata", () => {
-      // Arrange
       const userWithoutMeta = mockUsers.userWithoutMetadata;
 
-      // Assert
       expect(userWithoutMeta.user_metadata).toBe(null);
       expect(userWithoutMeta.email).toBeTruthy();
       expect(userWithoutMeta.id).toBeTruthy();
     });
 
     it("should handle empty admin list", () => {
-      // Arrange
-      const emptyAdminList: any[] = [];
+      const emptyAdminList: unknown[] = [];
 
-      // Assert
       expect(Array.isArray(emptyAdminList)).toBe(true);
       expect(emptyAdminList.length).toBe(0);
     });
 
     it("should validate UUID format for user IDs", () => {
-      // Arrange
       const uuidRegex =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-      // Assert
       expect(mockUsers.adminUser.id).toMatch(uuidRegex);
       expect(mockUsers.regularUser.id).toMatch(uuidRegex);
       expect(mockUsers.userWithoutMetadata.id).toMatch(uuidRegex);

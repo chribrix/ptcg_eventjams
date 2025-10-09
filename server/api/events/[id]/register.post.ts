@@ -149,10 +149,10 @@ export default defineEventHandler(async (event) => {
         eventName: customEvent.name,
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Registration error:", error);
 
-    if (error.statusCode) {
+    if (error && typeof error === "object" && "statusCode" in error) {
       throw error;
     }
 

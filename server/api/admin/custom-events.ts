@@ -210,26 +210,32 @@ export default defineEventHandler(async (event) => {
           statusMessage: "Method not allowed",
         });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Custom events API error:", error);
 
-    if (error.code === "P2002") {
-      throw createError({
-        statusCode: 409,
-        statusMessage: "Event with this name already exists",
-      });
+    // Handle Prisma errors
+    if (error && typeof error === "object" && "code" in error) {
+      if (error.code === "P2002") {
+        throw createError({
+          statusCode: 409,
+          statusMessage: "Event with this name already exists",
+        });
+      }
+
+      if (error.code === "P2025") {
+        throw createError({
+          statusCode: 404,
+          statusMessage: "Event not found",
+        });
+      }
     }
 
-    if (error.code === "P2025") {
-      throw createError({
-        statusCode: 404,
-        statusMessage: "Event not found",
-      });
-    }
-
+    // Handle generic errors
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
     throw createError({
       statusCode: 500,
-      statusMessage: error.message || "Internal server error",
+      statusMessage: errorMessage,
     });
   }
 });
