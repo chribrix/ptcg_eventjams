@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "~/generated/prisma";
 import { z } from "zod";
 
 const prisma = new PrismaClient();
@@ -63,9 +63,14 @@ export default defineEventHandler(async (event) => {
           const whereClause = search
             ? {
                 OR: [
-                  { name: { contains: search, mode: "insensitive" } },
-                  { playerId: { contains: search, mode: "insensitive" } },
-                  { email: { contains: search, mode: "insensitive" } },
+                  { name: { contains: search, mode: "insensitive" as const } },
+                  {
+                    playerId: {
+                      contains: search,
+                      mode: "insensitive" as const,
+                    },
+                  },
+                  { email: { contains: search, mode: "insensitive" as const } },
                 ],
               }
             : {};
@@ -185,9 +190,11 @@ export default defineEventHandler(async (event) => {
     }
 
     // Handle generic errors
-    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
     throw createError({
       statusCode: 500,
       statusMessage: errorMessage,
     });
+  }
 });

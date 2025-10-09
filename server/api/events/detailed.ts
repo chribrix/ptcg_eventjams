@@ -1,6 +1,4 @@
 import { defineEventHandler } from "h3";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 
 interface ParsedEvent {
   id: string;
@@ -12,18 +10,32 @@ interface ParsedEvent {
   country: string;
   link: string;
   icon?: string;
+  time?: string;
+  cost?: string;
+  streetAddress?: string;
 }
 
 export default defineEventHandler(async (): Promise<ParsedEvent[]> => {
   try {
-    // Read the parsed events JSON file
-    const filePath = join(process.cwd(), "out", "events.json");
-    const fileContent = readFileSync(filePath, "utf-8");
-    const events: ParsedEvent[] = JSON.parse(fileContent);
+    // Fetch events from the main events API
+    console.log("Fetching events from /api/events...");
+    const response = await $fetch<{
+      success: boolean;
+      events: ParsedEvent[];
+      totalFound: number;
+    }>("/api/events");
 
-    return events;
+    if (response.success && response.events) {
+      console.log(
+        `Successfully fetched ${response.events.length} detailed events`
+      );
+      return response.events;
+    } else {
+      console.warn("Events API returned no events");
+      return [];
+    }
   } catch (error) {
-    console.error("Error reading detailed events:", error);
+    console.error("Error fetching detailed events:", error);
     return [];
   }
 });

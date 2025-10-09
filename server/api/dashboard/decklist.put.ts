@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "~/generated/prisma";
 import { serverSupabaseUser } from "#supabase/server";
 
 const prisma = new PrismaClient();

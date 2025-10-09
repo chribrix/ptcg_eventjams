@@ -1,5 +1,5 @@
 import { serverSupabaseUser } from "#supabase/server";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "~/generated/prisma";
 import type { H3Event } from "h3";
 
 const prisma = new PrismaClient();
