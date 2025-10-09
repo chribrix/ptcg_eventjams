@@ -3,14 +3,14 @@
 
 generator client {
   provider        = "prisma-client-js"
-  //output          = "../generated/prisma"
+  output          = "../generated/prisma"
   previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["public", "conversions"]
+  schemas  = ["public", "conversions", "users"]
 }
 
 enum CardType {
@@ -96,5 +96,151 @@ model MetaState {
   info      Json?    @db.JsonB
 
   @@map("meta_state")
+  @@schema("public")
+}
+
+// Admin users table - only contains manually inserted admin users
+model AdminUser {
+  id        String   @id // Supabase user UUID
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations to admin-created content
+  CustomEvents CustomEvent[]
+
+  @@map("admin_users")
+  @@schema("users")
+}
+
+model User {
+  id           String         @id
+  email        String         @unique
+  name         String?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  UserDeck     UserDeck[]
+  Participants Participants[]
+
+  @@map("users")
+  @@schema("users")
+}
+
+model UserDeck {
+  id           String         @id
+  userId       String         @map("user_id")
+  name         String?
+  deckList     String?        @map("deck_list")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  user         User           @relation(fields: [userId], references: [id])
+  Participants Participants[]
+
+  @@map("user_decks")
+  @@schema("users")
+}
+
+model Event {
+  id           String         @id
+  name         String?
+  type         String
+  description  String?        @map("description")
+  organizer    String?        @map("organizer")
+  dateIssued   DateTime       @map("date_issued")
+  dateHeld     DateTime       @map("date_held")
+  properties   Json?          @db.JsonB
+  location     String?        @map("location")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  Participants Participants[]
+
+  @@map("events")
+  @@schema("public")
+}
+
+model Participants {
+  id         String    @id
+  eventId    String    @map("event_id")
+  userId     String    @map("user_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  userDeckId String?   @map("user_deck_id")
+  event      Event     @relation(fields: [eventId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
+  userDeck   UserDeck? @relation(fields: [userDeckId], references: [id])
+
+  @@map("participants")
+  @@schema("public")
+}
+
+model CustomEvent {
+  id                   String                   @id @default(cuid())
+  name                 String
+  venue                String
+  maxParticipants      Int                      @map("max_participants")
+  participationFee     Decimal?                 @map("participation_fee") @db.Decimal(10, 2)
+  description          String?
+  eventDate            DateTime                 @map("event_date")
+  registrationDeadline DateTime?                @map("registration_deadline")
+  status               String                   @default("upcoming") // upcoming, ongoing, completed, cancelled
+  requiresDecklist     Boolean                  @default(false) @map("requires_decklist")
+  createdBy            String                   @map("created_by")
+  createdAt            DateTime                 @default(now()) @map("created_at")
+  updatedAt            DateTime                 @updatedAt @map("updated_at")
+  creator              AdminUser                @relation(fields: [createdBy], references: [id])
+  registrations        EventRegistration[]
+  customParticipants   CustomEventParticipant[]
+
+  @@map("custom_events")
+  @@schema("public")
+}
+
+model Player {
+  id                      String                   @id @default(cuid())
+  playerId                String                   @unique @map("player_id") // External player ID provided by player
+  name                    String
+  birthDate               DateTime                 @map("birth_date")
+  email                   String?
+  phone                   String?
+  emergencyContact        String?                  @map("emergency_contact")
+  emergencyPhone          String?                  @map("emergency_phone")
+  createdAt               DateTime                 @default(now()) @map("created_at")
+  updatedAt               DateTime                 @updatedAt @map("updated_at")
+  registrations           EventRegistration[]
+  customEventParticipants CustomEventParticipant[]
+
+  @@map("players")
+  @@schema("public")
+}
+
+model EventRegistration {
+  id            String      @id @default(cuid())
+  customEventId String      @map("custom_event_id")
+  playerId      String      @map("player_id")
+  registeredAt  DateTime    @default(now()) @map("registered_at")
+  status        String      @default("registered") // registered, attended, no-show, cancelled
+  notes         String?
+  decklist      String? // Player's decklist for this event
+  customEvent   CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
+  player        Player      @relation(fields: [playerId], references: [id])
+
+  @@unique([customEventId, playerId])
+  @@map("event_registrations")
+  @@schema("public")
+}
+
+model CustomEventParticipant {
+  id            String      @id @default(cuid())
+  customEventId String      @map("custom_event_id")
+  playerId      String      @map("player_id")
+  placement     Int? // Final tournament placement
+  points        Int? // Tournament points earned
+  createdAt     DateTime    @default(now()) @map("created_at")
+  customEvent   CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
+  player        Player      @relation(fields: [playerId], references: [id])
+
+  @@unique([customEventId, playerId])
+  @@map("custom_event_participants")
   @@schema("public")
 }

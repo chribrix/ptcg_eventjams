@@ -9,16 +9,25 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: [
     "@prisma/nuxt",
+    "@nuxtjs/supabase",
     "@nuxtjs/tailwindcss",
     "@nuxt/test-utils/module",
     "@samk-dev/nuxt-vcalendar",
   ],
+  supabase: {
+    redirectOptions: {
+      login: "/",
+      callback: "/magic-login",
+      exclude: ["/", "/login", "/register", "/eventlist", "/events"],
+    },
+  },
   runtimeConfig: {
     public: {
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
     },
   },
+
   experimental: {
     appManifest: false,
   },

@@ -42,8 +42,6 @@
 </template>
 
 <script setup lang="ts">
-const { $supabase } = useNuxtApp();
-
 const email = ref("");
 const linkSent = ref(false);
 const error = ref("");
@@ -52,7 +50,7 @@ const submitLogin = async () => {
   linkSent.value = false;
   error.value = "";
 
-  const { error: signInError } = await $supabase.auth.signInWithOtp({
+  const { error: signInError } = await useSupabaseClient().auth.signInWithOtp({
     email: email.value,
   });
 
