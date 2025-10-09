@@ -175,11 +175,48 @@
                       }}</span
                     >
                   </div>
+                  <div v-if="isCustomEvent(event)" class="event-detail">
+                    <svg
+                      class="icon"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      ></path>
+                    </svg>
+                    <span>{{ getRegistrationCount(event) }}</span>
+                  </div>
                 </div>
 
                 <div class="event-column">
+                  <div v-if="isCustomEvent(event)" class="event-detail">
+                    <NuxtLink
+                      :to="`/events/register/${event.id}`"
+                      class="link-button"
+                    >
+                      <svg
+                        class="icon"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                        ></path>
+                      </svg>
+                      <span>Register</span>
+                    </NuxtLink>
+                  </div>
                   <div
-                    v-if="event.link && event.link !== '//'"
+                    v-else-if="event.link && event.link !== '//'"
                     class="event-detail"
                   >
                     <a
@@ -253,6 +290,7 @@ interface CustomEvent {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  registrationCount?: number;
 }
 
 interface ExternalEvent {
@@ -307,7 +345,33 @@ const fetchCustomEvents = async (): Promise<void> => {
     const response = await $fetch<{ events: CustomEvent[] }>(
       "/api/admin/custom-events"
     );
-    customEvents.value = response.events || [];
+
+    // Fetch registration counts for each event
+    const eventsWithCounts = await Promise.all(
+      (response.events || []).map(async (event) => {
+        try {
+          const eventResponse = await $fetch<{
+            event: CustomEvent;
+            registrationCount: number;
+          }>(`/api/events/${event.id}`);
+          return {
+            ...event,
+            registrationCount: eventResponse.registrationCount || 0,
+          };
+        } catch (error) {
+          console.error(
+            `Failed to fetch registration count for event ${event.id}:`,
+            error
+          );
+          return {
+            ...event,
+            registrationCount: 0,
+          };
+        }
+      })
+    );
+
+    customEvents.value = eventsWithCounts;
   } catch (error) {
     console.error("Failed to load custom events:", error);
     customEvents.value = [];
@@ -380,7 +444,8 @@ const calendarAttributes = computed(() => {
     eventsByDate.get(dateKey)!.push(event);
   });
 
-  const attributes: Array<Record<string, any>> = [];
+  // VCalendar attributes - using Record<string, any> for compatibility with complex VCalendar types
+  const attributes: Array<Record<string, unknown>> = [];
 
   // Create attributes for each date with events
   eventsByDate.forEach((dayEvents, dateKey) => {
@@ -586,6 +651,19 @@ const getEventTime = (event: ParsedEvent): string => {
     return "All Day";
   }
   return formatEventTime(event);
+};
+
+const getRegistrationCount = (event: ParsedEvent): string => {
+  if (isCustomEvent(event)) {
+    const customEvent = customEvents.value.find(
+      (ce) => String(ce.id) === event.id
+    );
+    if (customEvent) {
+      const registeredCount = customEvent.registrationCount || 0;
+      return `${registeredCount}/${customEvent.maxParticipants} registered`;
+    }
+  }
+  return "";
 };
 </script>
 
