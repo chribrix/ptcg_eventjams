@@ -1,46 +1,72 @@
 <template>
-  <div class="home-page">
-    <div class="content-wrapper">
-      <div class="left-section">
-        <div class="hero-section">
-          <h1 class="hero-title">Pokemon TCG Event Jams</h1>
-          <p class="hero-subtitle">Find Pokemon TCG events in your area</p>
+  <div class="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 p-8">
+    <div
+      class="flex flex-col lg:flex-row min-h-[calc(100vh-4rem)] gap-8 max-w-7xl mx-auto"
+    >
+      <!-- Hero Section -->
+      <div class="flex-1 flex items-center justify-center">
+        <div class="text-center text-white max-w-lg">
+          <h1 class="text-4xl lg:text-6xl font-bold mb-4 drop-shadow-lg">
+            Pokemon TCG Event Jams
+          </h1>
+          <p class="text-xl mb-12 opacity-90">
+            Find Pokemon TCG events in your area
+          </p>
 
-          <div class="features">
-            <div class="feature">
-              <h3>🗓️ Event Calendar</h3>
-              <p>Browse events by date with our interactive calendar view</p>
+          <div class="text-left mb-12 space-y-8">
+            <div class="space-y-2">
+              <h3 class="text-xl font-semibold">🗓️ Event Calendar</h3>
+              <p class="opacity-80 leading-relaxed">
+                Browse events by date with our interactive calendar view
+              </p>
             </div>
-            <div class="feature">
-              <h3>📍 Local Events</h3>
-              <p>
+            <div class="space-y-2">
+              <h3 class="text-xl font-semibold">📍 Local Events</h3>
+              <p class="opacity-80 leading-relaxed">
                 Find Pokemon TCG tournaments, league cups, and challenges near
                 you
               </p>
             </div>
-            <div class="feature">
-              <h3>⚡ Real-time Updates</h3>
-              <p>
+            <div class="space-y-2">
+              <h3 class="text-xl font-semibold">⚡ Real-time Updates</h3>
+              <p class="opacity-80 leading-relaxed">
                 Get the latest event information directly from official sources
               </p>
             </div>
           </div>
 
-          <div class="hero-actions">
-            <NuxtLink to="/events" class="btn btn-primary">
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <NuxtLink
+              to="/events"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 hover:-translate-y-1 shadow-lg"
+            >
               Full Event View
             </NuxtLink>
-            <NuxtLink to="/eventlist" class="btn btn-secondary">
+            <NuxtLink
+              to="/eventlist"
+              class="bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-8 rounded-lg border border-white/30 transition-all duration-200 hover:-translate-y-1 shadow-lg"
+            >
               List View
             </NuxtLink>
           </div>
         </div>
       </div>
 
-      <div class="right-section">
-        <div class="calendar-section">
-          <h2 class="calendar-title">Event Calendar</h2>
+      <!-- Right Panel -->
+      <div
+        class="flex-1 flex flex-col gap-8 bg-white/95 rounded-2xl p-8 shadow-xl"
+      >
+        <!-- Calendar Section -->
+        <div class="flex-shrink-0 flex flex-col">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">
+            Event Calendar
+          </h2>
           <EventCalendar />
+        </div>
+
+        <!-- User Dashboard Section -->
+        <div v-if="userName" class="flex-shrink-0">
+          <MyRegistrations />
         </div>
       </div>
     </div>
@@ -59,168 +85,3 @@ onMounted(async () => {
   }
 });
 </script>
-
-<style scoped>
-.home-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem;
-}
-
-.content-wrapper {
-  display: flex;
-  min-height: calc(100vh - 4rem);
-  gap: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.left-section {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.right-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.hero-section {
-  text-align: center;
-  color: white;
-  max-width: 500px;
-}
-
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.hero-subtitle {
-  font-size: 1.25rem;
-  margin-bottom: 3rem;
-  opacity: 0.9;
-}
-
-.features {
-  text-align: left;
-  margin-bottom: 3rem;
-}
-
-.feature {
-  margin-bottom: 2rem;
-}
-
-.feature h3 {
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-.feature p {
-  opacity: 0.8;
-  line-height: 1.5;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.calendar-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.calendar-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.btn {
-  padding: 0.75rem 2rem;
-  text-decoration: none;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  transition: all 0.2s;
-  display: inline-block;
-}
-
-.btn-primary {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #2563eb;
-  transform: translateY(-2px);
-}
-
-.btn-secondary {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-@media (max-width: 1024px) {
-  .content-wrapper {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .hero-title {
-    font-size: 2.5rem;
-  }
-
-  .features {
-    margin-bottom: 2rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .home-page {
-    padding: 1rem;
-  }
-
-  .hero-title {
-    font-size: 2rem;
-  }
-
-  .hero-subtitle {
-    font-size: 1.1rem;
-  }
-
-  .hero-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .btn {
-    width: 200px;
-  }
-
-  .right-section {
-    padding: 1rem;
-  }
-}
-</style>

@@ -82,8 +82,9 @@ async function submitForm() {
     form.start = "";
     form.end = "";
     form.type = "";
-  } catch (error: any) {
-    errorMessage.value = error.statusMessage || "Failed to add event.";
+  } catch (error: unknown) {
+    const errorObj = error as { statusMessage?: string };
+    errorMessage.value = errorObj.statusMessage || "Failed to add event.";
   } finally {
     loading.value = false;
   }

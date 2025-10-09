@@ -103,6 +103,23 @@
             ></textarea>
           </div>
 
+          <div class="form-group">
+            <div class="checkbox-wrapper">
+              <input
+                id="requiresDecklist"
+                v-model="eventForm.requiresDecklist"
+                type="checkbox"
+                class="form-checkbox"
+              />
+              <label for="requiresDecklist" class="checkbox-label">
+                Requires Decklist
+                <span class="checkbox-help">
+                  Participants must submit a decklist after registration
+                </span>
+              </label>
+            </div>
+          </div>
+
           <div v-if="editingEvent" class="form-group">
             <label for="status">Status</label>
             <select id="status" v-model="eventForm.status" class="form-select">
@@ -171,6 +188,9 @@
             </p>
             <p v-if="event.participationFee">
               <strong>Fee:</strong> €{{ event.participationFee }}
+            </p>
+            <p v-if="event.requiresDecklist" class="decklist-required">
+              <strong>📋 Decklist Required</strong>
             </p>
             <p v-if="event.description" class="description">
               {{ event.description }}
@@ -304,6 +324,7 @@ interface CustomEvent {
   description?: string;
   eventDate: string;
   registrationDeadline?: string;
+  requiresDecklist: boolean;
   status: string;
   createdBy: string;
   createdAt: string;
@@ -354,6 +375,7 @@ const eventForm = ref({
   description: "",
   eventDate: "",
   registrationDeadline: "",
+  requiresDecklist: false,
   status: "upcoming",
 });
 
@@ -430,6 +452,7 @@ const editEvent = (event: CustomEvent) => {
     registrationDeadline: event.registrationDeadline
       ? new Date(event.registrationDeadline).toISOString().slice(0, 16)
       : "",
+    requiresDecklist: event.requiresDecklist,
     status: event.status,
   };
 };
@@ -505,6 +528,7 @@ const closeModal = () => {
     description: "",
     eventDate: "",
     registrationDeadline: "",
+    requiresDecklist: false,
     status: "upcoming",
   };
 };
@@ -695,6 +719,33 @@ onMounted(loadEvents);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.checkbox-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.form-checkbox {
+  width: auto;
+  margin: 0;
+  accent-color: #3b82f6;
+}
+
+.checkbox-label {
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  margin: 0;
+}
+
+.checkbox-help {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
 .form-actions {
   display: flex;
   gap: 1rem;
@@ -795,6 +846,11 @@ onMounted(loadEvents);
 
 .description {
   font-style: italic;
+}
+
+.decklist-required {
+  color: #059669;
+  font-weight: 500;
 }
 
 .event-actions {

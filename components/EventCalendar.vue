@@ -1,100 +1,91 @@
 <template>
-  <div class="calendar-wrapper">
-    <div v-if="eventStore.error.value" class="error">
-      Error loading events: {{ eventStore.error.value }}
-    </div>
-
-    <!-- Event Stats Display -->
-    <div v-if="eventStats" class="event-stats">
-      <div class="stats-grid">
-        <div class="stat-item">
-          <span class="stat-label">Total Events:</span>
-          <span class="stat-value">{{ eventStats.totalEvents }}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Date Range:</span>
-          <span class="stat-value">{{ eventStats.dateRange.span }} days</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Free Events:</span>
-          <span class="stat-value text-green-600">{{
-            eventStats.pricing.free
-          }}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Paid Events:</span>
-          <span class="stat-value text-blue-600">{{
-            eventStats.pricing.paid
-          }}</span>
-        </div>
-      </div>
-      <button
-        @click="refreshEvents"
-        :disabled="eventStore.isLoading.value"
-        class="refresh-button"
-      >
-        {{ eventStore.isLoading.value ? "Refreshing..." : "Refresh Events" }}
-      </button>
-    </div>
-
-    <div class="calendar-container">
+  <div class="w-full flex flex-col justify-center items-center gap-4">
+    <div class="relative w-full h-full">
       <!-- Loading indicator overlay -->
-      <div v-if="eventStore.isLoading.value" class="loading-overlay">
-        <div class="loading-spinner">
-          <div class="spinner"></div>
-          <span>Loading events...</span>
+      <div
+        v-if="isLoading"
+        class="absolute inset-0 bg-white/80 flex justify-center items-center z-10 rounded-lg"
+      >
+        <div class="flex flex-col items-center gap-3">
+          <div
+            class="w-8 h-8 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"
+          ></div>
+          <span class="text-sm text-gray-600 font-medium"
+            >Loading events...</span
+          >
         </div>
       </div>
 
-      <VCalendar
-        expanded
-        :attributes="calendarAttributes"
-        :columns="1"
-        :rows="2"
-        :min-date="today"
-        :max-date="maxDate"
-        :show-pane="false"
-        @dayclick="onDayClick"
-      />
+      <ClientOnly>
+        <VCalendar
+          expanded
+          :attributes="calendarAttributes"
+          :columns="1"
+          :rows="2"
+          :min-date="today"
+          :max-date="maxDate"
+          :show-pane="false"
+          @dayclick="onDayClick"
+        />
+        <template #fallback>
+          <div class="flex flex-col items-center justify-center h-96 gap-3">
+            <div
+              class="w-8 h-8 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"
+            ></div>
+            <span class="text-sm text-gray-600 font-medium"
+              >Initializing calendar component...</span
+            >
+          </div>
+        </template>
+      </ClientOnly>
 
       <!-- Event Details Modal/Panel -->
       <div
         v-if="selectedDateEvents.length > 0"
-        class="event-details-overlay"
+        class="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
         @click="closeEventDetails"
       >
-        <div class="event-details-panel" @click.stop>
-          <div class="event-details-header">
-            <h3>Events on {{ formatSelectedDate }}</h3>
-            <button @click="closeEventDetails" class="close-button">
+        <div
+          class="bg-white rounded-xl shadow-xl max-w-2xl max-h-[80vh] w-[90%] overflow-hidden flex flex-col"
+          @click.stop
+        >
+          <div
+            class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"
+          >
+            <h3 class="text-xl font-semibold text-gray-900 m-0">
+              Events on {{ formatSelectedDate }}
+            </h3>
+            <button
+              @click="closeEventDetails"
+              class="bg-none border-none text-2xl text-gray-500 hover:bg-gray-100 hover:text-gray-700 cursor-pointer p-1 rounded transition-colors duration-200"
+            >
               &times;
             </button>
           </div>
-          <div class="event-details-content">
+          <div class="px-6 py-4 overflow-y-auto flex-1">
             <div
               v-for="event in selectedDateEvents"
               :key="event.id"
-              class="event-item"
-              :class="{ 'custom-event-item': isCustomEvent(event) }"
+              class="border border-gray-200 rounded-lg p-4 mb-3 transition-all duration-200 hover:shadow-md hover:border-gray-300 last:mb-0"
+              :class="{
+                'border-l-4 border-l-purple-600 bg-gradient-to-r from-purple-50 to-white hover:from-purple-100 hover:to-gray-50':
+                  isCustomEvent(event),
+              }"
             >
-              <div class="event-header">
+              <div class="flex justify-between items-center mb-3">
                 <div
-                  class="event-type-badge"
-                  :class="
-                    isCustomEvent(event)
-                      ? 'badge-custom'
-                      : `badge-${event.icon || 'friendly'}`
-                  "
+                  class="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"
+                  :class="getEventBadgeClasses(event)"
                 >
                   {{ isCustomEvent(event) ? "Custom Event" : event.type }}
                 </div>
-                <div class="event-header-right">
+                <div class="flex items-center gap-2">
                   <div
                     v-if="getEventCost(event) !== undefined"
-                    class="event-cost"
+                    class="flex items-center gap-1 text-sm font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full border border-green-200"
                   >
                     <svg
-                      class="icon"
+                      class="w-4 h-4 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -108,17 +99,23 @@
                     </svg>
                     {{ formatEventCost(event) }}
                   </div>
-                  <div v-if="getEventTime(event)" class="event-time-header">
+                  <div
+                    v-if="getEventTime(event)"
+                    class="text-base font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full"
+                  >
                     {{ getEventTime(event) }}
                   </div>
                 </div>
               </div>
 
-              <div class="event-content-grid">
-                <div class="event-column">
-                  <div v-if="event.venue" class="event-detail">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                  <div
+                    v-if="event.venue"
+                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
+                  >
                     <svg
-                      class="icon"
+                      class="w-4 h-4 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -130,11 +127,14 @@
                         d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m0 0H9"
                       ></path>
                     </svg>
-                    <span>{{ stripHtmlTags(event.venue) }}</span>
+                    <span class="flex-1">{{ stripHtmlTags(event.venue) }}</span>
                   </div>
-                  <div v-if="event.streetAddress" class="event-detail">
+                  <div
+                    v-if="event.streetAddress"
+                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
+                  >
                     <svg
-                      class="icon"
+                      class="w-4 h-4 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -152,11 +152,16 @@
                         d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                       ></path>
                     </svg>
-                    <span>{{ stripHtmlTags(event.streetAddress) }}</span>
+                    <span class="flex-1">{{
+                      stripHtmlTags(event.streetAddress)
+                    }}</span>
                   </div>
-                  <div v-if="event.location" class="event-detail">
+                  <div
+                    v-if="event.location"
+                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
+                  >
                     <svg
-                      class="icon"
+                      class="w-4 h-4 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -168,16 +173,19 @@
                         d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       ></path>
                     </svg>
-                    <span
+                    <span class="flex-1"
                       >{{ stripHtmlTags(event.location)
                       }}{{
                         event.country ? `, ${stripHtmlTags(event.country)}` : ""
                       }}</span
                     >
                   </div>
-                  <div v-if="isCustomEvent(event)" class="event-detail">
+                  <div
+                    v-if="isCustomEvent(event)"
+                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
+                  >
                     <svg
-                      class="icon"
+                      class="w-4 h-4 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -189,18 +197,23 @@
                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                       ></path>
                     </svg>
-                    <span>{{ getRegistrationCount(event) }}</span>
+                    <span class="flex-1">{{
+                      getRegistrationCount(event)
+                    }}</span>
                   </div>
                 </div>
 
-                <div class="event-column">
-                  <div v-if="isCustomEvent(event)" class="event-detail">
+                <div class="flex flex-col gap-2">
+                  <div
+                    v-if="isCustomEvent(event)"
+                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
+                  >
                     <NuxtLink
                       :to="`/events/register/${event.id}`"
-                      class="link-button"
+                      class="flex items-center gap-2 text-blue-600 no-underline font-medium text-sm px-3 py-2 bg-blue-50 rounded-md transition-all duration-200 border border-blue-200 hover:bg-blue-100 hover:text-blue-700"
                     >
                       <svg
-                        class="icon"
+                        class="w-4 h-4 flex-shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -217,16 +230,16 @@
                   </div>
                   <div
                     v-else-if="event.link && event.link !== '//'"
-                    class="event-detail"
+                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
                   >
                     <a
                       :href="event.link"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="link-button"
+                      class="flex items-center gap-2 text-blue-600 no-underline font-medium text-sm px-3 py-2 bg-blue-50 rounded-md transition-all duration-200 border border-blue-200 hover:bg-blue-100 hover:text-blue-700"
                     >
                       <svg
-                        class="icon"
+                        class="w-4 h-4 flex-shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -252,16 +265,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, unref, watch } from "vue";
 
 interface CalendarEvent {
   id: number | string;
   title: string;
-  start: string; // ISO format e.g. 2025-08-10
+  start: string;
   end?: string;
   type: "external" | "cup" | "local" | "challenge" | "custom";
   isCustom?: boolean;
-  customEventData?: any;
+  customEventData?: CustomEvent;
 }
 
 interface ParsedEvent {
@@ -327,6 +340,14 @@ const typeLabels: Record<CalendarEvent["type"], string> = {
   custom: "Custom Event",
 };
 
+// Helper function to handle client-side hydration
+const ensureClientSide = <T>(
+  clientCallback: () => T,
+  fallback: T = [] as T
+): T => {
+  return import.meta.client ? clientCallback() : fallback;
+};
+
 // State for event details modal
 const selectedDate = ref<string | null>(null);
 const selectedDateEvents = ref<ParsedEvent[]>([]);
@@ -338,40 +359,42 @@ const eventStore = useEventStore();
 const customEvents = ref<CustomEvent[]>([]);
 const customEventsLoading = ref<boolean>(false);
 
-// Fetch custom events
+// Combined loading state - use ref and manual updates to avoid reactivity issues
+const isLoading = ref(false);
+
+// Watch individual loading states and manually update combined state
+watch(
+  () => eventStore.isLoading,
+  (newVal) => {
+    const storeLoadingValue = unref(newVal);
+    isLoading.value =
+      Boolean(storeLoadingValue) || Boolean(customEventsLoading.value);
+  },
+  { immediate: true }
+);
+
+watch(
+  customEventsLoading,
+  (newVal) => {
+    const storeLoadingValue = unref(eventStore.isLoading);
+    isLoading.value = Boolean(storeLoadingValue) || Boolean(newVal);
+  },
+  { immediate: true }
+);
+
+// Fetch custom events from public endpoint
 const fetchCustomEvents = async (): Promise<void> => {
   try {
     customEventsLoading.value = true;
-    const response = await $fetch<{ events: CustomEvent[] }>(
-      "/api/admin/custom-events"
+    const response = await $fetch<{ success: boolean; events: CustomEvent[] }>(
+      "/api/events/custom"
     );
 
-    // Fetch registration counts for each event
-    const eventsWithCounts = await Promise.all(
-      (response.events || []).map(async (event) => {
-        try {
-          const eventResponse = await $fetch<{
-            event: CustomEvent;
-            registrationCount: number;
-          }>(`/api/events/${event.id}`);
-          return {
-            ...event,
-            registrationCount: eventResponse.registrationCount || 0,
-          };
-        } catch (error) {
-          console.error(
-            `Failed to fetch registration count for event ${event.id}:`,
-            error
-          );
-          return {
-            ...event,
-            registrationCount: 0,
-          };
-        }
-      })
-    );
-
-    customEvents.value = eventsWithCounts;
+    if (response.success && response.events) {
+      customEvents.value = response.events;
+    } else {
+      customEvents.value = [];
+    }
   } catch (error) {
     console.error("Failed to load custom events:", error);
     customEvents.value = [];
@@ -383,113 +406,124 @@ const fetchCustomEvents = async (): Promise<void> => {
 // Load events on mount
 onMounted(async (): Promise<void> => {
   try {
-    await Promise.all([eventStore.fetchEvents(), fetchCustomEvents()]);
+    // Only fetch events on client-side to avoid hydration issues
+    ensureClientSide(async () => {
+      await Promise.all([eventStore.fetchEvents(), fetchCustomEvents()]);
+    }, undefined);
   } catch (error) {
     console.error("Failed to load events:", error);
   }
 });
 
 const events = computed(() => {
-  // Convert ParsedEvents to CalendarEvents for the calendar display
-  const regularEvents = eventStore.events.value.map((event: ExternalEvent) => {
-    // Determine event type based on the original type
-    let type: CalendarEvent["type"] = "local";
-    if (event.type?.toLowerCase().includes("cup")) {
-      type = "cup";
-    } else if (event.type?.toLowerCase().includes("challenge")) {
-      type = "challenge";
-    } else if (
-      event.type?.toLowerCase().includes("tournament") &&
-      !event.type?.toLowerCase().includes("friendly")
-    ) {
-      type = "external";
-    }
+  return ensureClientSide(() => {
+    // Convert ParsedEvents to CalendarEvents for the calendar display
+    const regularEvents = unref(eventStore.events).map(
+      (event: ExternalEvent) => {
+        // Determine event type based on the original type
+        let type: CalendarEvent["type"] = "local";
+        if (event.type?.toLowerCase().includes("cup")) {
+          type = "cup";
+        } else if (event.type?.toLowerCase().includes("challenge")) {
+          type = "challenge";
+        } else if (
+          event.type?.toLowerCase().includes("tournament") &&
+          !event.type?.toLowerCase().includes("friendly")
+        ) {
+          type = "external";
+        }
 
-    return {
-      id: parseInt(event.id.replace(/[^0-9]/g, "")) || Math.random(),
-      title: event.title || event.type || "Event",
-      start: event.dateTime ? event.dateTime.split(" ")[0] : "", // Extract date part
-      type,
-      isCustom: false,
-    };
-  });
+        return {
+          id: parseInt(event.id.replace(/[^0-9]/g, "")) || Math.random(),
+          title: event.title || event.type || "Event",
+          start: event.dateTime ? event.dateTime.split(" ")[0] : "", // Extract date part
+          type,
+          isCustom: false,
+        };
+      }
+    );
 
-  // Convert custom events to CalendarEvents
-  const customCalendarEvents = customEvents.value.map((event: CustomEvent) => {
-    const eventDate = new Date(event.eventDate);
-    const dateString = eventDate.toISOString().split("T")[0]; // Get YYYY-MM-DD format
+    // Convert custom events to CalendarEvents
+    const customCalendarEvents = customEvents.value.map(
+      (event: CustomEvent) => {
+        const eventDate = new Date(event.eventDate);
+        const dateString = eventDate.toISOString().split("T")[0]; // Get YYYY-MM-DD format
 
-    return {
-      id: event.id,
-      title: event.name,
-      start: dateString,
-      type: "custom" as CalendarEvent["type"],
-      isCustom: true,
-      customEventData: event, // Store full custom event data for popover
-    };
-  });
+        return {
+          id: event.id,
+          title: event.name,
+          start: dateString,
+          type: "custom" as CalendarEvent["type"],
+          isCustom: true,
+          customEventData: event, // Store full custom event data for popover
+        };
+      }
+    );
 
-  return [...regularEvents, ...customCalendarEvents];
+    return [...regularEvents, ...customCalendarEvents];
+  }, []);
 });
 
 const calendarAttributes = computed(() => {
-  const eventsByDate = new Map<string, CalendarEvent[]>();
+  return ensureClientSide(() => {
+    const eventsByDate = new Map<string, CalendarEvent[]>();
 
-  // Group events by date
-  events.value.forEach((event) => {
-    const dateKey = event.start;
-    if (!eventsByDate.has(dateKey)) {
-      eventsByDate.set(dateKey, []);
-    }
-    eventsByDate.get(dateKey)!.push(event);
-  });
-
-  // VCalendar attributes - using Record<string, any> for compatibility with complex VCalendar types
-  const attributes: Array<Record<string, unknown>> = [];
-
-  // Create attributes for each date with events
-  eventsByDate.forEach((dayEvents, dateKey) => {
-    const date = new Date(dateKey);
-
-    // Add dots for each event type on this date
-    const eventTypes = [...new Set(dayEvents.map((e) => e.type))];
-
-    eventTypes.forEach((type, index) => {
-      const eventsOfType = dayEvents.filter((e) => e.type === type);
-
-      attributes.push({
-        key: `${dateKey}-${type}`,
-        dates: date,
-        dot: {
-          color: typeColors[type],
-          class: `event-dot event-${type}`,
-        },
-        popover: {
-          label: `${typeLabels[type]} (${eventsOfType.length})`,
-          content: eventsOfType.map((e) => e.title).join("\n"),
-          visibility: "hover",
-        },
-      });
+    // Group events by date
+    events.value.forEach((event) => {
+      const dateKey = event.start;
+      if (!eventsByDate.has(dateKey)) {
+        eventsByDate.set(dateKey, []);
+      }
+      eventsByDate.get(dateKey)!.push(event);
     });
 
-    // Add a highlight for the entire day if there are events
-    if (dayEvents.length > 0) {
-      // Check if there are custom events on this day
-      const hasCustomEvents = dayEvents.some((event) => event.isCustom);
+    // VCalendar attributes - using Record<string, any> for compatibility with complex VCalendar types
+    const attributes: Array<Record<string, unknown>> = [];
 
-      attributes.push({
-        key: `${dateKey}-highlight`,
-        dates: date,
-        highlight: {
-          color: hasCustomEvents ? "purple" : "blue",
-          fillMode: "light",
-          class: hasCustomEvents ? "has-custom-events" : "has-events",
-        },
+    // Create attributes for each date with events
+    eventsByDate.forEach((dayEvents, dateKey) => {
+      const date = new Date(dateKey);
+
+      // Add dots for each event type on this date
+      const eventTypes = [...new Set(dayEvents.map((e) => e.type))];
+
+      eventTypes.forEach((type, _) => {
+        const eventsOfType = dayEvents.filter((e) => e.type === type);
+
+        attributes.push({
+          key: `${dateKey}-${type}`,
+          dates: date,
+          dot: {
+            color: typeColors[type],
+            class: `event-dot event-${type}`,
+          },
+          popover: {
+            label: `${typeLabels[type]} (${eventsOfType.length})`,
+            content: eventsOfType.map((e) => e.title).join("\n"),
+            visibility: "hover",
+          },
+        });
       });
-    }
-  });
 
-  return attributes;
+      // Add a highlight for the entire day if there are events
+      if (dayEvents.length > 0) {
+        // Check if there are custom events on this day
+        const hasCustomEvents = dayEvents.some((event) => event.isCustom);
+
+        attributes.push({
+          key: `${dateKey}-highlight`,
+          dates: date,
+          highlight: {
+            color: hasCustomEvents ? "purple" : "blue",
+            fillMode: "light",
+            class: hasCustomEvents ? "has-custom-events" : "has-events",
+          },
+        });
+      }
+    });
+
+    return attributes;
+  }, []);
 });
 
 interface DayClickEvent {
@@ -503,7 +537,7 @@ const onDayClick = (day: DayClickEvent) => {
   selectedDate.value = clickedDate;
 
   // Find original events for this date using the store and mark them as regular events
-  const regularEventsForDate = eventStore.events.value
+  const regularEventsForDate = unref(eventStore.events)
     .filter((event: ExternalEvent) => {
       if (event.dateTime) {
         const eventDate = event.dateTime.split(" ")[0]; // Extract YYYY-MM-DD part
@@ -586,31 +620,34 @@ const formatEventTime = (event: ParsedEvent): string => {
   return "All Day";
 };
 
-// Strip HTML tags from text
 const stripHtmlTags = (html: string): string => {
   if (!html) return "";
   return html.replace(/<[^>]*>/g, "").trim();
 };
 
-// Get stats for display
-const eventStats = computed(() => eventStore.getEventStats());
-
-// Refresh events function
-const refreshEvents = async (): Promise<void> => {
-  try {
-    await Promise.all([
-      eventStore.fetchEvents(true), // Force refresh
-      fetchCustomEvents(), // Refresh custom events too
-    ]);
-  } catch (error) {
-    console.error("Failed to refresh events:", error);
-  }
-};
-
 // Helper functions for event display
 const isCustomEvent = (event: ParsedEvent): boolean => {
-  // Use the explicit flag we set in onDayClick
-  return event.isCustomEvent === true;
+  return !!event.isCustomEvent;
+};
+
+const getEventBadgeClasses = (event: ParsedEvent): string => {
+  // Custom events always get purple styling
+  if (isCustomEvent(event)) {
+    return "bg-purple-100 text-purple-800";
+  }
+
+  // Regular events get different colors based on their icon/type
+  switch (event.icon) {
+    case "cup":
+      return "bg-red-100 text-red-800";
+    case "chall":
+      return "bg-blue-100 text-blue-800";
+    case "pre":
+      return "bg-yellow-100 text-yellow-800";
+    case "friendly":
+    default:
+      return "bg-green-100 text-green-800"; // Default for friendly events or no icon
+  }
 };
 
 const getEventCost = (event: ParsedEvent): number | string | undefined => {
@@ -668,374 +705,7 @@ const getRegistrationCount = (event: ParsedEvent): string => {
 </script>
 
 <style scoped>
-.calendar-wrapper {
-  width: 30vw;
-  height: 50vh;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-}
-
-.event-stats {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  width: 100%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem;
-  background: #f9fafb;
-  border-radius: 0.25rem;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.text-green-600 {
-  color: #16a34a !important;
-}
-
-.text-blue-600 {
-  color: #2563eb !important;
-}
-
-.refresh-button {
-  width: 100%;
-  padding: 0.5rem 1rem;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.refresh-button:hover:not(:disabled) {
-  background-color: #2563eb;
-}
-
-.refresh-button:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-}
-
-.calendar-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  font-size: 1.2rem;
-  color: #6b7280;
-}
-
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(255, 255, 255, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-  border-radius: 0.5rem;
-}
-
-.loading-spinner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-spinner span {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.error {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  font-size: 1.1rem;
-  color: #dc2626;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin: 1rem;
-}
-
-/* Event Details Modal */
-.event-details-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.event-details-panel {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-width: 600px;
-  max-height: 80vh;
-  width: 90%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.event-details-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #f9fafb;
-}
-
-.event-details-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-  transition: all 0.2s ease;
-}
-
-.close-button:hover {
-  background-color: #f3f4f6;
-  color: #374151;
-}
-
-.event-details-content {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.event-item {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-  transition: all 0.2s ease;
-}
-
-.event-item:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  border-color: #d1d5db;
-}
-
-.event-item:last-child {
-  margin-bottom: 0;
-}
-
-.custom-event-item {
-  border-left: 4px solid #9333ea;
-  background: linear-gradient(to right, #f3e8ff, #ffffff);
-}
-
-.custom-event-item:hover {
-  border-color: #7c3aed;
-  background: linear-gradient(to right, #e9d5ff, #f9fafb);
-}
-
-.event-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.event-header-right {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.event-cost {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #059669;
-  background-color: #ecfdf5;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  border: 1px solid #a7f3d0;
-}
-
-.event-time-header {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-  background-color: #f3f4f6;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-}
-
-.event-content-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.event-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.event-detail {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #6b7280;
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
-
-.event-detail span {
-  flex: 1;
-}
-
-.icon {
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
-}
-
-.event-type-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.badge-friendly {
-  background-color: #f0fdf4;
-  color: #16a34a;
-}
-
-.badge-cup {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.badge-chall {
-  background-color: #eff6ff;
-  color: #2563eb;
-}
-
-.badge-pre {
-  background-color: #fefce8;
-  color: #ca8a04;
-}
-
-.badge-custom {
-  background-color: #f3e8ff;
-  color: #9333ea;
-  font-weight: 600;
-}
-
-.link-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.875rem;
-  padding: 0.5rem 0.75rem;
-  background-color: #eff6ff;
-  border-radius: 0.375rem;
-  transition: all 0.2s ease;
-  border: 1px solid #bfdbfe;
-}
-
-.link-button:hover {
-  background-color: #dbeafe;
-  color: #1d4ed8;
-  text-decoration: none;
-}
-
-/* Calendar Styles */
+/* Calendar Styles - Using :deep() for third-party component styling */
 :deep(.vc-calendar) {
   font-size: 1.1rem;
   --vc-day-content-height: 3rem;
