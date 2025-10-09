@@ -98,6 +98,21 @@ model MetaState {
   @@schema("public")
 }
 
+// Admin users table - only contains manually inserted admin users
+model AdminUser {
+  id        String   @id // Supabase user UUID
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations to admin-created content
+  CustomEvents CustomEvent[]
+
+  @@map("admin_users")
+  @@schema("users")
+}
+
 model User {
   id           String         @id
   email        String         @unique
@@ -106,7 +121,6 @@ model User {
   updatedAt    DateTime       @updatedAt @map("updated_at")
   UserDeck     UserDeck[]
   Participants Participants[]
-  CustomEvents CustomEvent[]
 
   @@map("users")
   @@schema("users")
@@ -172,7 +186,7 @@ model CustomEvent {
   createdBy            String                   @map("created_by")
   createdAt            DateTime                 @default(now()) @map("created_at")
   updatedAt            DateTime                 @updatedAt @map("updated_at")
-  creator              User                     @relation(fields: [createdBy], references: [id])
+  creator              AdminUser                @relation(fields: [createdBy], references: [id])
   registrations        EventRegistration[]
   customParticipants   CustomEventParticipant[]
 
