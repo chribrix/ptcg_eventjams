@@ -2,14 +2,8 @@ import TCGdex, { CardResumeModel, Query, SetModel } from "@tcgdex/sdk";
 import type { CardType } from "~/generated/prisma/enums";
 
 import type prisma from "~/lib/prisma.js";
-import type { CardRepository } from "~/server/plugins/CardRepository.js";
 
-export async function loadCards(
-  prism: typeof prisma,
-  cardRepository: CardRepository
-): Promise<void> {
-  //  return Promise.resolve();
-
+export async function loadCards(prism: typeof prisma): Promise<void> {
   const tcgdex = new TCGdex("en");
   const tcgDexDe = new TCGdex("de");
 
@@ -66,9 +60,7 @@ export async function loadCards(
     throw new Error("No sets found from TCGdex API.");
   }
 
-  // wait a second
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  //async function insertSets(sets: SetModel[]) {}
+  // Insert all sets
   await Promise.all(
     sets.map(async (set) => {
       if (!set) {
@@ -117,6 +109,7 @@ export async function loadCards(
     })
   );
 
+  // Process each set and add cards to db
   for (const set of sets) {
     if (!set) {
       console.warn("Set is undefined or null, skipping.");
@@ -171,8 +164,7 @@ export async function loadCards(
           };
 
           // Insert card into database
-          //const result = await client(Card).values({
-          const a = await prism.card.upsert({
+          await prism.card.upsert({
             where: { id: cardData.id },
             update: {
               id: cardData.id,
@@ -201,7 +193,6 @@ export async function loadCards(
           });
         } catch (error) {
           console.error(error);
-          // Handle error, e.g., log it or retry
         }
       })
     );

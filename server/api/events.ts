@@ -46,61 +46,6 @@ interface ExternalAPIEvent {
   guid?: string;
 }
 
-function parseEventsFromHtml(html: string): ParsedEvent[] {
-  const events: ParsedEvent[] = [];
-
-  // Match all event links and their content
-  const eventRegex =
-    /<a[^>]*class="eventlink"[^>]*href="([^"]*)"[^>]*>[\s\S]*?<div[^>]*>([\s\S]*?)<\/div>[\s\S]*?<\/a>/g;
-  let match;
-
-  while ((match = eventRegex.exec(html)) !== null) {
-    const href = match[1];
-    const content = match[2];
-
-    if (!href || href === "//") continue;
-
-    // Extract event details from the content
-    const dateTimeMatch = content.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2})/);
-    const typeMatch = content.match(
-      /- (TCG [^@]*|VG [^@]*|GO [^@]*|Pre Release)/
-    );
-    const venueMatch = content.match(/@\s*([^<\n]*?)(?:<br|$)/);
-    const locationMatch = content.match(
-      /(?:<br\s*\/?>|<\/br>)\s*([^<\n]*?)\s*-\s*([A-Z]{2})\s*(?:<|$)/
-    );
-
-    if (dateTimeMatch && typeMatch && venueMatch) {
-      const dateTime = dateTimeMatch[1];
-      const type = typeMatch[1].trim();
-      const venue = venueMatch[1].trim();
-      const location = locationMatch ? locationMatch[1].trim() : "";
-      const country = locationMatch ? locationMatch[2] : "DE";
-
-      // Extract event ID from href
-      const idMatch = href.match(/\/([^\/]+)\/?$/);
-      const id = idMatch
-        ? idMatch[1]
-        : `${dateTime}-${venue}`.replace(/[^a-zA-Z0-9-]/g, "-");
-
-      events.push({
-        id,
-        title: `${dateTime} - ${type}`,
-        dateTime,
-        type,
-        venue,
-        location,
-        country,
-        link: href.startsWith("http")
-          ? href
-          : `https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments${href}`,
-      });
-    }
-  }
-
-  return events;
-}
-
 function convertToCalendarEvents(parsedEvents: ParsedEvent[]): CalendarEvent[] {
   return parsedEvents.map((event) => {
     let icon = "friendly"; // Default: Green for friendly

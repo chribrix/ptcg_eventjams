@@ -1,5 +1,3 @@
-import { defineEventHandler } from "h3";
-
 interface ParsedEvent {
   id: string;
   title: string;

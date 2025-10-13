@@ -4,7 +4,6 @@ const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get all custom events that are public (not requiring admin access to view)
     const customEvents = await prisma.customEvent.findMany({
       orderBy: {
         eventDate: "asc",

@@ -1,3 +1,7 @@
+/**
+ * Represents a parsed external event from the pokedata.ovh API
+ * Used for displaying Pokemon TCG tournament events in the calendar
+ */
 interface ParsedEvent {
   id: string;
   title: string;
@@ -12,6 +16,10 @@ interface ParsedEvent {
   href?: string;
 }
 
+/**
+ * Calendar-formatted event data for use with VCalendar component
+ * Transforms ParsedEvent data into a format compatible with calendar libraries
+ */
 interface CalendarEvent {
   id: string;
   title: string;
@@ -26,11 +34,15 @@ interface CalendarEvent {
   };
 }
 
+/**
+ * Internal state structure for the event store
+ * Manages external Pokemon TCG events with caching and error handling
+ */
 interface EventStore {
-  events: ParsedEvent[];
-  lastFetch: Date | null;
-  isLoading: boolean;
-  error: string | null;
+  events: ParsedEvent[]; // Cached external events from pokedata.ovh
+  lastFetch: Date | null; // Timestamp of last successful fetch for cache invalidation
+  isLoading: boolean; // Loading state for UI feedback
+  error: string | null; // Error message if fetch fails
 }
 
 const eventStore = ref<EventStore>({
@@ -40,31 +52,80 @@ const eventStore = ref<EventStore>({
   error: null,
 });
 
+/**
+ * Composable for managing external Pokemon TCG events from pokedata.ovh
+ *
+ * Features:
+ * - Fetches external tournament events from pokedata.ovh API
+ * - Implements 5-minute caching to reduce API calls
+ * - Provides loading states and error handling
+ * - Transforms data for calendar display compatibility
+ * - Offers utility functions for filtering and searching events
+ *
+ * Usage:
+ * ```typescript
+ * const { events, isLoading, fetchEvents, getCalendarEvents } = useEventStore()
+ *
+ * // Fetch events (uses cache if available)
+ * await fetchEvents()
+ *
+ * // Get events formatted for calendar
+ * const calendarEvents = getCalendarEvents()
+ * ```
+ *
+ * Note: This composable only handles EXTERNAL events from pokedata.ovh
+ * Custom events are managed separately via the database API
+ */
 export const useEventStore = () => {
-  const clearEvents = () => {
+  /**
+   * Clears all cached events and resets store state
+   * Useful for forcing a fresh fetch or handling logout scenarios
+   */
+  function clearEvents(): void {
     eventStore.value.events = [];
     eventStore.value.lastFetch = null;
     eventStore.value.error = null;
-  };
+  }
 
-  const setEvents = (events: ParsedEvent[]) => {
+  /**
+   * Updates the store with new events and marks cache as fresh
+   * @param events - Array of parsed events to cache
+   */
+  function setEvents(events: ParsedEvent[]): void {
     eventStore.value.events = events;
     eventStore.value.lastFetch = new Date();
     eventStore.value.error = null;
-  };
+  }
 
-  const setLoading = (loading: boolean) => {
+  /**
+   * Updates the loading state for UI feedback
+   * @param loading - True when fetching data, false when complete
+   */
+  function setLoading(loading: boolean): void {
     eventStore.value.isLoading = loading;
-  };
+  }
 
-  const setError = (error: string) => {
+  /**
+   * Sets an error message and stops loading
+   * @param error - Error message to display
+   */
+  function setError(error: string): void {
     eventStore.value.error = error;
     eventStore.value.isLoading = false;
-  };
+  }
 
-  const fetchEvents = async (
-    force: boolean = false
-  ): Promise<ParsedEvent[]> => {
+  /**
+   * Fetches external Pokemon TCG events from the API with intelligent caching
+   *
+   * @param force - If true, bypasses cache and fetches fresh data
+   * @returns Promise<ParsedEvent[]> - Array of external events
+   *
+   * Caching behavior:
+   * - Cache is valid for 5 minutes
+   * - Returns cached data if available and not expired
+   * - Automatically fetches fresh data if cache is stale
+   */
+  async function fetchEvents(force: boolean = false): Promise<ParsedEvent[]> {
     // Return cached events if we have them and it's not a force refresh
     if (
       !force &&
@@ -109,9 +170,19 @@ export const useEventStore = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const getCalendarEvents = (): CalendarEvent[] => {
+  /**
+   * Transforms stored events into calendar-compatible format
+   *
+   * @returns CalendarEvent[] - Events formatted for VCalendar component
+   *
+   * Color coding:
+   * - Green: Free events
+   * - Blue: Paid events with known price
+   * - Red: Events with unknown/no price information
+   */
+  function getCalendarEvents(): CalendarEvent[] {
     return eventStore.value.events.map((event: ParsedEvent) => ({
       id: event.id || event.href || event.link,
       title: event.title || "Event",
@@ -130,25 +201,46 @@ export const useEventStore = () => {
         originalEvent: event,
       },
     }));
-  };
+  }
 
-  const getEventByHref = (href: string): ParsedEvent | undefined => {
+  /**
+   * Finds an event by its URL/link
+   *
+   * @param href - The URL to search for
+   * @returns ParsedEvent | undefined - Found event or undefined if not found
+   */
+  function getEventByHref(href: string): ParsedEvent | undefined {
     return eventStore.value.events.find(
       (event: ParsedEvent) => event.href === href || event.link === href
     );
-  };
+  }
 
-  const getEventsInDateRange = (
-    startDate: Date,
-    endDate: Date
-  ): ParsedEvent[] => {
+  /**
+   * Filters events within a specific date range
+   *
+   * @param startDate - Start date (inclusive)
+   * @param endDate - End date (inclusive)
+   * @returns ParsedEvent[] - Events falling within the specified range
+   */
+  function getEventsInDateRange(startDate: Date, endDate: Date): ParsedEvent[] {
     return eventStore.value.events.filter((event: ParsedEvent) => {
       const eventDate = new Date(event.dateTime || event.date || new Date());
       return eventDate >= startDate && eventDate <= endDate;
     });
-  };
+  }
 
-  const getEventStats = () => {
+  /**
+   * Provides statistical analysis of cached events
+   *
+   * @returns Object with comprehensive stats or null if no events
+   *
+   * Includes:
+   * - Total event count
+   * - Date range coverage
+   * - Pricing breakdown (free/paid/unknown)
+   * - Cache metadata (last fetch, loading state, errors)
+   */
+  function getEventStats() {
     const events = eventStore.value.events;
     if (events.length === 0) return null;
 
@@ -188,7 +280,7 @@ export const useEventStore = () => {
       isLoading: eventStore.value.isLoading,
       error: eventStore.value.error,
     };
-  };
+  }
 
   return {
     // State
