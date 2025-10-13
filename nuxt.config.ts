@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   devtools: { enabled: true },
   modules: [
-    "@prisma/nuxt",
+    // "@prisma/nuxt", // Commented out due to conflicts with custom Prisma output path
     "@nuxtjs/supabase",
     "@nuxtjs/tailwindcss",
     "@nuxt/test-utils/module",
@@ -24,7 +24,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       supabaseUrl: process.env.SUPABASE_URL,
-      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+      supabaseAnonKey: process.env.SUPABASE_KEY,
     },
   },
 
@@ -53,13 +53,20 @@ export default defineNuxtConfig({
       ],
     },
   },
+  alias: {
+    // Force all Prisma client imports to use custom location
+    "@prisma/client": resolver.resolve("./generated/prisma"),
+    ".prisma/client": resolver.resolve("./generated/prisma"),
+  },
   vite: {
     resolve: {
       alias: {
-        ".prisma/client/index-browser":
-          // https://vite.dev/config/shared-options.html#resolve-alias
-          // When aliasing to file system paths, always use absolute paths.
-          resolver.resolve("./node_modules/.prisma/client/index-browser.js"),
+        // Point to your custom Prisma client location for Vite
+        "@prisma/client": resolver.resolve("./generated/prisma"),
+        ".prisma/client": resolver.resolve("./generated/prisma"),
+        ".prisma/client/index-browser": resolver.resolve(
+          "./generated/prisma/index-browser.js"
+        ),
       },
     },
   },

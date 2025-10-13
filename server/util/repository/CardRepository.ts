@@ -1,4 +1,4 @@
-import type { Card, CardSet } from "@prisma/client";
+import type { Card, CardSet } from "~/generated/prisma";
 
 import prisma from "~/lib/prisma";
 

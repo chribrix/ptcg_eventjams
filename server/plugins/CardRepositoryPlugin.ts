@@ -7,6 +7,12 @@ export default defineEventHandler(async (event) => {
   const nitroApp = useNitroApp();
   nitroApp.cardRepository = new CardRepository();
 
+  // Skip database initialization in CI/test environments
+  if (process.env.SKIP_DB_INIT === "true" || process.env.NODE_ENV === "test") {
+    console.info("Skipping database initialization in test/CI environment.");
+    return;
+  }
+
   const metaState = await prisma.metaState.findFirst({
     where: { id: "db_init" },
   });

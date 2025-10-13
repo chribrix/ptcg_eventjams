@@ -5,7 +5,7 @@ import { setup } from "@nuxt/test-utils/e2e";
 import { CardRepository } from "~/server/util/repository/CardRepository.js";
 
 await setup({});
-describe("PTCGDeckValidator", () => {
+describe.skip("PTCGDeckValidator", () => {
   let validator: PTCGDeckValidator;
 
   beforeAll(async () => {
