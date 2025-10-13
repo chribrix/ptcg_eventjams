@@ -9,6 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: dev  # Reference the "dev" environment to access its secrets
 
     strategy:
       matrix:
@@ -54,12 +55,17 @@ jobs:
         echo "NUXT_SECRET_KEY=test-secret-key-for-ci" >> $GITHUB_ENV
         echo "NODE_ENV=test" >> $GITHUB_ENV
         echo "SKIP_DB_INIT=true" >> $GITHUB_ENV
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> $GITHUB_ENV
+        echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> $GITHUB_ENV
 
     - name: Generate Prisma Client
       run: |
         yarn prisma generate
         # Verify the generated client exists in the custom location
         ls -la generated/prisma/
+        echo "Checking if Prisma client files exist..."
+        test -f generated/prisma/index.js && echo "✅ index.js exists" || echo "❌ index.js missing"
+        test -f generated/prisma/index.d.ts && echo "✅ index.d.ts exists" || echo "❌ index.d.ts missing"
 
     - name: Setup database schemas
       run: |
@@ -93,14 +99,23 @@ jobs:
       run: |
         echo "Preparing Nuxt with custom Prisma client..."
         yarn nuxt prepare
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
     - name: Run tests
       run: |
         echo "Running tests with custom Prisma client..."
         yarn test
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
     - name: Build project
       run: yarn build
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
     - name: Test build artifacts
       run: |
