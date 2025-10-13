@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'yarn'
+
+    - name: Install dependencies
+      run: yarn install --frozen-lockfile
+
+    - name: Cache Prisma generated client
+      uses: actions/cache@v3
+      with:
+        path: generated/prisma
+        key: ${{ runner.os }}-prisma-${{ hashFiles('prisma/schema.prisma') }}
+
+    - name: Set up environment variables
+      run: |
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_db" >> $GITHUB_ENV
+        echo "NUXT_SECRET_KEY=test-secret-key-for-ci" >> $GITHUB_ENV
+        echo "NODE_ENV=test" >> $GITHUB_ENV
+        echo "SKIP_DB_INIT=true" >> $GITHUB_ENV
+
+    - name: Generate Prisma Client
+      run: |
+        yarn prisma generate
+        # Verify the generated client exists in the custom location
+        ls -la generated/prisma/
+
+    - name: Setup database schemas
+      run: |
+        # Create the required schemas
+        PGPASSWORD=postgres psql -h localhost -U postgres -d test_db -c "CREATE SCHEMA IF NOT EXISTS public;"
+        PGPASSWORD=postgres psql -h localhost -U postgres -d test_db -c "CREATE SCHEMA IF NOT EXISTS conversions;"
+        PGPASSWORD=postgres psql -h localhost -U postgres -d test_db -c "CREATE SCHEMA IF NOT EXISTS users;"
+
+    - name: Run database migrations
+      run: yarn prisma migrate deploy
+
+    # - name: Seed test data
+    #   run: |
+    #     echo "Seeding minimal test data for CI..."
+    #     yarn add --dev ts-node
+    #     node --loader ts-node/esm scripts/seed-test-data.ts
+
+    - name: Verify Prisma setup
+      run: |
+        echo "Checking Prisma client generation..."
+        if [ -f "generated/prisma/index.js" ]; then
+          echo "✅ Prisma client generated successfully at custom location"
+        else
+          echo "❌ Prisma client not found at expected location"
+          echo "Contents of generated directory:"
+          ls -la generated/ || echo "generated directory doesn't exist"
+          exit 1
+        fi
+
+    - name: Prepare Nuxt
+      run: |
+        echo "Preparing Nuxt with custom Prisma client..."
+        yarn nuxt prepare
+
+    - name: Run tests
+      run: |
+        echo "Running tests with custom Prisma client..."
+        yarn test
+
+    - name: Build project
+      run: yarn build
+
+    - name: Test build artifacts
+      run: |
+        if [ ! -d ".nuxt" ]; then
+          echo "Build failed - .nuxt directory not found"
+          exit 1
+        fi
