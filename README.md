@@ -4,9 +4,11 @@ A web application for hosting and managing Pokémon Trading Card Game (PTCG) eve
 
 ## Feature Roadmap
 
-- [ ] Create and manage events
-- [ ] Register participants
-- [ ] Submit and validate deck lists
+- [x] Create and manage events
+- [x] Register participants
+- [x] Submit decklists
+- [ ] Automatic decklist validation
+- [x] Find events in your proximity 
 
 ## Maybe Features
 - [ ] View event standings and results
