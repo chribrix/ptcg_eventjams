@@ -66,7 +66,7 @@
 
         <!-- User Dashboard Section -->
         <div v-if="userName" class="flex-shrink-0">
-          <MyRegistrations />
+          <UserEventRegistrations />
         </div>
       </div>
     </div>
