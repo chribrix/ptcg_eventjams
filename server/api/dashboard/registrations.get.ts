@@ -46,10 +46,13 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Get all event registrations for this player
+    // Get all active event registrations for this player (excluding cancelled ones)
     const registrations = await prisma.eventRegistration.findMany({
       where: {
         playerId: player.id,
+        status: {
+          not: "cancelled",
+        },
       },
       include: {
         customEvent: {

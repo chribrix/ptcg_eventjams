@@ -1,7 +1,7 @@
 <template>
   <div class="w-full">
     <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">
-      My Registrations
+      My Event Registrations
     </h2>
 
     <!-- Loading State -->
@@ -66,6 +66,25 @@
         >
           ✓ Decklist submitted
         </div>
+
+        <!-- Cancel Registration Button -->
+        <div class="mt-3 flex justify-end">
+          <button
+            v-if="canCancelRegistration(registration)"
+            @click="confirmCancellation(registration)"
+            :disabled="cancelling === registration.id"
+            class="px-3 py-1 text-xs font-medium text-red-600 border border-red-300 rounded hover:bg-red-50 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          >
+            <span v-if="cancelling === registration.id">Cancelling...</span>
+            <span v-else>Cancel Registration</span>
+          </button>
+          <span
+            v-else-if="!canCancelRegistration(registration)"
+            class="text-xs text-gray-500 italic"
+          >
+            {{ getCancellationMessage(registration) }}
+          </span>
+        </div>
       </div>
 
       <NuxtLink
@@ -101,20 +120,23 @@ interface EventRegistration {
   };
 }
 
+const CANCELLATION_DEADLINE_HOURS = 24;
+
 const registrations = ref<EventRegistration[]>([]);
-const isLoading = ref<boolean>(false);
+const isLoading = ref(false);
+const cancelling = ref<string | null>(null);
 const supabase = useSupabaseClient();
 
-const formatEventDate = (dateString: string): string => {
+function formatEventDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
   });
-};
+}
 
-const fetchUserRegistrations = async () => {
+async function fetchUserRegistrations(): Promise<void> {
   try {
     isLoading.value = true;
     const { data } = await $fetch<{ data: EventRegistration[] }>(
@@ -127,12 +149,95 @@ const fetchUserRegistrations = async () => {
   } finally {
     isLoading.value = false;
   }
-};
+}
+
+function canCancelRegistration(registration: EventRegistration): boolean {
+  const eventDate = new Date(registration.customEvent.eventDate);
+  const now = new Date();
+  const cancellationDeadline = new Date(
+    eventDate.getTime() - CANCELLATION_DEADLINE_HOURS * 60 * 60 * 1000
+  );
+
+  return (
+    eventDate > now &&
+    now <= cancellationDeadline &&
+    registration.status !== "cancelled"
+  );
+}
+
+function getCancellationMessage(registration: EventRegistration): string {
+  const eventDate = new Date(registration.customEvent.eventDate);
+  const now = new Date();
+
+  if (eventDate < now) {
+    return "Event has already started";
+  }
+
+  const cancellationDeadline = new Date(
+    eventDate.getTime() - CANCELLATION_DEADLINE_HOURS * 60 * 60 * 1000
+  );
+  if (now > cancellationDeadline) {
+    return "Cancellation deadline passed (24h before event)";
+  }
+
+  if (registration.status === "cancelled") {
+    return "Registration cancelled";
+  }
+
+  return "";
+}
+
+async function confirmCancellation(
+  registration: EventRegistration
+): Promise<void> {
+  const confirmed = confirm(
+    `Are you sure you want to cancel your registration for "${registration.customEvent.name}"?\n\n` +
+      `Event Date: ${formatEventDate(registration.customEvent.eventDate)}\n\n` +
+      "This action cannot be undone."
+  );
+
+  if (!confirmed) return;
+
+  try {
+    cancelling.value = registration.id;
+
+    await $fetch(
+      `/api/dashboard/registrations/${registration.id}/cancel` as string,
+      {
+        method: "POST" as const,
+      }
+    );
+
+    registrations.value = registrations.value.filter(
+      (r) => r.id !== registration.id
+    );
+
+    alert(
+      `Successfully cancelled your registration for "${registration.customEvent.name}"`
+    );
+  } catch (error: unknown) {
+    console.error("Failed to cancel registration:", error);
+
+    const errorMessage =
+      error &&
+      typeof error === "object" &&
+      "data" in error &&
+      error.data &&
+      typeof error.data === "object" &&
+      "message" in error.data
+        ? String(error.data.message)
+        : error instanceof Error
+        ? error.message
+        : "Failed to cancel registration";
+    alert(`Error: ${errorMessage}`);
+  } finally {
+    cancelling.value = null;
+  }
+}
 
 onMounted(async () => {
   const { data: session } = await supabase.auth.getSession();
   if (session?.session) {
-    // Fetch user registrations if logged in
     await fetchUserRegistrations();
   }
 });

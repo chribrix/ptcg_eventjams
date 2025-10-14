@@ -75,7 +75,6 @@ const handleSubmit = async (event: Event) => {
       statusMessage: "Failed to fetch data",
       fatal: true,
     });
-    console.info("Decklist validation response:", data.value);
   }
 
   if (!data.value?.body?.isValid) {
