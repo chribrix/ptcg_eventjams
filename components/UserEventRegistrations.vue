@@ -60,7 +60,9 @@
           class="bg-yellow-50 border border-yellow-300 rounded px-3 py-2 text-xs"
         >
           <div class="flex justify-between items-start mb-1">
-            <span class="font-medium text-yellow-800">⚠️ Registration Reserved</span>
+            <span class="font-medium text-yellow-800"
+              >⚠️ Registration Reserved</span
+            >
             <NuxtLink
               to="/dashboard"
               class="text-yellow-600 hover:text-yellow-800 font-medium hover:underline"
@@ -68,7 +70,9 @@
               Complete Now
             </NuxtLink>
           </div>
-          <p class="text-yellow-700">Complete your decklist submission to confirm your spot</p>
+          <p class="text-yellow-700">
+            Complete your decklist submission to confirm your spot
+          </p>
         </div>
 
         <div
@@ -90,8 +94,20 @@
           <span>📋 Bring decklist on-site</span>
         </div>
 
-        <!-- Cancel Registration Button -->
-        <div class="mt-3 flex justify-end">
+        <!-- Event Actions -->
+        <div class="mt-3 flex justify-between items-center">
+          <!-- View Participants Button -->
+          <button
+            @click="toggleParticipants(registration.customEventId)"
+            class="px-3 py-1 text-xs font-medium text-blue-600 border border-blue-300 rounded hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
+          >
+            <span v-if="expandedParticipants[registration.customEventId]">
+              Hide Participants
+            </span>
+            <span v-else> View Other Participants </span>
+          </button>
+
+          <!-- Cancel Registration Button -->
           <button
             v-if="canCancelRegistration(registration)"
             @click="confirmCancellation(registration)"
@@ -107,6 +123,17 @@
           >
             {{ getCancellationMessage(registration) }}
           </span>
+        </div>
+
+        <!-- Expandable Participants List -->
+        <div
+          v-if="expandedParticipants[registration.customEventId]"
+          class="mt-3 pt-3 border-t border-gray-200"
+        >
+          <EventParticipants
+            :event-id="registration.customEventId"
+            :show-decklist-status="registration.customEvent.requiresDecklist"
+          />
         </div>
       </div>
 
@@ -149,6 +176,7 @@ const CANCELLATION_DEADLINE_HOURS = 24;
 const registrations = ref<EventRegistration[]>([]);
 const isLoading = ref(false);
 const cancelling = ref<string | null>(null);
+const expandedParticipants = ref<Record<string, boolean>>({});
 const supabase = useSupabaseClient();
 
 function formatEventDate(dateString: string): string {
@@ -158,6 +186,10 @@ function formatEventDate(dateString: string): string {
     month: "short",
     day: "numeric",
   });
+}
+
+function toggleParticipants(eventId: string): void {
+  expandedParticipants.value[eventId] = !expandedParticipants.value[eventId];
 }
 
 async function fetchUserRegistrations(): Promise<void> {

@@ -36,7 +36,8 @@ export default defineEventHandler(async (event) => {
     if (decklist === undefined && bringingDecklistOnsite === undefined) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Either decklist or bringingDecklistOnsite must be provided",
+        statusMessage:
+          "Either decklist or bringingDecklistOnsite must be provided",
       });
     }
 
@@ -97,7 +98,7 @@ export default defineEventHandler(async (event) => {
 
     // Prepare update data
     const updateData: any = {};
-    
+
     if (decklist !== undefined) {
       if (decklist === null || decklist.trim() === "") {
         // Clearing decklist
@@ -109,7 +110,7 @@ export default defineEventHandler(async (event) => {
         updateData.bringingDecklistOnsite = false;
       }
     }
-    
+
     if (bringingDecklistOnsite !== undefined) {
       updateData.bringingDecklistOnsite = bringingDecklistOnsite;
       // Clear decklist if choosing to bring onsite
@@ -117,11 +118,17 @@ export default defineEventHandler(async (event) => {
         updateData.decklist = null;
       }
     }
-    
+
     // Determine status based on decklist fulfillment
-    const hasDecklist = updateData.decklist !== undefined ? updateData.decklist !== null : existingRegistration.decklist !== null;
-    const bringingOnsite = updateData.bringingDecklistOnsite !== undefined ? updateData.bringingDecklistOnsite : existingRegistration.bringingDecklistOnsite;
-    
+    const hasDecklist =
+      updateData.decklist !== undefined
+        ? updateData.decklist !== null
+        : existingRegistration.decklist !== null;
+    const bringingOnsite =
+      updateData.bringingDecklistOnsite !== undefined
+        ? updateData.bringingDecklistOnsite
+        : existingRegistration.bringingDecklistOnsite;
+
     if (hasDecklist || bringingOnsite) {
       updateData.status = "registered";
     } else {

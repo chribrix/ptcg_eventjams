@@ -32,8 +32,8 @@ export default defineEventHandler(async (event) => {
       where: {
         customEventId: eventId,
         status: {
-          not: "cancelled"
-        }
+          not: "cancelled",
+        },
       },
     });
 

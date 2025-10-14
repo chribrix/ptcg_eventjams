@@ -70,11 +70,11 @@ export default defineEventHandler(async (event) => {
 
     // Check current registration count (excluding cancelled registrations)
     const currentRegistrations = await prisma.eventRegistration.count({
-      where: { 
+      where: {
         customEventId: eventId,
         status: {
-          not: "cancelled"
-        }
+          not: "cancelled",
+        },
       },
     });
 
@@ -139,10 +139,12 @@ export default defineEventHandler(async (event) => {
 
     // Create or update event registration
     // Set status based on whether event requires decklist
-    const initialStatus = customEvent.requiresDecklist ? "reserved" : "registered";
-    
+    const initialStatus = customEvent.requiresDecklist
+      ? "reserved"
+      : "registered";
+
     let registration;
-    
+
     if (existingRegistration && existingRegistration.status === "cancelled") {
       // Update the cancelled registration
       registration = await prisma.eventRegistration.update({
