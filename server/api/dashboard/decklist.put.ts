@@ -23,12 +23,20 @@ export default defineEventHandler(async (event) => {
     }
 
     const body = await readBody(event);
-    const { registrationId, decklist } = body;
+    const { registrationId, decklist, bringingDecklistOnsite } = body;
 
-    if (!registrationId || typeof decklist !== "string") {
+    if (!registrationId) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Registration ID and decklist are required",
+        statusMessage: "Registration ID is required",
+      });
+    }
+
+    // Validate that at least one option is provided
+    if (decklist === undefined && bringingDecklistOnsite === undefined) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Either decklist or bringingDecklistOnsite must be provided",
       });
     }
 
@@ -87,14 +95,46 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Update the registration with the decklist
+    // Prepare update data
+    const updateData: any = {};
+    
+    if (decklist !== undefined) {
+      if (decklist === null || decklist.trim() === "") {
+        // Clearing decklist
+        updateData.decklist = null;
+      } else {
+        // Setting decklist
+        updateData.decklist = decklist.trim();
+        // Reset bringingDecklistOnsite if submitting actual decklist
+        updateData.bringingDecklistOnsite = false;
+      }
+    }
+    
+    if (bringingDecklistOnsite !== undefined) {
+      updateData.bringingDecklistOnsite = bringingDecklistOnsite;
+      // Clear decklist if choosing to bring onsite
+      if (bringingDecklistOnsite) {
+        updateData.decklist = null;
+      }
+    }
+    
+    // Determine status based on decklist fulfillment
+    const hasDecklist = updateData.decklist !== undefined ? updateData.decklist !== null : existingRegistration.decklist !== null;
+    const bringingOnsite = updateData.bringingDecklistOnsite !== undefined ? updateData.bringingDecklistOnsite : existingRegistration.bringingDecklistOnsite;
+    
+    if (hasDecklist || bringingOnsite) {
+      updateData.status = "registered";
+    } else {
+      // If both decklist and bringing onsite are cleared/false, set back to reserved
+      updateData.status = "reserved";
+    }
+
+    // Update the registration
     const updatedRegistration = await prisma.eventRegistration.update({
       where: {
         id: registrationId,
       },
-      data: {
-        decklist: decklist.trim(),
-      },
+      data: updateData,
     });
 
     return {

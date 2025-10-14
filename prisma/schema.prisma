@@ -215,15 +215,16 @@ model Player {
 }
 
 model EventRegistration {
-  id            String      @id @default(cuid())
-  customEventId String      @map("custom_event_id")
-  playerId      String      @map("player_id")
-  registeredAt  DateTime    @default(now()) @map("registered_at")
-  status        String      @default("registered") // registered, attended, no-show, cancelled
-  notes         String?
-  decklist      String? // Player's decklist for this event
-  customEvent   CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
-  player        Player      @relation(fields: [playerId], references: [id])
+  id                     String      @id @default(cuid())
+  customEventId          String      @map("custom_event_id")
+  playerId               String      @map("player_id")
+  registeredAt           DateTime    @default(now()) @map("registered_at")
+  status                 String      @default("registered") // registered, attended, no-show, cancelled
+  notes                  String?
+  decklist               String? // Player's decklist for this event
+  bringingDecklistOnsite Boolean?    @default(false) @map("bringing_decklist_onsite") // Whether player will bring physical decklist
+  customEvent            CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
+  player                 Player      @relation(fields: [playerId], references: [id])
 
   @@unique([customEventId, playerId])
   @@map("event_registrations")

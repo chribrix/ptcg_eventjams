@@ -34,9 +34,17 @@
         class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200"
       >
         <div class="flex justify-between items-center mb-2">
-          <h4 class="text-sm font-semibold text-gray-900">
-            {{ registration.customEvent.name }}
-          </h4>
+          <div class="flex items-center gap-2">
+            <h4 class="text-sm font-semibold text-gray-900">
+              {{ registration.customEvent.name }}
+            </h4>
+            <span
+              v-if="registration.status === 'reserved'"
+              class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full"
+            >
+              Reserved
+            </span>
+          </div>
           <span class="text-xs text-gray-500">
             {{ formatEventDate(registration.customEvent.eventDate) }}
           </span>
@@ -45,17 +53,22 @@
         <!-- Decklist Alert -->
         <div
           v-if="
-            registration.customEvent.requiresDecklist && !registration.decklist
+            registration.customEvent.requiresDecklist &&
+            !registration.decklist &&
+            !registration.bringingDecklistOnsite
           "
-          class="flex justify-between items-center bg-yellow-50 border border-yellow-300 rounded px-3 py-2 text-xs text-yellow-800"
+          class="bg-yellow-50 border border-yellow-300 rounded px-3 py-2 text-xs"
         >
-          <span>⚠️ Decklist required - not submitted yet</span>
-          <NuxtLink
-            to="/dashboard"
-            class="text-yellow-600 hover:text-yellow-800 font-medium hover:underline"
-          >
-            Submit Now
-          </NuxtLink>
+          <div class="flex justify-between items-start mb-1">
+            <span class="font-medium text-yellow-800">⚠️ Registration Reserved</span>
+            <NuxtLink
+              to="/dashboard"
+              class="text-yellow-600 hover:text-yellow-800 font-medium hover:underline"
+            >
+              Complete Now
+            </NuxtLink>
+          </div>
+          <p class="text-yellow-700">Complete your decklist submission to confirm your spot</p>
         </div>
 
         <div
@@ -65,6 +78,16 @@
           class="flex items-center bg-green-50 border border-green-300 rounded px-3 py-2 text-xs text-green-800"
         >
           ✓ Decklist submitted
+        </div>
+
+        <div
+          v-else-if="
+            registration.customEvent.requiresDecklist &&
+            registration.bringingDecklistOnsite
+          "
+          class="flex items-center bg-blue-50 border border-blue-300 rounded px-3 py-2 text-xs text-blue-800"
+        >
+          <span>📋 Bring decklist on-site</span>
         </div>
 
         <!-- Cancel Registration Button -->
@@ -106,6 +129,7 @@ interface EventRegistration {
   status: string;
   notes?: string | null;
   decklist?: string | null;
+  bringingDecklistOnsite?: boolean | null;
   customEvent: {
     id: string;
     name: string;
