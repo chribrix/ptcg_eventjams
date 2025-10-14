@@ -66,9 +66,16 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Check current registration count
+    // Note: Decklist validation is now handled on the dashboard after registration
+
+    // Check current registration count (excluding cancelled registrations)
     const currentRegistrations = await prisma.eventRegistration.count({
-      where: { customEventId: eventId },
+      where: { 
+        customEventId: eventId,
+        status: {
+          not: "cancelled"
+        }
+      },
     });
 
     if (currentRegistrations >= customEvent.maxParticipants) {
@@ -112,7 +119,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Check if player is already registered for this event
+    // Check if player is already registered for this event (excluding cancelled registrations)
     const existingRegistration = await prisma.eventRegistration.findUnique({
       where: {
         customEventId_playerId: {
@@ -122,7 +129,7 @@ export default defineEventHandler(async (event) => {
       },
     });
 
-    if (existingRegistration) {
+    if (existingRegistration && existingRegistration.status !== "cancelled") {
       throw createError({
         statusCode: 400,
         statusMessage: "Already registered",
@@ -130,13 +137,36 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Create event registration
-    const registration = await prisma.eventRegistration.create({
-      data: {
-        customEventId: eventId,
-        playerId: player.id,
-      },
-    });
+    // Create or update event registration
+    // Set status based on whether event requires decklist
+    const initialStatus = customEvent.requiresDecklist ? "reserved" : "registered";
+    
+    let registration;
+    
+    if (existingRegistration && existingRegistration.status === "cancelled") {
+      // Update the cancelled registration
+      registration = await prisma.eventRegistration.update({
+        where: { id: existingRegistration.id },
+        data: {
+          status: initialStatus,
+          registeredAt: new Date(), // Update registration timestamp
+          decklist: null, // Reset decklist
+          bringingDecklistOnsite: false, // Reset onsite option
+          notes: null, // Clear any notes
+        },
+      });
+    } else {
+      // Create new registration
+      registration = await prisma.eventRegistration.create({
+        data: {
+          customEventId: eventId,
+          playerId: player.id,
+          status: initialStatus,
+          decklist: null, // Will be added later via dashboard
+          bringingDecklistOnsite: false, // Default value, can be updated later
+        },
+      });
+    }
 
     return {
       success: true,

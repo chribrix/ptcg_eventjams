@@ -72,6 +72,8 @@
               :class="{
                 'bg-green-100 text-green-800':
                   registration.status === 'registered',
+                'bg-yellow-100 text-yellow-800':
+                  registration.status === 'reserved',
                 'bg-blue-100 text-blue-800': registration.status === 'attended',
                 'bg-red-100 text-red-800': registration.status === 'no-show',
                 'bg-gray-100 text-gray-800':
@@ -177,11 +179,31 @@
                 ✓ Submitted
               </span>
               <span
+                v-else-if="registration.bringingDecklistOnsite"
+                class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
+              >
+                📋 Bring On-Site
+              </span>
+              <span
                 v-else
                 class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full"
               >
                 ⚠ Required
               </span>
+            </div>
+            
+            <!-- Reserved Status Notice -->
+            <div
+              v-if="registration.status === 'reserved' && !registration.decklist && !registration.bringingDecklistOnsite"
+              class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+            >
+              <div class="flex items-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <p class="text-sm font-medium text-yellow-800">Registration Reserved</p>
+              </div>
+              <p class="text-xs text-yellow-700">Your spot is reserved, but you need to complete your decklist submission to confirm your registration.</p>
             </div>
 
             <div
@@ -194,29 +216,90 @@
                 class="bg-white border border-gray-200 rounded p-3 text-sm font-mono whitespace-pre-wrap"
                 >{{ registration.decklist }}</pre
               >
+              <div class="flex flex-wrap gap-2">
+                <button
+                  @click="
+                    startEditDecklist(registration.id, registration.decklist)
+                  "
+                  class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded transition-colors duration-200"
+                >
+                  Edit Decklist
+                </button>
+                <button
+                  @click="setBringingOnsite(registration.id)"
+                  class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium py-2 px-3 rounded transition-colors duration-200"
+                >
+                  Bring On-Site Instead
+                </button>
+                <button
+                  @click="deleteDecklist(registration.id)"
+                  class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-3 rounded transition-colors duration-200"
+                >
+                  Delete Decklist
+                </button>
+              </div>
+            </div>
+
+            <div
+              v-else-if="
+                registration.bringingDecklistOnsite &&
+                !isEditingDecklist[registration.id]
+              "
+              class="text-center py-4 bg-blue-50 border border-blue-200 rounded"
+            >
+              <div class="flex items-center justify-center gap-2 mb-2">
+                <svg
+                  class="w-5 h-5 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                <p class="text-blue-800 font-medium">
+                  Bringing Decklist On-Site
+                </p>
+              </div>
+              <p class="text-blue-700 text-sm mb-3">
+                Remember to bring your completed decklist in written or printed
+                form to the event.
+              </p>
               <button
-                @click="
-                  startEditDecklist(registration.id, registration.decklist)
-                "
+                @click="startEditDecklist(registration.id, '')"
                 class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors duration-200"
               >
-                Edit Decklist
+                Submit Online Instead
               </button>
             </div>
 
             <div
               v-else-if="
-                !registration.decklist && !isEditingDecklist[registration.id]
+                !registration.decklist &&
+                !registration.bringingDecklistOnsite &&
+                !isEditingDecklist[registration.id]
               "
               class="text-center py-4"
             >
-              <p class="text-gray-600 mb-3">No decklist submitted yet.</p>
-              <button
-                @click="startEditDecklist(registration.id, '')"
-                class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
-              >
-                Submit Decklist
-              </button>
+              <p class="text-gray-600 mb-4">Choose how to submit your decklist:</p>
+              <div class="space-y-3">
+                <button
+                  @click="startEditDecklist(registration.id, '')"
+                  class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
+                >
+                  Submit Decklist Online
+                </button>
+                <button
+                  @click="setBringingOnsite(registration.id)"
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
+                >
+                  I'll Bring Decklist On-Site
+                </button>
+              </div>
             </div>
 
             <!-- Decklist Editor -->
@@ -265,6 +348,7 @@ interface EventRegistration {
   status: string;
   notes?: string | null;
   decklist?: string | null;
+  bringingDecklistOnsite?: boolean | null;
   customEvent: {
     id: string;
     name: string;
@@ -353,6 +437,7 @@ const submitDecklist = async (registrationId: string) => {
     );
     if (registration) {
       registration.decklist = decklistText.value[registrationId];
+      registration.status = "registered"; // Update status when decklist is submitted
     }
 
     // Exit edit mode
@@ -366,6 +451,75 @@ const submitDecklist = async (registrationId: string) => {
     isSubmittingDecklist.value[registrationId] = false;
   }
 };
+
+const setBringingOnsite = async (registrationId: string) => {
+  try {
+    const { error: submitError } = await $fetch("/api/dashboard/decklist", {
+      method: "PUT",
+      body: {
+        registrationId,
+        bringingDecklistOnsite: true,
+      },
+    });
+
+    if (submitError) {
+      throw new Error(submitError);
+    }
+
+    // Update local state
+    const registration = registrations.value.find(
+      (r) => r.id === registrationId
+    );
+    if (registration) {
+      registration.bringingDecklistOnsite = true;
+      registration.decklist = null; // Clear any existing decklist
+      registration.status = "registered"; // Update status when onsite option is chosen
+    }
+  } catch (err) {
+    console.error("Failed to set bringing onsite:", err);
+    error.value =
+      err instanceof Error ? err.message : "Failed to update decklist option";
+  }
+};
+
+const deleteDecklist = async (registrationId: string) => {
+  const confirmed = confirm(
+    "Are you sure you want to delete your submitted decklist? This will set your registration back to reserved status."
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const { error: submitError } = await $fetch("/api/dashboard/decklist", {
+      method: "PUT",
+      body: {
+        registrationId,
+        decklist: null,
+        bringingDecklistOnsite: false,
+      },
+    });
+
+    if (submitError) {
+      throw new Error(submitError);
+    }
+
+    // Update local state
+    const registration = registrations.value.find(
+      (r) => r.id === registrationId
+    );
+    if (registration) {
+      registration.decklist = null;
+      registration.bringingDecklistOnsite = false;
+      registration.status = "reserved"; // Back to reserved status
+    }
+  } catch (err) {
+    console.error("Failed to delete decklist:", err);
+    error.value =
+      err instanceof Error ? err.message : "Failed to delete decklist";
+  }
+};
+
+
 
 // Format functions
 const formatStatus = (status: string): string => {

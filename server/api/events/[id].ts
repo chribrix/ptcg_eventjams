@@ -27,10 +27,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Count registrations for this event
+    // Count registrations for this event (excluding cancelled registrations)
     const registrationCount = await prisma.eventRegistration.count({
       where: {
         customEventId: eventId,
+        status: {
+          not: "cancelled"
+        }
       },
     });
 

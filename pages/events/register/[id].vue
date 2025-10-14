@@ -134,6 +134,11 @@
             Player <strong>{{ form.name }}</strong> (ID: {{ form.playerId }})
             has been successfully registered for {{ event.name }}.
           </p>
+          <p v-if="event.requiresDecklist" class="redirect-notice">
+            <strong>Next step:</strong> You will be redirected to your dashboard
+            where you can submit your decklist or choose to bring it on-site.
+          </p>
+          <p v-else>You will be redirected to your dashboard in a moment.</p>
           <p>A confirmation email will be sent to {{ form.email }}.</p>
         </div>
 
@@ -212,6 +217,33 @@
               </div>
             </div>
 
+            <!-- Decklist Notification -->
+            <div v-if="event.requiresDecklist" class="decklist-notification">
+              <div class="notification-content">
+                <div class="notification-header">
+                  <svg
+                    class="notification-icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    ></path>
+                  </svg>
+                  <h3 class="notification-title">Decklist Required</h3>
+                </div>
+                <p class="notification-text">
+                  This event requires a decklist submission. After registration,
+                  you'll be able to submit your decklist digitally or choose to
+                  bring it on-site in written/printed form.
+                </p>
+              </div>
+            </div>
+
             <div v-if="formError" class="form-error">
               {{ formError }}
             </div>
@@ -247,6 +279,7 @@ interface CustomEvent {
   venue: string;
   maxParticipants: number;
   participationFee: number;
+  requiresDecklist: boolean;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -270,7 +303,7 @@ const submitting = ref<boolean>(false);
 const registrationSuccess = ref<boolean>(false);
 const formError = ref<string>("");
 
-const form = ref<RegistrationForm>({
+const form = reactive<RegistrationForm>({
   playerId: "",
   name: "",
   email: "",
@@ -293,10 +326,7 @@ const eventPassed = computed(() => {
 });
 
 const hasPrefilledData = computed(() => {
-  return (
-    !userLoading.value &&
-    (form.value.playerId || form.value.name || form.value.email)
-  );
+  return !userLoading.value && (form.playerId || form.name || form.email);
 });
 
 // Methods
@@ -324,17 +354,17 @@ const loadUserData = async (): Promise<void> => {
       if (user.user_metadata) {
         // Prefill form with user metadata
         if (user.user_metadata.playerId) {
-          form.value.playerId = user.user_metadata.playerId;
+          form.playerId = user.user_metadata.playerId;
           console.log("Prefilled playerId:", user.user_metadata.playerId);
         }
         if (user.user_metadata.name) {
-          form.value.name = user.user_metadata.name;
+          form.name = user.user_metadata.name;
           console.log("Prefilled name:", user.user_metadata.name);
         }
       }
 
       if (user.email) {
-        form.value.email = user.email;
+        form.email = user.email;
         console.log("Prefilled email:", user.email);
       }
     } else {
@@ -378,13 +408,18 @@ const submitRegistration = async (): Promise<void> => {
     submitting.value = true;
     formError.value = "";
 
-    await $fetch(`/api/events/${eventId}/register`, {
+    const response = await $fetch(`/api/events/${eventId}/register`, {
       method: "POST",
-      body: form.value,
+      body: form,
     });
 
     registrationSuccess.value = true;
     registrationCount.value += 1;
+
+    // Redirect to dashboard after successful registration
+    setTimeout(() => {
+      navigateTo("/dashboard");
+    }, 2000); // Show success message for 2 seconds, then redirect
   } catch (err: unknown) {
     console.error("Registration failed:", err);
     const errorObj = err as { data?: { message?: string }; message?: string };
@@ -517,6 +552,15 @@ useHead({
   background-color: #fef2f2;
   border-left: 4px solid #ef4444;
   color: #991b1b;
+}
+
+.redirect-notice {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-weight: 500;
 }
 
 .status-message h3 {
@@ -660,6 +704,172 @@ useHead({
   color: #3b82f6;
 }
 
+/* Decklist Notification Styles */
+.decklist-notification {
+  margin: 1.5rem 0;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.notification-content {
+  padding: 1.25rem;
+}
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.notification-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.notification-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0;
+}
+
+.notification-text {
+  color: #92400e;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Decklist Section Styles */
+.decklist-section {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.decklist-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.decklist-description {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.decklist-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.decklist-option {
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: white;
+  transition: border-color 0.2s ease;
+}
+
+.decklist-option:has(.radio-input:checked) {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.radio-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+}
+
+.radio-input {
+  margin-top: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.radio-text {
+  line-height: 1.4;
+}
+
+.decklist-textarea-container {
+  margin-top: 1rem;
+  padding-left: 1.75rem;
+}
+
+.textarea-label {
+  display: block;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.decklist-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: monospace;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.decklist-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.onsite-notice {
+  margin-top: 1rem;
+  padding-left: 1.75rem;
+}
+
+.notice-content {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+}
+
+.notice-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.notice-title {
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 0.25rem;
+}
+
+.notice-text {
+  color: #92400e;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
 @media (max-width: 768px) {
   .event-header h1 {
     font-size: 2rem;
@@ -671,6 +881,19 @@ useHead({
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .decklist-options {
+    gap: 1rem;
+  }
+
+  .decklist-option {
+    padding: 0.75rem;
+  }
+
+  .decklist-textarea-container,
+  .onsite-notice {
+    padding-left: 1rem;
   }
 }
 </style>
