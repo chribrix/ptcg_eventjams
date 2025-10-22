@@ -20,19 +20,9 @@
             placeholder="Search events..."
             class="w-full py-2 px-3 pl-10 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-colors duration-200"
           />
-          <svg
+          <MagnifyingGlassIcon
             class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            ></path>
-          </svg>
+          />
         </div>
 
         <select
@@ -65,19 +55,7 @@
         v-if="filteredEvents.length === 0"
         class="flex flex-col items-center justify-center h-48 text-gray-500 gap-4"
       >
-        <svg
-          class="w-12 h-12"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          ></path>
-        </svg>
+        <CalendarIcon class="w-12 h-12" />
         <p>No events found matching your criteria</p>
       </div>
 
@@ -128,19 +106,7 @@
               </div>
 
               <div class="flex items-center gap-2 text-gray-600 text-sm mb-1">
-                <svg
-                  class="w-4 h-4 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m0 0H9"
-                  ></path>
-                </svg>
+                <BuildingOfficeIcon class="w-4 h-4 flex-shrink-0" />
                 <span>{{ stripHtmlTags(event.venue) }}</span>
               </div>
 
@@ -148,25 +114,7 @@
                 v-if="event.location"
                 class="flex items-center gap-2 text-gray-600 text-sm mb-0"
               >
-                <svg
-                  class="w-4 h-4 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  ></path>
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  ></path>
-                </svg>
+                <MapPinIcon class="w-4 h-4 flex-shrink-0" />
                 <span
                   >{{ stripHtmlTags(event.location)
                   }}{{
@@ -182,19 +130,7 @@
                 v-if="event.cost !== undefined"
                 class="flex items-center gap-1 text-sm font-semibold text-green-700"
               >
-                <svg
-                  class="w-4 h-4 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                  ></path>
-                </svg>
+                <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
                 <span>{{ event.cost || "?" }}</span>
               </div>
 
@@ -206,19 +142,7 @@
                   class="flex items-center gap-1 text-blue-600 no-underline font-medium text-sm py-1 px-2 bg-blue-50 rounded border border-blue-200 transition-all duration-200 hover:bg-blue-100 hover:text-blue-700"
                   @click.stop
                 >
-                  <svg
-                    class="w-4 h-4 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    ></path>
-                  </svg>
+                  <LinkIcon class="w-4 h-4 flex-shrink-0" />
                   Register
                 </a>
               </div>
@@ -227,19 +151,7 @@
 
           <!-- Expand arrow -->
           <div class="text-gray-400 flex-shrink-0">
-            <svg
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5l7 7-7 7"
-              ></path>
-            </svg>
+            <ChevronRightIcon class="w-4 h-4" />
           </div>
         </div>
       </div>
@@ -261,9 +173,9 @@
           <h3 class="text-xl font-semibold text-gray-900 m-0">Event Details</h3>
           <button
             @click="closeEventDetails"
-            class="bg-none border-none text-2xl text-gray-500 hover:bg-gray-100 hover:text-gray-700 cursor-pointer p-1 rounded transition-colors duration-200"
+            class="bg-none border-none text-gray-500 hover:bg-gray-100 hover:text-gray-700 cursor-pointer p-2 rounded-lg transition-colors duration-200"
           >
-            &times;
+            <XMarkIcon class="w-5 h-5" />
           </button>
         </div>
         <div class="px-6 py-4 overflow-y-auto flex-1">
@@ -286,19 +198,7 @@
                   v-if="selectedEvent.cost !== undefined"
                   class="flex items-center gap-1 text-sm font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full border border-green-200"
                 >
-                  <svg
-                    class="w-4 h-4 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                    ></path>
-                  </svg>
+                  <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
                   {{ selectedEvent.cost || "?" }}
                 </div>
                 <div
@@ -316,19 +216,7 @@
                   v-if="selectedEvent.venue"
                   class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
                 >
-                  <svg
-                    class="w-4 h-4 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4m0 0v-5a1 1 0 011-1h2a1 1 0 011 1v5m0 0H9"
-                    ></path>
-                  </svg>
+                  <BuildingOfficeIcon class="w-4 h-4 flex-shrink-0" />
                   <span class="flex-1">{{
                     stripHtmlTags(selectedEvent.venue)
                   }}</span>
@@ -337,25 +225,7 @@
                   v-if="selectedEvent.streetAddress"
                   class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
                 >
-                  <svg
-                    class="w-4 h-4 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    ></path>
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    ></path>
-                  </svg>
+                  <MapPinIcon class="w-4 h-4 flex-shrink-0" />
                   <span class="flex-1">{{
                     stripHtmlTags(selectedEvent.streetAddress)
                   }}</span>
@@ -364,19 +234,7 @@
                   v-if="selectedEvent.location"
                   class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
                 >
-                  <svg
-                    class="w-4 h-4 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    ></path>
-                  </svg>
+                  <GlobeAltIcon class="w-4 h-4 flex-shrink-0" />
                   <span class="flex-1"
                     >{{ stripHtmlTags(selectedEvent.location)
                     }}{{
@@ -399,19 +257,7 @@
                     rel="noopener noreferrer"
                     class="flex items-center gap-2 text-blue-600 no-underline font-medium text-sm px-3 py-2 bg-blue-50 rounded-md transition-all duration-200 border border-blue-200 hover:bg-blue-100 hover:text-blue-700"
                   >
-                    <svg
-                      class="w-4 h-4 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      ></path>
-                    </svg>
+                    <LinkIcon class="w-4 h-4 flex-shrink-0" />
                     <span>Register</span>
                   </a>
                 </div>
@@ -426,6 +272,17 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import {
+  MagnifyingGlassIcon,
+  CalendarIcon,
+  BuildingOfficeIcon,
+  MapPinIcon,
+  CurrencyDollarIcon,
+  LinkIcon,
+  ChevronRightIcon,
+  XMarkIcon,
+  GlobeAltIcon,
+} from "@heroicons/vue/24/outline";
 
 interface ParsedEvent {
   id: string;

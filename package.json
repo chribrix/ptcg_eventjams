@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@headlessui/vue": "^1.7.23",
+    "@heroicons/vue": "^2.2.0",
     "@nuxtjs/supabase": "^1.6.0",
     "@prisma/nuxt": "0.3.0",
     "@samk-dev/nuxt-vcalendar": "1.0.4",
