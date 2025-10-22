@@ -1,153 +1,330 @@
 <template>
-  <div class="w-full">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">
-      My Event Registrations
-    </h2>
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="text-center">
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">My Registrations</h2>
+      <p class="text-gray-600 text-sm">
+        Track and manage your tournament registrations
+      </p>
+    </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center gap-2 p-4 text-gray-600">
-      <div
-        class="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"
-      ></div>
-      <span>Loading your registrations...</span>
+    <div
+      v-if="isLoading"
+      class="flex flex-col items-center justify-center py-12 space-y-4"
+    >
+      <div class="relative">
+        <div
+          class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
+        ></div>
+        <div
+          class="absolute inset-0 w-12 h-12 border-4 border-transparent border-r-purple-600 rounded-full animate-spin"
+          style="animation-delay: 0.1s"
+        ></div>
+      </div>
+      <div class="text-center">
+        <p class="text-gray-600 font-medium">Loading your registrations...</p>
+        <p class="text-gray-400 text-sm">Please wait a moment</p>
+      </div>
     </div>
 
     <!-- Empty State -->
-    <div
-      v-else-if="registrations.length === 0"
-      class="p-4 text-center text-gray-600"
-    >
-      <p class="mb-3">No event registrations yet.</p>
+    <div v-else-if="!registrations.length" class="text-center py-16">
+      <div
+        class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center"
+      >
+        <TicketIcon class="w-10 h-10 text-gray-400" />
+      </div>
+      <h3 class="text-xl font-semibold text-gray-900 mb-2">
+        No registrations yet
+      </h3>
+      <p class="text-gray-500 mb-8 max-w-md mx-auto">
+        You haven't registered for any events yet. Start exploring tournaments
+        in your area!
+      </p>
       <NuxtLink
         to="/events"
-        class="text-blue-600 hover:text-blue-800 font-medium hover:underline"
+        class="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
       >
+        <MagnifyingGlassIcon
+          class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"
+        />
         Browse Events
+        <ArrowRightIcon
+          class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
+        />
       </NuxtLink>
     </div>
 
-    <!-- Registrations List -->
-    <div v-else class="space-y-3">
-      <div
-        v-for="registration in registrations"
-        :key="registration.id"
-        class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200"
-      >
-        <div class="flex justify-between items-center mb-2">
-          <div class="flex items-center gap-2">
-            <h4 class="text-sm font-semibold text-gray-900">
-              {{ registration.customEvent.name }}
-            </h4>
-            <span
-              v-if="registration.status === 'reserved'"
-              class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full"
-            >
-              Reserved
-            </span>
+    <!-- Registration Cards -->
+    <div v-else class="space-y-4">
+      <TransitionGroup name="registration" tag="div" class="space-y-4">
+        <div
+          v-for="registration in registrations"
+          :key="registration.id"
+          class="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-300 overflow-hidden"
+        >
+          <!-- Card Header -->
+          <div class="p-6 border-b border-gray-100">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex-1">
+                <div class="flex items-center space-x-3 mb-2">
+                  <div
+                    class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-sm"
+                  >
+                    <CalendarIcon class="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3
+                      class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors"
+                    >
+                      {{ registration.customEvent.name }}
+                    </h3>
+                    <div
+                      class="flex items-center space-x-4 text-sm text-gray-500"
+                    >
+                      <div class="flex items-center">
+                        <CalendarDaysIcon class="w-4 h-4 mr-1" />
+                        {{
+                          formatEventDate(registration.customEvent.eventDate)
+                        }}
+                      </div>
+                      <div class="flex items-center">
+                        <MapPinIcon class="w-4 h-4 mr-1" />
+                        {{ registration.customEvent.venue }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status Badge -->
+              <div class="flex flex-col items-end space-y-2">
+                <span
+                  :class="getStatusBadgeClass(registration.status)"
+                  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                >
+                  <span
+                    :class="getStatusDotClass(registration.status)"
+                    class="w-2 h-2 rounded-full mr-2"
+                  ></span>
+                  {{ getStatusLabel(registration.status) }}
+                </span>
+              </div>
+            </div>
           </div>
-          <span class="text-xs text-gray-500">
-            {{ formatEventDate(registration.customEvent.eventDate) }}
-          </span>
-        </div>
 
-        <!-- Decklist Alert -->
-        <div
-          v-if="
-            registration.customEvent.requiresDecklist &&
-            !registration.decklist &&
-            !registration.bringingDecklistOnsite
-          "
-          class="bg-yellow-50 border border-yellow-300 rounded px-3 py-2 text-xs"
-        >
-          <div class="flex justify-between items-start mb-1">
-            <span class="font-medium text-yellow-800"
-              >⚠️ Registration Reserved</span
+          <!-- Card Content -->
+          <div class="p-6 space-y-4">
+            <!-- Decklist Status Alerts -->
+            <div
+              v-if="registration.customEvent.requiresDecklist"
+              class="space-y-3"
             >
-            <NuxtLink
-              to="/dashboard"
-              class="text-yellow-600 hover:text-yellow-800 font-medium hover:underline"
+              <!-- Action Required Alert -->
+              <div
+                v-if="
+                  !registration.decklist && !registration.bringingDecklistOnsite
+                "
+                class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4"
+              >
+                <div class="flex items-start space-x-3">
+                  <div class="flex-shrink-0">
+                    <ExclamationTriangleIcon
+                      class="h-6 w-6 text-amber-600 mt-0.5"
+                    />
+                  </div>
+                  <div class="flex-1">
+                    <h4 class="text-sm font-semibold text-amber-900 mb-1">
+                      Action Required
+                    </h4>
+                    <p class="text-sm text-amber-800 mb-3">
+                      This tournament requires a decklist. Submit it online or
+                      choose to bring it on-site to confirm your registration.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                      <NuxtLink
+                        to="/dashboard"
+                        class="inline-flex items-center px-3 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-colors duration-200"
+                      >
+                        <DocumentTextIcon class="w-4 h-4 mr-1" />
+                        Submit Decklist
+                      </NuxtLink>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Decklist Submitted Success -->
+              <div
+                v-else-if="registration.decklist"
+                class="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-4"
+              >
+                <div class="flex items-center space-x-3">
+                  <CheckCircleIcon class="h-6 w-6 text-emerald-600" />
+                  <div>
+                    <h4 class="text-sm font-semibold text-emerald-900">
+                      Decklist Submitted
+                    </h4>
+                    <p class="text-sm text-emerald-800">
+                      Your decklist has been successfully submitted online
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bringing On-Site -->
+              <div
+                v-else-if="registration.bringingDecklistOnsite"
+                class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4"
+              >
+                <div class="flex items-center space-x-3">
+                  <InformationCircleIcon class="h-6 w-6 text-blue-600" />
+                  <div>
+                    <h4 class="text-sm font-semibold text-blue-900">
+                      Bringing Decklist On-Site
+                    </h4>
+                    <p class="text-sm text-blue-800">
+                      Remember to bring your written or printed decklist to the
+                      event
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-3 pt-2">
+              <!-- View Participants Button -->
+              <button
+                @click="toggleParticipants(registration.customEventId)"
+                class="group flex items-center px-4 py-2 bg-gray-50 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 transition-all duration-200 border border-gray-200 hover:border-gray-300"
+              >
+                <UsersIcon
+                  class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform"
+                />
+                {{
+                  expandedParticipants[registration.customEventId]
+                    ? "Hide"
+                    : "View"
+                }}
+                Participants
+                <ChevronDownIcon
+                  :class="[
+                    'w-4 h-4 ml-2 transition-all duration-200',
+                    expandedParticipants[registration.customEventId]
+                      ? 'rotate-180 text-blue-600'
+                      : 'group-hover:text-gray-900',
+                  ]"
+                />
+              </button>
+
+              <!-- Manage Registration Button -->
+              <NuxtLink
+                to="/dashboard"
+                class="group flex items-center px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition-all duration-200 border border-blue-200 hover:border-blue-300"
+              >
+                <CogIcon
+                  class="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-300"
+                />
+                Manage
+              </NuxtLink>
+
+              <!-- Cancel Registration Button -->
+              <button
+                v-if="canCancelRegistration(registration)"
+                @click="confirmCancellation(registration)"
+                :disabled="cancelling === registration.id"
+                class="group flex items-center px-4 py-2 bg-red-50 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 border border-red-200 hover:border-red-300"
+              >
+                <XMarkIcon
+                  v-if="cancelling !== registration.id"
+                  class="w-4 h-4 mr-2"
+                />
+                <div
+                  v-else
+                  class="w-4 h-4 mr-2 border-2 border-red-600 border-t-transparent rounded-full animate-spin"
+                ></div>
+                {{
+                  cancelling === registration.id ? "Cancelling..." : "Cancel"
+                }}
+              </button>
+
+              <!-- Cancellation Message -->
+              <div
+                v-else-if="!canCancelRegistration(registration)"
+                class="flex items-center px-3 py-2 bg-gray-50 text-gray-500 text-xs rounded-lg border border-gray-200"
+              >
+                <InformationCircleIcon class="w-4 h-4 mr-1" />
+                {{ getCancellationMessage(registration) }}
+              </div>
+            </div>
+
+            <!-- Expandable Participants List -->
+            <Transition
+              enter-active-class="transition-all duration-500 ease-out"
+              enter-from-class="opacity-0 max-h-0"
+              enter-to-class="opacity-100 max-h-[500px]"
+              leave-active-class="transition-all duration-300 ease-in"
+              leave-from-class="opacity-100 max-h-[500px]"
+              leave-to-class="opacity-0 max-h-0"
             >
-              Complete Now
-            </NuxtLink>
+              <div
+                v-if="expandedParticipants[registration.customEventId]"
+                class="overflow-hidden"
+              >
+                <div class="pt-4 border-t border-gray-100">
+                  <EventParticipants
+                    :event-id="registration.customEventId"
+                    :show-decklist-status="
+                      registration.customEvent.requiresDecklist
+                    "
+                  />
+                </div>
+              </div>
+            </Transition>
           </div>
-          <p class="text-yellow-700">
-            Complete your decklist submission to confirm your spot
-          </p>
         </div>
+      </TransitionGroup>
 
-        <div
-          v-else-if="
-            registration.customEvent.requiresDecklist && registration.decklist
-          "
-          class="flex items-center bg-green-50 border border-green-300 rounded px-3 py-2 text-xs text-green-800"
+      <!-- Dashboard Link -->
+      <div class="pt-4">
+        <NuxtLink
+          to="/dashboard"
+          class="group flex items-center justify-center w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
         >
-          ✓ Decklist submitted
-        </div>
-
-        <div
-          v-else-if="
-            registration.customEvent.requiresDecklist &&
-            registration.bringingDecklistOnsite
-          "
-          class="flex items-center bg-blue-50 border border-blue-300 rounded px-3 py-2 text-xs text-blue-800"
-        >
-          <span>📋 Bring decklist on-site</span>
-        </div>
-
-        <!-- Event Actions -->
-        <div class="mt-3 flex justify-between items-center">
-          <!-- View Participants Button -->
-          <button
-            @click="toggleParticipants(registration.customEventId)"
-            class="px-3 py-1 text-xs font-medium text-blue-600 border border-blue-300 rounded hover:bg-blue-50 hover:border-blue-400 transition-colors duration-200"
-          >
-            <span v-if="expandedParticipants[registration.customEventId]">
-              Hide Participants
-            </span>
-            <span v-else> View Other Participants </span>
-          </button>
-
-          <!-- Cancel Registration Button -->
-          <button
-            v-if="canCancelRegistration(registration)"
-            @click="confirmCancellation(registration)"
-            :disabled="cancelling === registration.id"
-            class="px-3 py-1 text-xs font-medium text-red-600 border border-red-300 rounded hover:bg-red-50 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-          >
-            <span v-if="cancelling === registration.id">Cancelling...</span>
-            <span v-else>Cancel Registration</span>
-          </button>
-          <span
-            v-else-if="!canCancelRegistration(registration)"
-            class="text-xs text-gray-500 italic"
-          >
-            {{ getCancellationMessage(registration) }}
-          </span>
-        </div>
-
-        <!-- Expandable Participants List -->
-        <div
-          v-if="expandedParticipants[registration.customEventId]"
-          class="mt-3 pt-3 border-t border-gray-200"
-        >
-          <EventParticipants
-            :event-id="registration.customEventId"
-            :show-decklist-status="registration.customEvent.requiresDecklist"
+          <ChartBarSquareIcon
+            class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"
           />
-        </div>
+          View Full Dashboard
+          <ArrowRightIcon
+            class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
+          />
+        </NuxtLink>
       </div>
-
-      <NuxtLink
-        to="/dashboard"
-        class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors duration-200"
-      >
-        View Full Dashboard
-      </NuxtLink>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import {
+  TicketIcon,
+  MagnifyingGlassIcon,
+  ArrowRightIcon,
+  CalendarIcon,
+  CalendarDaysIcon,
+  MapPinIcon,
+  ExclamationTriangleIcon,
+  DocumentTextIcon,
+  CheckCircleIcon,
+  InformationCircleIcon,
+  UsersIcon,
+  ChevronDownIcon,
+  CogIcon,
+  XMarkIcon,
+  ChartBarSquareIcon,
+} from "@heroicons/vue/24/outline";
+
 interface EventRegistration {
   id: string;
   customEventId: string;
@@ -182,10 +359,50 @@ const supabase = useSupabaseClient();
 function formatEventDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
     day: "numeric",
   });
+}
+
+function getStatusBadgeClass(status: string): string {
+  switch (status) {
+    case "registered":
+      return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+    case "reserved":
+      return "bg-amber-100 text-amber-800 border border-amber-200";
+    case "cancelled":
+      return "bg-red-100 text-red-800 border border-red-200";
+    default:
+      return "bg-gray-100 text-gray-800 border border-gray-200";
+  }
+}
+
+function getStatusDotClass(status: string): string {
+  switch (status) {
+    case "registered":
+      return "bg-emerald-500";
+    case "reserved":
+      return "bg-amber-500";
+    case "cancelled":
+      return "bg-red-500";
+    default:
+      return "bg-gray-500";
+  }
+}
+
+function getStatusLabel(status: string): string {
+  switch (status) {
+    case "registered":
+      return "Confirmed";
+    case "reserved":
+      return "Reserved";
+    case "cancelled":
+      return "Cancelled";
+    default:
+      return status.charAt(0).toUpperCase() + status.slice(1);
+  }
 }
 
 function toggleParticipants(eventId: string): void {
