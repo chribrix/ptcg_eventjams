@@ -8,6 +8,7 @@ import {
   ArrowRightOnRectangleIcon,
   UserPlusIcon,
   ChevronDownIcon,
+  ClockIcon,
 } from "@heroicons/vue/24/outline";
 
 const userName = ref<string | null>(null);
@@ -142,6 +143,10 @@ watch(
                   <NuxtLink to="/admin/players" class="admin-link">
                     <UserCircleIcon class="w-4 h-4" />
                     <span>Manage Players</span>
+                  </NuxtLink>
+                  <NuxtLink to="/admin/events/history" class="admin-link">
+                    <ClockIcon class="w-4 h-4" />
+                    <span>Event History</span>
                   </NuxtLink>
                 </div>
               </div>
