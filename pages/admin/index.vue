@@ -114,6 +114,11 @@
         </div>
       </div>
     </div>
+
+    <!-- Event History Section -->
+    <div class="mt-12">
+      <EventHistory :isAdmin="true" />
+    </div>
   </div>
 </template>
 

@@ -62,56 +62,64 @@ export default defineEventHandler(async (event) => {
       // Return empty array if player doesn't exist yet
       return {
         data: [],
-        error: null,
       };
     }
 
-    // Get only upcoming/current event registrations for this player (excluding cancelled ones and past events)
-    const registrations = await prisma.eventRegistration.findMany({
+    // Get user's past event registrations where the event date has passed
+    const pastEvents = await prisma.eventRegistration.findMany({
       where: {
         playerId: player.id,
-        status: {
-          not: "cancelled",
-        },
         customEvent: {
           eventDate: {
-            gte: new Date(), // Only future or current events
+            lt: new Date(), // Events in the past
           },
         },
       },
       include: {
         customEvent: {
-          select: {
-            id: true,
-            name: true,
-            venue: true,
-            maxParticipants: true,
-            participationFee: true,
-            description: true,
-            eventDate: true,
-            registrationDeadline: true,
-            status: true,
-            requiresDecklist: true,
+          include: {
+            _count: {
+              select: {
+                registrations: true,
+              },
+            },
           },
         },
       },
       orderBy: {
         customEvent: {
-          eventDate: "asc",
+          eventDate: "desc",
         },
       },
     });
 
+    // Transform the data for the frontend
+    const eventHistory = pastEvents.map((registration) => ({
+      id: registration.customEvent.id,
+      name: registration.customEvent.name,
+      venue: registration.customEvent.venue,
+      eventDate: registration.customEvent.eventDate.toISOString(),
+      participationFee: registration.customEvent.participationFee?.toString(),
+      description: registration.customEvent.description,
+      status: registration.customEvent.status,
+      requiresDecklist: registration.customEvent.requiresDecklist,
+      totalParticipants: registration.customEvent._count.registrations,
+      userRegistration: {
+        id: registration.id,
+        status: registration.status,
+        registeredAt: registration.registeredAt.toISOString(),
+      },
+    }));
+
     return {
-      data: registrations,
-      error: null,
+      data: eventHistory,
     };
   } catch (error) {
-    console.error("Dashboard registrations error:", error);
+    console.error("Error fetching user event history:", error);
     throw createError({
       statusCode: 500,
       statusMessage:
-        "Internal server error: " +
+        "Failed to fetch event history: " +
         (error instanceof Error ? error.message : String(error)),
     });
   }

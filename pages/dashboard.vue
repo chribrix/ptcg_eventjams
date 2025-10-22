@@ -55,232 +55,245 @@
         </NuxtLink>
       </div>
 
-      <!-- Registrations List -->
-      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div
-          v-for="registration in registrations"
-          :key="registration.id"
-          class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200"
-        >
-          <!-- Event Header -->
-          <div class="flex justify-between items-start mb-4">
-            <h3 class="text-xl font-semibold text-gray-900">
-              {{ registration.customEvent.name }}
-            </h3>
-            <span
-              class="px-2 py-1 text-xs font-medium rounded-full"
-              :class="{
-                'bg-green-100 text-green-800':
-                  registration.status === 'registered',
-                'bg-yellow-100 text-yellow-800':
-                  registration.status === 'reserved',
-                'bg-blue-100 text-blue-800': registration.status === 'attended',
-                'bg-red-100 text-red-800': registration.status === 'no-show',
-                'bg-gray-100 text-gray-800':
-                  registration.status === 'cancelled',
-              }"
-            >
-              {{ formatStatus(registration.status) }}
-            </span>
-          </div>
-
-          <!-- Event Details -->
-          <div class="space-y-3">
-            <div class="flex items-center gap-2 text-gray-600">
-              <CalendarIcon class="w-4 h-4 flex-shrink-0" />
-              <span class="text-sm">{{
-                formatEventDate(registration.customEvent.eventDate)
-              }}</span>
-            </div>
-
-            <div class="flex items-center gap-2 text-gray-600">
-              <MapPinIcon class="w-4 h-4 flex-shrink-0" />
-              <span class="text-sm">{{ registration.customEvent.venue }}</span>
-            </div>
-
-            <div
-              v-if="registration.customEvent.participationFee"
-              class="flex items-center gap-2 text-gray-600"
-            >
-              <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
-              <span class="text-sm"
-                >€{{ registration.customEvent.participationFee }}</span
-              >
-            </div>
-
-            <div class="flex items-center gap-2 text-gray-600">
-              <ClockIcon class="w-4 h-4 flex-shrink-0" />
-              <span class="text-sm">
-                Registered:
-                {{ formatRegistrationDate(registration.registeredAt) }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Decklist Section -->
+      <!-- Current Registrations List -->
+      <div v-else>
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+          Current Registrations
+        </h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
           <div
-            v-if="registration.customEvent.requiresDecklist"
-            class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
+            v-for="registration in registrations"
+            :key="registration.id"
+            class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200"
           >
-            <div class="flex justify-between items-center mb-3">
-              <h4 class="font-semibold text-gray-900">Decklist</h4>
+            <!-- Event Header -->
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="text-xl font-semibold text-gray-900">
+                {{ registration.customEvent.name }}
+              </h3>
               <span
-                v-if="registration.decklist"
-                class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                class="px-2 py-1 text-xs font-medium rounded-full"
+                :class="{
+                  'bg-green-100 text-green-800':
+                    registration.status === 'registered',
+                  'bg-yellow-100 text-yellow-800':
+                    registration.status === 'reserved',
+                  'bg-blue-100 text-blue-800':
+                    registration.status === 'attended',
+                  'bg-red-100 text-red-800': registration.status === 'no-show',
+                  'bg-gray-100 text-gray-800':
+                    registration.status === 'cancelled',
+                }"
               >
-                ✓ Submitted
-              </span>
-              <span
-                v-else-if="registration.bringingDecklistOnsite"
-                class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
-              >
-                📋 Bring On-Site
-              </span>
-              <span
-                v-else
-                class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full"
-              >
-                ⚠ Required
+                {{ formatStatus(registration.status) }}
               </span>
             </div>
 
-            <!-- Reserved Status Notice -->
+            <!-- Event Details -->
+            <div class="space-y-3">
+              <div class="flex items-center gap-2 text-gray-600">
+                <CalendarIcon class="w-4 h-4 flex-shrink-0" />
+                <span class="text-sm">{{
+                  formatEventDate(registration.customEvent.eventDate)
+                }}</span>
+              </div>
+
+              <div class="flex items-center gap-2 text-gray-600">
+                <MapPinIcon class="w-4 h-4 flex-shrink-0" />
+                <span class="text-sm">{{
+                  registration.customEvent.venue
+                }}</span>
+              </div>
+
+              <div
+                v-if="registration.customEvent.participationFee"
+                class="flex items-center gap-2 text-gray-600"
+              >
+                <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
+                <span class="text-sm"
+                  >€{{ registration.customEvent.participationFee }}</span
+                >
+              </div>
+
+              <div class="flex items-center gap-2 text-gray-600">
+                <ClockIcon class="w-4 h-4 flex-shrink-0" />
+                <span class="text-sm">
+                  Registered:
+                  {{ formatRegistrationDate(registration.registeredAt) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Decklist Section -->
             <div
-              v-if="
-                registration.status === 'reserved' &&
-                !registration.decklist &&
-                !registration.bringingDecklistOnsite
-              "
-              class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+              v-if="registration.customEvent.requiresDecklist"
+              class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
             >
-              <div class="flex items-center gap-2 mb-1">
-                <ExclamationTriangleIcon class="w-4 h-4 text-yellow-600" />
-                <p class="text-sm font-medium text-yellow-800">
-                  Registration Reserved
+              <div class="flex justify-between items-center mb-3">
+                <h4 class="font-semibold text-gray-900">Decklist</h4>
+                <span
+                  v-if="registration.decklist"
+                  class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+                >
+                  ✓ Submitted
+                </span>
+                <span
+                  v-else-if="registration.bringingDecklistOnsite"
+                  class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
+                >
+                  📋 Bring On-Site
+                </span>
+                <span
+                  v-else
+                  class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full"
+                >
+                  ⚠ Required
+                </span>
+              </div>
+
+              <!-- Reserved Status Notice -->
+              <div
+                v-if="
+                  registration.status === 'reserved' &&
+                  !registration.decklist &&
+                  !registration.bringingDecklistOnsite
+                "
+                class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+              >
+                <div class="flex items-center gap-2 mb-1">
+                  <ExclamationTriangleIcon class="w-4 h-4 text-yellow-600" />
+                  <p class="text-sm font-medium text-yellow-800">
+                    Registration Reserved
+                  </p>
+                </div>
+                <p class="text-xs text-yellow-700">
+                  Your spot is reserved, but you need to complete your decklist
+                  submission to confirm your registration.
                 </p>
               </div>
-              <p class="text-xs text-yellow-700">
-                Your spot is reserved, but you need to complete your decklist
-                submission to confirm your registration.
-              </p>
-            </div>
 
-            <div
-              v-if="
-                registration.decklist && !isEditingDecklist[registration.id]
-              "
-              class="space-y-3"
-            >
-              <pre
-                class="bg-white border border-gray-200 rounded p-3 text-sm font-mono whitespace-pre-wrap"
-                >{{ registration.decklist }}</pre
+              <div
+                v-if="
+                  registration.decklist && !isEditingDecklist[registration.id]
+                "
+                class="space-y-3"
               >
-              <div class="flex flex-wrap gap-2">
-                <button
-                  @click="
-                    startEditDecklist(registration.id, registration.decklist)
-                  "
-                  class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded transition-colors duration-200"
+                <pre
+                  class="bg-white border border-gray-200 rounded p-3 text-sm font-mono whitespace-pre-wrap"
+                  >{{ registration.decklist }}</pre
                 >
-                  Edit Decklist
-                </button>
-                <button
-                  @click="setBringingOnsite(registration.id)"
-                  class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium py-2 px-3 rounded transition-colors duration-200"
-                >
-                  Bring On-Site Instead
-                </button>
-                <button
-                  @click="deleteDecklist(registration.id)"
-                  class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-3 rounded transition-colors duration-200"
-                >
-                  Delete Decklist
-                </button>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    @click="
+                      startEditDecklist(registration.id, registration.decklist)
+                    "
+                    class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded transition-colors duration-200"
+                  >
+                    Edit Decklist
+                  </button>
+                  <button
+                    @click="setBringingOnsite(registration.id)"
+                    class="bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium py-2 px-3 rounded transition-colors duration-200"
+                  >
+                    Bring On-Site Instead
+                  </button>
+                  <button
+                    @click="deleteDecklist(registration.id)"
+                    class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-3 rounded transition-colors duration-200"
+                  >
+                    Delete Decklist
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div
-              v-else-if="
-                registration.bringingDecklistOnsite &&
-                !isEditingDecklist[registration.id]
-              "
-              class="text-center py-4 bg-blue-50 border border-blue-200 rounded"
-            >
-              <div class="flex items-center justify-center gap-2 mb-2">
-                <ClipboardDocumentIcon class="w-5 h-5 text-blue-600" />
-                <p class="text-blue-800 font-medium">
-                  Bringing Decklist On-Site
+              <div
+                v-else-if="
+                  registration.bringingDecklistOnsite &&
+                  !isEditingDecklist[registration.id]
+                "
+                class="text-center py-4 bg-blue-50 border border-blue-200 rounded"
+              >
+                <div class="flex items-center justify-center gap-2 mb-2">
+                  <ClipboardDocumentIcon class="w-5 h-5 text-blue-600" />
+                  <p class="text-blue-800 font-medium">
+                    Bringing Decklist On-Site
+                  </p>
+                </div>
+                <p class="text-blue-700 text-sm mb-3">
+                  Remember to bring your completed decklist in written or
+                  printed form to the event.
                 </p>
-              </div>
-              <p class="text-blue-700 text-sm mb-3">
-                Remember to bring your completed decklist in written or printed
-                form to the event.
-              </p>
-              <button
-                @click="startEditDecklist(registration.id, '')"
-                class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors duration-200"
-              >
-                Submit Online Instead
-              </button>
-            </div>
-
-            <div
-              v-else-if="
-                !registration.decklist &&
-                !registration.bringingDecklistOnsite &&
-                !isEditingDecklist[registration.id]
-              "
-              class="text-center py-4"
-            >
-              <p class="text-gray-600 mb-4">
-                Choose how to submit your decklist:
-              </p>
-              <div class="space-y-3">
                 <button
                   @click="startEditDecklist(registration.id, '')"
-                  class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
+                  class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors duration-200"
                 >
-                  Submit Decklist Online
-                </button>
-                <button
-                  @click="setBringingOnsite(registration.id)"
-                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
-                >
-                  I'll Bring Decklist On-Site
+                  Submit Online Instead
                 </button>
               </div>
-            </div>
 
-            <!-- Decklist Editor -->
-            <div v-if="isEditingDecklist[registration.id]" class="space-y-3">
-              <textarea
-                v-model="decklistText[registration.id]"
-                class="w-full border border-gray-300 rounded-lg p-3 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                placeholder="Enter your decklist here..."
-                rows="10"
-              ></textarea>
-              <div class="flex gap-2">
-                <button
-                  @click="submitDecklist(registration.id)"
-                  :disabled="isSubmittingDecklist[registration.id]"
-                  class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
-                >
-                  {{
-                    isSubmittingDecklist[registration.id]
-                      ? "Saving..."
-                      : "Save Decklist"
-                  }}
-                </button>
-                <button
-                  @click="cancelEditDecklist(registration.id)"
-                  class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
-                >
-                  Cancel
-                </button>
+              <div
+                v-else-if="
+                  !registration.decklist &&
+                  !registration.bringingDecklistOnsite &&
+                  !isEditingDecklist[registration.id]
+                "
+                class="text-center py-4"
+              >
+                <p class="text-gray-600 mb-4">
+                  Choose how to submit your decklist:
+                </p>
+                <div class="space-y-3">
+                  <button
+                    @click="startEditDecklist(registration.id, '')"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
+                  >
+                    Submit Decklist Online
+                  </button>
+                  <button
+                    @click="setBringingOnsite(registration.id)"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
+                  >
+                    I'll Bring Decklist On-Site
+                  </button>
+                </div>
+              </div>
+
+              <!-- Decklist Editor -->
+              <div v-if="isEditingDecklist[registration.id]" class="space-y-3">
+                <textarea
+                  v-model="decklistText[registration.id]"
+                  class="w-full border border-gray-300 rounded-lg p-3 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="Enter your decklist here..."
+                  rows="10"
+                ></textarea>
+                <div class="flex gap-2">
+                  <button
+                    @click="submitDecklist(registration.id)"
+                    :disabled="isSubmittingDecklist[registration.id]"
+                    class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
+                  >
+                    {{
+                      isSubmittingDecklist[registration.id]
+                        ? "Saving..."
+                        : "Save Decklist"
+                    }}
+                  </button>
+                  <button
+                    @click="cancelEditDecklist(registration.id)"
+                    class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Event History Section - Always visible -->
+      <div class="mt-12">
+        <EventHistory :isAdmin="false" />
       </div>
     </div>
   </div>
