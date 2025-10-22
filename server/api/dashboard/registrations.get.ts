@@ -12,8 +12,28 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Get user from Supabase authentication
-    const supabaseUser = await serverSupabaseUser(event);
+    let supabaseUser = null;
+
+    // Try Supabase authentication FIRST (real auth takes priority)
+    try {
+      supabaseUser = await serverSupabaseUser(event);
+    } catch (supabaseError) {
+      console.log("Supabase auth failed:", supabaseError);
+      // Continue without Supabase auth
+    }
+
+    // Only fallback to dev authentication if no Supabase user AND in development
+    if (!supabaseUser && process.env.NODE_ENV !== "production") {
+      const devUserId = getCookie(event, "dev-user-id");
+      const devUserEmail = getCookie(event, "dev-user-email");
+
+      if (devUserId && devUserEmail) {
+        supabaseUser = {
+          id: devUserId,
+          email: devUserEmail,
+        } as any;
+      }
+    }
 
     if (!supabaseUser) {
       throw createError({
@@ -85,7 +105,9 @@ export default defineEventHandler(async (event) => {
     console.error("Dashboard registrations error:", error);
     throw createError({
       statusCode: 500,
-      statusMessage: "Internal server error",
+      statusMessage:
+        "Internal server error: " +
+        (error instanceof Error ? error.message : String(error)),
     });
   }
 });

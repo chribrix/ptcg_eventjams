@@ -4,13 +4,26 @@ import { ref, onMounted, watch } from "vue";
 const userName = ref<string | null>(null);
 const supabase = useSupabaseClient();
 
+// Use our enhanced auth composable
+const { user: authUser, checkDevAuth, clearDevAuth } = useAuth();
+
 // Admin composable - now uses server-side verification
-const { isAdmin, user, loading } = useAdmin();
+const { isAdmin, user: adminUser, loading } = useAdmin();
 
 // Logout function
 const logout = async () => {
   try {
     await supabase.auth.signOut();
+
+    // Clear dev cookies and state if in dev mode
+    if (process.dev) {
+      document.cookie =
+        "dev-user-id=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+      document.cookie =
+        "dev-user-email=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+      clearDevAuth();
+    }
+
     userName.value = null;
     // Redirect to home page after logout
     await navigateTo("/");
@@ -20,22 +33,28 @@ const logout = async () => {
 };
 
 onMounted(async () => {
+  // Check Supabase auth first
   const { data: sessionData } = await supabase.auth.getSession();
   const sessionUser = sessionData?.session?.user;
 
   if (sessionUser) {
     userName.value = sessionUser.user_metadata.name || sessionUser.email;
   }
+  // Don't automatically check dev auth - let user trigger it manually
 });
 
 // Watch for user authentication changes
-watch(user, (newUser) => {
-  if (newUser) {
-    userName.value = newUser.user_metadata?.name || newUser.email;
-  } else {
-    userName.value = null;
-  }
-});
+watch(
+  authUser,
+  (newUser) => {
+    if (newUser) {
+      userName.value = newUser.user_metadata?.name || newUser.email;
+    } else {
+      userName.value = null;
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -104,6 +123,9 @@ watch(user, (newUser) => {
     <div class="container mx-auto p-4">
       <slot />
     </div>
+
+    <!-- Dev Login component - only shows in development -->
+    <DevLogin />
   </div>
 </template>
 

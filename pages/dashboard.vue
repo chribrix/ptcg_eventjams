@@ -87,38 +87,14 @@
           <!-- Event Details -->
           <div class="space-y-3">
             <div class="flex items-center gap-2 text-gray-600">
-              <svg
-                class="w-4 h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 9l6 6 6-6M2 17h20"
-                ></path>
-              </svg>
+              <CalendarIcon class="w-4 h-4 flex-shrink-0" />
               <span class="text-sm">{{
                 formatEventDate(registration.customEvent.eventDate)
               }}</span>
             </div>
 
             <div class="flex items-center gap-2 text-gray-600">
-              <svg
-                class="w-4 h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                ></path>
-              </svg>
+              <MapPinIcon class="w-4 h-4 flex-shrink-0" />
               <span class="text-sm">{{ registration.customEvent.venue }}</span>
             </div>
 
@@ -126,38 +102,14 @@
               v-if="registration.customEvent.participationFee"
               class="flex items-center gap-2 text-gray-600"
             >
-              <svg
-                class="w-4 h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                ></path>
-              </svg>
+              <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
               <span class="text-sm"
                 >€{{ registration.customEvent.participationFee }}</span
               >
             </div>
 
             <div class="flex items-center gap-2 text-gray-600">
-              <svg
-                class="w-4 h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 9l6 6 6-6M2 17h20"
-                ></path>
-              </svg>
+              <ClockIcon class="w-4 h-4 flex-shrink-0" />
               <span class="text-sm">
                 Registered:
                 {{ formatRegistrationDate(registration.registeredAt) }}
@@ -202,19 +154,7 @@
               class="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
             >
               <div class="flex items-center gap-2 mb-1">
-                <svg
-                  class="w-4 h-4 text-yellow-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-                  ></path>
-                </svg>
+                <ExclamationTriangleIcon class="w-4 h-4 text-yellow-600" />
                 <p class="text-sm font-medium text-yellow-800">
                   Registration Reserved
                 </p>
@@ -267,19 +207,7 @@
               class="text-center py-4 bg-blue-50 border border-blue-200 rounded"
             >
               <div class="flex items-center justify-center gap-2 mb-2">
-                <svg
-                  class="w-5 h-5 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />
-                </svg>
+                <ClipboardDocumentIcon class="w-5 h-5 text-blue-600" />
                 <p class="text-blue-800 font-medium">
                   Bringing Decklist On-Site
                 </p>
@@ -360,6 +288,16 @@
 
 <script setup lang="ts">
 // Page is automatically protected by auth.global.ts middleware
+import {
+  CalendarIcon,
+  MapPinIcon,
+  CurrencyDollarIcon,
+  ClockIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  ClipboardDocumentIcon,
+} from "@heroicons/vue/24/outline";
 
 interface EventRegistration {
   id: string;
@@ -385,7 +323,7 @@ interface EventRegistration {
 }
 
 const { $client: supabase } = useNuxtApp();
-const user = useSupabaseUser();
+const { user } = useAuth();
 
 const registrations = ref<EventRegistration[]>([]);
 const isLoading = ref(true);
