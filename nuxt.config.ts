@@ -13,7 +13,33 @@ export default defineNuxtConfig({
     "@nuxtjs/tailwindcss",
     "@nuxt/test-utils/module",
     "@samk-dev/nuxt-vcalendar",
+    "@nuxtjs/i18n",
   ],
+  i18n: {
+    locales: [
+      {
+        code: "en",
+        iso: "en-US",
+        name: "English",
+        file: "en.json",
+      },
+      {
+        code: "de",
+        iso: "de-DE",
+        name: "Deutsch",
+        file: "de.json",
+      },
+    ],
+    langDir: "locales",
+    defaultLocale: "en",
+    strategy: "prefix_except_default",
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: "i18n_redirected",
+      redirectOn: "root",
+      alwaysRedirect: false,
+    },
+  },
   supabase: {
     redirectOptions: {
       login: "/",

@@ -3,9 +3,15 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Event History</h2>
+        <h2 class="text-2xl font-bold text-gray-900">
+          {{ t("eventHistory.title") }}
+        </h2>
         <p class="text-gray-600 mt-1">
-          {{ isAdmin ? "All past events" : "Events you participated in" }}
+          {{
+            isAdmin
+              ? t("eventHistory.adminSubtitle")
+              : t("eventHistory.userSubtitle")
+          }}
         </p>
       </div>
 
@@ -16,7 +22,7 @@
           @change="fetchEvents"
           class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
-          <option value="">All Years</option>
+          <option value="">{{ t("eventHistory.allYears") }}</option>
           <option v-for="year in availableYears" :key="year" :value="year">
             {{ year }}
           </option>
@@ -27,10 +33,10 @@
           @change="sortEvents"
           class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
-          <option value="date-desc">Newest First</option>
-          <option value="date-asc">Oldest First</option>
-          <option value="name-asc">Name A-Z</option>
-          <option value="name-desc">Name Z-A</option>
+          <option value="date-desc">{{ t("eventHistory.newestFirst") }}</option>
+          <option value="date-asc">{{ t("eventHistory.oldestFirst") }}</option>
+          <option value="name-asc">{{ t("eventHistory.nameAZ") }}</option>
+          <option value="name-desc">{{ t("eventHistory.nameZA") }}</option>
         </select>
       </div>
     </div>
@@ -39,7 +45,7 @@
     <div v-if="loading" class="flex items-center justify-center py-12">
       <div class="flex items-center gap-3 text-gray-600">
         <ArrowPathIcon class="w-5 h-5 animate-spin" />
-        <span>Loading event history...</span>
+        <span>{{ t("eventHistory.loadingHistory") }}</span>
       </div>
     </div>
 
@@ -50,7 +56,7 @@
     >
       <ExclamationTriangleIcon class="w-8 h-8 text-red-500 mx-auto mb-3" />
       <h3 class="text-lg font-semibold text-red-800 mb-2">
-        Failed to Load Events
+        {{ t("eventHistory.failedToLoad") }}
       </h3>
       <p class="text-red-600 mb-4">{{ error }}</p>
       <button
@@ -67,12 +73,14 @@
       class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center"
     >
       <CalendarDaysIcon class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-      <h3 class="text-xl font-semibold text-gray-900 mb-2">No Past Events</h3>
+      <h3 class="text-xl font-semibold text-gray-900 mb-2">
+        {{ t("eventHistory.noPastEvents") }}
+      </h3>
       <p class="text-gray-600">
         {{
           isAdmin
-            ? "No events have been completed yet."
-            : "You haven't participated in any completed events yet."
+            ? t("eventHistory.noEventsAdmin")
+            : t("eventHistory.noEventsUser")
         }}
       </p>
     </div>
@@ -148,11 +156,7 @@
                 <UsersIcon class="w-4 h-4" />
                 <span class="font-medium">{{ event.totalParticipants }}</span>
                 <span class="text-gray-500">
-                  {{
-                    event.totalParticipants === 1
-                      ? "participant"
-                      : "participants"
-                  }}
+                  {{ t("common.participants") }}
                 </span>
               </div>
 
@@ -193,9 +197,10 @@
                 class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
               >
                 {{
-                  expandedEvents.has(event.id) ? "Hide" : "View"
+                  expandedEvents.has(event.id)
+                    ? t("eventHistory.hideParticipants")
+                    : t("eventHistory.viewParticipants")
                 }}
-                Participants
               </button>
             </div>
           </div>
@@ -207,7 +212,9 @@
           class="border-t border-gray-200 bg-white"
         >
           <div class="p-4">
-            <h4 class="font-semibold text-gray-900 mb-3">Event Participants</h4>
+            <h4 class="font-semibold text-gray-900 mb-3">
+              {{ t("eventHistory.eventParticipants") }}
+            </h4>
             <div
               v-if="event.participants && event.participants.length > 0"
               class="space-y-2"
@@ -260,7 +267,7 @@
               </div>
             </div>
             <div v-else class="text-center text-gray-500 py-4">
-              No participants found for this event.
+              {{ t("eventHistory.noParticipants") }}
             </div>
           </div>
         </div>
@@ -270,43 +277,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, onMounted, computed } from "vue";
 import {
-  CalendarDaysIcon,
+  CalendarIcon,
   MapPinIcon,
-  CurrencyDollarIcon,
   UsersIcon,
-  UserIcon,
-  DocumentTextIcon,
-  ArrowPathIcon,
-  ExclamationTriangleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  TrophyIcon,
+  ExclamationCircleIcon,
 } from "@heroicons/vue/24/outline";
+
+// Use i18n for translations
+const { t } = useI18n();
+
+interface EventParticipant {
+  id: string;
+  playerId: string;
+  status: string;
+  placement?: number;
+  registeredAt: string;
+  player: {
+    id: string;
+    name: string;
+    playerId?: string;
+  };
+}
 
 interface EventHistoryItem {
   id: string;
   name: string;
-  venue: string;
+  description: string | null;
   eventDate: string;
-  participationFee?: string;
-  description?: string;
+  venue: string;
+  maxParticipants?: number;
+  participationFee?: string | number;
   status: string;
   requiresDecklist: boolean;
   totalParticipants: number;
+  participants?: EventParticipant[];
   userRegistration?: {
     id: string;
     status: string;
-    registeredAt: string;
-  };
-  participants?: Array<{
-    id: string;
-    status: string;
     placement?: number;
-    player: {
-      id: string;
-      name: string;
-      playerId?: string;
-    };
-  }>;
+  };
 }
 
 const props = defineProps<{

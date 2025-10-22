@@ -65,6 +65,9 @@ watch(
   },
   { immediate: true }
 );
+
+// Use i18n for translations
+const { t } = useI18n();
 </script>
 
 <template>
@@ -94,7 +97,7 @@ watch(
           >
             <UserCircleIcon class="w-5 h-5 text-blue-600" />
             <span class="text-blue-800 font-semibold"
-              >Hello, {{ userName }}</span
+              >{{ t("nav.hello") }}, {{ userName }}</span
             >
           </div>
 
@@ -104,7 +107,7 @@ watch(
             <div class="hidden md:flex items-center space-x-1">
               <NuxtLink to="/eventlist" class="nav-link">
                 <CalendarDaysIcon class="w-4 h-4" />
-                <span>Events</span>
+                <span>{{ t("nav.events") }}</span>
               </NuxtLink>
 
               <!-- Dashboard for logged-in users -->
@@ -114,12 +117,12 @@ watch(
                 class="nav-link-primary"
               >
                 <Cog6ToothIcon class="w-4 h-4" />
-                <span>Dashboard</span>
+                <span>{{ t("nav.dashboard") }}</span>
               </NuxtLink>
 
               <NuxtLink v-if="userName" to="/importer" class="nav-link">
                 <DocumentIcon class="w-4 h-4" />
-                <span>Importer</span>
+                <span>{{ t("nav.importer") }}</span>
               </NuxtLink>
             </div>
 
@@ -134,38 +137,41 @@ watch(
                 <div class="admin-dropdown-content">
                   <NuxtLink to="/admin" class="admin-link">
                     <Cog6ToothIcon class="w-4 h-4" />
-                    <span>Dashboard</span>
+                    <span>{{ t("nav.dashboard") }}</span>
                   </NuxtLink>
                   <NuxtLink to="/admin/custom-events" class="admin-link">
                     <CalendarDaysIcon class="w-4 h-4" />
-                    <span>Manage Events</span>
+                    <span>{{ t("nav.manageEvents") }}</span>
                   </NuxtLink>
                   <NuxtLink to="/admin/players" class="admin-link">
                     <UserCircleIcon class="w-4 h-4" />
-                    <span>Manage Players</span>
+                    <span>{{ t("nav.managePlayers") }}</span>
                   </NuxtLink>
                   <NuxtLink to="/admin/events/history" class="admin-link">
                     <ClockIcon class="w-4 h-4" />
-                    <span>Event History</span>
+                    <span>{{ t("nav.eventHistory") }}</span>
                   </NuxtLink>
                 </div>
               </div>
             </div>
 
-            <!-- Auth Actions -->
+            <!-- Language Switcher & Auth Actions -->
             <div
-              class="flex items-center space-x-2 ml-4 pl-4 border-l border-gray-200"
+              class="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200"
             >
+              <!-- Language Switcher -->
+              <LanguageSwitcher />
+
               <!-- Logout button for authenticated users -->
               <button v-if="userName" @click="logout" class="logout-button">
                 <ArrowRightOnRectangleIcon class="w-4 h-4" />
-                <span class="hidden sm:inline">Logout</span>
+                <span class="hidden sm:inline">{{ t("nav.logout") }}</span>
               </button>
 
               <!-- Sign in/register for non-authenticated users -->
               <NuxtLink v-else to="/register" class="signin-button">
                 <UserPlusIcon class="w-4 h-4" />
-                <span>Sign In</span>
+                <span>{{ t("nav.login") }}</span>
               </NuxtLink>
             </div>
           </div>
@@ -178,7 +184,7 @@ watch(
           >
             <UserCircleIcon class="w-4 h-4 text-blue-600" />
             <span class="text-blue-800 font-medium text-sm"
-              >Hello, {{ userName }}</span
+              >{{ t("nav.hello") }}, {{ userName }}</span
             >
           </div>
         </div>

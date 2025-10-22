@@ -3,9 +3,11 @@
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-8 text-center">
-        <h1 class="text-4xl font-bold text-gray-900 mb-2">My Dashboard</h1>
+        <h1 class="text-4xl font-bold text-gray-900 mb-2">
+          {{ t("dashboard.title") }}
+        </h1>
         <p class="text-lg text-gray-600">
-          Your registered events and decklists
+          {{ t("dashboard.subtitle") }}
         </p>
       </div>
 
@@ -15,7 +17,7 @@
           <div
             class="w-5 h-5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"
           ></div>
-          <span class="text-lg">Loading your registrations...</span>
+          <span class="text-lg">{{ t("dashboard.loadingRegistrations") }}</span>
         </div>
       </div>
 
@@ -25,14 +27,14 @@
         class="bg-red-50 border border-red-200 rounded-lg p-6 text-center"
       >
         <h3 class="text-xl font-semibold text-red-800 mb-2">
-          Error loading dashboard
+          {{ t("dashboard.errorLoading") }}
         </h3>
         <p class="text-red-600 mb-4">{{ error }}</p>
         <button
           @click="fetchRegistrations"
           class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200"
         >
-          Try Again
+          {{ t("dashboard.tryAgain") }}
         </button>
       </div>
 
@@ -58,7 +60,7 @@
       <!-- Current Registrations List -->
       <div v-else>
         <h2 class="text-2xl font-bold text-gray-900 mb-6">
-          Current Registrations
+          {{ t("dashboard.currentRegistrations") }}
         </h2>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
           <div
@@ -311,6 +313,9 @@ import {
   CheckCircleIcon,
   ClipboardDocumentIcon,
 } from "@heroicons/vue/24/outline";
+
+// Use i18n for translations
+const { t } = useI18n();
 
 interface EventRegistration {
   id: string;
