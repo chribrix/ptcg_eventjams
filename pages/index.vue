@@ -1,74 +1,56 @@
 <template>
-  <div
-    class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"
-  >
+  <div>
     <!-- Hero Section -->
     <div class="relative overflow-hidden">
-      <!-- Background Pattern -->
-      <div
-        class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700"
-      ></div>
-      <div
-        class="absolute inset-0 bg-gradient-to-br from-transparent via-blue-500/20 to-purple-500/30"
-      ></div>
+      <!-- No additional background needed - inherits from layout -->
 
-      <div
-        class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24"
-      >
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div class="text-center">
           <!-- Main Heading -->
-          <div class="flex justify-center mb-8">
-            <div
-              class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20"
+          <div class="flex justify-center items-center mb-2">
+            <SparklesIcon class="w-6 h-6 md:w-7 md:h-7 text-yellow-500 mr-3" />
+            <h1
+              class="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight"
             >
-              <SparklesIcon class="w-5 h-5 text-yellow-300 mr-2" />
-              <span class="text-white/90 text-sm font-medium"
-                >Tournament Management Platform</span
+              PTCG Event
+              <span
+                class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
               >
-            </div>
+                Jams
+              </span>
+            </h1>
           </div>
-
-          <h1
-            class="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight"
-          >
-            PTCG Event
-            <span
-              class="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent"
-            >
-              Jams
-            </span>
-          </h1>
           <p
-            class="text-xl md:text-2xl text-blue-100 mb-12 max-w-3xl mx-auto leading-relaxed"
+            class="text-base md:text-lg text-gray-600 mb-4 max-w-2xl mx-auto leading-relaxed"
           >
             Discover, register, and participate in Pokemon TCG tournaments
             worldwide. Connect with the community and compete in style.
           </p>
 
           <!-- Action Buttons -->
-          <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+          <div class="flex flex-col sm:flex-row gap-3 justify-center mb-4">
             <NuxtLink
               to="/events"
-              class="group inline-flex items-center px-8 py-4 bg-white text-blue-700 font-semibold rounded-xl hover:bg-blue-50 transform hover:scale-105 transition-all duration-200 shadow-xl hover:shadow-2xl"
+              class="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              <CalendarIcon class="w-5 h-5 mr-2 group-hover:animate-pulse" />
+              <CalendarIcon class="w-4 h-4 mr-2 group-hover:animate-pulse" />
               Browse Events
               <ArrowRightIcon
-                class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
+                class="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform"
               />
             </NuxtLink>
             <NuxtLink
               v-if="!userName"
               to="/login"
-              class="group inline-flex items-center px-8 py-4 border-2 border-white/30 text-white font-semibold rounded-xl hover:bg-white/10 backdrop-blur-sm transform hover:scale-105 transition-all duration-200"
+              class="group inline-flex items-center px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 transform hover:scale-105 transition-all duration-200"
             >
-              <UserIcon class="w-5 h-5 mr-2" />
+              <UserIcon class="w-4 h-4 mr-2" />
               Get Started
             </NuxtLink>
           </div>
 
           <!-- Feature Highlights -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <!--<div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div
               class="group bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300"
             >
@@ -119,32 +101,34 @@
                 events
               </p>
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+    <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 scale-110 origin-top">
         <!-- Event Calendar Card -->
         <div
-          class="group bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300"
+          class="group bg-white rounded-3xl shadow-2xl border-2 border-blue-100 overflow-hidden hover:shadow-3xl hover:border-blue-200 transition-all duration-300 transform hover:scale-[1.02]"
         >
-          <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-8 py-6">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <div
-                  class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3"
-                >
-                  <CalendarDaysIcon class="w-6 h-6 text-white" />
-                </div>
-                <h2 class="text-2xl font-bold text-white">Event Calendar</h2>
+          <div class="bg-gradient-to-r from-blue-600 to-purple-700 px-10 py-10">
+            <div class="flex items-center">
+              <div
+                class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mr-5 group-hover:scale-110 transition-transform duration-300"
+              >
+                <CalendarDaysIcon class="w-8 h-8 text-white" />
               </div>
-              <div class="opacity-75 text-white text-sm">Interactive View</div>
+              <div>
+                <h2 class="text-3xl font-bold text-white">Event Calendar</h2>
+                <p class="text-blue-100 text-base">
+                  Discover upcoming tournaments
+                </p>
+              </div>
             </div>
           </div>
-          <div class="p-8">
+          <div class="p-10">
             <EventCalendar />
           </div>
         </div>
@@ -152,24 +136,26 @@
         <!-- User Dashboard or Welcome Card -->
         <div
           v-if="userName"
-          class="group bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300"
+          class="group bg-white rounded-3xl shadow-2xl border-2 border-emerald-100 overflow-hidden hover:shadow-3xl hover:border-emerald-200 transition-all duration-300 transform hover:scale-[1.02]"
         >
-          <div class="bg-gradient-to-r from-emerald-500 to-teal-600 px-8 py-6">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <div
-                  class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3"
-                >
-                  <UserCircleIcon class="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 class="text-2xl font-bold text-white">Welcome back!</h2>
-                  <p class="text-emerald-100 text-sm">{{ userName }}</p>
-                </div>
+          <div
+            class="bg-gradient-to-r from-emerald-600 to-teal-700 px-10 py-10"
+          >
+            <div class="flex items-center">
+              <div
+                class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mr-5 group-hover:scale-110 transition-transform duration-300"
+              >
+                <UserCircleIcon class="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h2 class="text-3xl font-bold text-white">My Dashboard</h2>
+                <p class="text-emerald-100 text-base">
+                  Welcome back, {{ userName }}!
+                </p>
               </div>
             </div>
           </div>
-          <div class="p-8">
+          <div class="p-10">
             <UserEventRegistrations />
           </div>
         </div>
@@ -177,19 +163,26 @@
         <!-- Getting Started Card (for non-logged users) -->
         <div
           v-else
-          class="group bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300"
+          class="group bg-white rounded-3xl shadow-2xl border-2 border-violet-100 overflow-hidden hover:shadow-3xl hover:border-violet-200 transition-all duration-300 transform hover:scale-[1.02]"
         >
-          <div class="bg-gradient-to-r from-violet-500 to-purple-600 px-8 py-6">
+          <div
+            class="bg-gradient-to-r from-violet-600 to-purple-700 px-10 py-10"
+          >
             <div class="flex items-center">
               <div
-                class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3"
+                class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mr-5 group-hover:scale-110 transition-transform duration-300"
               >
-                <RocketLaunchIcon class="w-6 h-6 text-white" />
+                <RocketLaunchIcon class="w-8 h-8 text-white" />
               </div>
-              <h2 class="text-2xl font-bold text-white">Getting Started</h2>
+              <div>
+                <h2 class="text-3xl font-bold text-white">Get Started</h2>
+                <p class="text-violet-100 text-base">
+                  Join the community today - it's free!
+                </p>
+              </div>
             </div>
           </div>
-          <div class="p-8 space-y-6">
+          <div class="p-10 space-y-6">
             <!-- Feature List -->
             <div class="space-y-4">
               <div class="flex items-start space-x-4 group">

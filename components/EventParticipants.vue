@@ -1,9 +1,16 @@
 <template>
   <div
-    class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 shadow-sm overflow-hidden"
+    :class="
+      compact
+        ? ''
+        : 'bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 shadow-sm overflow-hidden'
+    "
   >
-    <!-- Header -->
-    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+    <!-- Header (only in non-compact mode) -->
+    <div
+      v-if="!compact"
+      class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4"
+    >
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <div
@@ -30,7 +37,7 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="p-4">
+    <div v-if="isLoading" :class="compact ? 'p-2' : 'p-4'">
       <div class="flex items-center gap-2 text-gray-600">
         <div
           class="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"
@@ -40,7 +47,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="p-4">
+    <div v-else-if="error" :class="compact ? 'p-2' : 'p-4'">
       <div class="text-red-600 text-sm">
         Failed to load participants: {{ error }}
       </div>
@@ -49,43 +56,70 @@
     <!-- Empty State -->
     <div
       v-else-if="participants.length === 0"
-      class="p-4 text-center text-gray-500"
+      :class="
+        compact
+          ? 'p-2 text-center text-gray-500'
+          : 'p-4 text-center text-gray-500'
+      "
     >
       <p>No participants registered yet.</p>
     </div>
 
     <!-- Participants List -->
-    <div v-else class="p-6">
+    <div v-else :class="compact ? '' : 'p-6'">
       <div class="grid gap-4">
         <div
           v-for="participant in participants"
           :key="participant.id"
-          class="group bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200"
+          :class="
+            compact
+              ? 'group bg-gray-50 rounded-lg border border-gray-200 p-3 hover:bg-gray-100 transition-all duration-200'
+              : 'group bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200'
+          "
         >
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4">
+            <div
+              class="flex items-center"
+              :class="compact ? 'space-x-3' : 'space-x-4'"
+            >
               <div class="relative flex-shrink-0">
                 <!-- Player Avatar with status indicator -->
                 <div
-                  class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg"
+                  :class="
+                    compact
+                      ? 'w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-md'
+                      : 'w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg'
+                  "
                 >
                   {{ getInitials(participant.playerName) }}
                 </div>
                 <div
-                  :class="getStatusIndicatorClass(participant.status)"
-                  class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white shadow-sm"
+                  :class="[
+                    getStatusIndicatorClass(participant.status),
+                    compact ? 'w-2.5 h-2.5' : 'w-3 h-3',
+                  ]"
+                  class="absolute -bottom-1 -right-1 rounded-full border-2 border-white shadow-sm"
                 ></div>
               </div>
 
               <!-- Player Info -->
               <div class="min-w-0 flex-1">
                 <div class="flex items-center space-x-2">
-                  <UserIcon class="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <p class="font-semibold text-gray-900 truncate">
+                  <UserIcon
+                    :class="compact ? 'w-3 h-3' : 'w-4 h-4'"
+                    class="text-gray-400 flex-shrink-0"
+                  />
+                  <p
+                    :class="
+                      compact
+                        ? 'font-medium text-gray-900 truncate'
+                        : 'font-semibold text-gray-900 truncate'
+                    "
+                  >
                     {{ participant.playerName }}
                   </p>
                 </div>
-                <div class="flex items-center space-x-2 mt-1">
+                <div v-if="!compact" class="flex items-center space-x-2 mt-1">
                   <ClockIcon class="w-3 h-3 text-gray-400 flex-shrink-0" />
                   <p class="text-xs text-gray-500">
                     Registered
@@ -99,45 +133,15 @@
             <div class="flex items-center space-x-3">
               <!-- Registration Status -->
               <span
-                :class="getRegistrationBadgeClass(participant.status)"
+                :class="getParticipantStatusBadgeClass(participant)"
                 class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
               >
                 <div
-                  :class="getStatusDotClass(participant.status)"
+                  :class="getParticipantStatusDotClass(participant)"
                   class="w-2 h-2 rounded-full mr-2"
                 ></div>
-                {{
-                  participant.status === "registered" ? "Confirmed" : "Reserved"
-                }}
+                {{ getParticipantStatusLabel(participant) }}
               </span>
-
-              <!-- Decklist Status (if event requires decklist) -->
-              <div v-if="showDecklistStatus" class="flex items-center">
-                <span
-                  v-if="participant.hasDecklistSubmitted"
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200"
-                  title="Decklist submitted online"
-                >
-                  <CheckCircleIcon class="w-3 h-3" />
-                  Online
-                </span>
-                <span
-                  v-else-if="participant.isBringingDecklistOnsite"
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200"
-                  title="Bringing decklist on-site"
-                >
-                  <DocumentTextIcon class="w-3 h-3" />
-                  On-site
-                </span>
-                <span
-                  v-else
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200"
-                  title="Decklist pending"
-                >
-                  <ExclamationTriangleIcon class="w-3 h-3" />
-                  Pending
-                </span>
-              </div>
             </div>
           </div>
         </div>
@@ -178,10 +182,12 @@ interface ParticipantsResponse {
 interface Props {
   eventId: string;
   showDecklistStatus?: boolean;
+  compact?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showDecklistStatus: false,
+  compact: false,
 });
 
 const participants = ref<Participant[]>([]);
@@ -243,6 +249,64 @@ async function fetchParticipants(): Promise<void> {
 
 async function refreshParticipants(): Promise<void> {
   await fetchParticipants();
+}
+
+function getParticipantStatusLabel(participant: Participant): string {
+  // If event doesn't require decklist, just show registration status
+  if (!props.showDecklistStatus) {
+    return participant.status === "registered" ? "Registered" : "Reserved";
+  }
+
+  // If event requires decklist, check decklist submission regardless of registration status
+  if (
+    participant.hasDecklistSubmitted ||
+    participant.isBringingDecklistOnsite
+  ) {
+    return "Registered";
+  }
+
+  // If event requires decklist but user hasn't submitted it
+  return "No deck submitted";
+}
+
+function getParticipantStatusBadgeClass(participant: Participant): string {
+  // If event doesn't require decklist, just show registration status
+  if (!props.showDecklistStatus) {
+    return participant.status === "registered"
+      ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+      : "bg-amber-100 text-amber-800 border border-amber-200";
+  }
+
+  // If event requires decklist, check decklist submission regardless of registration status
+  if (
+    participant.hasDecklistSubmitted ||
+    participant.isBringingDecklistOnsite
+  ) {
+    return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+  }
+
+  // If event requires decklist but user hasn't submitted it
+  return "bg-amber-100 text-amber-800 border border-amber-200";
+}
+
+function getParticipantStatusDotClass(participant: Participant): string {
+  // If event doesn't require decklist, just show registration status
+  if (!props.showDecklistStatus) {
+    return participant.status === "registered"
+      ? "bg-emerald-500"
+      : "bg-amber-500";
+  }
+
+  // If event requires decklist, check decklist submission regardless of registration status
+  if (
+    participant.hasDecklistSubmitted ||
+    participant.isBringingDecklistOnsite
+  ) {
+    return "bg-emerald-500";
+  }
+
+  // If event requires decklist but user hasn't submitted it
+  return "bg-amber-500";
 }
 
 function getRegistrationBadgeClass(status: string): string {

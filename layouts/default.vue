@@ -68,10 +68,30 @@ watch(
 
 // Use i18n for translations
 const { t } = useI18n();
+
+// Admin dropdown state
+const adminDropdownOpen = ref(false);
+let hideDropdownTimer: ReturnType<typeof setTimeout> | null = null;
+
+const showAdminDropdown = () => {
+  if (hideDropdownTimer) {
+    clearTimeout(hideDropdownTimer);
+    hideDropdownTimer = null;
+  }
+  adminDropdownOpen.value = true;
+};
+
+const hideAdminDropdown = () => {
+  hideDropdownTimer = setTimeout(() => {
+    adminDropdownOpen.value = false;
+  }, 150); // Small delay to allow moving between elements
+};
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+  <div
+    class="min-h-screen bg-gradient-to-r from-white via-purple-50 to-purple-100"
+  >
     <header class="bg-white shadow-lg border-b border-gray-200">
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
@@ -127,27 +147,51 @@ const { t } = useI18n();
             </div>
 
             <!-- Admin Dropdown -->
-            <div v-if="isAdmin" class="relative">
-              <div class="admin-dropdown">
+            <div
+              v-if="isAdmin"
+              class="relative"
+              @mouseleave="hideAdminDropdown"
+            >
+              <div class="admin-dropdown" @mouseenter="showAdminDropdown">
                 <button class="admin-menu-button">
                   <Cog6ToothIcon class="w-4 h-4" />
                   <span>Admin</span>
                   <ChevronDownIcon class="w-4 h-4" />
                 </button>
-                <div class="admin-dropdown-content">
-                  <NuxtLink to="/admin" class="admin-link">
+                <div
+                  v-show="adminDropdownOpen"
+                  class="admin-dropdown-content"
+                  @mouseenter="showAdminDropdown"
+                >
+                  <NuxtLink
+                    to="/admin"
+                    class="admin-link"
+                    @click="hideAdminDropdown"
+                  >
                     <Cog6ToothIcon class="w-4 h-4" />
                     <span>{{ t("nav.dashboard") }}</span>
                   </NuxtLink>
-                  <NuxtLink to="/admin/custom-events" class="admin-link">
+                  <NuxtLink
+                    to="/admin/custom-events"
+                    class="admin-link"
+                    @click="hideAdminDropdown"
+                  >
                     <CalendarDaysIcon class="w-4 h-4" />
                     <span>{{ t("nav.manageEvents") }}</span>
                   </NuxtLink>
-                  <NuxtLink to="/admin/players" class="admin-link">
+                  <NuxtLink
+                    to="/admin/players"
+                    class="admin-link"
+                    @click="hideAdminDropdown"
+                  >
                     <UserCircleIcon class="w-4 h-4" />
                     <span>{{ t("nav.managePlayers") }}</span>
                   </NuxtLink>
-                  <NuxtLink to="/admin/events/history" class="admin-link">
+                  <NuxtLink
+                    to="/admin/events/history"
+                    class="admin-link"
+                    @click="hideAdminDropdown"
+                  >
                     <ClockIcon class="w-4 h-4" />
                     <span>{{ t("nav.eventHistory") }}</span>
                   </NuxtLink>
@@ -277,11 +321,10 @@ const { t } = useI18n();
 }
 
 .admin-dropdown-content {
-  display: none;
   position: absolute;
   right: 0;
   top: 100%;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
   width: 12rem;
   background-color: white;
   border-radius: 0.75rem;
@@ -292,19 +335,15 @@ const { t } = useI18n();
   overflow: hidden;
 }
 
-/* Add a pseudo-element to bridge the gap */
+/* Add padding area to make hovering easier */
 .admin-dropdown-content::before {
   content: "";
   position: absolute;
-  top: -0.25rem;
-  left: 0;
-  right: 0;
-  height: 0.25rem;
+  top: -0.5rem;
+  left: -1rem;
+  right: -1rem;
+  height: 0.5rem;
   background: transparent;
-}
-
-.admin-dropdown:hover .admin-dropdown-content {
-  display: block;
 }
 
 .admin-link {

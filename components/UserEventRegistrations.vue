@@ -196,28 +196,68 @@
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-3 pt-2">
               <!-- View Participants Button -->
-              <button
-                @click="toggleParticipants(registration.customEventId)"
-                class="group flex items-center px-4 py-2 bg-gray-50 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 transition-all duration-200 border border-gray-200 hover:border-gray-300"
-              >
-                <UsersIcon
-                  class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform"
-                />
-                {{
-                  expandedParticipants[registration.customEventId]
-                    ? "Hide"
-                    : "View"
-                }}
-                Participants
-                <ChevronDownIcon
-                  :class="[
-                    'w-4 h-4 ml-2 transition-all duration-200',
-                    expandedParticipants[registration.customEventId]
-                      ? 'rotate-180 text-blue-600'
-                      : 'group-hover:text-gray-900',
-                  ]"
-                />
-              </button>
+              <div class="relative">
+                <button
+                  @click="toggleParticipantsPopover(registration.customEventId)"
+                  class="group flex items-center px-4 py-2 bg-gray-50 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 transition-all duration-200 border border-gray-200 hover:border-gray-300"
+                >
+                  <UsersIcon
+                    class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform"
+                  />
+                  View Participants
+                </button>
+
+                <!-- Participants Popover Portal -->
+                <Teleport to="body">
+                  <Transition
+                    enter-active-class="transition-all duration-200 ease-out"
+                    enter-from-class="opacity-0 scale-95"
+                    enter-to-class="opacity-100 scale-100"
+                    leave-active-class="transition-all duration-150 ease-in"
+                    leave-from-class="opacity-100 scale-100"
+                    leave-to-class="opacity-0 scale-95"
+                  >
+                    <div
+                      v-if="activePopover === registration.customEventId"
+                      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                      @click="closePopover"
+                    >
+                      <div
+                        class="w-[600px] max-w-[95vw] max-h-[85vh] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden"
+                        @click.stop
+                      >
+                        <!-- Popover Header -->
+                        <div
+                          class="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4"
+                        >
+                          <div class="flex items-center justify-between">
+                            <h3 class="text-white font-semibold text-lg">
+                              Event Participants
+                            </h3>
+                            <button
+                              @click="closePopover()"
+                              class="text-white/80 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-lg"
+                            >
+                              <XMarkIcon class="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Popover Content -->
+                        <div class="max-h-96 overflow-y-auto p-6">
+                          <EventParticipants
+                            :event-id="registration.customEventId"
+                            :show-decklist-status="
+                              registration.customEvent.requiresDecklist
+                            "
+                            :compact="true"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </Transition>
+                </Teleport>
+              </div>
 
               <!-- Manage Registration Button -->
               <NuxtLink
@@ -259,30 +299,6 @@
                 {{ getCancellationMessage(registration) }}
               </div>
             </div>
-
-            <!-- Expandable Participants List -->
-            <Transition
-              enter-active-class="transition-all duration-500 ease-out"
-              enter-from-class="opacity-0 max-h-0"
-              enter-to-class="opacity-100 max-h-[500px]"
-              leave-active-class="transition-all duration-300 ease-in"
-              leave-from-class="opacity-100 max-h-[500px]"
-              leave-to-class="opacity-0 max-h-0"
-            >
-              <div
-                v-if="expandedParticipants[registration.customEventId]"
-                class="overflow-hidden"
-              >
-                <div class="pt-4 border-t border-gray-100">
-                  <EventParticipants
-                    :event-id="registration.customEventId"
-                    :show-decklist-status="
-                      registration.customEvent.requiresDecklist
-                    "
-                  />
-                </div>
-              </div>
-            </Transition>
           </div>
         </div>
       </TransitionGroup>
@@ -353,7 +369,7 @@ const CANCELLATION_DEADLINE_HOURS = 24;
 const registrations = ref<EventRegistration[]>([]);
 const isLoading = ref(false);
 const cancelling = ref<string | null>(null);
-const expandedParticipants = ref<Record<string, boolean>>({});
+const activePopover = ref<string | null>(null);
 const supabase = useSupabaseClient();
 
 function formatEventDate(dateString: string): string {
@@ -405,8 +421,16 @@ function getStatusLabel(status: string): string {
   }
 }
 
-function toggleParticipants(eventId: string): void {
-  expandedParticipants.value[eventId] = !expandedParticipants.value[eventId];
+function toggleParticipantsPopover(eventId: string): void {
+  if (activePopover.value === eventId) {
+    activePopover.value = null;
+  } else {
+    activePopover.value = eventId;
+  }
+}
+
+function closePopover(): void {
+  activePopover.value = null;
 }
 
 async function fetchUserRegistrations(): Promise<void> {
