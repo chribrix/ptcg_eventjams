@@ -66,13 +66,10 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Get only upcoming/current event registrations for this player (excluding cancelled ones and past events)
+    // Get all upcoming/current event registrations for this player (including cancelled ones so they can re-register)
     const registrations = await prisma.eventRegistration.findMany({
       where: {
         playerId: player.id,
-        status: {
-          not: "cancelled",
-        },
         customEvent: {
           eventDate: {
             gte: new Date(), // Only future or current events

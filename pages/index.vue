@@ -111,9 +111,11 @@
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 scale-110 origin-top">
         <!-- Event Calendar Card -->
         <div
-          class="group bg-white rounded-3xl shadow-2xl border-2 border-blue-100 overflow-hidden hover:shadow-3xl hover:border-blue-200 transition-all duration-300 transform hover:scale-[1.02]"
+          class="group bg-white rounded-3xl shadow-2xl border-2 border-blue-100 overflow-hidden hover:shadow-3xl hover:border-blue-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col"
         >
-          <div class="bg-gradient-to-r from-blue-600 to-purple-700 px-10 py-10">
+          <div
+            class="bg-gradient-to-r from-blue-600 to-purple-700 px-10 py-10 flex-shrink-0"
+          >
             <div class="flex items-center">
               <div
                 class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mr-5 group-hover:scale-110 transition-transform duration-300"
@@ -128,18 +130,20 @@
               </div>
             </div>
           </div>
-          <div class="p-10">
-            <EventCalendar />
+          <div class="p-10 flex-1 overflow-hidden flex flex-col">
+            <div class="h-full">
+              <EventCalendar />
+            </div>
           </div>
         </div>
 
         <!-- User Dashboard or Welcome Card -->
         <div
           v-if="userName"
-          class="group bg-white rounded-3xl shadow-2xl border-2 border-emerald-100 overflow-hidden hover:shadow-3xl hover:border-emerald-200 transition-all duration-300 transform hover:scale-[1.02]"
+          class="group bg-white rounded-3xl shadow-2xl border-2 border-emerald-100 overflow-hidden hover:shadow-3xl hover:border-emerald-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col"
         >
           <div
-            class="bg-gradient-to-r from-emerald-600 to-teal-700 px-10 py-10"
+            class="bg-gradient-to-r from-emerald-600 to-teal-700 px-10 py-10 flex-shrink-0"
           >
             <div class="flex items-center">
               <div
@@ -148,25 +152,27 @@
                 <UserCircleIcon class="w-8 h-8 text-white" />
               </div>
               <div>
-                <h2 class="text-3xl font-bold text-white">My Dashboard</h2>
+                <h2 class="text-3xl font-bold text-white">My Registrations</h2>
                 <p class="text-emerald-100 text-base">
                   Welcome back, {{ userName }}!
                 </p>
               </div>
             </div>
           </div>
-          <div class="p-10">
-            <UserEventRegistrations />
+          <div class="p-10 flex-1 overflow-hidden flex flex-col">
+            <div class="h-full">
+              <UserEventRegistrations />
+            </div>
           </div>
         </div>
 
         <!-- Getting Started Card (for non-logged users) -->
         <div
           v-else
-          class="group bg-white rounded-3xl shadow-2xl border-2 border-violet-100 overflow-hidden hover:shadow-3xl hover:border-violet-200 transition-all duration-300 transform hover:scale-[1.02]"
+          class="group bg-white rounded-3xl shadow-2xl border-2 border-violet-100 overflow-hidden hover:shadow-3xl hover:border-violet-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col"
         >
           <div
-            class="bg-gradient-to-r from-violet-600 to-purple-700 px-10 py-10"
+            class="bg-gradient-to-r from-violet-600 to-purple-700 px-10 py-10 flex-shrink-0"
           >
             <div class="flex items-center">
               <div
@@ -182,7 +188,9 @@
               </div>
             </div>
           </div>
-          <div class="p-10 space-y-6">
+          <div
+            class="p-10 flex-1 overflow-hidden flex flex-col justify-center space-y-6"
+          >
             <!-- Feature List -->
             <div class="space-y-4">
               <div class="flex items-start space-x-4 group">

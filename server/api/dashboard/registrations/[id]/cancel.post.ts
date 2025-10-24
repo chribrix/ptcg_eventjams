@@ -24,33 +24,24 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    let player = await prisma.player.findUnique({
-      where: {
-        playerId: supabaseUser.id,
-      },
-    });
-
-    if (!player && supabaseUser.email) {
-      player = await prisma.player.findFirst({
-        where: {
-          email: supabaseUser.email.toLowerCase(),
-        },
-      });
-    }
-
-    if (!player) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: "Player not found",
-      });
-    }
-
+    // Find the registration by ID and verify ownership in one secure step
+    // Only fetch registrations that belong to the authenticated user's email
     const registration = await prisma.eventRegistration.findFirst({
       where: {
         id: registrationId,
-        playerId: player.id,
+        player: {
+          email: supabaseUser.email?.toLowerCase(),
+        },
       },
       include: {
+        player: {
+          select: {
+            id: true,
+            playerId: true,
+            name: true,
+            email: true,
+          },
+        },
         customEvent: {
           select: {
             id: true,
@@ -69,6 +60,8 @@ export default defineEventHandler(async (event) => {
         statusMessage: "Registration not found or access denied",
       });
     }
+
+
 
     if (registration.status === "cancelled") {
       throw createError({

@@ -119,6 +119,53 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    // Check if a player with this playerId is already registered for this event
+    const existingPlayerRegistration = await prisma.eventRegistration.findFirst(
+      {
+        where: {
+          customEventId: eventId,
+          status: {
+            not: "cancelled",
+          },
+          player: {
+            playerId: playerId,
+          },
+        },
+        include: {
+          player: {
+            select: {
+              playerId: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      }
+    );
+
+    if (existingPlayerRegistration) {
+      // Check if it's the same person (same email) trying to re-register
+      if (
+        existingPlayerRegistration.player.email?.toLowerCase() ===
+        email.toLowerCase()
+      ) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: "Already registered",
+          data: { message: "You are already registered for this event" },
+        });
+      } else {
+        // Different person trying to use the same playerId
+        throw createError({
+          statusCode: 400,
+          statusMessage: "Player ID already taken",
+          data: {
+            message: `Player ID "${playerId}" is already registered for this event by another participant. Please use a different Player ID.`,
+          },
+        });
+      }
+    }
+
     // Check if player is already registered for this event (excluding cancelled registrations)
     const existingRegistration = await prisma.eventRegistration.findUnique({
       where: {
