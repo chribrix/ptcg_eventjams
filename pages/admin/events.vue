@@ -1,6 +1,6 @@
 <template>
   <div class="flex">
-    <EventCalendar />
+    <EventCalendarCard />
     <div class="admin-container">
       <h1>Add New Event</h1>
       <form @submit.prevent="submitForm">
@@ -42,6 +42,9 @@
 
 <script setup lang="ts">
 import { reactive, ref } from "vue";
+
+// Explicit component import due to nested folder structure
+import EventCalendarCard from "~/components/landingPageCards/calendar/EventCalendarCard.vue";
 
 interface EventForm {
   title: string;

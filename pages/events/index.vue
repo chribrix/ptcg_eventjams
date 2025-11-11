@@ -2,13 +2,16 @@
   <div class="events-page">
     <h1 class="page-title">Pokemon TCG Events</h1>
     <div class="events-container">
-      <EventCalendar />
+      <EventCalendarCard />
       <EventList />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// Explicit component import due to nested folder structure
+import EventCalendarCard from "~/components/landingPageCards/calendar/EventCalendarCard.vue";
+
 definePageMeta({
   layout: "products",
 });
