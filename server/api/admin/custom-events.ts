@@ -1,4 +1,4 @@
-import { PrismaClient } from "~/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { verifyAdmin } from "../../middleware/admin";
 

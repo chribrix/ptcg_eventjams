@@ -279,13 +279,14 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import {
-  CalendarIcon,
+  CalendarDaysIcon,
   MapPinIcon,
   UsersIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  TrophyIcon,
-  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  ArrowPathIcon,
+  CurrencyDollarIcon,
+  DocumentTextIcon,
+  UserIcon,
 } from "@heroicons/vue/24/outline";
 
 // Use i18n for translations

@@ -2,7 +2,7 @@
   <div class="admin-custom-events">
     <div class="page-header">
       <h1 class="page-title">Custom Events Management</h1>
-      <button @click="showCreateForm = true" class="btn btn-primary">
+      <button @click="createNewEvent" class="btn btn-primary">
         <Icon name="plus" /> Create New Event
       </button>
     </div>
@@ -79,14 +79,37 @@
               type="datetime-local"
               required
               class="form-input"
+              @change="onEventDateChange"
             />
           </div>
 
           <div class="form-group">
-            <label for="registrationDeadline">Registration Deadline</label>
+            <label for="registrationDeadline">
+              Registration Deadline
+              <span class="field-help"
+                >Automatically set to event date/time when event date
+                changes</span
+              >
+            </label>
             <input
               id="registrationDeadline"
               v-model="eventForm.registrationDeadline"
+              type="datetime-local"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="cancellationDeadline">
+              Cancellation Deadline
+              <span class="field-help"
+                >Automatically set to event date/time when event date
+                changes</span
+              >
+            </label>
+            <input
+              id="cancellationDeadline"
+              v-model="eventForm.cancellationDeadline"
               type="datetime-local"
               class="form-input"
             />
@@ -195,9 +218,36 @@
             <p v-if="event.description" class="description">
               {{ event.description }}
             </p>
+            <div class="registration-link-section">
+              <p class="registration-link-label">
+                <strong>Registration Link:</strong>
+              </p>
+              <div class="registration-link-container">
+                <input
+                  :value="getRegistrationUrl(event.id)"
+                  readonly
+                  class="registration-link-input"
+                  @focus="$event.target.select()"
+                />
+                <button
+                  @click="copyRegistrationLink(event.id)"
+                  class="btn btn-small btn-copy"
+                  :class="{ copied: copiedEventId === event.id }"
+                >
+                  {{ copiedEventId === event.id ? "✓ Copied!" : "📋 Copy" }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="event-actions">
+            <NuxtLink
+              :to="`/events/register/${event.id}`"
+              class="btn btn-small btn-success"
+              target="_blank"
+            >
+              🔗 Open Registration Page
+            </NuxtLink>
             <button
               @click="viewRegistrations(event)"
               class="btn btn-small btn-info"
@@ -324,6 +374,7 @@ interface CustomEvent {
   description?: string;
   eventDate: string;
   registrationDeadline?: string;
+  cancellationDeadline?: string;
   requiresDecklist: boolean;
   status: string;
   createdBy: string;
@@ -365,6 +416,7 @@ const showRegistrations = ref(false);
 const editingEvent = ref<CustomEvent | null>(null);
 const selectedEvent = ref<CustomEvent | null>(null);
 const searchTerm = ref("");
+const copiedEventId = ref<string | null>(null);
 
 // Form data
 const eventForm = ref({
@@ -375,9 +427,38 @@ const eventForm = ref({
   description: "",
   eventDate: "",
   registrationDeadline: "",
+  cancellationDeadline: "",
   requiresDecklist: false,
   status: "upcoming",
 });
+
+// Initialize form with default dates when creating new event
+const initializeEventForm = () => {
+  const now = new Date();
+  // Set default time to 10:00 AM today
+  const defaultDateTime = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    10,
+    0
+  )
+    .toISOString()
+    .slice(0, 16);
+
+  eventForm.value = {
+    name: "",
+    venue: "",
+    maxParticipants: 1,
+    participationFee: 0,
+    description: "",
+    eventDate: defaultDateTime,
+    registrationDeadline: defaultDateTime,
+    cancellationDeadline: defaultDateTime,
+    requiresDecklist: false,
+    status: "upcoming",
+  };
+};
 
 // Computed
 const filteredEvents = computed(() => {
@@ -393,6 +474,33 @@ const filteredEvents = computed(() => {
 });
 
 // Methods
+const createNewEvent = () => {
+  initializeEventForm();
+  showCreateForm.value = true;
+};
+
+const onEventDateChange = () => {
+  // Auto-set registration and cancellation deadlines to match event date/time
+  // Only if they are currently empty or match the previous event date
+  if (eventForm.value.eventDate) {
+    // Always update registration deadline to match event date
+    if (
+      !eventForm.value.registrationDeadline ||
+      eventForm.value.registrationDeadline === eventForm.value.eventDate
+    ) {
+      eventForm.value.registrationDeadline = eventForm.value.eventDate;
+    }
+
+    // Always update cancellation deadline to match event date
+    if (
+      !eventForm.value.cancellationDeadline ||
+      eventForm.value.cancellationDeadline === eventForm.value.eventDate
+    ) {
+      eventForm.value.cancellationDeadline = eventForm.value.eventDate;
+    }
+  }
+};
+
 const loadEvents = async () => {
   try {
     loading.value = true;
@@ -451,6 +559,9 @@ const editEvent = (event: CustomEvent) => {
     eventDate: new Date(event.eventDate).toISOString().slice(0, 16),
     registrationDeadline: event.registrationDeadline
       ? new Date(event.registrationDeadline).toISOString().slice(0, 16)
+      : "",
+    cancellationDeadline: event.cancellationDeadline
+      ? new Date(event.cancellationDeadline).toISOString().slice(0, 16)
       : "",
     requiresDecklist: event.requiresDecklist,
     status: event.status,
@@ -520,17 +631,7 @@ const cancelRegistration = async (registration: Registration) => {
 const closeModal = () => {
   showCreateForm.value = false;
   editingEvent.value = null;
-  eventForm.value = {
-    name: "",
-    venue: "",
-    maxParticipants: 1,
-    participationFee: 0,
-    description: "",
-    eventDate: "",
-    registrationDeadline: "",
-    requiresDecklist: false,
-    status: "upcoming",
-  };
+  initializeEventForm();
 };
 
 const closeRegistrationsModal = () => {
@@ -541,6 +642,37 @@ const closeRegistrationsModal = () => {
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString();
+};
+
+const getRegistrationUrl = (eventId: string) => {
+  if (import.meta.client) {
+    return `${window.location.origin}/events/register/${eventId}`;
+  }
+  return `/events/register/${eventId}`;
+};
+
+const copyRegistrationLink = async (eventId: string) => {
+  const url = getRegistrationUrl(eventId);
+  try {
+    await navigator.clipboard.writeText(url);
+    copiedEventId.value = eventId;
+    setTimeout(() => {
+      copiedEventId.value = null;
+    }, 2000);
+  } catch (error) {
+    console.error("Failed to copy link:", error);
+    // Fallback for older browsers
+    const input = document.createElement("input");
+    input.value = url;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand("copy");
+    document.body.removeChild(input);
+    copiedEventId.value = eventId;
+    setTimeout(() => {
+      copiedEventId.value = null;
+    }, 2000);
+  }
 };
 
 // Load events on mount
@@ -615,6 +747,33 @@ onMounted(loadEvents);
 
 .btn-info:hover {
   background-color: #0891b2;
+}
+
+.btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #059669;
+}
+
+.btn-copy {
+  background-color: #8b5cf6;
+  color: white;
+  white-space: nowrap;
+}
+
+.btn-copy:hover {
+  background-color: #7c3aed;
+}
+
+.btn-copy.copied {
+  background-color: #10b981;
+}
+
+.btn-copy.copied:hover {
+  background-color: #059669;
 }
 
 .btn-small {
@@ -744,6 +903,15 @@ onMounted(loadEvents);
   font-weight: 400;
   color: #6b7280;
   margin-top: 0.25rem;
+}
+
+.field-help {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  font-style: italic;
 }
 
 .form-actions {
@@ -934,5 +1102,39 @@ onMounted(loadEvents);
   text-align: center;
   padding: 2rem;
   color: #6b7280;
+}
+
+.registration-link-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.registration-link-label {
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+
+.registration-link-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.registration-link-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background-color: #f9fafb;
+  font-family: monospace;
+  color: #374151;
+}
+
+.registration-link-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: white;
 }
 </style>

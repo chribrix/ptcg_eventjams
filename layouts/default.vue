@@ -176,11 +176,6 @@ const { t } = useI18n();
                   <ChartBarIcon class="w-4 h-4" />
                   <span>{{ t("nav.dashboard") }}</span>
                 </NuxtLink>
-
-                <NuxtLink v-if="userName" to="/importer" class="nav-link">
-                  <DocumentIcon class="w-4 h-4" />
-                  <span>{{ t("nav.importer") }}</span>
-                </NuxtLink>
               </div>
 
               <!-- Admin Dropdown -->
@@ -236,6 +231,14 @@ const { t } = useI18n();
                     >
                       <ClockIcon class="w-4 h-4" />
                       <span>{{ t("nav.eventHistory") }}</span>
+                    </NuxtLink>
+                    <NuxtLink
+                      to="/importer"
+                      class="admin-link"
+                      @click="hideAdminDropdown"
+                    >
+                      <DocumentIcon class="w-4 h-4" />
+                      <span>{{ t("nav.importer") }}</span>
                     </NuxtLink>
                   </div>
                 </div>
@@ -328,18 +331,16 @@ const { t } = useI18n();
                 <UsersIcon class="w-4 h-4" />
                 <span>{{ t("nav.managePlayers") }}</span>
               </NuxtLink>
-            </div>
 
-            <!-- Importer for logged-in users -->
-            <NuxtLink
-              v-if="userName"
-              to="/importer"
-              @click="mobileMenuOpen = false"
-              class="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-            >
-              <DocumentIcon class="w-5 h-5" />
-              <span>{{ t("nav.importer") }}</span>
-            </NuxtLink>
+              <NuxtLink
+                to="/importer"
+                @click="mobileMenuOpen = false"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                <DocumentIcon class="w-4 h-4" />
+                <span>{{ t("nav.importer") }}</span>
+              </NuxtLink>
+            </div>
 
             <!-- Language Switcher -->
             <div class="px-3 py-2">

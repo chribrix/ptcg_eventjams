@@ -2,7 +2,7 @@
  * Minimal test data seeder for CI environment
  * Creates basic test data without making external API calls
  */
-import type { PrismaClient } from "~/generated/prisma";
+import type { PrismaClient } from "@prisma/client";
 
 export async function seedTestData(prisma: PrismaClient): Promise<void> {
   console.log("Seeding minimal test data for CI...");

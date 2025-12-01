@@ -59,16 +59,15 @@ export const useAuth = () => {
     }
   });
 
-  // Check for existing dev auth on mount (but only if no Supabase user)
-  onMounted(() => {
-    // Wait a bit to ensure Supabase auth has been checked first
-    setTimeout(() => {
-      if (isDevMode && !supabaseUser.value) {
-        // Only check dev auth if definitely no Supabase user
+  // Auto-check dev auth on client side (if no Supabase user exists)
+  if (process.client && isDevMode && !supabaseUser.value) {
+    // Use nextTick to ensure Supabase auth has been checked first
+    nextTick(() => {
+      if (!supabaseUser.value) {
         checkDevAuth();
       }
-    }, 100);
-  });
+    });
+  }
 
   return {
     user,

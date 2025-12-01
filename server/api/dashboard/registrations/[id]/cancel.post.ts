@@ -1,4 +1,4 @@
-import { PrismaClient } from "~/generated/prisma";
+import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
 
 const CANCELLATION_DEADLINE_HOURS = 24;

@@ -1,5 +1,5 @@
 import TCGdex, { CardResumeModel, Query, SetModel } from "@tcgdex/sdk";
-import type { CardType } from "~/generated/prisma/enums";
+import type { CardType } from "@prisma/client";
 
 import type prisma from "~/lib/prisma.js";
 

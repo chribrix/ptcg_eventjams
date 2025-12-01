@@ -29,7 +29,7 @@
   },
   "nav": {
     "home": "Home",
-    "about": "About", 
+    "about": "About",
     "events": "Events",
     "dashboard": "Dashboard",
     "importer": "Importer",
@@ -39,6 +39,7 @@
     "register": "Register",
     "manageEvents": "Manage Events",
     "managePlayers": "Manage Players",
+    "customEvents": "Custom Events",
     "eventHistory": "Event History",
     "hello": "Hello"
   },
@@ -94,7 +95,7 @@
     "decklistRequired": "Decklist Required",
     "eventStatus": {
       "upcoming": "Upcoming",
-      "ongoing": "Ongoing", 
+      "ongoing": "Ongoing",
       "completed": "Completed",
       "cancelled": "Cancelled"
     }
@@ -125,7 +126,7 @@
     "recentActivity": "Recent Activity",
     "customEvents": "Custom Events",
     "registeredPlayers": "Registered Players",
-    "upcomingEvents": "Upcoming Events", 
+    "upcomingEvents": "Upcoming Events",
     "completedEvents": "Completed Events",
     "manageEvents": "Manage Events",
     "manageEventsDesc": "Create, edit, and manage custom events",
@@ -147,7 +148,7 @@
     "adminSubtitle": "All past events",
     "allYears": "All Years",
     "newestFirst": "Newest First",
-    "oldestFirst": "Oldest First", 
+    "oldestFirst": "Oldest First",
     "nameAZ": "Name A-Z",
     "nameZA": "Name Z-A",
     "loadingHistory": "Loading event history...",

@@ -43,12 +43,6 @@ jobs:
     - name: Install dependencies
       run: yarn install --frozen-lockfile
 
-    - name: Cache Prisma generated client
-      uses: actions/cache@v3
-      with:
-        path: generated/prisma
-        key: ${{ runner.os }}-prisma-${{ hashFiles('prisma/schema.prisma') }}
-
     - name: Set up environment variables
       run: |
         echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_db" >> $GITHUB_ENV
@@ -59,13 +53,7 @@ jobs:
         echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> $GITHUB_ENV
 
     - name: Generate Prisma Client
-      run: |
-        yarn prisma generate
-        # Verify the generated client exists in the custom location
-        ls -la generated/prisma/
-        echo "Checking if Prisma client files exist..."
-        test -f generated/prisma/index.js && echo "✅ index.js exists" || echo "❌ index.js missing"
-        test -f generated/prisma/index.d.ts && echo "✅ index.d.ts exists" || echo "❌ index.d.ts missing"
+      run: yarn prisma generate
 
     - name: Setup database schemas
       run: |
@@ -86,18 +74,17 @@ jobs:
     - name: Verify Prisma setup
       run: |
         echo "Checking Prisma client generation..."
-        if [ -f "generated/prisma/index.js" ]; then
-          echo "✅ Prisma client generated successfully at custom location"
+        if [ -f "node_modules/.prisma/client/index.js" ]; then
+          echo "✅ Prisma client generated successfully"
         else
           echo "❌ Prisma client not found at expected location"
-          echo "Contents of generated directory:"
-          ls -la generated/ || echo "generated directory doesn't exist"
+          ls -la node_modules/.prisma || echo ".prisma directory doesn't exist"
           exit 1
         fi
 
     - name: Prepare Nuxt
       run: |
-        echo "Preparing Nuxt with custom Prisma client..."
+        echo "Preparing Nuxt..."
         yarn nuxt prepare
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -105,7 +92,7 @@ jobs:
 
     - name: Run tests
       run: |
-        echo "Running tests with custom Prisma client..."
+        echo "Running tests..."
         yarn test
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

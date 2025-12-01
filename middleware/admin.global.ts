@@ -15,6 +15,9 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
           statusCode: 403,
           statusMessage: "Access denied - Admin privileges required",
         });
+      } else if (errorObj.statusCode === 503) {
+        // Supabase unavailable - redirect to home page with message
+        return navigateTo("/?error=service-unavailable");
       } else {
         // Other errors (including 500 from missing auth) - redirect to login
         return navigateTo("/login");

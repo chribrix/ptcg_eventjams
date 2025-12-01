@@ -46,6 +46,23 @@ const email = ref("");
 const linkSent = ref(false);
 const error = ref("");
 
+// Check if user is already authenticated and redirect to home
+const { user } = useAuth();
+
+onMounted(() => {
+  // If user is already authenticated, redirect to home page
+  if (user.value) {
+    navigateTo("/");
+  }
+});
+
+// Also watch for user changes (in case auth state changes while on login page)
+watch(user, (newUser) => {
+  if (newUser) {
+    navigateTo("/");
+  }
+});
+
 const submitLogin = async () => {
   linkSent.value = false;
   error.value = "";

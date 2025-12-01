@@ -29,7 +29,7 @@
   },
   "nav": {
     "home": "Startseite",
-    "about": "Über uns", 
+    "about": "Über uns",
     "events": "Veranstaltungen",
     "dashboard": "Dashboard",
     "importer": "Importer",
@@ -39,6 +39,7 @@
     "register": "Registrieren",
     "manageEvents": "Veranstaltungen verwalten",
     "managePlayers": "Spieler verwalten",
+    "customEvents": "Benutzerdefinierte Veranstaltungen",
     "eventHistory": "Veranstaltungshistorie",
     "hello": "Hallo"
   },
@@ -94,7 +95,7 @@
     "decklistRequired": "Deckliste erforderlich",
     "eventStatus": {
       "upcoming": "Bevorstehend",
-      "ongoing": "Laufend", 
+      "ongoing": "Laufend",
       "completed": "Abgeschlossen",
       "cancelled": "Abgesagt"
     }
@@ -125,7 +126,7 @@
     "recentActivity": "Kürzliche Aktivitäten",
     "customEvents": "Benutzerdefinierte Veranstaltungen",
     "registeredPlayers": "Registrierte Spieler",
-    "upcomingEvents": "Kommende Veranstaltungen", 
+    "upcomingEvents": "Kommende Veranstaltungen",
     "completedEvents": "Abgeschlossene Veranstaltungen",
     "manageEvents": "Veranstaltungen verwalten",
     "manageEventsDesc": "Erstellen, bearbeiten und verwalten Sie benutzerdefinierte Veranstaltungen",
@@ -147,7 +148,7 @@
     "adminSubtitle": "Alle vergangenen Veranstaltungen",
     "allYears": "Alle Jahre",
     "newestFirst": "Neueste zuerst",
-    "oldestFirst": "Älteste zuerst", 
+    "oldestFirst": "Älteste zuerst",
     "nameAZ": "Name A-Z",
     "nameZA": "Name Z-A",
     "loadingHistory": "Veranstaltungshistorie wird geladen...",

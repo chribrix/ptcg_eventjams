@@ -1,14 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
-import { createResolver } from "@nuxt/kit";
-
-const resolver = createResolver(import.meta.url);
-
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
   devtools: { enabled: true },
   modules: [
-    // "@prisma/nuxt", // Commented out due to conflicts with custom Prisma output path
+    // "@prisma/nuxt", // Optional helper module if Prisma runtime helpers are needed
     "@nuxtjs/supabase",
     "@nuxtjs/tailwindcss",
     "@nuxt/test-utils/module",
@@ -41,11 +37,7 @@ export default defineNuxtConfig({
     },
   },
   supabase: {
-    redirectOptions: {
-      login: "/",
-      callback: "/magic-login",
-      exclude: ["/", "/login", "/register", "/eventlist", "/events"],
-    },
+    redirect: false,
   },
   runtimeConfig: {
     public: {
@@ -77,23 +69,6 @@ export default defineNuxtConfig({
           href: "https://fonts.googleapis.com/icons?family=Material+Icons",
         },
       ],
-    },
-  },
-  alias: {
-    // Force all Prisma client imports to use custom location
-    "@prisma/client": resolver.resolve("./generated/prisma"),
-    ".prisma/client": resolver.resolve("./generated/prisma"),
-  },
-  vite: {
-    resolve: {
-      alias: {
-        // Point to your custom Prisma client location for Vite
-        "@prisma/client": resolver.resolve("./generated/prisma"),
-        ".prisma/client": resolver.resolve("./generated/prisma"),
-        ".prisma/client/index-browser": resolver.resolve(
-          "./generated/prisma/index-browser.js"
-        ),
-      },
     },
   },
 });
