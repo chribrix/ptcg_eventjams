@@ -109,8 +109,21 @@ const email = ref("");
 const name = ref("");
 const playerId = ref("");
 const linkSent = ref(false);
+const runtimeConfig = useRuntimeConfig();
+
+const getMagicLinkRedirect = () => {
+  const configuredBase = runtimeConfig.public.appBaseUrl?.replace(/\/$/, "");
+  if (configuredBase) {
+    return `${configuredBase}/magic-login`;
+  }
+  if (process.client) {
+    return `${window.location.origin.replace(/\/$/, "")}/magic-login`;
+  }
+  return undefined;
+};
 
 const submitForm = async () => {
+  const redirectTo = getMagicLinkRedirect();
   const { error } = await useSupabaseClient().auth.signInWithOtp({
     email: email.value,
     options: {
@@ -118,7 +131,7 @@ const submitForm = async () => {
         name: name.value,
         playerId: playerId.value,
       },
-      emailRedirectTo: `${window.location.origin}/magic-login`,
+      ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
     },
   });
 

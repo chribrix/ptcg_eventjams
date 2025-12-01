@@ -45,6 +45,18 @@
 const email = ref("");
 const linkSent = ref(false);
 const error = ref("");
+const runtimeConfig = useRuntimeConfig();
+
+const getMagicLinkRedirect = () => {
+  const configuredBase = runtimeConfig.public.appBaseUrl?.replace(/\/$/, "");
+  if (configuredBase) {
+    return `${configuredBase}/magic-login`;
+  }
+  if (process.client) {
+    return `${window.location.origin.replace(/\/$/, "")}/magic-login`;
+  }
+  return undefined;
+};
 
 // Check if user is already authenticated and redirect to home
 const { user } = useAuth();
@@ -67,8 +79,14 @@ const submitLogin = async () => {
   linkSent.value = false;
   error.value = "";
 
+  const redirectTo = getMagicLinkRedirect();
   const { error: signInError } = await useSupabaseClient().auth.signInWithOtp({
     email: email.value,
+    options: redirectTo
+      ? {
+          emailRedirectTo: redirectTo,
+        }
+      : undefined,
   });
 
   if (signInError) {
