@@ -61,8 +61,6 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-
-
     if (registration.status === "cancelled") {
       throw createError({
         statusCode: 400,

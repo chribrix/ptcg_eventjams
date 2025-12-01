@@ -13,6 +13,10 @@ RUN npm install --frozen-lockfile
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+ARG SUPABASE_URL
+ARG SUPABASE_KEY
+ENV SUPABASE_URL=${SUPABASE_URL}
+ENV SUPABASE_KEY=${SUPABASE_KEY}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -25,8 +29,12 @@ RUN npm run build
 # Production image, copy all the files and run
 FROM base AS runner
 WORKDIR /app
+ARG SUPABASE_URL
+ARG SUPABASE_KEY
 
 ENV NODE_ENV=production
+ENV SUPABASE_URL=${SUPABASE_URL}
+ENV SUPABASE_KEY=${SUPABASE_KEY}
 ENV NUXT_HOST=0.0.0.0
 ENV NUXT_PORT=3000
 
