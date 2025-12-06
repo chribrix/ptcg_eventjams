@@ -2,8 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@import './event-calendar.css';
+
 body {
   @apply bg-gray-100;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 @layer components {

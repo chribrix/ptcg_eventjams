@@ -13,7 +13,7 @@
         @click="$emit('close')"
       >
         <div
-          class="bg-white rounded-xl shadow-xl max-w-2xl max-h-[80vh] w-[90%] overflow-hidden flex flex-col transform transition-transform"
+          class="bg-white rounded-xl shadow-xl max-w-2xl max-h-[80vh] w-[90%] overflow-hidden flex flex-col transform transition-transform min-w-0"
           @click.stop
         >
           <div
@@ -33,32 +33,50 @@
             <div
               v-for="event in events"
               :key="event.id"
-              class="border border-gray-200 rounded-lg p-4 mb-3 transition-all duration-200 hover:shadow-md hover:border-gray-300 last:mb-0"
+              class="border border-gray-200 rounded-lg p-4 mb-3 transition-all duration-200 hover:shadow-md hover:border-gray-300 last:mb-0 min-w-0"
               :class="{
-                'border-l-4 border-l-purple-600 bg-gradient-to-r from-purple-50 to-white hover:from-purple-100 hover:to-gray-50':
-                  isCustomEvent(event),
+                'border-l-4': isCustomEvent(event),
               }"
+              :style="
+                isCustomEvent(event)
+                  ? {
+                      borderLeftColor:
+                        getEventBadgeStyles(event).backgroundColor,
+                      background: `linear-gradient(to right, ${
+                        getEventBadgeStyles(event).backgroundColor
+                      }10, white)`,
+                    }
+                  : {}
+              "
+              style="word-break: break-word; overflow-wrap: anywhere"
             >
               <div class="flex justify-between items-center mb-3">
-                <div
-                  class="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"
-                  :class="getEventBadgeClasses(event)"
-                >
-                  {{ isCustomEvent(event) ? "Custom Event" : event.type }}
-                </div>
-                <div class="flex items-center gap-2">
-                  <div
-                    v-if="getEventCost(event) !== undefined"
-                    class="flex items-center gap-1 text-sm font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full border border-green-200"
-                  >
-                    <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
-                    {{ formatEventCost(event) }}
+                <div class="flex flex-col w-full gap-1">
+                  <!-- Top row: Event type badge -->
+                  <div class="w-full mb-1">
+                    <div
+                      class="inline-block w-full px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide min-w-0 text-center"
+                      :style="getEventBadgeStyles(event)"
+                      style="word-break: break-word; overflow-wrap: anywhere"
+                    >
+                      {{ isCustomEvent(event) ? "Custom Event" : event.type }}
+                    </div>
                   </div>
-                  <div
-                    v-if="getEventTime(event)"
-                    class="text-base font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full"
-                  >
-                    {{ getEventTime(event) }}
+                  <!-- Second row: Cost and time badges -->
+                  <div class="flex flex-wrap gap-2 w-full justify-center">
+                    <div
+                      v-if="getEventCost(event) !== undefined"
+                      class="flex items-center gap-1 text-sm font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full border border-green-200"
+                    >
+                      <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
+                      {{ formatEventCost(event) }}
+                    </div>
+                    <div
+                      v-if="getEventTime(event)"
+                      class="text-base font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full"
+                    >
+                      {{ getEventTime(event) }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -70,23 +88,31 @@
                     class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
                   >
                     <BuildingOfficeIcon class="w-4 h-4 flex-shrink-0" />
-                    <span class="flex-1">{{ stripHtmlTags(event.venue) }}</span>
+                    <span
+                      class="flex-1 min-w-0"
+                      style="word-break: break-word; overflow-wrap: anywhere"
+                      >{{ stripHtmlTags(event.venue) }}</span
+                    >
                   </div>
                   <div
                     v-if="event.streetAddress"
                     class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
                   >
                     <MapPinIcon class="w-4 h-4 flex-shrink-0" />
-                    <span class="flex-1">{{
-                      stripHtmlTags(event.streetAddress)
-                    }}</span>
+                    <span
+                      class="flex-1 min-w-0"
+                      style="word-break: break-word; overflow-wrap: anywhere"
+                      >{{ stripHtmlTags(event.streetAddress) }}</span
+                    >
                   </div>
                   <div
                     v-if="event.location"
                     class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
                   >
                     <GlobeAltIcon class="w-4 h-4 flex-shrink-0" />
-                    <span class="flex-1"
+                    <span
+                      class="flex-1 min-w-0"
+                      style="word-break: break-word; overflow-wrap: anywhere"
                       >{{ stripHtmlTags(event.location)
                       }}{{
                         event.country ? `, ${stripHtmlTags(event.country)}` : ""
@@ -110,7 +136,27 @@
                     class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
                   >
                     <NuxtLink
-                      :to="`/events/register/${event.id}`"
+                      :to="
+                        isUserLoggedIn
+                          ? `/events/register/${event.id}`
+                          : '/login'
+                      "
+                      class="flex items-center gap-2 text-blue-600 no-underline font-medium text-sm px-3 py-2 bg-blue-50 rounded-md transition-all duration-200 border border-blue-200 hover:bg-blue-100 hover:text-blue-700"
+                    >
+                      <UserPlusIcon class="w-4 h-4 flex-shrink-0" />
+                      <span>Register</span>
+                    </NuxtLink>
+                  </div>
+                  <div
+                    v-else-if="hasLocalRegistration(event)"
+                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
+                  >
+                    <NuxtLink
+                      :to="
+                        isUserLoggedIn
+                          ? `/events/register/${event.id}`
+                          : '/login'
+                      "
                       class="flex items-center gap-2 text-blue-600 no-underline font-medium text-sm px-3 py-2 bg-blue-50 rounded-md transition-all duration-200 border border-blue-200 hover:bg-blue-100 hover:text-blue-700"
                     >
                       <UserPlusIcon class="w-4 h-4 flex-shrink-0" />
@@ -151,6 +197,7 @@ import {
   UserPlusIcon,
   LinkIcon,
 } from "@heroicons/vue/24/outline";
+import { getEventBadgeStyles as getColorStyles } from "~/utils/eventColors";
 
 interface ParsedEvent {
   id: string;
@@ -194,6 +241,8 @@ defineEmits<{
 
 // For accessing custom events data (assuming it's available globally or passed down)
 const customEvents = ref<CustomEvent[]>([]);
+const supabase = useSupabaseClient();
+const isUserLoggedIn = ref(false);
 
 // Load custom events if needed
 onMounted(async () => {
@@ -207,6 +256,10 @@ onMounted(async () => {
   } catch (error) {
     console.error("Failed to load custom events:", error);
   }
+
+  // Check if user is logged in
+  const { data: session } = await supabase.auth.getSession();
+  isUserLoggedIn.value = !!session?.session;
 });
 
 // Helper functions
@@ -219,24 +272,25 @@ const isCustomEvent = (event: ParsedEvent): boolean => {
   return !!event.isCustomEvent;
 };
 
-const getEventBadgeClasses = (event: ParsedEvent): string => {
-  // Custom events always get purple styling
+const hasLocalRegistration = (event: ParsedEvent): boolean => {
+  return !!(event as any).hasLocalRegistration;
+};
+
+const getEventBadgeStyles = (
+  event: ParsedEvent
+): { backgroundColor: string; color: string } => {
+  // Custom events
   if (isCustomEvent(event)) {
-    return "bg-purple-100 text-purple-800";
+    return getColorStyles("custom");
   }
 
-  // Regular events get different colors based on their icon/type
-  switch (event.icon) {
-    case "cup":
-      return "bg-red-100 text-red-800";
-    case "chall":
-      return "bg-blue-100 text-blue-800";
-    case "pre":
-      return "bg-yellow-100 text-yellow-800";
-    case "friendly":
-    default:
-      return "bg-green-100 text-green-800"; // Default for friendly events or no icon
+  // Regular events get colors based on their icon/type
+  if (event.icon) {
+    return getColorStyles(event.icon);
   }
+
+  // Fallback based on type string
+  return getColorStyles(event.type);
 };
 
 const getEventCost = (event: ParsedEvent): number | string | undefined => {

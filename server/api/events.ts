@@ -164,6 +164,28 @@ export default defineEventHandler(async (event) => {
     const apiData = await response.json();
     console.log(`API returned ${apiData.length} events`);
 
+    // Store the raw API response from pokedata.ovh
+    try {
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      const rawDataPath = path.join(
+        process.cwd(),
+        "debug",
+        "pokedata_raw_response.json"
+      );
+      await fs.mkdir(path.dirname(rawDataPath), { recursive: true });
+      await fs.writeFile(
+        rawDataPath,
+        JSON.stringify(apiData, null, 2),
+        "utf-8"
+      );
+      console.log(
+        `Debug: Stored raw pokedata.ovh API response (${apiData.length} events) to ${rawDataPath}`
+      );
+    } catch (writeError) {
+      console.error("Failed to write raw API response file:", writeError);
+    }
+
     // Sort events chronologically
     apiData.sort((a: ExternalAPIEvent, b: ExternalAPIEvent) => {
       const dateA = new Date(a.when || a.date || "1970-01-01");
@@ -242,6 +264,28 @@ export default defineEventHandler(async (event) => {
 
     // Group events by date for calendar display
     const calendarEvents = groupEventsByDate(events);
+
+    // Write debug file with the calendar events (after icon mapping)
+    try {
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      const debugPath = path.join(
+        process.cwd(),
+        "debug",
+        "pokedata_events.json"
+      );
+      await fs.mkdir(path.dirname(debugPath), { recursive: true });
+      await fs.writeFile(
+        debugPath,
+        JSON.stringify(calendarEvents, null, 2),
+        "utf-8"
+      );
+      console.log(
+        `Debug: Wrote ${calendarEvents.length} calendar events to ${debugPath}`
+      );
+    } catch (writeError) {
+      console.error("Failed to write debug file:", writeError);
+    }
 
     return createEventResponse(calendarEvents, apiData.length);
   } catch (error: unknown) {

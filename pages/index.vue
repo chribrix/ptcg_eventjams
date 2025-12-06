@@ -26,29 +26,6 @@
             Discover, register, and participate in Pokemon TCG tournaments
             worldwide. Connect with the community and compete in style.
           </p>
-
-          <!-- Action Buttons -->
-          <div class="flex flex-col sm:flex-row gap-3 justify-center mb-4">
-            <NuxtLink
-              to="/events"
-              class="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              <CalendarIcon class="w-4 h-4 mr-2 group-hover:animate-pulse" />
-              Browse Events
-              <ArrowRightIcon
-                class="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform"
-              />
-            </NuxtLink>
-            <NuxtLink
-              v-if="!userName"
-              to="/login"
-              class="group inline-flex items-center px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 transform hover:scale-105 transition-all duration-200"
-            >
-              <UserIcon class="w-4 h-4 mr-2" />
-              Get Started
-            </NuxtLink>
-          </div>
-
           <!-- Feature Highlights -->
           <!--<div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div
@@ -107,30 +84,34 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 scale-110 origin-top">
+    <div class="w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div
+        class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 xl:scale-110 origin-top"
+      >
         <!-- Event Calendar Card -->
         <div
-          class="group bg-white rounded-3xl shadow-2xl border-2 border-blue-100 overflow-hidden hover:shadow-3xl hover:border-blue-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col"
+          class="group bg-white rounded-3xl shadow-2xl border-2 border-blue-100 overflow-hidden hover:shadow-3xl hover:border-blue-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col w-full"
         >
           <div
-            class="bg-gradient-to-r from-blue-600 to-purple-700 px-10 py-10 flex-shrink-0"
+            class="bg-gradient-to-r from-blue-600 to-purple-700 px-5 py-6 sm:px-10 sm:py-10 flex-shrink-0"
           >
             <div class="flex items-center">
               <div
-                class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mr-5 group-hover:scale-110 transition-transform duration-300"
+                class="w-10 h-10 sm:w-14 sm:h-14 bg-white/20 rounded-xl flex items-center justify-center mr-4 sm:mr-5 group-hover:scale-110 transition-transform duration-300"
               >
-                <CalendarDaysIcon class="w-8 h-8 text-white" />
+                <CalendarDaysIcon class="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
               <div>
-                <h2 class="text-3xl font-bold text-white">Event Calendar</h2>
-                <p class="text-blue-100 text-base">
+                <h2 class="text-2xl sm:text-3xl font-bold text-white">
+                  Event Calendar
+                </h2>
+                <p class="text-blue-100 text-sm sm:text-base">
                   Discover upcoming tournaments
                 </p>
               </div>
             </div>
           </div>
-          <div class="p-10 flex-1 overflow-hidden flex flex-col">
+          <div class="p-5 sm:p-10 flex-1 overflow-hidden flex flex-col">
             <div class="h-full">
               <EventCalendarCard />
             </div>
@@ -140,26 +121,28 @@
         <!-- User Dashboard or Welcome Card -->
         <div
           v-if="userName"
-          class="group bg-white rounded-3xl shadow-2xl border-2 border-emerald-100 overflow-hidden hover:shadow-3xl hover:border-emerald-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col"
+          class="group bg-white rounded-3xl shadow-2xl border-2 border-emerald-100 overflow-hidden hover:shadow-3xl hover:border-emerald-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col w-full"
         >
           <div
-            class="bg-gradient-to-r from-emerald-600 to-teal-700 px-10 py-10 flex-shrink-0"
+            class="bg-gradient-to-r from-emerald-600 to-teal-700 px-5 py-6 sm:px-10 sm:py-10 flex-shrink-0"
           >
             <div class="flex items-center">
               <div
-                class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mr-5 group-hover:scale-110 transition-transform duration-300"
+                class="w-10 h-10 sm:w-14 sm:h-14 bg-white/20 rounded-xl flex items-center justify-center mr-4 sm:mr-5 group-hover:scale-110 transition-transform duration-300"
               >
-                <UserCircleIcon class="w-8 h-8 text-white" />
+                <UserCircleIcon class="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
               <div>
-                <h2 class="text-3xl font-bold text-white">My Registrations</h2>
-                <p class="text-emerald-100 text-base">
+                <h2 class="text-2xl sm:text-3xl font-bold text-white">
+                  My Registrations
+                </h2>
+                <p class="text-emerald-100 text-sm sm:text-base">
                   Welcome back, {{ userName }}!
                 </p>
               </div>
             </div>
           </div>
-          <div class="p-10 flex-1 overflow-hidden flex flex-col">
+          <div class="p-5 sm:p-10 flex-1 overflow-hidden flex flex-col">
             <div class="h-full">
               <EventMiniDashboardCard />
             </div>
@@ -186,7 +169,7 @@ import {
 } from "@heroicons/vue/24/outline";
 
 // Explicit component imports due to nested folder structure
-import EventCalendarCard from "~/components/landingPageCards/calendar/EventCalendarCard.vue";
+import EventCalendarCard from "~/components/landingPageCards/calendar/EventCalendarCardNew.vue";
 import EventMiniDashboardCard from "~/components/landingPageCards/dashboard/EventMiniDashboardCard.vue";
 import GetStartedCard from "~/components/landingPageCards/GetStartedCard.vue";
 

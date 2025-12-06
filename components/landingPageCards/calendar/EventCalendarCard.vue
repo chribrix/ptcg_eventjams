@@ -1,7 +1,11 @@
 <template>
-  <div class="w-full bg-white rounded-lg border border-gray-200 shadow-sm">
-    <div class="p-4">
-      <div class="relative w-full h-full">
+  <div class="w-full h-full">
+    <div
+      class="p-4 sm:p-6 flex flex-col justify-center items-center h-full min-h-[400px]"
+    >
+      <div
+        class="relative w-full calendar-wrapper flex flex-col justify-center items-center flex-1"
+      >
         <!-- Loading indicator overlay -->
         <div
           v-if="isLoading"
@@ -387,97 +391,129 @@ const formatSelectedDate = computed(() => {
 </script>
 
 <style scoped>
-/* Calendar Styles - Using :deep() for third-party component styling */
+.calendar-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.calendar-wrapper :deep(.vc-container) {
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+:deep(.vc-pane-layout) {
+  justify-content: center;
+}
+
+/* Modern Calendar Styles - Using :deep() for third-party component styling */
 :deep(.vc-calendar) {
-  font-size: 1.1rem;
-  --vc-day-content-height: 3rem;
-  --vc-day-content-width: 3rem;
-  --vc-border-radius: 0.5rem;
+  font-size: 1.08rem;
+  --vc-day-content-height: 2.8rem;
+  --vc-day-content-width: 2.8rem;
+  --vc-border-radius: 0.75rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  box-shadow: 0 6px 32px 0 rgba(60, 60, 120, 0.1);
+  border: none;
+  padding: 1.5rem 1rem;
 }
 
 :deep(.vc-title),
 :deep(.vc-weekday) {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #2563eb;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #4f46e5;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 #fff;
+}
+
+:deep(.vc-weekday) {
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  color: #6366f1;
 }
 
 :deep(.vc-popover-content) {
-  font-size: 0.9rem;
-  padding: 0.75rem 1rem;
-  min-width: 200px;
-  max-width: 300px;
+  font-size: 1rem;
+  padding: 1rem 1.25rem;
+  min-width: 220px;
+  max-width: 340px;
   white-space: pre-line;
-  background-color: white;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: #fff;
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 32px rgba(60, 60, 120, 0.18);
   z-index: 1000;
 }
 
+:deep(.vc-day-content) {
+  cursor: pointer;
+  border-radius: 0.75rem;
+  background: #fff;
+  transition: box-shadow 0.2s, background 0.2s, transform 0.2s;
+  box-shadow: 0 1px 4px rgba(60, 60, 120, 0.07);
+  font-weight: 500;
+  color: #312e81;
+}
+
 :deep(.vc-day-content:hover) {
-  background-color: #f3f4f6;
-  transform: scale(1.05);
-  transition: all 0.2s ease;
+  background: linear-gradient(90deg, #6366f1 0%, #a5b4fc 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
+  transform: scale(1.07);
 }
 
-:deep(.has-events) {
-  border: 2px solid #3b82f6;
-  border-radius: 0.5rem;
+:deep(.vc-day-content:active) {
+  transform: scale(0.97);
+  background: #ede9fe;
 }
 
-:deep(.has-custom-events) {
-  border: 2px solid #9333ea;
-  border-radius: 0.5rem;
-  background-color: #f3e8ff !important;
+/* Event day highlights - targeting VCalendar's highlight structure */
+:deep(.vc-highlight.has-events) {
+  background-color: #dbeafe !important; /* blue-100 */
+}
+
+:deep(.vc-highlight.has-custom-events) {
+  background-color: #e9d5ff !important; /* purple-100 */
+}
+
+:deep(.vc-day.is-not-in-month .vc-highlight) {
+  opacity: 0.3;
 }
 
 :deep(.event-dot) {
-  width: 8px;
-  height: 8px;
-  margin: 1px;
+  width: 10px;
+  height: 10px;
+  margin: 2px;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(60, 60, 120, 0.1);
 }
 
 /* Specific dot colors for each event type */
 :deep(.event-external) {
-  background-color: #dc2626 !important;
+  background-color: #ef4444 !important;
 }
-
 :deep(.event-cup) {
-  background-color: #dc2626 !important;
+  background-color: #ef4444 !important;
 }
-
 :deep(.event-local) {
-  background-color: #16a34a !important;
+  background-color: #22c55e !important;
 }
-
 :deep(.event-challenge) {
-  background-color: #2563eb !important;
+  background-color: #6366f1 !important;
 }
-
 :deep(.event-custom) {
-  background-color: #9333ea !important;
-}
-
-/* Alternative selectors in case VCalendar uses different structure */
-:deep(.event-external .vc-dot) {
-  background-color: #dc2626 !important;
-}
-
-:deep(.event-cup .vc-dot) {
-  background-color: #dc2626 !important;
-}
-
-:deep(.event-local .vc-dot) {
-  background-color: #16a34a !important;
-}
-
-:deep(.event-challenge .vc-dot) {
-  background-color: #2563eb !important;
-}
-
-:deep(.event-custom .vc-dot) {
-  background-color: #9333ea !important;
+  background-color: #a21caf !important;
 }
 
 /* Multiple dots arrangement */
@@ -485,35 +521,28 @@ const formatSelectedDate = computed(() => {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 2px;
-  margin-top: 2px;
-}
-
-/* Hover effects for days with events */
-:deep(.vc-day.has-events .vc-day-content) {
-  cursor: pointer;
-  position: relative;
-}
-
-:deep(.vc-day.has-events .vc-day-content::after) {
-  content: "";
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  background-color: #3b82f6;
-  border-radius: 50%;
+  gap: 3px;
+  margin-top: 4px;
 }
 
 /* Make days with events more clickable */
-:deep(.vc-day-content) {
-  cursor: pointer;
-  transition: all 0.2s ease;
+:deep(.vc-day.has-events .vc-day-content) {
+  position: relative;
 }
 
-:deep(.vc-day-content:active) {
-  transform: scale(0.95);
+@media (max-width: 640px) {
+  .calendar-wrapper {
+    padding: 0;
+  }
+  :deep(.vc-calendar) {
+    font-size: 0.98rem;
+    --vc-day-content-height: 2.1rem;
+    --vc-day-content-width: 2.1rem;
+    padding: 0.5rem 0.25rem;
+  }
+  :deep(.vc-title),
+  :deep(.vc-weekday) {
+    font-size: 1.05rem;
+  }
 }
 </style>

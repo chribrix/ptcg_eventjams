@@ -1,0 +1,18 @@
+.event-day-box {
+  box-shadow: none !important;
+  border: 2px solid #6366f1 !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Force background colors to be visible on event days */
+.vc-highlight.vc-highlight-bg-solid {
+  opacity: 1 !important;
+}
+
+.has-events .vc-highlight-bg-solid {
+  background-color: #dbeafe !important; /* blue-100 */
+}
+
+.has-custom-events .vc-highlight-bg-solid {
+  background-color: #e9d5ff !important; /* purple-100 */
+}

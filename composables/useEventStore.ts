@@ -92,9 +92,16 @@ export const useEventStore = () => {
    * @param events - Array of parsed events to cache
    */
   function setEvents(events: ParsedEvent[]): void {
+    console.log("useEventStore.setEvents: Storing events", {
+      count: events.length,
+      beforeStoreLength: eventStore.value.events.length,
+    });
     eventStore.value.events = events;
     eventStore.value.lastFetch = new Date();
     eventStore.value.error = null;
+    console.log("useEventStore.setEvents: After storing", {
+      storeLength: eventStore.value.events.length,
+    });
   }
 
   /**
@@ -150,14 +157,26 @@ export const useEventStore = () => {
 
     try {
       console.log("Fetching fresh events from API...");
-      const response = await $fetch<ParsedEvent[]>("/api/events/detailed");
+      const response = await $fetch<{ events: ParsedEvent[] }>(
+        "/api/events/detailed"
+      );
 
-      if (Array.isArray(response)) {
-        setEvents(response);
+      console.log("useEventStore: Received response", {
+        hasEvents: !!response?.events,
+        isArray: Array.isArray(response?.events),
+        type: typeof response,
+        length: Array.isArray(response?.events)
+          ? response.events.length
+          : "N/A",
+        response: response,
+      });
+
+      if (response?.events && Array.isArray(response.events)) {
+        setEvents(response.events);
         console.log(
-          `Successfully fetched and cached ${response.length} events`
+          `Successfully fetched and cached ${response.events.length} events`
         );
-        return response;
+        return response.events;
       } else {
         throw new Error("Invalid response format");
       }

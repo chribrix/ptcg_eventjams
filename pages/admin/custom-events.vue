@@ -195,7 +195,16 @@
           :class="{ [event.status]: true }"
         >
           <div class="event-header">
-            <h3>{{ event.name }}</h3>
+            <div class="event-title-row">
+              <h3>{{ event.name }}</h3>
+              <span
+                v-if="event.isExternalEvent"
+                class="event-type-badge"
+                :class="`type-${event.eventType}`"
+              >
+                {{ getEventTypeName(event.eventType) }}
+              </span>
+            </div>
             <span class="status-badge" :class="event.status">
               {{ event.status }}
             </span>
@@ -254,18 +263,28 @@
             >
               View Registrations ({{ event._count?.registrations || 0 }})
             </button>
-            <button
-              @click="editEvent(event)"
-              class="btn btn-small btn-secondary"
-            >
-              Edit
-            </button>
-            <button
-              @click="deleteEvent(event)"
-              class="btn btn-small btn-danger"
-            >
-              Delete
-            </button>
+            <template v-if="!event.isExternalEvent">
+              <button
+                @click="editEvent(event)"
+                class="btn btn-small btn-secondary"
+              >
+                Edit
+              </button>
+              <button
+                @click="deleteEvent(event)"
+                class="btn btn-small btn-danger"
+              >
+                Delete
+              </button>
+            </template>
+            <template v-else>
+              <NuxtLink
+                to="/admin/external-events"
+                class="btn btn-small btn-secondary"
+              >
+                Manage in External Events
+              </NuxtLink>
+            </template>
           </div>
         </div>
       </div>
@@ -505,7 +524,7 @@ const loadEvents = async () => {
   try {
     loading.value = true;
     const response = await $fetch<{ events: CustomEvent[] }>(
-      "/api/admin/custom-events"
+      "/api/admin/events/combined"
     );
     events.value = response.events || [];
   } catch (error) {
@@ -549,6 +568,12 @@ const saveEvent = async () => {
 };
 
 const editEvent = (event: CustomEvent) => {
+  // Prevent editing external events from this page
+  if ((event as any).isExternalEvent) {
+    alert("External events must be managed in the External Events page.");
+    return;
+  }
+
   editingEvent.value = event;
   eventForm.value = {
     name: event.name,
@@ -569,6 +594,12 @@ const editEvent = (event: CustomEvent) => {
 };
 
 const deleteEvent = async (event: CustomEvent) => {
+  // Prevent deleting external events from this page
+  if ((event as any).isExternalEvent) {
+    alert("External events must be managed in the External Events page.");
+    return;
+  }
+
   if (!confirm(`Are you sure you want to delete "${event.name}"?`)) return;
 
   try {
@@ -673,6 +704,16 @@ const copyRegistrationLink = async (eventId: string) => {
       copiedEventId.value = null;
     }, 2000);
   }
+};
+
+const getEventTypeName = (eventType: string): string => {
+  const types: Record<string, string> = {
+    cup: "League Cup",
+    challenge: "League Challenge",
+    local: "Local Event",
+    custom: "Custom Event",
+  };
+  return types[eventType] || eventType;
 };
 
 // Load events on mount
@@ -971,12 +1012,51 @@ onMounted(loadEvents);
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.event-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
 }
 
 .event-header h3 {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
+}
+
+.event-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.event-type-badge.type-cup {
+  background-color: #bbf7d0;
+  color: #166534;
+}
+
+.event-type-badge.type-challenge {
+  background-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.event-type-badge.type-local {
+  background-color: #e0f2fe;
+  color: #075985;
+}
+
+.event-type-badge.type-custom {
+  background-color: #fed7aa;
+  color: #9a3412;
 }
 
 .status-badge {

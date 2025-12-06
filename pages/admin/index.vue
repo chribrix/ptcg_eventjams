@@ -70,15 +70,15 @@
             <p>View and manage registered players</p>
           </NuxtLink>
 
+          <NuxtLink to="/admin/external-events" class="action-card">
+            <div class="action-icon">🔧</div>
+            <h3>External Event Overrides</h3>
+            <p>Customize pokedata.ovh event details</p>
+          </NuxtLink>
+
           <div class="action-card disabled">
             <div class="action-icon">📊</div>
             <h3>Reports</h3>
-            <p>Coming soon...</p>
-          </div>
-
-          <div class="action-card disabled">
-            <div class="action-icon">⚙️</div>
-            <h3>Settings</h3>
             <p>Coming soon...</p>
           </div>
         </div>

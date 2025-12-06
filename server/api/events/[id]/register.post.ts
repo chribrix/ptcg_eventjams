@@ -43,20 +43,48 @@ export default defineEventHandler(async (event) => {
 
     const { playerId, name, email } = validationResult.data;
 
-    // Check if event exists
-    const customEvent = await prisma.customEvent.findUnique({
+    // Check if this is a custom event or an external event override
+    let customEvent = await prisma.customEvent.findUnique({
       where: { id: eventId },
     });
 
+    let externalEventOverride = null;
+    let isExternalEvent = false;
+
     if (!customEvent) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: "Event not found",
+      // Try to find external event override with local registration
+      externalEventOverride = await prisma.externalEventOverride.findUnique({
+        where: { id: eventId },
       });
+
+      if (
+        !externalEventOverride ||
+        !externalEventOverride.handleRegistrationLocally
+      ) {
+        throw createError({
+          statusCode: 404,
+          statusMessage: "Event not found",
+        });
+      }
+
+      isExternalEvent = true;
     }
 
+    // Get event details (either custom or external)
+    const eventDate = isExternalEvent
+      ? new Date(externalEventOverride!.eventDate)
+      : new Date(customEvent!.eventDate);
+    const maxParticipants = isExternalEvent
+      ? externalEventOverride!.maxParticipants || 0
+      : customEvent!.maxParticipants;
+    const requiresDecklist = isExternalEvent
+      ? externalEventOverride!.requiresDecklist
+      : customEvent!.requiresDecklist;
+    const eventName = isExternalEvent
+      ? externalEventOverride!.eventName
+      : customEvent!.name;
+
     // Check if event is in the future
-    const eventDate = new Date(customEvent.eventDate);
     const now = new Date();
     if (eventDate < now) {
       throw createError({
@@ -70,15 +98,22 @@ export default defineEventHandler(async (event) => {
 
     // Check current registration count (excluding cancelled registrations)
     const currentRegistrations = await prisma.eventRegistration.count({
-      where: {
-        customEventId: eventId,
-        status: {
-          not: "cancelled",
-        },
-      },
+      where: isExternalEvent
+        ? {
+            externalEventId: eventId,
+            status: {
+              not: "cancelled",
+            },
+          }
+        : {
+            customEventId: eventId,
+            status: {
+              not: "cancelled",
+            },
+          },
     });
 
-    if (currentRegistrations >= customEvent.maxParticipants) {
+    if (maxParticipants && currentRegistrations >= maxParticipants) {
       throw createError({
         statusCode: 400,
         statusMessage: "Event is full",
@@ -122,15 +157,25 @@ export default defineEventHandler(async (event) => {
     // Check if a player with this playerId is already registered for this event
     const existingPlayerRegistration = await prisma.eventRegistration.findFirst(
       {
-        where: {
-          customEventId: eventId,
-          status: {
-            not: "cancelled",
-          },
-          player: {
-            playerId: playerId,
-          },
-        },
+        where: isExternalEvent
+          ? {
+              externalEventId: eventId,
+              status: {
+                not: "cancelled",
+              },
+              player: {
+                playerId: playerId,
+              },
+            }
+          : {
+              customEventId: eventId,
+              status: {
+                not: "cancelled",
+              },
+              player: {
+                playerId: playerId,
+              },
+            },
         include: {
           player: {
             select: {
@@ -167,14 +212,23 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check if player is already registered for this event (excluding cancelled registrations)
-    const existingRegistration = await prisma.eventRegistration.findUnique({
-      where: {
-        customEventId_playerId: {
-          customEventId: eventId,
-          playerId: player.id,
-        },
-      },
-    });
+    const existingRegistration = isExternalEvent
+      ? await prisma.eventRegistration.findUnique({
+          where: {
+            externalEventId_playerId: {
+              externalEventId: eventId,
+              playerId: player.id,
+            },
+          },
+        })
+      : await prisma.eventRegistration.findUnique({
+          where: {
+            customEventId_playerId: {
+              customEventId: eventId,
+              playerId: player.id,
+            },
+          },
+        });
 
     if (existingRegistration && existingRegistration.status !== "cancelled") {
       throw createError({
@@ -186,9 +240,7 @@ export default defineEventHandler(async (event) => {
 
     // Create or update event registration
     // Set status based on whether event requires decklist
-    const initialStatus = customEvent.requiresDecklist
-      ? "reserved"
-      : "registered";
+    const initialStatus = requiresDecklist ? "reserved" : "registered";
 
     let registration;
 
@@ -207,13 +259,21 @@ export default defineEventHandler(async (event) => {
     } else {
       // Create new registration
       registration = await prisma.eventRegistration.create({
-        data: {
-          customEventId: eventId,
-          playerId: player.id,
-          status: initialStatus,
-          decklist: null, // Will be added later via dashboard
-          bringingDecklistOnsite: false, // Default value, can be updated later
-        },
+        data: isExternalEvent
+          ? {
+              externalEventId: eventId,
+              playerId: player.id,
+              status: initialStatus,
+              decklist: null,
+              bringingDecklistOnsite: false,
+            }
+          : {
+              customEventId: eventId,
+              playerId: player.id,
+              status: initialStatus,
+              decklist: null,
+              bringingDecklistOnsite: false,
+            },
       });
     }
 
@@ -225,7 +285,7 @@ export default defineEventHandler(async (event) => {
         playerName: name,
         playerId: playerId,
         email: email.toLowerCase(),
-        eventName: customEvent.name,
+        eventName: eventName,
       },
     };
   } catch (error: unknown) {

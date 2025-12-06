@@ -5,9 +5,17 @@
     <!-- Event Header -->
     <div class="flex items-start justify-between mb-3">
       <div class="flex-1 min-w-0">
-        <h3 class="text-lg font-semibold text-gray-900 truncate mb-1">
-          {{ registration.customEvent.name }}
-        </h3>
+        <div class="flex items-center gap-2 mb-1 flex-wrap">
+          <h3 class="text-lg font-semibold text-gray-900 truncate">
+            {{ registration.customEvent.name }}
+          </h3>
+          <span
+            class="event-type-badge"
+            :class="`type-${registration.eventType || 'custom'}`"
+          >
+            {{ getEventTypeName(registration.eventType || "custom") }}
+          </span>
+        </div>
 
         <div class="flex items-center gap-2 text-sm text-gray-600 mb-2">
           <MapPinIcon class="w-4 h-4 flex-shrink-0" />
@@ -161,13 +169,16 @@ import {
 
 interface EventRegistration {
   id: string;
-  customEventId: string;
+  customEventId: string | null;
+  externalEventId?: string | null;
   playerId: string;
   registeredAt: string;
   status: string;
   decklist?: string | null;
   bringingDecklistOnsite: boolean;
   notes?: string | null;
+  isExternalEvent?: boolean;
+  eventType?: string;
   customEvent: {
     id: string;
     name: string;
@@ -319,4 +330,44 @@ function formatRegistrationDate(dateString: string): string {
     return `${days} days ago`;
   }
 }
+
+function getEventTypeName(eventType: string): string {
+  const types: Record<string, string> = {
+    cup: "League Cup",
+    challenge: "League Challenge",
+    local: "Local Event",
+    custom: "Custom Event",
+  };
+  return types[eventType] || eventType;
+}
 </script>
+
+<style scoped>
+.event-type-badge {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.event-type-badge.type-cup {
+  background-color: #bbf7d0;
+  color: #166534;
+}
+
+.event-type-badge.type-challenge {
+  background-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.event-type-badge.type-local {
+  background-color: #e0f2fe;
+  color: #075985;
+}
+
+.event-type-badge.type-custom {
+  background-color: #fed7aa;
+  color: #9a3412;
+}
+</style>

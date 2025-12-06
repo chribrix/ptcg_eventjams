@@ -104,7 +104,7 @@ const { t } = useI18n();
 
 <template>
   <div
-    class="min-h-screen bg-gradient-to-r from-white via-purple-50 to-purple-100"
+    class="min-h-screen bg-gradient-to-r from-white via-purple-50 to-purple-100 overflow-x-hidden"
   >
     <header class="bg-white shadow-lg border-b border-gray-200">
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -223,6 +223,14 @@ const { t } = useI18n();
                     >
                       <UsersIcon class="w-4 h-4" />
                       <span>{{ t("nav.managePlayers") }}</span>
+                    </NuxtLink>
+                    <NuxtLink
+                      to="/admin/external-events"
+                      class="admin-link"
+                      @click="hideAdminDropdown"
+                    >
+                      <CogIcon class="w-4 h-4" />
+                      <span>External Events</span>
                     </NuxtLink>
                     <NuxtLink
                       to="/admin/events/history"

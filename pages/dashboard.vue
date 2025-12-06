@@ -70,9 +70,18 @@
           >
             <!-- Event Header -->
             <div class="flex justify-between items-start mb-4">
-              <h3 class="text-xl font-semibold text-gray-900">
-                {{ registration.customEvent.name }}
-              </h3>
+              <div class="event-title-row">
+                <h3 class="text-xl font-semibold text-gray-900">
+                  {{ registration.customEvent.name }}
+                </h3>
+                <span
+                  v-if="registration.isExternalEvent"
+                  class="event-type-badge"
+                  :class="`type-${registration.eventType}`"
+                >
+                  {{ getEventTypeName(registration.eventType) }}
+                </span>
+              </div>
               <span
                 class="px-2 py-1 text-xs font-medium rounded-full"
                 :class="{
@@ -319,13 +328,16 @@ const { t } = useI18n();
 
 interface EventRegistration {
   id: string;
-  customEventId: string;
+  customEventId: string | null;
+  externalEventId: string | null;
   playerId: string;
   registeredAt: string;
   status: string;
   notes?: string | null;
   decklist?: string | null;
   bringingDecklistOnsite?: boolean | null;
+  isExternalEvent?: boolean;
+  eventType?: string;
   customEvent: {
     id: string;
     name: string;
@@ -520,8 +532,55 @@ const formatRegistrationDate = (dateString: string): string => {
   });
 };
 
+const getEventTypeName = (eventType: string): string => {
+  const types: Record<string, string> = {
+    cup: "League Cup",
+    challenge: "League Challenge",
+    local: "Local Event",
+    custom: "Custom Event",
+  };
+  return types[eventType] || eventType;
+};
+
 // Load data on mount
 onMounted(() => {
   fetchRegistrations();
 });
 </script>
+
+<style scoped>
+.event-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.event-type-badge {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.event-type-badge.type-cup {
+  background-color: #bbf7d0;
+  color: #166534;
+}
+
+.event-type-badge.type-challenge {
+  background-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.event-type-badge.type-local {
+  background-color: #e0f2fe;
+  color: #075985;
+}
+
+.event-type-badge.type-custom {
+  background-color: #fed7aa;
+  color: #9a3412;
+}
+</style>

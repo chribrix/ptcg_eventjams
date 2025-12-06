@@ -134,7 +134,20 @@
                 <span>{{ event.cost || "?" }}</span>
               </div>
 
-              <div v-if="event.link && event.link !== '//'" class="ml-auto">
+              <div v-if="hasLocalRegistration(event)" class="ml-auto">
+                <NuxtLink
+                  :to="`/events/register/${event.id}`"
+                  class="flex items-center gap-1 text-blue-600 no-underline font-medium text-sm py-1 px-2 bg-blue-50 rounded border border-blue-200 transition-all duration-200 hover:bg-blue-100 hover:text-blue-700"
+                  @click.stop
+                >
+                  <LinkIcon class="w-4 h-4 flex-shrink-0" />
+                  Register
+                </NuxtLink>
+              </div>
+              <div
+                v-else-if="event.link && event.link !== '//'"
+                class="ml-auto"
+              >
                 <a
                   :href="event.link"
                   target="_blank"
@@ -374,6 +387,10 @@ const formatMonth = (dateString: string) => {
 const stripHtmlTags = (html: string) => {
   if (!html) return "";
   return html.replace(/<[^>]*>/g, "").trim();
+};
+
+const hasLocalRegistration = (event: ParsedEvent): boolean => {
+  return !!(event as any).hasLocalRegistration;
 };
 
 const openEventDetails = (event: ParsedEvent) => {

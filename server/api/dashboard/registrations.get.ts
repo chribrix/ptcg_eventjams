@@ -70,11 +70,22 @@ export default defineEventHandler(async (event) => {
     const registrations = await prisma.eventRegistration.findMany({
       where: {
         playerId: player.id,
-        customEvent: {
-          eventDate: {
-            gte: new Date(), // Only future or current events
+        OR: [
+          {
+            customEvent: {
+              eventDate: {
+                gte: new Date(), // Only future or current events
+              },
+            },
           },
-        },
+          {
+            externalEvent: {
+              eventDate: {
+                gte: new Date(), // Only future or current events
+              },
+            },
+          },
+        ],
       },
       include: {
         customEvent: {
@@ -91,16 +102,104 @@ export default defineEventHandler(async (event) => {
             requiresDecklist: true,
           },
         },
+        externalEvent: {
+          select: {
+            id: true,
+            eventName: true,
+            eventLocation: true,
+            eventDate: true,
+            maxParticipants: true,
+            participationFee: true,
+            description: true,
+            registrationDeadline: true,
+            requiresDecklist: true,
+            overrides: true,
+          },
+        },
       },
       orderBy: {
-        customEvent: {
-          eventDate: "asc",
-        },
+        registeredAt: "desc",
       },
     });
 
+    // Transform registrations to have a consistent structure
+    const transformedRegistrations = registrations.map((reg) => {
+      const isExternalEvent = !!reg.externalEventId;
+
+      if (isExternalEvent && reg.externalEvent) {
+        const overrides = reg.externalEvent.overrides;
+
+        // Helper function to determine event type from overrides
+        const getEventType = (): string => {
+          if (!overrides) return "custom";
+          if (overrides.icon === "cup" || overrides.type === "cup")
+            return "cup";
+          if (overrides.icon === "challenge" || overrides.type === "challenge")
+            return "challenge";
+          if (overrides.icon === "local" || overrides.type === "local")
+            return "local";
+          return "custom";
+        };
+
+        return {
+          id: reg.id,
+          customEventId: reg.customEventId,
+          externalEventId: reg.externalEventId,
+          playerId: reg.playerId,
+          registeredAt: reg.registeredAt,
+          status: reg.status,
+          notes: reg.notes,
+          decklist: reg.decklist,
+          bringingDecklistOnsite: reg.bringingDecklistOnsite,
+          customEvent: {
+            id: reg.externalEvent.id,
+            name:
+              overrides?.title ||
+              overrides?.venue ||
+              reg.externalEvent.eventName,
+            venue:
+              overrides?.venue ||
+              reg.externalEvent.eventLocation ||
+              reg.externalEvent.eventName,
+            eventDate: reg.externalEvent.eventDate,
+            maxParticipants: reg.externalEvent.maxParticipants || 0,
+            participationFee:
+              reg.externalEvent.participationFee?.toString() || null,
+            description: reg.externalEvent.description,
+            registrationDeadline: reg.externalEvent.registrationDeadline,
+            status: "published",
+            requiresDecklist: reg.externalEvent.requiresDecklist,
+          },
+          isExternalEvent: true,
+          eventType: getEventType(),
+        };
+      }
+
+      return {
+        id: reg.id,
+        customEventId: reg.customEventId,
+        externalEventId: reg.externalEventId,
+        playerId: reg.playerId,
+        registeredAt: reg.registeredAt,
+        status: reg.status,
+        notes: reg.notes,
+        decklist: reg.decklist,
+        bringingDecklistOnsite: reg.bringingDecklistOnsite,
+        customEvent: reg.customEvent,
+        isExternalEvent: false,
+        eventType: "custom",
+      };
+    });
+
+    // Sort by event date
+    transformedRegistrations.sort((a, b) => {
+      const dateA = new Date(a.customEvent.eventDate);
+      const dateB = new Date(b.customEvent.eventDate);
+      return dateA.getTime() - dateB.getTime();
+    });
+
     return {
-      data: registrations,
+      data: transformedRegistrations,
       error: null,
     };
   } catch (error) {

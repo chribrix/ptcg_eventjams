@@ -24,7 +24,15 @@
         class="registration-card-summary"
       >
         <div class="registration-header">
-          <h4>{{ registration.customEvent.name }}</h4>
+          <div class="event-title-row">
+            <h4>{{ registration.customEvent.name }}</h4>
+            <span
+              class="event-type-badge"
+              :class="`type-${registration.eventType || 'custom'}`"
+            >
+              {{ getEventTypeName(registration.eventType || "custom") }}
+            </span>
+          </div>
           <span class="event-date">
             {{ formatEventDate(registration.customEvent.eventDate) }}
           </span>
@@ -63,12 +71,15 @@
 <script setup lang="ts">
 interface EventRegistration {
   id: string;
-  customEventId: string;
+  customEventId: string | null;
+  externalEventId?: string | null;
   playerId: string;
   registeredAt: string;
   status: string;
   notes?: string | null;
   decklist?: string | null;
+  isExternalEvent?: boolean;
+  eventType?: string;
   customEvent: {
     id: string;
     name: string;
@@ -94,6 +105,16 @@ const formatEventDate = (dateString: string): string => {
     month: "short",
     day: "numeric",
   });
+};
+
+const getEventTypeName = (eventType: string): string => {
+  const types: Record<string, string> = {
+    cup: "League Cup",
+    challenge: "League Challenge",
+    local: "Local Event",
+    custom: "Custom Event",
+  };
+  return types[eventType] || eventType;
 };
 
 const fetchUserRegistrations = async () => {
@@ -204,11 +225,47 @@ onMounted(async () => {
   margin-bottom: 0.5rem;
 }
 
+.event-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
 .registration-header h4 {
   margin: 0;
   font-size: 0.875rem;
   font-weight: 600;
   color: #1f2937;
+}
+
+.event-type-badge {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.event-type-badge.type-cup {
+  background-color: #bbf7d0;
+  color: #166534;
+}
+
+.event-type-badge.type-challenge {
+  background-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.event-type-badge.type-local {
+  background-color: #e0f2fe;
+  color: #075985;
+}
+
+.event-type-badge.type-custom {
+  background-color: #fed7aa;
+  color: #9a3412;
 }
 
 .event-date {

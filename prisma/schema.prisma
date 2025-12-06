@@ -101,13 +101,14 @@ model MetaState {
 // Admin users table - only contains manually inserted admin users
 model AdminUser {
   id        String   @id // Supabase user UUID
-  email     String   @unique
+  email     String
   name      String?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations to admin-created content
-  CustomEvents CustomEvent[]
+  CustomEvents           CustomEvent[]
+  ExternalEventOverrides ExternalEventOverride[]
 
   @@map("admin_users")
   @@schema("users")
@@ -214,18 +215,21 @@ model Player {
 }
 
 model EventRegistration {
-  id                     String      @id @default(cuid())
-  customEventId          String      @map("custom_event_id")
-  playerId               String      @map("player_id")
-  registeredAt           DateTime    @default(now()) @map("registered_at")
-  status                 String      @default("registered") // registered, attended, no-show, cancelled
+  id                     String                 @id @default(cuid())
+  customEventId          String?                @map("custom_event_id")
+  externalEventId        String?                @map("external_event_id") // For external events with local registration
+  playerId               String                 @map("player_id")
+  registeredAt           DateTime               @default(now()) @map("registered_at")
+  status                 String                 @default("registered") // registered, attended, no-show, cancelled
   notes                  String?
   decklist               String? // Player's decklist for this event
-  bringingDecklistOnsite Boolean?    @default(false) @map("bringing_decklist_onsite") // Whether player will bring physical decklist
-  customEvent            CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
-  player                 Player      @relation(fields: [playerId], references: [id])
+  bringingDecklistOnsite Boolean?               @default(false) @map("bringing_decklist_onsite") // Whether player will bring physical decklist
+  customEvent            CustomEvent?           @relation(fields: [customEventId], references: [id], onDelete: Cascade)
+  externalEvent          ExternalEventOverride? @relation(fields: [externalEventId], references: [id], onDelete: Cascade)
+  player                 Player                 @relation(fields: [playerId], references: [id])
 
   @@unique([customEventId, playerId])
+  @@unique([externalEventId, playerId])
   @@map("event_registrations")
   @@schema("public")
 }
@@ -242,5 +246,39 @@ model CustomEventParticipant {
 
   @@unique([customEventId, playerId])
   @@map("custom_event_participants")
+  @@schema("public")
+}
+
+// Event overrides for external pokedata events
+// Allows admins to override details of events fetched from pokedata.ovh
+model ExternalEventOverride {
+  id            String   @id @default(cuid())
+  // Matching criteria - used to identify the external event
+  eventName     String   @map("event_name") // Event venue/name from pokedata
+  eventDate     DateTime @map("event_date") // Event date from pokedata
+  eventLocation String?  @map("event_location") // Optional: city/location for additional matching
+
+  // Override fields - JSONB column for flexible overrides
+  overrides Json @map("overrides") // Any field from the event can be overridden
+
+  // Local registration handling
+  handleRegistrationLocally Boolean   @default(false) @map("handle_registration_locally") // If true, handle registration in our system
+  maxParticipants           Int?      @map("max_participants") // Max participants when handling registration
+  participationFee          Decimal?  @map("participation_fee") @db.Decimal(10, 2) // Entry fee
+  registrationDeadline      DateTime? @map("registration_deadline") // Deadline for registration
+  requiresDecklist          Boolean   @default(false) @map("requires_decklist") // Whether decklist is required
+  description               String? // Event description for local registration
+
+  // Metadata
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  notes     String? // Admin notes about why this override exists
+
+  creator       AdminUser           @relation(fields: [createdBy], references: [id])
+  registrations EventRegistration[]
+
+  @@unique([eventName, eventDate]) // One override per event name+date combo
+  @@map("external_event_overrides")
   @@schema("public")
 }

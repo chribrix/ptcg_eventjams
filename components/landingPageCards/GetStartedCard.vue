@@ -1,26 +1,26 @@
 <template>
   <div
-    class="group bg-white rounded-3xl shadow-2xl border-2 border-violet-100 overflow-hidden hover:shadow-3xl hover:border-violet-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col"
+    class="group bg-white rounded-3xl shadow-2xl border-2 border-violet-100 overflow-hidden hover:shadow-3xl hover:border-violet-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col w-full"
   >
     <div
-      class="bg-gradient-to-r from-violet-600 to-purple-700 px-10 py-10 flex-shrink-0"
+      class="bg-gradient-to-r from-violet-600 to-purple-700 px-5 py-6 sm:px-10 sm:py-10 flex-shrink-0"
     >
       <div class="flex items-center">
         <div
-          class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mr-5 group-hover:scale-110 transition-transform duration-300"
+          class="w-10 h-10 sm:w-14 sm:h-14 bg-white/20 rounded-xl flex items-center justify-center mr-4 sm:mr-5 group-hover:scale-110 transition-transform duration-300"
         >
-          <RocketLaunchIcon class="w-8 h-8 text-white" />
+          <RocketLaunchIcon class="w-6 h-6 sm:w-8 sm:h-8 text-white" />
         </div>
         <div>
-          <h2 class="text-3xl font-bold text-white">Get Started</h2>
-          <p class="text-violet-100 text-base">
+          <h2 class="text-2xl sm:text-3xl font-bold text-white">Get Started</h2>
+          <p class="text-violet-100 text-sm sm:text-base">
             Join the community today - it's free!
           </p>
         </div>
       </div>
     </div>
     <div
-      class="p-10 flex-1 overflow-hidden flex flex-col justify-center space-y-6"
+      class="p-5 sm:p-10 flex-1 overflow-hidden flex flex-col justify-center space-y-6"
     >
       <!-- Feature List -->
       <div class="space-y-4">

@@ -21,7 +21,10 @@ nano .env
 
 - `POSTGRES_PASSWORD` - Use a strong password
 - `SUPABASE_URL` and `SUPABASE_KEY` - Your production Supabase credentials
+- `APP_BASE_URL` - The public URL of your app (used in Supabase magic-link redirects)
 - `SMTP_*` - Your production email service credentials
+
+These values are injected into the Docker build, so make sure `.env` exists **before** running `docker compose --profile prod up -d --build`.
 
 ### 2. Build and Start Production Services
 
@@ -40,13 +43,13 @@ This will:
 - Start the app container
 - Expose the app on port 3000
 
-### 3. Run Database Migrations
+### 3. Database Migrations
+
+When the app container starts it automatically runs `npx prisma migrate deploy`. This ensures the schema is always up to date when the service boots. To skip this behavior (for example on read-only replicas) set `SKIP_PRISMA_MIGRATE=true` in the app container environment.
+
+If you want to seed data manually you can still run:
 
 ```bash
-# Run Prisma migrations in the app container
-docker exec ptcg_app npx prisma migrate deploy
-
-# Optional: Seed the database
 docker exec ptcg_app npx prisma db seed
 ```
 
