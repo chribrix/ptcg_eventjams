@@ -52,8 +52,8 @@
           </div>
 
           <div class="event-details">
-            <p><strong>Venue:</strong> {{ event.venue }}</p>
             <p><strong>Date:</strong> {{ formatDate(event.eventDate) }}</p>
+            <p><strong>Venue:</strong> {{ event.venue }}</p>
             <p>
               <strong>Participants:</strong>
               {{ event._count?.registrations || 0 }} /
@@ -536,8 +536,12 @@ const getNextFriday = (): Date => {
 const formatDateWithWeekday = (dateString: string): string => {
   if (!dateString) return "";
   const date = new Date(dateString);
-  const weekday = date.toLocaleDateString("de-DE", { weekday: "short" });
+  const weekday = date.toLocaleDateString("de-DE", {
+    timeZone: "Europe/Berlin",
+    weekday: "short",
+  });
   const formatted = date.toLocaleDateString("de-DE", {
+    timeZone: "Europe/Berlin",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -550,11 +554,25 @@ const formatDateWithWeekday = (dateString: string): string => {
 // Initialize form with default dates when creating new event
 const initializeEventForm = () => {
   const nextFriday = getNextFriday();
-  const eventDateTime = nextFriday.toISOString().slice(0, 16);
+
+  // Format for datetime-local input in German timezone
+  const formatForInput = (date: Date): string => {
+    const berlinDate = new Date(
+      date.toLocaleString("en-US", { timeZone: "Europe/Berlin" })
+    );
+    const year = berlinDate.getFullYear();
+    const month = String(berlinDate.getMonth() + 1).padStart(2, "0");
+    const day = String(berlinDate.getDate()).padStart(2, "0");
+    const hours = String(berlinDate.getHours()).padStart(2, "0");
+    const minutes = String(berlinDate.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const eventDateTime = formatForInput(nextFriday);
 
   // Registration deadline: 15 minutes before event
   const regDeadline = new Date(nextFriday.getTime() - 15 * 60 * 1000);
-  const regDeadlineString = regDeadline.toISOString().slice(0, 16);
+  const regDeadlineString = formatForInput(regDeadline);
 
   eventForm.value = {
     name: "",
@@ -596,9 +614,18 @@ const onEventDateChange = () => {
 
     // Registration deadline: 15 minutes before event (but still editable)
     const regDeadline = new Date(eventDate.getTime() - 15 * 60 * 1000);
-    eventForm.value.registrationDeadline = regDeadline
-      .toISOString()
-      .slice(0, 16);
+
+    // Format for datetime-local input in German timezone
+    const berlinDate = new Date(
+      regDeadline.toLocaleString("en-US", { timeZone: "Europe/Berlin" })
+    );
+    const year = berlinDate.getFullYear();
+    const month = String(berlinDate.getMonth() + 1).padStart(2, "0");
+    const day = String(berlinDate.getDate()).padStart(2, "0");
+    const hours = String(berlinDate.getHours()).padStart(2, "0");
+    const minutes = String(berlinDate.getMinutes()).padStart(2, "0");
+
+    eventForm.value.registrationDeadline = `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 };
 
@@ -623,7 +650,9 @@ const saveEvent = async () => {
 
     const eventData = {
       ...eventForm.value,
-      participationFee: eventForm.value.participationFee || undefined,
+      participationFee: eventForm.value.participationFee
+        ? Number(eventForm.value.participationFee)
+        : undefined,
     };
 
     if (editingEvent.value) {
@@ -657,6 +686,23 @@ const editEvent = (event: CustomEvent) => {
   }
 
   editingEvent.value = event;
+
+  // Convert dates from UTC to German timezone for datetime-local input
+  const formatForInput = (dateStr: string): string => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    // Get the date in German timezone
+    const berlinDate = new Date(
+      date.toLocaleString("en-US", { timeZone: "Europe/Berlin" })
+    );
+    const year = berlinDate.getFullYear();
+    const month = String(berlinDate.getMonth() + 1).padStart(2, "0");
+    const day = String(berlinDate.getDate()).padStart(2, "0");
+    const hours = String(berlinDate.getHours()).padStart(2, "0");
+    const minutes = String(berlinDate.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   eventForm.value = {
     name: event.name,
     venue: event.venue,
@@ -664,9 +710,9 @@ const editEvent = (event: CustomEvent) => {
     maxParticipants: event.maxParticipants,
     participationFee: event.participationFee || 0,
     description: event.description || "",
-    eventDate: new Date(event.eventDate).toISOString().slice(0, 16),
+    eventDate: formatForInput(event.eventDate),
     registrationDeadline: event.registrationDeadline
-      ? new Date(event.registrationDeadline).toISOString().slice(0, 16)
+      ? formatForInput(event.registrationDeadline)
       : "",
     requiresDecklist: event.requiresDecklist,
     status: event.status,
@@ -760,7 +806,14 @@ const closeDecklistModal = () => {
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString();
+  return new Date(dateString).toLocaleString("de-DE", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 const getRegistrationUrl = (eventId: string) => {

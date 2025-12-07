@@ -43,8 +43,8 @@ export default defineEventHandler(async (event) => {
       eventName = overrides?.title || "External Event";
     }
 
-    // Fetch participants (registered and reserved, excluding cancelled)
-    const participants = await prisma.eventRegistration.findMany({
+    // Fetch active participants (registered and reserved, excluding cancelled)
+    const activeParticipants = await prisma.eventRegistration.findMany({
       where: isExternalEvent
         ? {
             externalEventId: eventId,
@@ -75,13 +75,49 @@ export default defineEventHandler(async (event) => {
       },
     });
 
+    // Fetch cancelled participants separately
+    const cancelledParticipants = await prisma.eventRegistration.findMany({
+      where: isExternalEvent
+        ? {
+            externalEventId: eventId,
+            status: "cancelled",
+          }
+        : {
+            customEventId: eventId,
+            status: "cancelled",
+          },
+      select: {
+        id: true,
+        status: true,
+        registeredAt: true,
+        decklist: true,
+        bringingDecklistOnsite: true,
+        player: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        registeredAt: "asc",
+      },
+    });
+
     return {
       event: {
         id: eventId,
         name: eventName,
         isExternalEvent,
       },
-      participants: participants.map((p) => ({
+      participants: activeParticipants.map((p) => ({
+        id: p.id,
+        status: p.status,
+        registeredAt: p.registeredAt,
+        playerName: p.player.name,
+        hasDecklistSubmitted: Boolean(p.decklist),
+        isBringingDecklistOnsite: Boolean(p.bringingDecklistOnsite),
+      })),
+      cancelledParticipants: cancelledParticipants.map((p) => ({
         id: p.id,
         status: p.status,
         registeredAt: p.registeredAt,

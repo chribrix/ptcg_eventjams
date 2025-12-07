@@ -50,6 +50,14 @@
               "
               style="word-break: break-word; overflow-wrap: anywhere"
             >
+              <!-- Event Title Headline -->
+              <h4
+                class="text-lg font-bold text-gray-900 mb-3 leading-tight"
+                style="word-break: break-word; overflow-wrap: anywhere"
+              >
+                {{ getEventTitle(event) }}
+              </h4>
+
               <div class="flex justify-between items-center mb-3">
                 <div class="flex flex-col w-full gap-1">
                   <!-- Top row: Event type badge -->
@@ -386,5 +394,18 @@ const getRegistrationCount = (event: ParsedEvent): string => {
     }
   }
   return "";
+};
+
+const getEventTitle = (event: ParsedEvent): string => {
+  if (isCustomEvent(event)) {
+    const customEvent = customEvents.value.find(
+      (ce) => String(ce.id) === event.id
+    );
+    if (customEvent) {
+      return customEvent.name;
+    }
+  }
+  // For external events, use title or venue
+  return event.title || event.venue || "Event";
 };
 </script>

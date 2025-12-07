@@ -55,7 +55,9 @@
 
     <!-- Empty State -->
     <div
-      v-else-if="participants.length === 0"
+      v-else-if="
+        participants.length === 0 && cancelledParticipants.length === 0
+      "
       :class="
         compact
           ? 'p-2 text-center text-gray-500'
@@ -67,7 +69,8 @@
 
     <!-- Participants List -->
     <div v-else :class="compact ? '' : 'p-6'">
-      <div class="grid gap-4">
+      <!-- Active Participants -->
+      <div v-if="participants.length > 0" class="grid gap-4">
         <div
           v-for="participant in participants"
           :key="participant.id"
@@ -146,6 +149,86 @@
           </div>
         </div>
       </div>
+
+      <!-- Cancelled Participants Section -->
+      <div v-if="cancelledParticipants.length > 0" class="mt-6">
+        <div class="flex items-center space-x-2 mb-3">
+          <div class="h-px flex-1 bg-gray-300"></div>
+          <h4
+            class="text-sm font-semibold text-gray-600 uppercase tracking-wide"
+          >
+            Cancelled
+          </h4>
+          <div class="h-px flex-1 bg-gray-300"></div>
+        </div>
+        <div class="grid gap-4">
+          <div
+            v-for="participant in cancelledParticipants"
+            :key="participant.id"
+            :class="
+              compact
+                ? 'group bg-gray-50 rounded-lg border border-gray-200 p-3 opacity-60'
+                : 'group bg-white rounded-xl border border-gray-200 p-4 opacity-60'
+            "
+          >
+            <div class="flex items-center justify-between">
+              <div
+                class="flex items-center"
+                :class="compact ? 'space-x-3' : 'space-x-4'"
+              >
+                <div class="relative flex-shrink-0">
+                  <!-- Player Avatar -->
+                  <div
+                    :class="
+                      compact
+                        ? 'w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-md'
+                        : 'w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg'
+                    "
+                  >
+                    {{ getInitials(participant.playerName) }}
+                  </div>
+                </div>
+
+                <!-- Player Info -->
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center space-x-2">
+                    <UserIcon
+                      :class="compact ? 'w-3 h-3' : 'w-4 h-4'"
+                      class="text-gray-400 flex-shrink-0"
+                    />
+                    <p
+                      :class="
+                        compact
+                          ? 'font-medium text-gray-600 truncate line-through'
+                          : 'font-semibold text-gray-600 truncate line-through'
+                      "
+                    >
+                      {{ participant.playerName }}
+                    </p>
+                  </div>
+                  <div v-if="!compact" class="flex items-center space-x-2 mt-1">
+                    <ClockIcon class="w-3 h-3 text-gray-400 flex-shrink-0" />
+                    <p class="text-xs text-gray-500">
+                      Registered
+                      {{ formatRegistrationDate(participant.registeredAt) }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cancelled Badge -->
+              <div class="flex items-center space-x-3">
+                <span
+                  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200"
+                >
+                  <div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                  Cancelled
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -164,7 +247,7 @@ import {
 
 interface Participant {
   id: string;
-  status: "registered" | "reserved";
+  status: "registered" | "reserved" | "cancelled";
   registeredAt: string;
   playerName: string;
   hasDecklistSubmitted: boolean;
@@ -177,6 +260,7 @@ interface ParticipantsResponse {
     name: string;
   };
   participants: Participant[];
+  cancelledParticipants?: Participant[];
 }
 
 interface Props {
@@ -191,6 +275,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const participants = ref<Participant[]>([]);
+const cancelledParticipants = ref<Participant[]>([]);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 
@@ -237,6 +322,7 @@ async function fetchParticipants(): Promise<void> {
     );
 
     participants.value = response.participants || [];
+    cancelledParticipants.value = response.cancelledParticipants || [];
   } catch (err: unknown) {
     console.error("Failed to fetch participants:", err);
     error.value =
