@@ -12,27 +12,52 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Fetch the event to verify it exists
+    // Check if it's a custom event or external event override
     const customEvent = await prisma.customEvent.findUnique({
       where: { id: eventId },
       select: { id: true, name: true },
     });
 
-    if (!customEvent) {
+    const externalEventOverride = await prisma.externalEventOverride.findUnique(
+      {
+        where: { id: eventId },
+        select: { id: true, overrides: true },
+      }
+    );
+
+    if (!customEvent && !externalEventOverride) {
       throw createError({
         statusCode: 404,
         statusMessage: "Event not found",
       });
     }
 
+    const isExternalEvent = Boolean(externalEventOverride);
+
+    // Get event name
+    let eventName = "";
+    if (customEvent) {
+      eventName = customEvent.name;
+    } else if (externalEventOverride) {
+      const overrides = externalEventOverride.overrides as any;
+      eventName = overrides?.title || "External Event";
+    }
+
     // Fetch participants (registered and reserved, excluding cancelled)
     const participants = await prisma.eventRegistration.findMany({
-      where: {
-        customEventId: eventId,
-        status: {
-          not: "cancelled",
-        },
-      },
+      where: isExternalEvent
+        ? {
+            externalEventId: eventId,
+            status: {
+              not: "cancelled",
+            },
+          }
+        : {
+            customEventId: eventId,
+            status: {
+              not: "cancelled",
+            },
+          },
       select: {
         id: true,
         status: true,
@@ -52,8 +77,9 @@ export default defineEventHandler(async (event) => {
 
     return {
       event: {
-        id: customEvent.id,
-        name: customEvent.name,
+        id: eventId,
+        name: eventName,
+        isExternalEvent,
       },
       participants: participants.map((p) => ({
         id: p.id,

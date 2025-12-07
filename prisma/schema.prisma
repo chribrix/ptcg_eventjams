@@ -184,6 +184,7 @@ model CustomEvent {
   eventDate            DateTime                 @map("event_date")
   registrationDeadline DateTime?                @map("registration_deadline")
   status               String                   @default("upcoming") // upcoming, ongoing, completed, cancelled
+  eventType            String                   @default("custom") @map("event_type") // cup, challenge, local, custom
   requiresDecklist     Boolean                  @default(false) @map("requires_decklist")
   createdBy            String                   @map("created_by")
   createdAt            DateTime                 @default(now()) @map("created_at")

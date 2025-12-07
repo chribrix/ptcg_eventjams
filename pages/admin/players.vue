@@ -1,11 +1,10 @@
 <template>
-  <div class="admin-players">
-    <div class="page-header">
-      <h1 class="page-title">Players Management</h1>
+  <AdminPageLayout title="Players Management">
+    <template #actions>
       <button @click="showCreateForm = true" class="btn btn-primary">
         Add New Player
       </button>
-    </div>
+    </template>
 
     <!-- Create/Edit Player Modal -->
     <div
@@ -123,7 +122,7 @@
     </div>
 
     <!-- Players List -->
-    <div class="players-section">
+    <div class="admin-card">
       <div class="section-header">
         <h2>Players</h2>
         <div class="search-box">
@@ -138,8 +137,8 @@
 
       <div v-if="loading" class="loading">Loading players...</div>
 
-      <div v-else-if="filteredPlayers.length > 0" class="players-table">
-        <table>
+      <div v-else-if="filteredPlayers.length > 0" class="admin-table-wrapper">
+        <table class="admin-table">
           <thead>
             <tr>
               <th>Player ID</th>
@@ -178,11 +177,9 @@
         </table>
       </div>
 
-      <div v-else class="no-players">
-        No players found. Add your first player!
-      </div>
+      <div v-else class="no-data">No players found. Add your first player!</div>
     </div>
-  </div>
+  </AdminPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -342,242 +339,15 @@ onMounted(loadPlayers);
 </script>
 
 <style scoped>
-.admin-players {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-primary {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #2563eb;
-}
-
-.btn-secondary {
-  background-color: #6b7280;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: #4b5563;
-}
-
-.btn-danger {
-  background-color: #ef4444;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #dc2626;
-}
-
-.btn-small {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 0.5rem;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #6b7280;
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-btn:hover {
-  color: #374151;
-}
-
-.player-form {
-  padding: 1.5rem;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-input:disabled {
-  background-color: #f9fafb;
-  color: #6b7280;
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 1.5rem;
-}
-
-.players-section {
-  margin-top: 2rem;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.search-input {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  width: 250px;
-}
-
-.players-table {
-  background: white;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.players-table table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.players-table th,
-.players-table td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.players-table th {
-  font-weight: 600;
-  background-color: #f9fafb;
-  color: #374151;
-}
+@import "~/assets/css/admin-shared.css";
 
 .action-buttons {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.font-mono {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
-  color: #6b7280;
-}
-
-.no-players {
-  text-align: center;
-  padding: 3rem;
-  color: #6b7280;
-  background: white;
-  border-radius: 0.5rem;
+.player-form {
+  padding: 1.5rem;
 }
 </style>

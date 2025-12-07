@@ -1,10 +1,221 @@
 <template>
-  <div class="admin-custom-events">
-    <div class="page-header">
-      <h1 class="page-title">Custom Events Management</h1>
+  <AdminPageLayout title="Custom Events Management">
+    <template #actions>
       <button @click="createNewEvent" class="btn btn-primary">
-        <Icon name="plus" /> Create New Event
+        Create New Event
       </button>
+    </template>
+
+    <!-- Events List -->
+    <div class="admin-card">
+      <div class="section-header">
+        <h2>Events</h2>
+        <div class="search-box">
+          <input
+            v-model="searchTerm"
+            type="text"
+            placeholder="Search events..."
+            class="search-input"
+          />
+        </div>
+      </div>
+
+      <div v-if="loading" class="loading">Loading events...</div>
+
+      <div v-else-if="filteredEvents.length > 0" class="events-grid">
+        <div
+          v-for="event in filteredEvents"
+          :key="event.id"
+          class="event-card"
+          :class="{ [event.status]: true }"
+        >
+          <div class="event-header">
+            <div class="event-title-row">
+              <h3>{{ event.name }}</h3>
+              <span
+                v-if="event.isExternalEvent"
+                class="event-type-badge"
+                :class="`type-${event.eventType}`"
+              >
+                {{ getEventTypeName(event.eventType) }}
+              </span>
+            </div>
+            <span class="status-badge" :class="event.status">
+              {{ event.status }}
+            </span>
+          </div>
+
+          <div class="event-details">
+            <p><strong>Venue:</strong> {{ event.venue }}</p>
+            <p><strong>Date:</strong> {{ formatDate(event.eventDate) }}</p>
+            <p>
+              <strong>Participants:</strong>
+              {{ event._count?.registrations || 0 }} /
+              {{ event.maxParticipants }}
+            </p>
+            <p v-if="event.participationFee">
+              <strong>Fee:</strong> €{{ event.participationFee }}
+            </p>
+            <p v-if="event.requiresDecklist" class="decklist-required">
+              <strong>📋 Decklist Required</strong>
+            </p>
+            <p v-if="event.description" class="description">
+              {{ event.description }}
+            </p>
+            <div class="registration-link-section">
+              <p class="registration-link-label">
+                <strong>Registration Link:</strong>
+              </p>
+              <div class="registration-link-container">
+                <input
+                  :value="getRegistrationUrl(event.id)"
+                  readonly
+                  class="registration-link-input"
+                  @click="copyRegistrationLink(event.id)"
+                  @focus="$event.target.select()"
+                  title="Click to copy"
+                />
+                <button
+                  @click="copyRegistrationLink(event.id)"
+                  class="btn btn-small btn-copy"
+                  :class="{ copied: copiedEventId === event.id }"
+                >
+                  {{ copiedEventId === event.id ? "✓ Copied!" : "📋 Copy" }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="event-actions">
+            <NuxtLink
+              :to="`/events/register/${event.id}`"
+              class="btn btn-small btn-success"
+              target="_blank"
+            >
+              🔗 Open Registration Page
+            </NuxtLink>
+            <button
+              @click="viewRegistrations(event)"
+              class="btn btn-small btn-info"
+            >
+              View Registrations ({{ event._count?.registrations || 0 }})
+            </button>
+            <template v-if="!event.isExternalEvent">
+              <button
+                @click="editEvent(event)"
+                class="btn btn-small btn-secondary"
+              >
+                Edit
+              </button>
+              <button
+                @click="deleteEvent(event)"
+                class="btn btn-small btn-danger"
+              >
+                Delete
+              </button>
+            </template>
+            <template v-else>
+              <NuxtLink
+                to="/admin/external-events"
+                class="btn btn-small btn-secondary"
+              >
+                Manage in External Events
+              </NuxtLink>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="!loading && filteredEvents.length === 0" class="no-data">
+        No events found. Create your first event!
+      </div>
+    </div>
+
+    <!-- Registration Management Modal -->
+    <div
+      v-if="showRegistrations"
+      class="modal-overlay"
+      @click="closeRegistrationsModal"
+    >
+      <div class="modal-content modal-large" @click.stop>
+        <div class="modal-header">
+          <h2>{{ selectedEvent?.name }} - Registrations</h2>
+          <button @click="closeRegistrationsModal" class="close-btn">
+            &times;
+          </button>
+        </div>
+
+        <div class="registrations-content">
+          <div class="registrations-stats">
+            <div class="stat-item">
+              <span class="stat-number">{{ registrations.length }}</span>
+              <span class="stat-label">Total Registered</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">{{
+                selectedEvent?.maxParticipants || 0
+              }}</span>
+              <span class="stat-label">Max Capacity</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">{{
+                (selectedEvent?.maxParticipants || 0) - registrations.length
+              }}</span>
+              <span class="stat-label">Available Spots</span>
+            </div>
+          </div>
+
+          <div v-if="registrations.length > 0" class="registrations-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Player ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Registered At</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="registration in registrations"
+                  :key="registration.id"
+                >
+                  <td>{{ registration.player.playerId }}</td>
+                  <td>{{ registration.player.name }}</td>
+                  <td>{{ registration.player.email || "N/A" }}</td>
+                  <td>{{ formatDate(registration.registeredAt) }}</td>
+                  <td>
+                    <select
+                      v-model="registration.status"
+                      @change="updateRegistrationStatus(registration)"
+                      class="status-select"
+                    >
+                      <option value="registered">Registered</option>
+                      <option value="attended">Attended</option>
+                      <option value="no-show">No-show</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </td>
+                  <td>
+                    <button
+                      @click="cancelRegistration(registration)"
+                      class="btn btn-small btn-danger"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div v-else class="no-registrations">
+            No registrations yet for this event.
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Create/Edit Event Modal -->
@@ -170,217 +381,7 @@
         </form>
       </div>
     </div>
-
-    <!-- Events List -->
-    <div class="events-section">
-      <div class="section-header">
-        <h2>Events</h2>
-        <div class="search-box">
-          <input
-            v-model="searchTerm"
-            type="text"
-            placeholder="Search events..."
-            class="search-input"
-          />
-        </div>
-      </div>
-
-      <div v-if="loading" class="loading">Loading events...</div>
-
-      <div v-else class="events-grid">
-        <div
-          v-for="event in filteredEvents"
-          :key="event.id"
-          class="event-card"
-          :class="{ [event.status]: true }"
-        >
-          <div class="event-header">
-            <div class="event-title-row">
-              <h3>{{ event.name }}</h3>
-              <span
-                v-if="event.isExternalEvent"
-                class="event-type-badge"
-                :class="`type-${event.eventType}`"
-              >
-                {{ getEventTypeName(event.eventType) }}
-              </span>
-            </div>
-            <span class="status-badge" :class="event.status">
-              {{ event.status }}
-            </span>
-          </div>
-
-          <div class="event-details">
-            <p><strong>Venue:</strong> {{ event.venue }}</p>
-            <p><strong>Date:</strong> {{ formatDate(event.eventDate) }}</p>
-            <p>
-              <strong>Participants:</strong>
-              {{ event._count?.registrations || 0 }} /
-              {{ event.maxParticipants }}
-            </p>
-            <p v-if="event.participationFee">
-              <strong>Fee:</strong> €{{ event.participationFee }}
-            </p>
-            <p v-if="event.requiresDecklist" class="decklist-required">
-              <strong>📋 Decklist Required</strong>
-            </p>
-            <p v-if="event.description" class="description">
-              {{ event.description }}
-            </p>
-            <div class="registration-link-section">
-              <p class="registration-link-label">
-                <strong>Registration Link:</strong>
-              </p>
-              <div class="registration-link-container">
-                <input
-                  :value="getRegistrationUrl(event.id)"
-                  readonly
-                  class="registration-link-input"
-                  @focus="$event.target.select()"
-                />
-                <button
-                  @click="copyRegistrationLink(event.id)"
-                  class="btn btn-small btn-copy"
-                  :class="{ copied: copiedEventId === event.id }"
-                >
-                  {{ copiedEventId === event.id ? "✓ Copied!" : "📋 Copy" }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="event-actions">
-            <NuxtLink
-              :to="`/events/register/${event.id}`"
-              class="btn btn-small btn-success"
-              target="_blank"
-            >
-              🔗 Open Registration Page
-            </NuxtLink>
-            <button
-              @click="viewRegistrations(event)"
-              class="btn btn-small btn-info"
-            >
-              View Registrations ({{ event._count?.registrations || 0 }})
-            </button>
-            <template v-if="!event.isExternalEvent">
-              <button
-                @click="editEvent(event)"
-                class="btn btn-small btn-secondary"
-              >
-                Edit
-              </button>
-              <button
-                @click="deleteEvent(event)"
-                class="btn btn-small btn-danger"
-              >
-                Delete
-              </button>
-            </template>
-            <template v-else>
-              <NuxtLink
-                to="/admin/external-events"
-                class="btn btn-small btn-secondary"
-              >
-                Manage in External Events
-              </NuxtLink>
-            </template>
-          </div>
-        </div>
-      </div>
-
-      <div v-if="!loading && filteredEvents.length === 0" class="no-events">
-        No events found. Create your first event!
-      </div>
-    </div>
-
-    <!-- Registration Management Modal -->
-    <div
-      v-if="showRegistrations"
-      class="modal-overlay"
-      @click="closeRegistrationsModal"
-    >
-      <div class="modal-content modal-large" @click.stop>
-        <div class="modal-header">
-          <h2>{{ selectedEvent?.name }} - Registrations</h2>
-          <button @click="closeRegistrationsModal" class="close-btn">
-            &times;
-          </button>
-        </div>
-
-        <div class="registrations-content">
-          <div class="registrations-stats">
-            <div class="stat-item">
-              <span class="stat-number">{{ registrations.length }}</span>
-              <span class="stat-label">Total Registered</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number">{{
-                selectedEvent?.maxParticipants || 0
-              }}</span>
-              <span class="stat-label">Max Capacity</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number">{{
-                (selectedEvent?.maxParticipants || 0) - registrations.length
-              }}</span>
-              <span class="stat-label">Available Spots</span>
-            </div>
-          </div>
-
-          <div v-if="registrations.length > 0" class="registrations-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Player ID</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Registered At</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="registration in registrations"
-                  :key="registration.id"
-                >
-                  <td>{{ registration.player.playerId }}</td>
-                  <td>{{ registration.player.name }}</td>
-                  <td>{{ registration.player.email || "N/A" }}</td>
-                  <td>{{ formatDate(registration.registeredAt) }}</td>
-                  <td>
-                    <select
-                      v-model="registration.status"
-                      @change="updateRegistrationStatus(registration)"
-                      class="status-select"
-                    >
-                      <option value="registered">Registered</option>
-                      <option value="attended">Attended</option>
-                      <option value="no-show">No-show</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </td>
-                  <td>
-                    <button
-                      @click="cancelRegistration(registration)"
-                      class="btn btn-small btn-danger"
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div v-else class="no-registrations">
-            No registrations yet for this event.
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  </AdminPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -421,10 +422,6 @@ interface Registration {
 }
 
 // Page metadata
-definePageMeta({
-  layout: "products",
-});
-
 // Reactive data
 const events = ref<CustomEvent[]>([]);
 const registrations = ref<Registration[]>([]);
@@ -721,290 +718,42 @@ onMounted(loadEvents);
 </script>
 
 <style scoped>
-.admin-custom-events {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  justify-content: between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-primary {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #2563eb;
-}
-
-.btn-secondary {
-  background-color: #6b7280;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: #4b5563;
-}
-
-.btn-danger {
-  background-color: #ef4444;
-  color: white;
-}
-
-.btn-danger:hover {
-  background-color: #dc2626;
-}
-
-.btn-info {
-  background-color: #06b6d4;
-  color: white;
-}
-
-.btn-info:hover {
-  background-color: #0891b2;
-}
-
-.btn-success {
-  background-color: #10b981;
-  color: white;
-}
-
-.btn-success:hover {
-  background-color: #059669;
-}
-
-.btn-copy {
-  background-color: #8b5cf6;
-  color: white;
-  white-space: nowrap;
-}
-
-.btn-copy:hover {
-  background-color: #7c3aed;
-}
-
-.btn-copy.copied {
-  background-color: #10b981;
-}
-
-.btn-copy.copied:hover {
-  background-color: #059669;
-}
-
-.btn-small {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 0.5rem;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-large {
-  max-width: 800px;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #6b7280;
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-btn:hover {
-  color: #374151;
-}
-
-.event-form {
-  padding: 1.5rem;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.form-input,
-.form-textarea,
-.form-select {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-}
-
-.form-input:focus,
-.form-textarea:focus,
-.form-select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.checkbox-wrapper {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.form-checkbox {
-  width: auto;
-  margin: 0;
-  accent-color: #3b82f6;
-}
-
-.checkbox-label {
-  font-weight: 500;
-  color: #374151;
-  cursor: pointer;
-  margin: 0;
-}
-
-.checkbox-help {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 400;
-  color: #6b7280;
-  margin-top: 0.25rem;
-}
-
-.field-help {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 400;
-  color: #6b7280;
-  margin-top: 0.25rem;
-  font-style: italic;
-}
-
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 1.5rem;
-}
-
-.events-section {
-  margin-top: 2rem;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.search-input {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  width: 250px;
-}
+@import "~/assets/css/admin-shared.css";
 
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 1.5rem;
+  grid-template-columns: 1fr;
 }
 
 .event-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
   background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 2px solid #e2e8f0;
+  transition: all 0.2s;
+}
+
+.event-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.event-card.upcoming {
+  border-left: 4px solid #3b82f6;
+}
+
+.event-card.ongoing {
+  border-left: 4px solid #10b981;
 }
 
 .event-card.completed {
-  background-color: #f9fafb;
+  border-left: 4px solid #6b7280;
 }
 
 .event-card.cancelled {
-  background-color: #fef2f2;
+  border-left: 4px solid #ef4444;
+  opacity: 0.7;
 }
 
 .event-header {
@@ -1020,80 +769,53 @@ onMounted(loadEvents);
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: wrap;
   flex: 1;
 }
 
-.event-header h3 {
+.event-title-row h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.event-type-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.event-type-badge.type-cup {
-  background-color: #bbf7d0;
-  color: #166534;
-}
-
-.event-type-badge.type-challenge {
-  background-color: #bfdbfe;
-  color: #1e40af;
-}
-
-.event-type-badge.type-local {
-  background-color: #e0f2fe;
-  color: #075985;
-}
-
-.event-type-badge.type-custom {
-  background-color: #fed7aa;
-  color: #9a3412;
 }
 
 .status-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
   font-weight: 500;
-  text-transform: uppercase;
+  text-transform: capitalize;
 }
 
 .status-badge.upcoming {
-  background-color: #dbeafe;
-  color: #1d4ed8;
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 .status-badge.ongoing {
-  background-color: #fef3c7;
-  color: #92400e;
+  background: #d1fae5;
+  color: #065f46;
 }
 
 .status-badge.completed {
-  background-color: #dcfce7;
-  color: #166534;
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .status-badge.cancelled {
-  background-color: #fee2e2;
+  background: #fee2e2;
   color: #991b1b;
+}
+
+.event-details {
+  margin-bottom: 1rem;
 }
 
 .event-details p {
   margin: 0.5rem 0;
-  color: #6b7280;
-}
-
-.description {
-  font-style: italic;
+  font-size: 0.95rem;
+  color: #475569;
 }
 
 .decklist-required {
@@ -1101,23 +823,96 @@ onMounted(loadEvents);
   font-weight: 500;
 }
 
+.description {
+  color: #64748b;
+  font-style: italic;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.registration-link-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.registration-link-label {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.registration-link-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.registration-link-input {
+  flex: 1;
+  padding: 0.625rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: #f8fafc;
+  font-family: monospace;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.registration-link-input:hover {
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.registration-link-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: white;
+}
+
+.btn-copy {
+  white-space: nowrap;
+}
+
+.btn-copy.copied {
+  background: #10b981;
+}
+
 .event-actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1rem;
   flex-wrap: wrap;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
 }
 
-.loading {
-  text-align: center;
-  padding: 2rem;
-  color: #6b7280;
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
 }
 
-.no-events {
-  text-align: center;
-  padding: 3rem;
-  color: #6b7280;
+.btn-info {
+  background: #0ea5e9;
+  color: white;
+}
+
+.btn-info:hover:not(:disabled) {
+  background: #0284c7;
+}
+
+.btn-success {
+  background: #10b981;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #059669;
+}
+
+.modal-large {
+  max-width: 900px;
 }
 
 .registrations-content {
@@ -1126,28 +921,30 @@ onMounted(loadEvents);
 
 .registrations-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
 }
 
 .stat-item {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 1rem;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
 }
 
 .stat-number {
-  display: block;
   font-size: 2rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #1e293b;
 }
 
 .stat-label {
-  color: #6b7280;
   font-size: 0.875rem;
+  color: #64748b;
+  text-align: center;
 }
 
 .registrations-table {
@@ -1163,58 +960,32 @@ onMounted(loadEvents);
 .registrations-table td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .registrations-table th {
+  background: #f8fafc;
   font-weight: 600;
-  background-color: #f9fafb;
+  color: #475569;
 }
 
-.status-select {
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
+.registrations-table tr:hover {
+  background: #f8fafc;
 }
 
-.no-registrations {
-  text-align: center;
-  padding: 2rem;
-  color: #6b7280;
+.event-form {
+  padding: 1.5rem;
 }
 
-.registration-link-section {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+@media (min-width: 768px) {
+  .events-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.registration-link-label {
-  margin-bottom: 0.5rem;
-  color: #374151;
-}
-
-.registration-link-container {
-  display: flex;
-  gap: 0.5rem;
-  align-items: stretch;
-}
-
-.registration-link-input {
-  flex: 1;
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  background-color: #f9fafb;
-  font-family: monospace;
-  color: #374151;
-}
-
-.registration-link-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  background-color: white;
+@media (min-width: 1024px) {
+  .events-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

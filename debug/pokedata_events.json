@@ -1,33 +1,5 @@
 [
   {
-    "id": "cf00cd7a-29c0-428e-add1-1bbafa8a30fc",
-    "title": "2025-12-06 13:00 - League Challenge",
-    "dateTime": "2025-12-06",
-    "time": "13:00",
-    "type": "League Challenge",
-    "venue": "THE ARENA",
-    "location": "Ingolstadt",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-001420/",
-    "cost": "15€",
-    "streetAddress": "TRÄNKTORSTRASSE 14, 85049 INGOLSTADT, GERMANY",
-    "icon": "chall"
-  },
-  {
-    "id": "3579e255-8bdc-4215-8f6a-c2e6fd7e19e0",
-    "title": "2025-12-06 13:00 - League Cup",
-    "dateTime": "2025-12-06",
-    "time": "13:00",
-    "type": "League Cup",
-    "venue": "GAMES-CAFÉ",
-    "location": "Luhe am Forst",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-000889/",
-    "cost": "20€",
-    "streetAddress": "9 LEUCHTENBERGER STR., LUHE-WILDENAU, BY 92706, DE",
-    "icon": "cup"
-  },
-  {
     "id": "87bc24b3-f8b6-431e-aced-71359cc72047",
     "title": "2025-12-07 10:00 - League Cup",
     "dateTime": "2025-12-07",

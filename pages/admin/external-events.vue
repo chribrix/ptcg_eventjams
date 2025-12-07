@@ -1,78 +1,76 @@
 <template>
-  <div class="external-events-admin">
-    <div class="header">
-      <h1>External Event Overrides</h1>
-      <p class="subtitle">Customize details for events from pokedata.ovh</p>
+  <AdminPageLayout
+    title="External Event Overrides"
+    subtitle="Customize details for events from pokedata.ovh"
+  >
+    <div v-if="loading" class="loading">Loading events...</div>
+
+    <div v-else-if="error" class="admin-card">
+      <p class="error-message">Error: {{ error }}</p>
     </div>
 
-    <div v-if="loading" class="loading">
-      <p>Loading events...</p>
-    </div>
-
-    <div v-else-if="error" class="error-message">
-      <p>Error: {{ error }}</p>
-    </div>
-
-    <div v-else class="events-list">
-      <div
-        v-for="event in paginatedEvents"
-        :key="event.id"
-        class="event-card"
-        :class="{ 'has-override': hasOverride(event) }"
-      >
-        <div class="event-header">
-          <div class="event-info">
-            <h3>{{ event.venue }}</h3>
-            <div class="event-meta">
-              <span class="event-date">{{ formatDate(event.dateTime) }}</span>
-              <span class="event-type" :class="`type-${event.icon}`">
-                {{ getEventTypeName(event.icon) }}
+    <div v-else class="admin-card">
+      <div class="events-list">
+        <div
+          v-for="event in paginatedEvents"
+          :key="event.id"
+          class="event-card"
+          :class="{ 'has-override': hasOverride(event) }"
+        >
+          <div class="event-header">
+            <div class="event-info">
+              <h3>{{ event.venue }}</h3>
+              <div class="event-meta">
+                <span class="event-date">{{ formatDate(event.dateTime) }}</span>
+                <span class="event-type" :class="`type-${event.icon}`">
+                  {{ getEventTypeName(event.icon) }}
+                </span>
+                <span v-if="event.location" class="event-location">
+                  {{ event.location }}, {{ event.country }}
+                </span>
+              </div>
+            </div>
+            <div class="event-actions">
+              <span v-if="hasOverride(event)" class="override-badge">
+                Modified
               </span>
-              <span v-if="event.location" class="event-location">
-                {{ event.location }}, {{ event.country }}
-              </span>
+              <button
+                @click="openEditModal(event)"
+                class="btn-edit"
+                :class="{ 'btn-edit-active': hasOverride(event) }"
+              >
+                {{ hasOverride(event) ? "Edit Override" : "Add Override" }}
+              </button>
             </div>
           </div>
-          <div class="event-actions">
-            <span v-if="hasOverride(event)" class="override-badge">
-              Modified
-            </span>
-            <button
-              @click="openEditModal(event)"
-              class="btn-edit"
-              :class="{ 'btn-edit-active': hasOverride(event) }"
-            >
-              {{ hasOverride(event) ? "Edit Override" : "Add Override" }}
-            </button>
+
+          <div v-if="event.link" class="event-link">
+            <a :href="event.link" target="_blank" rel="noopener noreferrer">
+              {{ event.link }}
+            </a>
           </div>
         </div>
 
-        <div v-if="event.link" class="event-link">
-          <a :href="event.link" target="_blank" rel="noopener noreferrer">
-            {{ event.link }}
-          </a>
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="pagination">
+          <button
+            @click="currentPage--"
+            :disabled="currentPage === 1"
+            class="btn-page"
+          >
+            Previous
+          </button>
+          <span class="page-info">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          <button
+            @click="currentPage++"
+            :disabled="currentPage === totalPages"
+            class="btn-page"
+          >
+            Next
+          </button>
         </div>
-      </div>
-
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="pagination">
-        <button
-          @click="currentPage--"
-          :disabled="currentPage === 1"
-          class="btn-page"
-        >
-          Previous
-        </button>
-        <span class="page-info">
-          Page {{ currentPage }} of {{ totalPages }}
-        </span>
-        <button
-          @click="currentPage++"
-          :disabled="currentPage === totalPages"
-          class="btn-page"
-        >
-          Next
-        </button>
       </div>
     </div>
 
@@ -251,7 +249,7 @@
         <p v-if="modalSuccess" class="success-message">{{ modalSuccess }}</p>
       </div>
     </div>
-  </div>
+  </AdminPageLayout>
 </template>
 
 <script setup lang="ts">
@@ -270,6 +268,7 @@ interface ParsedEvent {
   location: string;
   country: string;
   link: string;
+  type?: string;
   icon?: string;
   cost?: string;
   streetAddress?: string;
@@ -584,37 +583,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.external-events-admin {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.header {
-  margin-bottom: 2rem;
-}
-
-.header h1 {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.subtitle {
-  color: #6b7280;
-  font-size: 0.95rem;
-}
-
-.loading,
-.error-message {
-  text-align: center;
-  padding: 2rem;
-  font-size: 1.1rem;
-}
-
-.error-message {
-  color: #dc2626;
-}
+@import "~/assets/css/admin-shared.css";
 
 .events-list {
   display: flex;
@@ -624,14 +593,14 @@ onMounted(async () => {
 
 .event-card {
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.2s;
 }
 
 .event-card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .event-card.has-override {
@@ -644,72 +613,62 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .event-info h3 {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
+  color: #1e293b;
 }
 
 .event-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.75rem;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #64748b;
 }
 
-.event-type {
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
-  font-weight: 500;
-}
-
-.type-cup {
-  background: #bbf7d0;
-  color: #166534;
-}
-
-.type-chall {
-  background: #bfdbfe;
-  color: #1e40af;
-}
-
-.type-local {
-  background: #e0f2fe;
-  color: #075985;
+.event-date,
+.event-location {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .event-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .override-badge {
+  padding: 0.25rem 0.75rem;
   background: #3b82f6;
   color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .btn-edit {
-  background: #f3f4f6;
-  color: #374151;
   padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 500;
   transition: all 0.2s;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
 }
 
 .btn-edit:hover {
-  background: #e5e7eb;
+  border-color: #3b82f6;
+  color: #3b82f6;
 }
 
 .btn-edit-active {
@@ -724,238 +683,42 @@ onMounted(async () => {
 
 .event-link {
   margin-top: 0.75rem;
-  font-size: 0.875rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
 }
 
 .event-link a {
   color: #3b82f6;
   text-decoration: none;
+  font-size: 0.875rem;
+  word-break: break-all;
 }
 
 .event-link a:hover {
   text-decoration: underline;
 }
 
-/* Pagination */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding: 1rem;
-}
-
-.btn-page {
-  padding: 0.5rem 1rem;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.btn-page:hover:not(:disabled) {
-  background: #e5e7eb;
-}
-
-.btn-page:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-weight: 500;
-  color: #374151;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 0.5rem;
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  cursor: pointer;
-  color: #6b7280;
-  line-height: 1;
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
-}
-
-.btn-close:hover {
-  color: #374151;
-}
-
-.modal-body {
-  padding: 1.5rem;
-}
-
 .event-details {
-  background: #f9fafb;
+  background: #f8fafc;
   padding: 1rem;
-  border-radius: 0.375rem;
+  border-radius: 8px;
   margin-bottom: 1.5rem;
-  font-size: 0.875rem;
 }
 
 .event-details p {
-  margin-bottom: 0.25rem;
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  color: #475569;
 }
 
-.form-group {
-  margin-bottom: 1.25rem;
+.override-form {
+  padding: 1.5rem;
 }
 
-.form-group label {
-  display: block;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: #374151;
-}
-
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-}
-
-.form-section {
-  background: #f9fafb;
-  padding: 1.25rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1.25rem;
-  border: 1px solid #e5e7eb;
-}
-
-.checkbox-group {
-  margin-bottom: 1rem;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  font-weight: 500;
-  color: #374151;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 1.125rem;
-  height: 1.125rem;
-  cursor: pointer;
-}
-
-.help-text {
-  margin-top: 0.25rem;
-  font-size: 0.8125rem;
-  color: #6b7280;
-  font-weight: normal;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.btn-delete {
-  background: #dc2626;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-weight: 500;
-  margin-right: auto;
-}
-
-.btn-delete:hover:not(:disabled) {
-  background: #b91c1c;
-}
-
-.btn-cancel {
-  background: #f3f4f6;
-  color: #374151;
-  padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.btn-cancel:hover {
-  background: #e5e7eb;
-}
-
-.btn-save {
-  background: #3b82f6;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.btn-save:hover:not(:disabled) {
-  background: #2563eb;
-}
-
-.btn-save:disabled,
-.btn-delete:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.error-message {
+  color: #ef4444;
+  text-align: center;
+  padding: 1rem;
 }
 
 .success-message {
@@ -963,5 +726,33 @@ onMounted(async () => {
   text-align: center;
   margin-top: 1rem;
   font-weight: 500;
+}
+
+.btn-save {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.btn-cancel {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.btn-cancel:hover {
+  background: #cbd5e1;
+}
+
+.btn-delete {
+  background: #ef4444;
+  color: white;
+  margin-right: auto;
+}
+
+.btn-delete:hover:not(:disabled) {
+  background: #dc2626;
 }
 </style>
