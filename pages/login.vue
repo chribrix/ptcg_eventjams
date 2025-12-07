@@ -20,7 +20,14 @@
 
     <p class="mt-4 text-center text-sm text-gray-600">
       Don't have an account?
-      <NuxtLink to="/register" class="text-green-600 hover:underline">
+      <NuxtLink
+        :to="
+          route.query.redirect
+            ? `/register?redirect=${route.query.redirect}`
+            : '/register'
+        "
+        class="text-green-600 hover:underline"
+      >
         Register
       </NuxtLink>
     </p>
@@ -58,20 +65,23 @@ const getMagicLinkRedirect = () => {
   return undefined;
 };
 
-// Check if user is already authenticated and redirect to home
+// Check if user is already authenticated and redirect
 const { user } = useAuth();
+const route = useRoute();
 
 onMounted(() => {
-  // If user is already authenticated, redirect to home page
+  // If user is already authenticated, redirect to intended page or home
   if (user.value) {
-    navigateTo("/");
+    const redirectTo = route.query.redirect as string;
+    navigateTo(redirectTo || "/");
   }
 });
 
 // Also watch for user changes (in case auth state changes while on login page)
 watch(user, (newUser) => {
   if (newUser) {
-    navigateTo("/");
+    const redirectTo = route.query.redirect as string;
+    navigateTo(redirectTo || "/");
   }
 });
 
@@ -79,7 +89,14 @@ const submitLogin = async () => {
   linkSent.value = false;
   error.value = "";
 
-  const redirectTo = getMagicLinkRedirect();
+  const returnPath = route.query.redirect as string;
+  let redirectTo = getMagicLinkRedirect();
+
+  // Append the return path if present
+  if (redirectTo && returnPath) {
+    redirectTo = `${redirectTo}?return=${encodeURIComponent(returnPath)}`;
+  }
+
   const { error: signInError } = await useSupabaseClient().auth.signInWithOtp({
     email: email.value,
     options: redirectTo

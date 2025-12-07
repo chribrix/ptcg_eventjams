@@ -23,8 +23,8 @@
           <p
             class="text-base md:text-lg text-gray-600 mb-4 max-w-2xl mx-auto leading-relaxed"
           >
-            Discover, register, and participate in Pokemon TCG tournaments
-            worldwide. Connect with the community and compete in style.
+            Discover, register, and participate in Pokemon TCG tournaments.
+            Connect with the community and compete in style.
           </p>
           <!-- Feature Highlights -->
           <!--<div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">

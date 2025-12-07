@@ -73,7 +73,11 @@
       <p class="text-sm text-gray-600">
         Already have an account?
         <NuxtLink
-          to="/login"
+          :to="
+            route.query.redirect
+              ? `/login?redirect=${route.query.redirect}`
+              : '/login'
+          "
           class="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
         >
           Sign in
@@ -110,16 +114,25 @@ const name = ref("");
 const playerId = ref("");
 const linkSent = ref(false);
 const runtimeConfig = useRuntimeConfig();
+const route = useRoute();
 
 const getMagicLinkRedirect = () => {
+  const returnPath = route.query.redirect as string;
   const configuredBase = runtimeConfig.public.appBaseUrl?.replace(/\/$/, "");
+  let redirectTo = "";
+
   if (configuredBase) {
-    return `${configuredBase}/magic-login`;
+    redirectTo = `${configuredBase}/magic-login`;
+  } else if (process.client) {
+    redirectTo = `${window.location.origin.replace(/\/$/, "")}/magic-login`;
   }
-  if (process.client) {
-    return `${window.location.origin.replace(/\/$/, "")}/magic-login`;
+
+  // Append the return path if present
+  if (redirectTo && returnPath) {
+    redirectTo = `${redirectTo}?return=${encodeURIComponent(returnPath)}`;
   }
-  return undefined;
+
+  return redirectTo || undefined;
 };
 
 const submitForm = async () => {

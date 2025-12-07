@@ -5,8 +5,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const publicPages = ["/", "/login", "/register", "/events", "/eventlist"];
 
+  // Check if path starts with public patterns
+  const isPublicPath =
+    publicPages.includes(to.path) || to.path.startsWith("/events/");
+
   // If already on a public page, don't redirect
-  if (publicPages.includes(to.path)) return;
+  if (isPublicPath) return;
 
   // On client side, check for authentication
   if (isClient) {

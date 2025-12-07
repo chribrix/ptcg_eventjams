@@ -311,6 +311,7 @@ const form = reactive<RegistrationForm>({
 
 // Supabase user data
 const supabase = useSupabaseClient();
+const user = useSupabaseUser();
 const userLoading = ref<boolean>(true);
 
 // Computed properties
@@ -434,6 +435,16 @@ const submitRegistration = async (): Promise<void> => {
 
 // Lifecycle
 onMounted(async () => {
+  // Wait a moment for user auth to load
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  // If no user is logged in, redirect to login with return URL
+  if (!user.value) {
+    const returnUrl = encodeURIComponent(`/events/register/${eventId}`);
+    await navigateTo(`/login?redirect=${returnUrl}`);
+    return;
+  }
+
   await Promise.all([loadUserData(), fetchEventDetails()]);
 });
 

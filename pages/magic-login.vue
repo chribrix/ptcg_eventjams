@@ -6,6 +6,7 @@
 
 <script setup lang="ts">
 const router = useRouter();
+const route = useRoute();
 
 onMounted(async () => {
   const { data, error } = await useSupabaseClient().auth.getSession();
@@ -21,6 +22,8 @@ onMounted(async () => {
   const user = data.session.user;
   console.log("User metadata:", user.user_metadata);
 
-  router.push("/");
+  // Check if there's a return URL
+  const returnPath = route.query.return as string;
+  router.push(returnPath || "/");
 });
 </script>

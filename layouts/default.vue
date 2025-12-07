@@ -60,8 +60,10 @@ const logout = async () => {
     }
 
     userName.value = null;
-    // Redirect to home page after logout
-    await navigateTo("/");
+    // Reload the page to clear all user data
+    if (process.client) {
+      window.location.href = "/";
+    }
   } catch (error) {
     console.error("Error during logout:", error);
   }
