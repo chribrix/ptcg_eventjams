@@ -22,8 +22,11 @@
               <h3>{{ event.venue }}</h3>
               <div class="event-meta">
                 <span class="event-date">{{ formatDate(event.dateTime) }}</span>
-                <span class="event-type" :class="`type-${event.icon}`">
-                  {{ getEventTypeName(event.icon) }}
+                <span
+                  class="event-type"
+                  :class="`type-${getEventTypeFromIcon(event.icon)}`"
+                >
+                  {{ getEventTypeName(getEventTypeFromIcon(event.icon)) }}
                 </span>
                 <span v-if="event.location" class="event-location">
                   {{ event.location }}, {{ event.country }}
@@ -253,6 +256,7 @@
 </template>
 
 <script setup lang="ts">
+import { getEventTypeName } from "~/utils/eventTypes";
 import { ref, computed, onMounted } from "vue";
 import { useAdmin } from "~/composables/useAdmin";
 
@@ -363,14 +367,14 @@ function formatDate(dateString: string | undefined): string {
   });
 }
 
-function getEventTypeName(icon: string | undefined): string {
-  const types: Record<string, string> = {
-    cup: "League Cup",
-    chall: "League Challenge",
-    local: "Local Event",
-    custom: "Custom Event",
+function getEventTypeFromIcon(icon: string | undefined): string {
+  const iconMap: Record<string, string> = {
+    cup: "cup",
+    chall: "challenge",
+    pre: "local",
+    friendly: "local",
   };
-  return types[icon || ""] || "Event";
+  return iconMap[icon || ""] || "custom";
 }
 
 function openEditModal(event: ParsedEvent) {

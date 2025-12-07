@@ -59,7 +59,7 @@
                       :style="getEventBadgeStyles(event)"
                       style="word-break: break-word; overflow-wrap: anywhere"
                     >
-                      {{ isCustomEvent(event) ? "Custom Event" : event.type }}
+                      {{ getEventTypeLabel(event) }}
                     </div>
                   </div>
                   <!-- Second row: Cost and time badges -->
@@ -213,6 +213,7 @@ interface ParsedEvent {
   streetAddress?: string;
   icon?: string;
   isCustomEvent?: boolean;
+  eventType?: string;
 }
 
 interface CustomEvent {
@@ -226,6 +227,7 @@ interface CustomEvent {
   createdAt: string;
   updatedAt: string;
   registrationCount?: number;
+  eventType?: string;
 }
 
 // Props
@@ -279,9 +281,10 @@ const hasLocalRegistration = (event: ParsedEvent): boolean => {
 const getEventBadgeStyles = (
   event: ParsedEvent
 ): { backgroundColor: string; color: string } => {
-  // Custom events
+  // Custom events - use their eventType
   if (isCustomEvent(event)) {
-    return getColorStyles("custom");
+    const eventType = event.eventType || "custom";
+    return getColorStyles(eventType);
   }
 
   // Regular events get colors based on their icon/type
@@ -291,6 +294,20 @@ const getEventBadgeStyles = (
 
   // Fallback based on type string
   return getColorStyles(event.type);
+};
+
+const getEventTypeLabel = (event: ParsedEvent): string => {
+  if (isCustomEvent(event)) {
+    const eventType = event.eventType || "custom";
+    const labels: Record<string, string> = {
+      cup: "League Cup",
+      challenge: "League Challenge",
+      local: "Local Event",
+      custom: "Custom Event",
+    };
+    return labels[eventType] || "Custom Event";
+  }
+  return event.type;
 };
 
 const getEventCost = (event: ParsedEvent): number | string | undefined => {

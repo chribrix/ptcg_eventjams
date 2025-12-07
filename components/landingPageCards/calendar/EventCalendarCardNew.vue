@@ -72,6 +72,7 @@ interface ParsedEvent {
   streetAddress?: string;
   icon?: string;
   isCustomEvent?: boolean;
+  eventType?: string;
 }
 
 interface CustomEvent {
@@ -82,6 +83,7 @@ interface CustomEvent {
   maxParticipants: number;
   participationFee: number;
   registrationCount?: number;
+  eventType?: "custom" | "challenge" | "cup" | "local";
 }
 
 const today = new Date();
@@ -185,7 +187,7 @@ const calendarAttributes = computed(() => {
       id: event.id,
       title: event.name,
       start: new Date(event.eventDate).toISOString().split("T")[0],
-      type: "custom" as const,
+      type: (event.eventType || "custom") as CalendarEvent["type"],
       isCustom: true,
     })),
   ];
@@ -328,12 +330,13 @@ const onDayClick = (day: any) => {
         id: String(event.id),
         title: event.name,
         dateTime: event.eventDate,
-        type: "Custom Event",
+        type: event.eventType || "custom",
         venue: event.venue,
         location: "",
         country: "",
         link: "",
         isCustomEvent: true,
+        eventType: event.eventType,
       })
     );
 

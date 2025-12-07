@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { getEventTypeFromOverrides } from "~/utils/eventTypes";
 
 const prisma = new PrismaClient();
 
@@ -70,7 +71,7 @@ export default defineEventHandler(async () => {
           registrations: event.registrations,
           creator: event.creator,
           isExternalEvent: true, // Flag to identify external events
-          eventType: getEventType(overrides), // Add event type for color coding
+          eventType: getEventTypeFromOverrides(overrides), // Add event type for color coding
           originalEventName: event.eventName,
           originalEventDate: event.eventDate,
         };
@@ -82,7 +83,7 @@ export default defineEventHandler(async () => {
       ...customEvents.map((e) => ({
         ...e,
         isExternalEvent: false,
-        eventType: "custom",
+        eventType: e.eventType || "custom",
       })),
       ...transformedExternalEvents,
     ].sort(
@@ -103,22 +104,5 @@ export default defineEventHandler(async () => {
   }
 });
 
-// Helper function to determine event type from overrides or original data
-function getEventType(overrides: any): string {
-  // Check if icon is present in overrides
-  if (overrides.icon) {
-    const iconMap: Record<string, string> = {
-      cup: "cup",
-      chall: "challenge",
-      pre: "local",
-      friendly: "local",
-    };
-    return iconMap[overrides.icon] || "local";
-  }
-  // If no icon, check type field
-  if (overrides.type) {
-    return overrides.type;
-  }
-  // Default to custom for local handling
-  return "custom";
-}
+// Use centralized event type utility
+// (function removed - now imported from utils/eventTypes.ts)

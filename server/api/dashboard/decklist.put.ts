@@ -71,6 +71,7 @@ export default defineEventHandler(async (event) => {
       },
       include: {
         customEvent: true,
+        externalEvent: true,
       },
     });
 
@@ -88,8 +89,18 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Check if the event requires a decklist
-    if (!existingRegistration.customEvent.requiresDecklist) {
+    // Check if the event exists and requires a decklist
+    const registeredEvent =
+      existingRegistration.customEvent || existingRegistration.externalEvent;
+
+    if (!registeredEvent) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Event not found for this registration",
+      });
+    }
+
+    if (!registeredEvent.requiresDecklist) {
       throw createError({
         statusCode: 400,
         statusMessage: "This event does not require a decklist",

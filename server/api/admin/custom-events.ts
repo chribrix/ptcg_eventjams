@@ -24,6 +24,7 @@ const validateDatetimeLocal = (value: string) => {
 const createCustomEventSchema = z.object({
   name: z.string().min(1),
   venue: z.string().min(1),
+  eventType: z.enum(["custom", "challenge", "cup", "local"]).default("custom"),
   maxParticipants: z.number().min(1),
   participationFee: z.number().optional(),
   description: z.string().optional(),
@@ -41,6 +42,7 @@ const createCustomEventSchema = z.object({
 const updateCustomEventSchema = z.object({
   name: z.string().min(1).optional(),
   venue: z.string().min(1).optional(),
+  eventType: z.enum(["custom", "challenge", "cup", "local"]).optional(),
   maxParticipants: z.number().min(1).optional(),
   participationFee: z.number().optional(),
   description: z.string().optional(),

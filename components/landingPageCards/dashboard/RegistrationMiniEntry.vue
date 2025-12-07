@@ -107,6 +107,21 @@
 
     <!-- Action Buttons -->
     <div class="flex items-center gap-3">
+      <!-- Submit Decklist Button (for reserved status with pending decklist) -->
+      <NuxtLink
+        v-if="
+          registration.status === 'reserved' &&
+          registration.customEvent.requiresDecklist &&
+          !registration.decklist &&
+          !registration.bringingDecklistOnsite
+        "
+        to="/dashboard"
+        class="group flex items-center px-4 py-2 bg-amber-50 text-amber-700 text-sm font-semibold rounded-lg hover:bg-amber-100 transition-all duration-200 border border-amber-300 hover:border-amber-400 shadow-sm hover:shadow-md"
+      >
+        <DocumentTextIcon class="w-4 h-4 mr-2" />
+        Submit Decklist
+      </NuxtLink>
+
       <!-- Event Details Button -->
       <NuxtLink
         :to="`/events/${registration.customEvent.id}`"
@@ -154,6 +169,7 @@
 </template>
 
 <script setup lang="ts">
+import { getEventTypeName } from "~/utils/eventTypes";
 import {
   MapPinIcon,
   CalendarIcon,
@@ -329,16 +345,6 @@ function formatRegistrationDate(dateString: string): string {
     const days = Math.floor(diffInHours / 24);
     return `${days} days ago`;
   }
-}
-
-function getEventTypeName(eventType: string): string {
-  const types: Record<string, string> = {
-    cup: "League Cup",
-    challenge: "League Challenge",
-    local: "Local Event",
-    custom: "Custom Event",
-  };
-  return types[eventType] || eventType;
 }
 </script>
 

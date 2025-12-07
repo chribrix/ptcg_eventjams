@@ -115,30 +115,112 @@
             <h2 class="text-xl font-semibold text-gray-900">Registration</h2>
 
             <!-- User Registration Status -->
-            <div
-              v-if="userRegistration"
-              class="bg-blue-50 border border-blue-200 rounded-lg p-4"
-            >
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="font-medium text-blue-900">
-                    You are registered for this event
-                  </div>
-                  <div class="text-sm text-blue-700">
-                    Status:
-                    {{
-                      userRegistration.status === "registered"
-                        ? "Confirmed"
-                        : "Reserved"
-                    }}
+            <div v-if="userRegistration" class="space-y-4">
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <div>
+                    <div class="font-medium text-blue-900">
+                      You are registered for this event
+                    </div>
+                    <div class="text-sm text-blue-700">
+                      Status:
+                      {{
+                        userRegistration.status === "registered"
+                          ? "Confirmed"
+                          : userRegistration.status === "reserved"
+                          ? "Reserved (Pending Decklist)"
+                          : userRegistration.status
+                      }}
+                    </div>
                   </div>
                 </div>
-                <NuxtLink
-                  to="/dashboard"
-                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+
+                <!-- Decklist Section (if event requires it) -->
+                <div
+                  v-if="event.requiresDecklist"
+                  class="mt-4 pt-4 border-t border-blue-200"
                 >
-                  Manage Registration
-                </NuxtLink>
+                  <h4 class="font-medium text-blue-900 mb-2">
+                    Decklist Status
+                  </h4>
+
+                  <!-- Decklist Submitted -->
+                  <div
+                    v-if="userRegistration.decklist"
+                    class="bg-white rounded p-3 mb-3"
+                  >
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-sm font-medium text-gray-700"
+                        >Your Decklist:</span
+                      >
+                      <span
+                        class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded"
+                        >✓ Submitted</span
+                      >
+                    </div>
+                    <pre
+                      class="text-xs text-gray-600 whitespace-pre-wrap font-mono bg-gray-50 p-2 rounded max-h-32 overflow-y-auto"
+                      >{{ userRegistration.decklist }}</pre
+                    >
+                  </div>
+
+                  <!-- Bringing Onsite -->
+                  <div
+                    v-else-if="userRegistration.bringingDecklistOnsite"
+                    class="bg-amber-50 border border-amber-200 rounded p-3 mb-3"
+                  >
+                    <div class="flex items-center gap-2 text-amber-800">
+                      <svg
+                        class="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                          clip-rule="evenodd"
+                        ></path>
+                      </svg>
+                      <span class="text-sm font-medium"
+                        >Bringing decklist on-site</span
+                      >
+                    </div>
+                  </div>
+
+                  <!-- Pending Decklist -->
+                  <div
+                    v-else
+                    class="bg-amber-50 border border-amber-200 rounded p-3 mb-3"
+                  >
+                    <div class="text-amber-800 text-sm mb-2">
+                      ⚠️ Decklist required - Your registration is reserved until
+                      you submit a decklist
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 mt-4">
+                  <NuxtLink
+                    to="/dashboard"
+                    class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center font-medium"
+                  >
+                    {{
+                      event.requiresDecklist &&
+                      !userRegistration.decklist &&
+                      !userRegistration.bringingDecklistOnsite
+                        ? "Submit Decklist"
+                        : "Edit Registration"
+                    }}
+                  </NuxtLink>
+                  <button
+                    @click="cancelRegistration"
+                    :disabled="isCancelling"
+                    class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {{ isCancelling ? "Cancelling..." : "Cancel Registration" }}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -206,6 +288,8 @@ interface EventResponse {
 interface UserRegistration {
   id: string;
   status: string;
+  decklist?: string | null;
+  bringingDecklistOnsite?: boolean;
 }
 
 const { id } = useRoute().params;
@@ -217,10 +301,7 @@ const registrationCount = ref(0);
 const userRegistration = ref<UserRegistration | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
-
-definePageMeta({
-  layout: "products",
-});
+const isCancelling = ref(false);
 
 function formatEventDate(dateString: string): string {
   const date = new Date(dateString);
@@ -274,16 +355,56 @@ async function fetchUserRegistration(): Promise<void> {
     const { data } = await $fetch<{ data: any[] }>(
       "/api/dashboard/registrations"
     );
-    const registration = data?.find((r) => r.customEventId === id);
+    // Check both customEventId and externalEventId, and also check the nested customEvent.id
+    const registration = data?.find(
+      (r) =>
+        r.customEventId === id ||
+        r.externalEventId === id ||
+        r.customEvent?.id === id
+    );
     userRegistration.value = registration
       ? {
           id: registration.id,
           status: registration.status,
+          decklist: registration.decklist,
+          bringingDecklistOnsite: registration.bringingDecklistOnsite,
         }
       : null;
   } catch (err: unknown) {
     console.error("Failed to fetch user registration:", err);
     // Don't show error for this, as it's not critical
+  }
+}
+
+async function cancelRegistration(): Promise<void> {
+  if (!userRegistration.value || isCancelling.value) return;
+
+  if (
+    !confirm(
+      "Are you sure you want to cancel your registration for this event?"
+    )
+  ) {
+    return;
+  }
+
+  try {
+    isCancelling.value = true;
+
+    await $fetch(`/api/events/${id}/cancel`, {
+      method: "POST",
+      body: { registrationId: userRegistration.value.id },
+    });
+
+    // Refresh data
+    await fetchUserRegistration();
+    await fetchEventDetails();
+
+    alert("Registration cancelled successfully");
+  } catch (err: unknown) {
+    console.error("Failed to cancel registration:", err);
+    alert("Failed to cancel registration. Please try again.");
+  } finally {
+    isCancelling.value = false;
   }
 }
 

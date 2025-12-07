@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
         venue: true,
         maxParticipants: true,
         participationFee: true,
+        eventType: true,
         createdAt: true,
         updatedAt: true,
         // Also get registration count

@@ -69,6 +69,7 @@
 </template>
 
 <script setup lang="ts">
+import { getEventTypeName } from "~/utils/eventTypes";
 interface EventRegistration {
   id: string;
   customEventId: string | null;

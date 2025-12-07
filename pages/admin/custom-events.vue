@@ -33,11 +33,17 @@
             <div class="event-title-row">
               <h3>{{ event.name }}</h3>
               <span
-                v-if="event.isExternalEvent"
+                v-if="event.eventType && event.eventType !== 'custom'"
                 class="event-type-badge"
                 :class="`type-${event.eventType}`"
               >
                 {{ getEventTypeName(event.eventType) }}
+              </span>
+              <span
+                v-else-if="event.isExternalEvent"
+                class="event-type-badge type-custom"
+              >
+                {{ getEventTypeName("custom") }}
               </span>
             </div>
             <span class="status-badge" :class="event.status">
@@ -72,7 +78,7 @@
                   readonly
                   class="registration-link-input"
                   @click="copyRegistrationLink(event.id)"
-                  @focus="$event.target.select()"
+                  @focus="($event.target as HTMLInputElement)?.select()"
                   title="Click to copy"
                 />
                 <button
@@ -255,6 +261,20 @@
             />
           </div>
 
+          <div class="form-group">
+            <label for="eventType">Event Type *</label>
+            <select
+              id="eventType"
+              v-model="eventForm.eventType"
+              required
+              class="form-input"
+            >
+              <option value="custom">Custom Event</option>
+              <option value="challenge">League Challenge</option>
+              <option value="cup">League Cup</option>
+            </select>
+          </div>
+
           <div class="form-row">
             <div class="form-group">
               <label for="maxParticipants">Max Participants *</label>
@@ -283,7 +303,12 @@
           </div>
 
           <div class="form-group">
-            <label for="eventDate">Event Date *</label>
+            <label for="eventDate">
+              Event Date *
+              <span v-if="eventForm.eventDate" class="field-help">
+                {{ formatDateWithWeekday(eventForm.eventDate) }}
+              </span>
+            </label>
             <input
               id="eventDate"
               v-model="eventForm.eventDate"
@@ -297,30 +322,13 @@
           <div class="form-group">
             <label for="registrationDeadline">
               Registration Deadline
-              <span class="field-help"
-                >Automatically set to event date/time when event date
-                changes</span
-              >
+              <span class="field-help">
+                Automatically set to 15 minutes before event start
+              </span>
             </label>
             <input
               id="registrationDeadline"
               v-model="eventForm.registrationDeadline"
-              type="datetime-local"
-              class="form-input"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="cancellationDeadline">
-              Cancellation Deadline
-              <span class="field-help"
-                >Automatically set to event date/time when event date
-                changes</span
-              >
-            </label>
-            <input
-              id="cancellationDeadline"
-              v-model="eventForm.cancellationDeadline"
               type="datetime-local"
               class="form-input"
             />
@@ -385,21 +393,23 @@
 </template>
 
 <script setup lang="ts">
+import { getEventTypeName } from "~/utils/eventTypes";
 interface CustomEvent {
   id: string;
   name: string;
   venue: string;
+  eventType?: string;
   maxParticipants: number;
   participationFee?: number;
   description?: string;
   eventDate: string;
   registrationDeadline?: string;
-  cancellationDeadline?: string;
   requiresDecklist: boolean;
   status: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  isExternalEvent?: boolean;
   _count?: {
     registrations: number;
   };
@@ -438,39 +448,67 @@ const copiedEventId = ref<string | null>(null);
 const eventForm = ref({
   name: "",
   venue: "",
-  maxParticipants: 1,
+  eventType: "custom",
+  maxParticipants: 20,
   participationFee: 0,
   description: "",
   eventDate: "",
   registrationDeadline: "",
-  cancellationDeadline: "",
   requiresDecklist: false,
   status: "upcoming",
 });
 
-// Initialize form with default dates when creating new event
-const initializeEventForm = () => {
+// Helper function to get next Friday at 18:00
+const getNextFriday = (): Date => {
   const now = new Date();
-  // Set default time to 10:00 AM today
-  const defaultDateTime = new Date(
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 5 = Friday
+  const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 7 - dayOfWeek + 5;
+
+  const nextFriday = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate(),
-    10,
+    now.getDate() + daysUntilFriday,
+    18,
+    0,
     0
-  )
-    .toISOString()
-    .slice(0, 16);
+  );
+
+  return nextFriday;
+};
+
+// Format date with weekday
+const formatDateWithWeekday = (dateString: string): string => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const weekday = date.toLocaleDateString("de-DE", { weekday: "short" });
+  const formatted = date.toLocaleDateString("de-DE", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${weekday}, ${formatted}`;
+};
+
+// Initialize form with default dates when creating new event
+const initializeEventForm = () => {
+  const nextFriday = getNextFriday();
+  const eventDateTime = nextFriday.toISOString().slice(0, 16);
+
+  // Registration deadline: 15 minutes before event
+  const regDeadline = new Date(nextFriday.getTime() - 15 * 60 * 1000);
+  const regDeadlineString = regDeadline.toISOString().slice(0, 16);
 
   eventForm.value = {
     name: "",
     venue: "",
-    maxParticipants: 1,
+    eventType: "custom",
+    maxParticipants: 20,
     participationFee: 0,
     description: "",
-    eventDate: defaultDateTime,
-    registrationDeadline: defaultDateTime,
-    cancellationDeadline: defaultDateTime,
+    eventDate: eventDateTime,
+    registrationDeadline: regDeadlineString,
     requiresDecklist: false,
     status: "upcoming",
   };
@@ -496,24 +534,15 @@ const createNewEvent = () => {
 };
 
 const onEventDateChange = () => {
-  // Auto-set registration and cancellation deadlines to match event date/time
-  // Only if they are currently empty or match the previous event date
+  // Auto-set registration deadline based on event date
   if (eventForm.value.eventDate) {
-    // Always update registration deadline to match event date
-    if (
-      !eventForm.value.registrationDeadline ||
-      eventForm.value.registrationDeadline === eventForm.value.eventDate
-    ) {
-      eventForm.value.registrationDeadline = eventForm.value.eventDate;
-    }
+    const eventDate = new Date(eventForm.value.eventDate);
 
-    // Always update cancellation deadline to match event date
-    if (
-      !eventForm.value.cancellationDeadline ||
-      eventForm.value.cancellationDeadline === eventForm.value.eventDate
-    ) {
-      eventForm.value.cancellationDeadline = eventForm.value.eventDate;
-    }
+    // Registration deadline: 15 minutes before event (but still editable)
+    const regDeadline = new Date(eventDate.getTime() - 15 * 60 * 1000);
+    eventForm.value.registrationDeadline = regDeadline
+      .toISOString()
+      .slice(0, 16);
   }
 };
 
@@ -575,15 +604,13 @@ const editEvent = (event: CustomEvent) => {
   eventForm.value = {
     name: event.name,
     venue: event.venue,
+    eventType: event.eventType || "custom",
     maxParticipants: event.maxParticipants,
     participationFee: event.participationFee || 0,
     description: event.description || "",
     eventDate: new Date(event.eventDate).toISOString().slice(0, 16),
     registrationDeadline: event.registrationDeadline
       ? new Date(event.registrationDeadline).toISOString().slice(0, 16)
-      : "",
-    cancellationDeadline: event.cancellationDeadline
-      ? new Date(event.cancellationDeadline).toISOString().slice(0, 16)
       : "",
     requiresDecklist: event.requiresDecklist,
     status: event.status,
@@ -701,16 +728,6 @@ const copyRegistrationLink = async (eventId: string) => {
       copiedEventId.value = null;
     }, 2000);
   }
-};
-
-const getEventTypeName = (eventType: string): string => {
-  const types: Record<string, string> = {
-    cup: "League Cup",
-    challenge: "League Challenge",
-    local: "Local Event",
-    custom: "Custom Event",
-  };
-  return types[eventType] || eventType;
 };
 
 // Load events on mount

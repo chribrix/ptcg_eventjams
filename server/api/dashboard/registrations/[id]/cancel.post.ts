@@ -51,6 +51,14 @@ export default defineEventHandler(async (event) => {
             status: true,
           },
         },
+        externalEvent: {
+          select: {
+            id: true,
+            eventName: true,
+            eventDate: true,
+            registrationDeadline: true,
+          },
+        },
       },
     });
 
@@ -68,7 +76,17 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const eventDate = new Date(registration.customEvent.eventDate);
+    // Get event details from either customEvent or externalEvent
+    const eventData = registration.customEvent || registration.externalEvent;
+
+    if (!eventData) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Event not found for this registration",
+      });
+    }
+
+    const eventDate = new Date(eventData.eventDate);
     const now = new Date();
 
     if (eventDate < now) {
@@ -102,14 +120,6 @@ export default defineEventHandler(async (event) => {
             }\n\nCancelled by player on ${new Date().toISOString()}`
           : `Cancelled by player on ${new Date().toISOString()}`,
       },
-      include: {
-        customEvent: {
-          select: {
-            name: true,
-            eventDate: true,
-          },
-        },
-      },
     });
 
     return {
@@ -117,8 +127,11 @@ export default defineEventHandler(async (event) => {
       message: "Registration cancelled successfully",
       registration: {
         id: updatedRegistration.id,
-        eventName: updatedRegistration.customEvent.name,
-        eventDate: updatedRegistration.customEvent.eventDate,
+        eventName:
+          registration.customEvent?.name ||
+          registration.externalEvent?.eventName ||
+          "Unknown Event",
+        eventDate: eventData.eventDate,
         cancelledAt: new Date().toISOString(),
       },
     };

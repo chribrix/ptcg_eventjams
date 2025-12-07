@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
+import { getEventTypeFromOverrides } from "~/utils/eventTypes";
 
 const prisma = new PrismaClient();
 
@@ -66,10 +67,13 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    // Get all upcoming/current event registrations for this player (including cancelled ones so they can re-register)
+    // Get all upcoming/current event registrations for this player (excluding cancelled ones)
     const registrations = await prisma.eventRegistration.findMany({
       where: {
         playerId: player.id,
+        status: {
+          not: "cancelled", // Exclude cancelled registrations
+        },
         OR: [
           {
             customEvent: {
@@ -93,6 +97,7 @@ export default defineEventHandler(async (event) => {
             id: true,
             name: true,
             venue: true,
+            eventType: true,
             maxParticipants: true,
             participationFee: true,
             description: true,
@@ -129,17 +134,8 @@ export default defineEventHandler(async (event) => {
       if (isExternalEvent && reg.externalEvent) {
         const overrides = reg.externalEvent.overrides;
 
-        // Helper function to determine event type from overrides
-        const getEventType = (): string => {
-          if (!overrides) return "custom";
-          if (overrides.icon === "cup" || overrides.type === "cup")
-            return "cup";
-          if (overrides.icon === "challenge" || overrides.type === "challenge")
-            return "challenge";
-          if (overrides.icon === "local" || overrides.type === "local")
-            return "local";
-          return "custom";
-        };
+        // Use centralized event type utility
+        const eventType = getEventTypeFromOverrides(overrides);
 
         return {
           id: reg.id,
@@ -171,7 +167,7 @@ export default defineEventHandler(async (event) => {
             requiresDecklist: reg.externalEvent.requiresDecklist,
           },
           isExternalEvent: true,
-          eventType: getEventType(),
+          eventType: eventType,
         };
       }
 
@@ -187,7 +183,7 @@ export default defineEventHandler(async (event) => {
         bringingDecklistOnsite: reg.bringingDecklistOnsite,
         customEvent: reg.customEvent,
         isExternalEvent: false,
-        eventType: "custom",
+        eventType: reg.customEvent?.eventType || "custom",
       };
     });
 

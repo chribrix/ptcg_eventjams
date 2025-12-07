@@ -1,5 +1,6 @@
 import { z } from "zod";
 import prisma from "~/lib/prisma";
+import { getEventTypeFromOverrides } from "~/utils/eventTypes";
 
 // Get event details with registration count
 export default defineEventHandler(async (event) => {
@@ -68,19 +69,8 @@ export default defineEventHandler(async (event) => {
 
     // Extract event type from overrides JSONB field
     const overrides = externalEventOverride.overrides as any;
-    const getEventType = (): string => {
-      if (!overrides) return "custom";
-      if (overrides.icon === "cup" || overrides.type === "cup") return "cup";
-      if (
-        overrides.icon === "challenge" ||
-        overrides.icon === "chall" ||
-        overrides.type === "challenge"
-      )
-        return "challenge";
-      if (overrides.icon === "local" || overrides.type === "local")
-        return "local";
-      return "custom";
-    };
+    // Use centralized event type utility
+    const eventType = getEventTypeFromOverrides(overrides);
 
     // Create a custom event-like object from the external event override
     const transformedEvent = {
@@ -102,7 +92,7 @@ export default defineEventHandler(async (event) => {
       createdAt: externalEventOverride.createdAt,
       updatedAt: externalEventOverride.updatedAt,
       isExternalEvent: true,
-      eventType: getEventType(),
+      eventType: eventType,
     };
 
     return {
