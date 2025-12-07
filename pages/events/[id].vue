@@ -214,11 +214,11 @@
                     }}
                   </NuxtLink>
                   <button
-                    @click="cancelRegistration"
+                    @click="openCancelModal"
                     :disabled="isCancelling"
                     class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {{ isCancelling ? "Cancelling..." : "Cancel Registration" }}
+                    Cancel Registration
                   </button>
                 </div>
               </div>
@@ -263,6 +263,70 @@
         />
       </div>
     </div>
+
+    <!-- Cancel Confirmation Modal -->
+    <div
+      v-if="showCancelModal"
+      class="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
+      @click="closeCancelModal"
+    >
+      <div
+        class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden"
+        @click.stop
+      >
+        <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+          <h3 class="text-xl font-semibold text-red-900">
+            Cancel Registration?
+          </h3>
+        </div>
+        <div class="px-6 py-4">
+          <p class="text-gray-700 mb-4">
+            Are you sure you want to cancel your registration for this event?
+          </p>
+          <p class="text-sm text-gray-600">
+            This action cannot be undone. You will need to register again if you
+            change your mind.
+          </p>
+        </div>
+        <div class="px-6 py-4 bg-gray-50 flex gap-3 justify-end">
+          <button
+            @click="closeCancelModal"
+            :disabled="isCancelling"
+            class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+          >
+            Keep Registration
+          </button>
+          <button
+            @click="cancelRegistration"
+            :disabled="isCancelling"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+          >
+            <span
+              v-if="isCancelling"
+              class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+            ></span>
+            {{ isCancelling ? "Cancelling..." : "Yes, Cancel Registration" }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <div
+      v-if="cancelSuccess"
+      class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in"
+    >
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
+        <span>Registration cancelled successfully</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -302,6 +366,8 @@ const userRegistration = ref<UserRegistration | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 const isCancelling = ref(false);
+const showCancelModal = ref(false);
+const cancelSuccess = ref(false);
 
 function formatEventDate(dateString: string): string {
   const date = new Date(dateString);
@@ -379,33 +445,38 @@ async function fetchUserRegistration(): Promise<void> {
 async function cancelRegistration(): Promise<void> {
   if (!userRegistration.value || isCancelling.value) return;
 
-  if (
-    !confirm(
-      "Are you sure you want to cancel your registration for this event?"
-    )
-  ) {
-    return;
-  }
-
   try {
     isCancelling.value = true;
 
-    await $fetch(`/api/events/${id}/cancel`, {
-      method: "POST",
-      body: { registrationId: userRegistration.value.id },
-    });
+    await $fetch(
+      `/api/dashboard/registrations/${userRegistration.value.id}/cancel`,
+      {
+        method: "POST",
+      }
+    );
 
     // Refresh data
     await fetchUserRegistration();
     await fetchEventDetails();
 
-    alert("Registration cancelled successfully");
+    cancelSuccess.value = true;
   } catch (err: unknown) {
     console.error("Failed to cancel registration:", err);
+    cancelSuccess.value = false;
     alert("Failed to cancel registration. Please try again.");
   } finally {
     isCancelling.value = false;
+    showCancelModal.value = false;
   }
+}
+
+function openCancelModal(): void {
+  showCancelModal.value = true;
+  cancelSuccess.value = false;
+}
+
+function closeCancelModal(): void {
+  showCancelModal.value = false;
 }
 
 // Fetch event details on mount

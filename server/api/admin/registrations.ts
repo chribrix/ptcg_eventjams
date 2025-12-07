@@ -42,7 +42,14 @@ export default defineEventHandler(async (event) => {
           orderBy: { registeredAt: "asc" },
         });
 
-        return { registrations };
+        // Include decklist fields in the response
+        const registrationsWithDecklist = registrations.map((reg) => ({
+          ...reg,
+          decklist: reg.decklist,
+          bringingDecklistOnsite: reg.bringingDecklistOnsite,
+        }));
+
+        return { registrations: registrationsWithDecklist };
 
       case "POST":
         // Register player for event

@@ -180,6 +180,7 @@
                   <th>Email</th>
                   <th>Registered At</th>
                   <th>Status</th>
+                  <th v-if="selectedEvent?.requiresDecklist">Decklist</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -193,24 +194,49 @@
                   <td>{{ registration.player.email || "N/A" }}</td>
                   <td>{{ formatDate(registration.registeredAt) }}</td>
                   <td>
-                    <select
-                      v-model="registration.status"
-                      @change="updateRegistrationStatus(registration)"
-                      class="status-select"
+                    <span
+                      class="status-badge"
+                      :class="`status-${registration.status}`"
                     >
-                      <option value="registered">Registered</option>
-                      <option value="attended">Attended</option>
-                      <option value="no-show">No-show</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
+                      {{ registration.status }}
+                    </span>
+                  </td>
+                  <td v-if="selectedEvent?.requiresDecklist">
+                    <span
+                      v-if="registration.decklist"
+                      class="decklist-status status-success"
+                    >
+                      ✓ Submitted
+                    </span>
+                    <span
+                      v-else-if="registration.bringingDecklistOnsite"
+                      class="decklist-status status-warning"
+                    >
+                      📋 Bringing On-site
+                    </span>
+                    <span v-else class="decklist-status status-danger">
+                      ✗ Not Submitted
+                    </span>
                   </td>
                   <td>
-                    <button
-                      @click="cancelRegistration(registration)"
-                      class="btn btn-small btn-danger"
-                    >
-                      Remove
-                    </button>
+                    <div class="action-buttons">
+                      <button
+                        v-if="
+                          selectedEvent?.requiresDecklist &&
+                          registration.decklist
+                        "
+                        @click="viewDecklist(registration)"
+                        class="btn btn-small btn-info"
+                      >
+                        View Decklist
+                      </button>
+                      <button
+                        @click="cancelRegistration(registration)"
+                        class="btn btn-small btn-danger"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -220,6 +246,33 @@
           <div v-else class="no-registrations">
             No registrations yet for this event.
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decklist Viewer Modal -->
+    <div
+      v-if="selectedDecklist"
+      class="modal-overlay"
+      @click="closeDecklistModal"
+      style="z-index: 1001"
+    >
+      <div class="modal-content modal-large" @click.stop>
+        <div class="modal-header">
+          <h2>Decklist - {{ selectedDecklist.player.name }}</h2>
+          <button @click="closeDecklistModal" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="decklist-viewer">
+            <pre class="decklist-content-modal">{{
+              selectedDecklist.decklist
+            }}</pre>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeDecklistModal" class="btn btn-secondary">
+            ← Zurück
+          </button>
         </div>
       </div>
     </div>
@@ -422,6 +475,8 @@ interface Registration {
   registeredAt: string;
   status: string;
   notes?: string;
+  decklist?: string | null;
+  bringingDecklistOnsite?: boolean;
   player: {
     id: string;
     playerId: string;
@@ -443,6 +498,7 @@ const editingEvent = ref<CustomEvent | null>(null);
 const selectedEvent = ref<CustomEvent | null>(null);
 const searchTerm = ref("");
 const copiedEventId = ref<string | null>(null);
+const selectedDecklist = ref<Registration | null>(null);
 
 // Form data
 const eventForm = ref({
@@ -693,6 +749,14 @@ const closeRegistrationsModal = () => {
   showRegistrations.value = false;
   selectedEvent.value = null;
   registrations.value = [];
+};
+
+const viewDecklist = (registration: Registration) => {
+  selectedDecklist.value = registration;
+};
+
+const closeDecklistModal = () => {
+  selectedDecklist.value = null;
 };
 
 const formatDate = (dateString: string) => {
@@ -988,6 +1052,93 @@ onMounted(loadEvents);
 
 .registrations-table tr:hover {
   background: #f8fafc;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-registered {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-attended {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-no-show {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-cancelled {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.decklist-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.decklist-viewer {
+  max-height: 60vh;
+  overflow-y: auto;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.decklist-content-modal {
+  font-family: "Courier New", monospace;
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  color: #1f2937;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.5rem;
 }
 
 .event-form {
