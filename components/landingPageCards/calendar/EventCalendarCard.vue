@@ -213,30 +213,31 @@ onMounted(async (): Promise<void> => {
 const events = computed(() => {
   return ensureClientSide(() => {
     // Convert ParsedEvents to CalendarEvents for the calendar display
-    const regularEvents = unref(eventStore.events).map(
-      (event: ExternalEvent) => {
-        // Determine event type based on the original type
-        let type: CalendarEvent["type"] = "local";
-        if (event.type?.toLowerCase().includes("cup")) {
-          type = "cup";
-        } else if (event.type?.toLowerCase().includes("challenge")) {
-          type = "challenge";
-        } else if (
-          event.type?.toLowerCase().includes("tournament") &&
-          !event.type?.toLowerCase().includes("friendly")
-        ) {
-          type = "external";
-        }
+    // Note: Hidden events are already filtered out at the server level in applyOverrides
+    const allEvents = unref(eventStore.events);
 
-        return {
-          id: parseInt(event.id.replace(/[^0-9]/g, "")) || Math.random(),
-          title: event.title || event.type || "Event",
-          start: event.dateTime ? event.dateTime.split(" ")[0] : "", // Extract date part
-          type,
-          isCustom: false,
-        };
+    const regularEvents = allEvents.map((event: ExternalEvent) => {
+      // Determine event type based on the original type
+      let type: CalendarEvent["type"] = "local";
+      if (event.type?.toLowerCase().includes("cup")) {
+        type = "cup";
+      } else if (event.type?.toLowerCase().includes("challenge")) {
+        type = "challenge";
+      } else if (
+        event.type?.toLowerCase().includes("tournament") &&
+        !event.type?.toLowerCase().includes("friendly")
+      ) {
+        type = "external";
       }
-    );
+
+      return {
+        id: parseInt(event.id.replace(/[^0-9]/g, "")) || Math.random(),
+        title: event.title || event.type || "Event",
+        start: event.dateTime ? event.dateTime.split(" ")[0] : "", // Extract date part
+        type,
+        isCustom: false,
+      };
+    });
 
     // Convert custom events to CalendarEvents
     const customCalendarEvents = customEvents.value.map(
@@ -332,6 +333,7 @@ const onDayClick = (day: DayClickEvent) => {
   selectedDate.value = clickedDate;
 
   // Find original events for this date using the store and mark them as regular events
+  // Note: Hidden events are already filtered out at server level
   const regularEventsForDate = unref(eventStore.events)
     .filter((event: ExternalEvent) => {
       if (event.dateTime) {

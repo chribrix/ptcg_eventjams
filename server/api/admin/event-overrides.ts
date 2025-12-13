@@ -50,6 +50,7 @@ export default defineEventHandler(async (event) => {
         registrationDeadline,
         requiresDecklist,
         description,
+        hideFromCalendar,
       } = body;
 
       // Validate required fields
@@ -77,6 +78,7 @@ export default defineEventHandler(async (event) => {
             : null,
           requiresDecklist: requiresDecklist || false,
           description: description || null,
+          hideFromCalendar: hideFromCalendar || false,
         },
       });
 

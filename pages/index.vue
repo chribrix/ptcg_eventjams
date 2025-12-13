@@ -86,11 +86,11 @@
     <!-- Main Content -->
     <div class="w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div
-        class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 xl:scale-110 origin-top"
+        class="grid grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 2xl:scale-110 origin-top"
       >
         <!-- Event Calendar Card -->
         <div
-          class="group bg-white rounded-3xl shadow-2xl border-2 border-blue-100 overflow-hidden hover:shadow-3xl hover:border-blue-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col w-full"
+          class="group bg-white rounded-3xl shadow-2xl border-2 border-blue-100 overflow-hidden hover:shadow-3xl hover:border-blue-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col w-full max-w-full"
         >
           <div
             class="bg-gradient-to-r from-blue-600 to-purple-700 px-5 py-6 sm:px-10 sm:py-10 flex-shrink-0"
@@ -121,7 +121,7 @@
         <!-- User Dashboard or Welcome Card -->
         <div
           v-if="userName"
-          class="group bg-white rounded-3xl shadow-2xl border-2 border-emerald-100 overflow-hidden hover:shadow-3xl hover:border-emerald-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col w-full"
+          class="group bg-white rounded-3xl shadow-2xl border-2 border-emerald-100 overflow-hidden hover:shadow-3xl hover:border-emerald-200 transition-all duration-300 transform hover:scale-[1.02] h-[750px] flex flex-col w-full max-w-full"
         >
           <div
             class="bg-gradient-to-r from-emerald-600 to-teal-700 px-5 py-6 sm:px-10 sm:py-10 flex-shrink-0"

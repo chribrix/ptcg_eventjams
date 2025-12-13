@@ -37,6 +37,20 @@
               <span v-if="hasOverride(event)" class="override-badge">
                 Modified
               </span>
+              <span v-if="isHiddenFromCalendar(event)" class="hidden-badge">
+                Hidden from Calendar
+              </span>
+              <button
+                @click="toggleHideFromCalendar(event)"
+                class="btn-toggle-hide"
+                :class="{ 'btn-hide-active': isHiddenFromCalendar(event) }"
+              >
+                {{
+                  isHiddenFromCalendar(event)
+                    ? "Show in Calendar"
+                    : "Hide from Calendar"
+                }}
+              </button>
               <button
                 @click="openEditModal(event)"
                 class="btn-edit"
@@ -358,6 +372,74 @@ function getOverride(event: ParsedEvent): EventOverride | undefined {
   });
 }
 
+// Check if event is hidden from calendar
+function isHiddenFromCalendar(event: ParsedEvent): boolean {
+  const override = getOverride(event);
+  return override ? (override as any).hideFromCalendar === true : false;
+}
+
+// Toggle hide from calendar status
+async function toggleHideFromCalendar(event: ParsedEvent) {
+  const override = getOverride(event);
+  const isCurrentlyHidden = isHiddenFromCalendar(event);
+  const action = isCurrentlyHidden ? "show" : "hide";
+
+  if (
+    !confirm(`Are you sure you want to ${action} this event from the calendar?`)
+  ) {
+    return;
+  }
+
+  try {
+    let response;
+
+    if (override) {
+      // Toggle existing override
+      response = await $fetch<{ success: boolean; hideFromCalendar: boolean }>(
+        `/api/admin/event-overrides/${override.id}/toggle-hide`,
+        {
+          method: "POST",
+        }
+      );
+    } else {
+      // Create new override with just the hide flag
+      if (!adminUser.value?.id) {
+        alert("Admin user not found");
+        return;
+      }
+
+      response = await $fetch<{ success: boolean; override: any }>(
+        `/api/admin/event-overrides`,
+        {
+          method: "POST",
+          body: {
+            eventName: event.venue,
+            eventDate: event.dateTime,
+            eventLocation: event.location,
+            overrides: {
+              type: event.type,
+              icon: event.icon,
+            },
+            createdBy: adminUser.value.id,
+            hideFromCalendar: true,
+          },
+        }
+      );
+    }
+
+    if (response.success) {
+      // Update local state
+      await Promise.all([loadOverrides(), loadEvents()]);
+
+      // Force refresh the event store cache so the calendar updates
+      await eventStore.fetchEvents(true);
+    }
+  } catch (err: any) {
+    console.error("Failed to toggle hide status:", err);
+    alert(err.data?.message || err.message || "Failed to toggle hide status");
+  }
+}
+
 function formatDate(dateString: string | undefined): string {
   if (!dateString) return "N/A";
   return new Date(dateString).toLocaleDateString("en-US", {
@@ -554,9 +636,9 @@ async function deleteOverride() {
 
 async function loadEvents() {
   try {
-    const response = await $fetch<{ events: ParsedEvent[] }>(
-      "/api/events/detailed"
-    );
+    // Use /api/events instead of /api/events/detailed to get ALL events
+    // including those hidden from calendar (admins need to see everything)
+    const response = await $fetch<{ events: ParsedEvent[] }>("/api/events");
     events.value = response?.events || [];
   } catch (err) {
     console.error("Failed to load events:", err);
@@ -656,6 +738,42 @@ onMounted(async () => {
   border-radius: 9999px;
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+.hidden-badge {
+  padding: 0.25rem 0.75rem;
+  background: #ef4444;
+  color: white;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.btn-toggle-hide {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.btn-toggle-hide:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.btn-toggle-hide.btn-hide-active {
+  background: #16a34a;
+  color: white;
+  border-color: #16a34a;
+}
+
+.btn-toggle-hide.btn-hide-active:hover {
+  background: #15803d;
 }
 
 .btn-edit {

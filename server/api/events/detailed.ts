@@ -16,34 +16,30 @@ interface ParsedEvent {
 }
 
 export default defineEventHandler(
-  async (): Promise<{ events: ParsedEvent[] }> => {
+  async (event): Promise<{ events: ParsedEvent[] }> => {
+    // Disable caching for this endpoint
+    setResponseHeader(
+      event,
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate"
+    );
+    setResponseHeader(event, "Pragma", "no-cache");
+    setResponseHeader(event, "Expires", "0");
+
     try {
       // Fetch events from the main events API
-      console.log("Fetching events from /api/events...");
       const response = await $fetch<{
         success: boolean;
         events: ParsedEvent[];
         totalFound: number;
       }>("/api/events");
 
-      console.log("API /events response:", {
-        success: response.success,
-        eventsCount: response.events?.length,
-        totalFound: response.totalFound,
-        firstEvent: response.events?.[0],
-      });
-
       if (response.success && response.events) {
-        console.log(
-          `Successfully fetched ${response.events.length} detailed events`
-        );
-
-        // Apply any admin overrides to the events
+        // Apply any admin overrides to the events (includes filtering hidden events)
         const eventsWithOverrides = await applyEventOverrides(response.events);
 
         return { events: eventsWithOverrides };
       } else {
-        console.warn("Events API returned no events");
         return { events: [] };
       }
     } catch (error) {

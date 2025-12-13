@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
         registrationDeadline,
         requiresDecklist,
         description,
+        hideFromCalendar,
       } = body;
 
       const updateData: any = {};
@@ -50,6 +51,8 @@ export default defineEventHandler(async (event) => {
       if (requiresDecklist !== undefined)
         updateData.requiresDecklist = requiresDecklist;
       if (description !== undefined) updateData.description = description;
+      if (hideFromCalendar !== undefined)
+        updateData.hideFromCalendar = hideFromCalendar;
 
       const override = await prisma.externalEventOverride.update({
         where: { id },

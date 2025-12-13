@@ -1,75 +1,5 @@
 [
   {
-    "id": "87bc24b3-f8b6-431e-aced-71359cc72047",
-    "title": "2025-12-07 10:00 - League Cup",
-    "dateTime": "2025-12-07",
-    "time": "10:00",
-    "type": "League Cup",
-    "venue": "KOLPINGHAUS",
-    "location": "Memmingen",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-000139/",
-    "cost": "",
-    "streetAddress": "6 KOLPINGSTRASSE, BUCHLOE, BY 86807, DE",
-    "icon": "cup"
-  },
-  {
-    "id": "31c0d8f9-36b3-4ac9-b77e-c52ac550c802",
-    "title": "2025-12-07 10:00 - League Cup",
-    "dateTime": "2025-12-07",
-    "time": "10:00",
-    "type": "League Cup",
-    "venue": "BETREUUNGSZENTRUM",
-    "location": "Wasserburg am Inn",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-004359/",
-    "cost": "",
-    "streetAddress": "ANTON-WOGER-STRASSE 1, 83512 WASSERBURG AM INN, GERMANY",
-    "icon": "cup"
-  },
-  {
-    "id": "af68826c-a2a7-47ab-a85e-5ad2f46438f2",
-    "title": "2025-12-07 15:00 - League Challenge",
-    "dateTime": "2025-12-07",
-    "time": "15:00",
-    "type": "League Challenge",
-    "venue": "BETREUUNGSZENTRUM",
-    "location": "Wasserburg am Inn",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-004361/",
-    "cost": "",
-    "streetAddress": "ANTON-WOGER-STRASSE 1, 83512 WASSERBURG AM INN, GERMANY",
-    "icon": "chall"
-  },
-  {
-    "id": "9f3ba6f9-7e9c-4abf-bf00-ed33a8804ed3",
-    "title": "2025-12-09 16:00 - League Challenge",
-    "dateTime": "2025-12-09",
-    "time": "16:00",
-    "type": "League Challenge",
-    "venue": "DRAGONLORD GAMES WÜRZBURG",
-    "location": "Wurzburg",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-001601/",
-    "cost": "10 €",
-    "streetAddress": "WENZELSTRASSE 18, 97084 WÜRZBURG, GERMANY",
-    "icon": "chall"
-  },
-  {
-    "id": "b4a4c854-1e4f-41cc-8f41-523f0ce69afa",
-    "title": "2025-12-09 17:00 - League Challenge",
-    "dateTime": "2025-12-09",
-    "time": "17:00",
-    "type": "League Challenge",
-    "venue": "SPIELEABEND.SHOP",
-    "location": "Coburg",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-005267/",
-    "cost": "",
-    "streetAddress": "KIRCHGASSE 5, 96450 COBURG, GERMANY",
-    "icon": "chall"
-  },
-  {
     "id": "71d37058-81d9-4d35-be47-492558b79590",
     "title": "2025-12-13 10:00 - League Cup",
     "dateTime": "2025-12-13",
@@ -123,6 +53,20 @@
     "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-005250/",
     "cost": "",
     "streetAddress": "HANS-BÖCKLER-STRASSE 18, 95032 HOF, GERMANY",
+    "icon": "chall"
+  },
+  {
+    "id": "76b71861-a470-4306-8d82-17759025144d",
+    "title": "2025-12-13 11:00 - League Challenge",
+    "dateTime": "2025-12-13",
+    "time": "11:00",
+    "type": "League Challenge",
+    "venue": "BB-SPIELE POKEMON TURNIER",
+    "location": "Rosenheim",
+    "country": "DE",
+    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-013630/",
+    "cost": "",
+    "streetAddress": "20 KOLBERMOORER STR., RO, BY 83026, DE",
     "icon": "chall"
   },
   {
@@ -292,5 +236,19 @@
     "cost": "15 €",
     "streetAddress": "WENZELSTRASSE 18, 97084 WÜRZBURG, GERMANY",
     "icon": "cup"
+  },
+  {
+    "id": "c4dc4850-e873-4359-ae01-2b3704234fac",
+    "title": "2026-01-31 11:00 - League Challenge",
+    "dateTime": "2026-01-31",
+    "time": "11:00",
+    "type": "League Challenge",
+    "venue": "GAMES ISLAND",
+    "location": "Hof",
+    "country": "DE",
+    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/26-01-000492/",
+    "cost": "",
+    "streetAddress": "HANS-BÖCKLER-STRASSE 18, 95032 HOF, GERMANY",
+    "icon": "chall"
   }
 ]

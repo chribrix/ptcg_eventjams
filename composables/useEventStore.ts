@@ -157,8 +157,14 @@ export const useEventStore = () => {
 
     try {
       console.log("Fetching fresh events from API...");
+      // Add cache busting parameter to force fresh data
+      const cacheBuster = force ? `?_t=${Date.now()}` : "";
       const response = await $fetch<{ events: ParsedEvent[] }>(
-        "/api/events/detailed"
+        `/api/events/detailed${cacheBuster}`,
+        {
+          // Disable caching for this request
+          cache: "no-cache" as RequestCache,
+        }
       );
 
       console.log("useEventStore: Received response", {

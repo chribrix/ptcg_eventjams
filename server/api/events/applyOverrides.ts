@@ -32,8 +32,6 @@ export async function applyEventOverrides(
       return events; // No overrides, return original events
     }
 
-    console.log(`Applying ${overrides.length} event overrides...`);
-
     // Apply overrides to matching events
     const eventsWithOverrides = events.map((event) => {
       // Find matching override by venue name and date
@@ -58,10 +56,6 @@ export async function applyEventOverrides(
         return event; // No override for this event
       }
 
-      console.log(
-        `Applying override for event: ${event.venue} on ${event.dateTime}`
-      );
-
       // Apply all overrides from the JSONB field
       const overrideData = override.overrides as any;
 
@@ -85,15 +79,18 @@ export async function applyEventOverrides(
         overriddenEvent.hasLocalRegistration = true; // Flag for UI
       }
 
+      // Pass through the hideFromCalendar flag from the database
+      overriddenEvent.hideFromCalendar = override.hideFromCalendar;
+
       return overriddenEvent;
     });
 
-    const overriddenCount = eventsWithOverrides.filter(
-      (e: any) => e.isOverridden
-    ).length;
-    console.log(`Applied overrides to ${overriddenCount} events`);
+    // Filter out events that are hidden from calendar
+    const visibleEvents = eventsWithOverrides.filter(
+      (event: any) => event.hideFromCalendar !== true
+    );
 
-    return eventsWithOverrides;
+    return visibleEvents;
   } catch (error) {
     console.error("Error applying event overrides:", error);
     // On error, return original events without overrides

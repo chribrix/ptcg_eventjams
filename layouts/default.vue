@@ -48,7 +48,12 @@ const hideAdminDropdown = () => {
 // Logout function
 const logout = async () => {
   try {
-    await supabase.auth.signOut();
+    // Sign out from Supabase and wait for completion
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Supabase signOut error:", error);
+    }
 
     // Clear dev cookies and state if in dev mode
     if (process.dev) {
@@ -59,14 +64,38 @@ const logout = async () => {
       clearDevAuth();
     }
 
+    // Clear local storage (Supabase session storage)
+    if (process.client) {
+      localStorage.clear();
+      sessionStorage.clear();
+    }
+
     userName.value = null;
+
+    // Small delay to ensure signOut completes before reload
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     // Reload the page to clear all user data
     if (process.client) {
       window.location.href = "/";
     }
   } catch (error) {
     console.error("Error during logout:", error);
+    // Force reload even if there's an error
+    if (process.client) {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = "/";
+    }
   }
+};
+
+// Mobile logout handler - close menu first, then logout
+const handleMobileLogout = async () => {
+  mobileMenuOpen.value = false;
+  // Small delay to let menu close animation complete
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  await logout();
 };
 
 onMounted(async () => {
@@ -362,10 +391,7 @@ const { t } = useI18n();
               <!-- Logout button for authenticated users -->
               <button
                 v-if="userName"
-                @click="
-                  logout;
-                  mobileMenuOpen = false;
-                "
+                @click="handleMobileLogout"
                 class="flex items-center space-x-3 w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"
               >
                 <ArrowRightOnRectangleIcon class="w-5 h-5" />

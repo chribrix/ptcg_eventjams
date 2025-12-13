@@ -270,6 +270,9 @@ model ExternalEventOverride {
   requiresDecklist          Boolean   @default(false) @map("requires_decklist") // Whether decklist is required
   description               String? // Event description for local registration
 
+  // Calendar visibility
+  hideFromCalendar Boolean @default(false) @map("hide_from_calendar") // If true, hide this event from the calendar
+
   // Metadata
   createdBy String   @map("created_by")
   createdAt DateTime @default(now()) @map("created_at")
