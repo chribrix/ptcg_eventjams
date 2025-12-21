@@ -22,7 +22,7 @@ export const EVENT_COLORS = {
   custom: {
     bg: "#fed7aa", // orange-200 - soft orange for custom events
     text: "#9a3412", // orange-800 - dark orange text
-    name: "Custom Event",
+    name: "Crow's & Owl's Locals",
   },
   prerelease: {
     bg: "#fef3c7", // amber-100 - soft yellow for prereleases

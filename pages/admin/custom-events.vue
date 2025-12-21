@@ -1,141 +1,654 @@
 <template>
-  <AdminPageLayout title="Custom Events Management">
-    <template #actions>
-      <button @click="createNewEvent" class="btn btn-primary">
-        Create New Event
-      </button>
-    </template>
+  <AdminPageLayout title="Custom Events">
+    <!-- Search bar -->
+    <div class="px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-10">
+      <input
+        v-model="searchTerm"
+        type="text"
+        placeholder="Search events..."
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      />
+    </div>
 
-    <!-- Events List -->
-    <div class="admin-card">
-      <div class="section-header">
-        <h2>Events</h2>
-        <div class="search-box">
-          <input
-            v-model="searchTerm"
-            type="text"
-            placeholder="Search events..."
-            class="search-input"
-          />
-        </div>
+    <div class="p-4 pb-24">
+      <div v-if="loading" class="flex justify-center items-center py-12">
+        <div
+          class="w-8 h-8 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"
+        ></div>
       </div>
 
-      <div v-if="loading" class="loading">Loading events...</div>
+      <div v-else>
+        <!-- Upcoming Events -->
+        <div class="mb-6">
+          <h2
+            class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2"
+          >
+            <svg
+              class="w-5 h-5 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            Upcoming Events
+            <span class="text-sm font-normal text-gray-500"
+              >({{ upcomingEvents.length }})</span
+            >
+          </h2>
 
-      <div v-else-if="filteredEvents.length > 0" class="events-grid">
-        <div
-          v-for="event in filteredEvents"
-          :key="event.id"
-          class="event-card"
-          :class="{ [event.status]: true }"
-        >
-          <div class="event-header">
-            <div class="event-title-row">
-              <h3>{{ event.name }}</h3>
-              <span
-                v-if="event.eventType && event.eventType !== 'custom'"
-                class="event-type-badge"
-                :class="`type-${event.eventType}`"
-              >
-                {{ getEventTypeName(event.eventType) }}
-              </span>
-              <span
-                v-else-if="event.isExternalEvent"
-                class="event-type-badge type-custom"
-              >
-                {{ getEventTypeName("custom") }}
-              </span>
-            </div>
-            <span class="status-badge" :class="event.status">
-              {{ event.status }}
-            </span>
-          </div>
-
-          <div class="event-details">
-            <p><strong>Date:</strong> {{ formatDate(event.eventDate) }}</p>
-            <p><strong>Venue:</strong> {{ event.venue }}</p>
-            <p>
-              <strong>Participants:</strong>
-              {{ event._count?.registrations || 0 }} /
-              {{ event.maxParticipants }}
-            </p>
-            <p v-if="event.participationFee">
-              <strong>Fee:</strong> €{{ event.participationFee }}
-            </p>
-            <p v-if="event.requiresDecklist" class="decklist-required">
-              <strong>📋 Decklist Required</strong>
-            </p>
-            <p v-if="event.description" class="description">
-              {{ event.description }}
-            </p>
-            <div class="registration-link-section">
-              <p class="registration-link-label">
-                <strong>Registration Link:</strong>
-              </p>
-              <div class="registration-link-container">
-                <input
-                  :value="getRegistrationUrl(event.id)"
-                  readonly
-                  class="registration-link-input"
-                  @click="copyRegistrationLink(event.id)"
-                  @focus="($event.target as HTMLInputElement)?.select()"
-                  title="Click to copy"
-                />
-                <button
-                  @click="copyRegistrationLink(event.id)"
-                  class="btn btn-small btn-copy"
-                  :class="{ copied: copiedEventId === event.id }"
-                >
-                  {{ copiedEventId === event.id ? "✓ Copied!" : "📋 Copy" }}
-                </button>
+          <div v-if="upcomingEvents.length > 0" class="space-y-2">
+            <div
+              v-for="event in upcomingEvents"
+              :key="event.id"
+              class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+              @click="openEventDetails(event)"
+            >
+              <div class="p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex-1 min-w-0">
+                    <h3
+                      class="font-semibold text-gray-900 mb-1 flex items-center gap-2"
+                    >
+                      {{ event.name }}
+                      <span
+                        v-if="event.eventType && event.eventType !== 'custom'"
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                        :class="getEventTypeBadgeClass(event.eventType)"
+                      >
+                        {{ getEventTypeName(event.eventType) }}
+                      </span>
+                    </h3>
+                    <div class="flex flex-col gap-1 text-sm text-gray-600">
+                      <div class="flex items-center gap-2">
+                        <svg
+                          class="w-4 h-4 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <span>{{ formatCompactDate(event.eventDate) }}</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <svg
+                          class="w-4 h-4 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        <span class="truncate">{{ event.venue }}</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <svg
+                          class="w-4 h-4 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                          />
+                        </svg>
+                        <span
+                          >{{ event._count?.registrations || 0 }} /
+                          {{ event.maxParticipants }}</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                  <svg
+                    class="w-5 h-5 flex-shrink-0 text-gray-400 mt-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
-
-          <div class="event-actions">
-            <NuxtLink
-              :to="`/events/register/${event.id}`"
-              class="btn btn-small btn-success"
-              target="_blank"
-            >
-              🔗 Open Registration Page
-            </NuxtLink>
-            <button
-              @click="viewRegistrations(event)"
-              class="btn btn-small btn-info"
-            >
-              View Registrations ({{ event._count?.registrations || 0 }})
-            </button>
-            <template v-if="!event.isExternalEvent">
-              <button
-                @click="editEvent(event)"
-                class="btn btn-small btn-secondary"
-              >
-                Edit
-              </button>
-              <button
-                @click="deleteEvent(event)"
-                class="btn btn-small btn-danger"
-              >
-                Delete
-              </button>
-            </template>
-            <template v-else>
-              <NuxtLink
-                to="/admin/external-events"
-                class="btn btn-small btn-secondary"
-              >
-                Manage in External Events
-              </NuxtLink>
-            </template>
+          <div v-else class="text-center py-8 text-gray-500">
+            No upcoming events
           </div>
         </div>
-      </div>
 
-      <div v-if="!loading && filteredEvents.length === 0" class="no-data">
-        No events found. Create your first event!
+        <!-- Completed Events (Collapsible) -->
+        <div class="mb-6">
+          <button
+            @click="showCompletedEvents = !showCompletedEvents"
+            class="w-full text-left mb-3 flex items-center justify-between"
+          >
+            <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <svg
+                class="w-5 h-5 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Completed Events
+              <span class="text-sm font-normal text-gray-500"
+                >({{ completedEvents.length }})</span
+              >
+            </h2>
+            <svg
+              class="w-5 h-5 text-gray-400 transition-transform duration-200"
+              :class="{ 'rotate-180': showCompletedEvents }"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="max-h-0 opacity-0"
+            enter-to-class="max-h-[5000px] opacity-100"
+            leave-active-class="transition-all duration-300 ease-in"
+            leave-from-class="max-h-[5000px] opacity-100"
+            leave-to-class="max-h-0 opacity-0"
+          >
+            <div v-if="showCompletedEvents" class="space-y-2 overflow-hidden">
+              <div
+                v-for="event in completedEvents"
+                :key="event.id"
+                class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer opacity-75"
+                @click="openEventDetails(event)"
+              >
+                <div class="p-4">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                      <h3 class="font-semibold text-gray-700 mb-1">
+                        {{ event.name }}
+                      </h3>
+                      <div class="flex flex-col gap-1 text-sm text-gray-500">
+                        <div class="flex items-center gap-2">
+                          <svg
+                            class="w-4 h-4 flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          <span>{{ formatCompactDate(event.eventDate) }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <svg
+                            class="w-4 h-4 flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            />
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                          <span class="truncate">{{ event.venue }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <svg
+                      class="w-5 h-5 flex-shrink-0 text-gray-400 mt-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
       </div>
     </div>
+
+    <!-- Floating Create Button -->
+    <button
+      @click="createNewEvent"
+      class="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50"
+      title="Create New Event"
+    >
+      <svg
+        class="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 4v16m8-8H4"
+        />
+      </svg>
+    </button>
+
+    <!-- Event Details Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="selectedEvent"
+          class="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4"
+          @click="closeEventDetails"
+        >
+          <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="translate-y-full sm:translate-y-0 sm:scale-95"
+            enter-to-class="translate-y-0 sm:scale-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="translate-y-0 sm:scale-100"
+            leave-to-class="translate-y-full sm:translate-y-0 sm:scale-95"
+          >
+            <div
+              class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-xl"
+              @click.stop
+            >
+              <!-- Modal Header -->
+              <div
+                class="px-6 py-4 border-b border-gray-200 flex justify-between items-start"
+              >
+                <div class="flex-1">
+                  <h3 class="text-xl font-bold text-gray-900 mb-2">
+                    {{ selectedEvent.name }}
+                  </h3>
+                  <div class="flex items-center gap-2">
+                    <span
+                      v-if="
+                        selectedEvent.eventType &&
+                        selectedEvent.eventType !== 'custom'
+                      "
+                      class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                      :class="getEventTypeBadgeClass(selectedEvent.eventType)"
+                    >
+                      {{ getEventTypeName(selectedEvent.eventType) }}
+                    </span>
+                    <span
+                      class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                      :class="getStatusBadgeClass(selectedEvent.status)"
+                    >
+                      {{ selectedEvent.status }}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  @click="closeEventDetails"
+                  class="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Modal Body -->
+              <div class="px-6 py-4 overflow-y-auto flex-1">
+                <div class="space-y-4">
+                  <!-- Date and Time -->
+                  <div class="flex items-start gap-3">
+                    <svg
+                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <div>
+                      <p class="text-sm font-medium text-gray-700">
+                        Date & Time
+                      </p>
+                      <p class="text-sm text-gray-900">
+                        {{ formatDate(selectedEvent.eventDate) }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Venue -->
+                  <div class="flex items-start gap-3">
+                    <svg
+                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    <div>
+                      <p class="text-sm font-medium text-gray-700">Venue</p>
+                      <p class="text-sm text-gray-900">
+                        {{ selectedEvent.venue }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Participants -->
+                  <div class="flex items-start gap-3">
+                    <svg
+                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                    <div>
+                      <p class="text-sm font-medium text-gray-700">
+                        Participants
+                      </p>
+                      <p class="text-sm text-gray-900">
+                        {{ selectedEvent._count?.registrations || 0 }} /
+                        {{ selectedEvent.maxParticipants }}
+                        <span class="text-gray-500">registered</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Fee -->
+                  <div
+                    v-if="selectedEvent.participationFee"
+                    class="flex items-start gap-3"
+                  >
+                    <svg
+                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div>
+                      <p class="text-sm font-medium text-gray-700">
+                        Participation Fee
+                      </p>
+                      <p class="text-sm text-gray-900">
+                        €{{ selectedEvent.participationFee }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Decklist Required -->
+                  <div
+                    v-if="selectedEvent.requiresDecklist"
+                    class="flex items-start gap-3"
+                  >
+                    <svg
+                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <div>
+                      <p class="text-sm font-medium text-gray-700">Decklist</p>
+                      <p class="text-sm text-gray-900">
+                        Required after registration
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Description -->
+                  <div
+                    v-if="selectedEvent.description"
+                    class="flex items-start gap-3"
+                  >
+                    <svg
+                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div>
+                      <p class="text-sm font-medium text-gray-700">
+                        Description
+                      </p>
+                      <p class="text-sm text-gray-900">
+                        {{ selectedEvent.description }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Registration Link -->
+                  <div class="flex items-start gap-3">
+                    <svg
+                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                      />
+                    </svg>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium text-gray-700 mb-1">
+                        Registration Link
+                      </p>
+                      <div class="flex gap-2">
+                        <input
+                          :value="getRegistrationUrl(selectedEvent.id)"
+                          readonly
+                          class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                          @click="($event.target as HTMLInputElement)?.select()"
+                        />
+                        <button
+                          @click="copyRegistrationLink(selectedEvent.id)"
+                          class="px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                          :class="{
+                            'bg-green-600 hover:bg-green-700':
+                              copiedEventId === selectedEvent.id,
+                          }"
+                        >
+                          {{
+                            copiedEventId === selectedEvent.id
+                              ? "✓ Copied!"
+                              : "Copy"
+                          }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div
+                class="px-6 py-4 border-t border-gray-200 flex flex-wrap gap-2"
+              >
+                <NuxtLink
+                  :to="`/events/register/${selectedEvent.id}`"
+                  class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors no-underline"
+                  target="_blank"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                  Open Registration
+                </NuxtLink>
+                <button
+                  @click="viewRegistrations(selectedEvent)"
+                  class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  Registrations ({{ selectedEvent._count?.registrations || 0 }})
+                </button>
+                <template v-if="!selectedEvent.isExternalEvent">
+                  <button
+                    @click="editEvent(selectedEvent)"
+                    class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    @click="deleteEvent(selectedEvent)"
+                    class="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                  >
+                    Delete
+                  </button>
+                </template>
+                <template v-else>
+                  <NuxtLink
+                    to="/admin/external-events"
+                    class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors no-underline"
+                  >
+                    Manage in External Events
+                  </NuxtLink>
+                </template>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Registration Management Modal -->
     <div
@@ -494,11 +1007,101 @@ const loading = ref(true);
 const saving = ref(false);
 const showCreateForm = ref(false);
 const showRegistrations = ref(false);
+const showCompletedEvents = ref(false);
 const editingEvent = ref<CustomEvent | null>(null);
 const selectedEvent = ref<CustomEvent | null>(null);
 const searchTerm = ref("");
 const copiedEventId = ref<string | null>(null);
 const selectedDecklist = ref<Registration | null>(null);
+
+// Computed properties for upcoming and completed events
+const upcomingEvents = computed(() => {
+  const now = new Date();
+  const filtered = filteredEvents.value.filter((event) => {
+    const eventDate = new Date(event.eventDate);
+    return event.status === "upcoming" || eventDate >= now;
+  });
+  return filtered.sort(
+    (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
+  );
+});
+
+const completedEvents = computed(() => {
+  const now = new Date();
+  const filtered = filteredEvents.value.filter((event) => {
+    const eventDate = new Date(event.eventDate);
+    return (
+      event.status === "completed" ||
+      (event.status !== "upcoming" && eventDate < now)
+    );
+  });
+  return filtered.sort(
+    (a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
+  );
+});
+
+// Format compact date
+const formatCompactDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // Check if today
+  if (date.toDateString() === now.toDateString()) {
+    return `Today, ${date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+  }
+
+  // Check if tomorrow
+  if (date.toDateString() === tomorrow.toDateString()) {
+    return `Tomorrow, ${date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+  }
+
+  // Otherwise show full date
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+// Event type badge classes
+const getEventTypeBadgeClass = (eventType: string): string => {
+  const classes = {
+    cup: "bg-green-100 text-green-800 border border-green-200",
+    challenge: "bg-purple-100 text-purple-800 border border-purple-200",
+    custom: "bg-blue-100 text-blue-800 border border-blue-200",
+  };
+  return classes[eventType as keyof typeof classes] || classes.custom;
+};
+
+// Status badge classes
+const getStatusBadgeClass = (status: string): string => {
+  const classes = {
+    upcoming: "bg-blue-100 text-blue-800",
+    ongoing: "bg-yellow-100 text-yellow-800",
+    completed: "bg-green-100 text-green-800",
+    cancelled: "bg-red-100 text-red-800",
+  };
+  return classes[status as keyof typeof classes] || classes.upcoming;
+};
+
+// Open event details modal
+const openEventDetails = (event: CustomEvent) => {
+  selectedEvent.value = event;
+};
+
+// Close event details modal
+const closeEventDetails = () => {
+  selectedEvent.value = null;
+};
 
 // Form data
 const eventForm = ref({

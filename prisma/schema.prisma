@@ -225,6 +225,7 @@ model EventRegistration {
   notes                  String?
   decklist               String? // Player's decklist for this event
   bringingDecklistOnsite Boolean?               @default(false) @map("bringing_decklist_onsite") // Whether player will bring physical decklist
+  isAnonymous            Boolean                @default(false) @map("is_anonymous") // Whether the participant wants to remain anonymous to other participants
   customEvent            CustomEvent?           @relation(fields: [customEventId], references: [id], onDelete: Cascade)
   externalEvent          ExternalEventOverride? @relation(fields: [externalEventId], references: [id], onDelete: Cascade)
   player                 Player                 @relation(fields: [playerId], references: [id])

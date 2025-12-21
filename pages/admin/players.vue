@@ -159,6 +159,13 @@
               <td>
                 <div class="action-buttons">
                   <button
+                    @click="impersonatePlayer(player)"
+                    class="btn btn-small btn-info"
+                    title="Als dieser Spieler anmelden"
+                  >
+                    Imitieren
+                  </button>
+                  <button
                     @click="editPlayer(player)"
                     class="btn btn-small btn-secondary"
                   >
@@ -200,6 +207,10 @@ interface Player {
 definePageMeta({
   layout: "products",
 });
+
+// Composables
+const { startImpersonation } = useImpersonation();
+const router = useRouter();
 
 // Reactive data
 const players = ref<Player[]>([]);
@@ -332,6 +343,16 @@ const closeModal = () => {
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString();
+};
+
+const impersonatePlayer = (player: Player) => {
+  startImpersonation({
+    id: player.playerId,
+    name: player.name,
+    email: player.email || "",
+  });
+  // Redirect to dashboard to see the player's view
+  router.push("/dashboard");
 };
 
 // Load players on mount

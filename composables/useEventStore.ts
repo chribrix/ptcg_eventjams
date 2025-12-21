@@ -92,16 +92,9 @@ export const useEventStore = () => {
    * @param events - Array of parsed events to cache
    */
   function setEvents(events: ParsedEvent[]): void {
-    console.log("useEventStore.setEvents: Storing events", {
-      count: events.length,
-      beforeStoreLength: eventStore.value.events.length,
-    });
     eventStore.value.events = events;
     eventStore.value.lastFetch = new Date();
     eventStore.value.error = null;
-    console.log("useEventStore.setEvents: After storing", {
-      storeLength: eventStore.value.events.length,
-    });
   }
 
   /**
@@ -143,11 +136,6 @@ export const useEventStore = () => {
       const maxCacheAge = 5 * 60 * 1000; // 5 minutes
 
       if (cacheAge < maxCacheAge) {
-        console.log(
-          `Using cached events (${
-            eventStore.value.events.length
-          } events, cached ${Math.round(cacheAge / 1000)}s ago)`
-        );
         return eventStore.value.events;
       }
     }
@@ -156,7 +144,6 @@ export const useEventStore = () => {
     setError("");
 
     try {
-      console.log("Fetching fresh events from API...");
       // Add cache busting parameter to force fresh data
       const cacheBuster = force ? `?_t=${Date.now()}` : "";
       const response = await $fetch<{ events: ParsedEvent[] }>(
@@ -167,21 +154,10 @@ export const useEventStore = () => {
         }
       );
 
-      console.log("useEventStore: Received response", {
-        hasEvents: !!response?.events,
-        isArray: Array.isArray(response?.events),
-        type: typeof response,
-        length: Array.isArray(response?.events)
-          ? response.events.length
-          : "N/A",
-        response: response,
-      });
 
       if (response?.events && Array.isArray(response.events)) {
         setEvents(response.events);
-        console.log(
-          `Successfully fetched and cached ${response.events.length} events`
-        );
+
         return response.events;
       } else {
         throw new Error("Invalid response format");

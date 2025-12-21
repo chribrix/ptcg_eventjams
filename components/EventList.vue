@@ -330,10 +330,8 @@ const fetchEvents = async () => {
   error.value = null;
 
   try {
-    console.log("Fetching events from /api/events...");
     const response = await $fetch<{ events: ParsedEvent[] }>("/api/events");
     events.value = response.events || [];
-    console.log(`Loaded ${events.value.length} events`);
   } catch (err) {
     console.error("Failed to load events:", err);
     error.value = err instanceof Error ? err.message : "Failed to load events";

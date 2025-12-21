@@ -6,7 +6,7 @@
       <div
         class="relative w-full calendar-wrapper flex flex-col justify-center items-center flex-1"
       >
-        <!-- Loading indicator overlay -->
+        <!-- Loading indicator -->
         <div
           v-if="isLoading"
           class="absolute inset-0 bg-white/80 flex justify-center items-center z-10 rounded-lg"
@@ -21,6 +21,42 @@
           </div>
         </div>
 
+        <!-- Legend -->
+        <div class="w-full max-w-[620px] mb-4 px-2">
+          <div class="flex flex-wrap gap-2 justify-center items-center">
+            <button
+              @click="openTypeFilter('cup')"
+              class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer border-0"
+              :style="{
+                backgroundColor: EVENT_COLORS.cup.bg,
+                color: EVENT_COLORS.cup.text,
+              }"
+            >
+              {{ EVENT_COLORS.cup.name }}
+            </button>
+            <button
+              @click="openTypeFilter('challenge')"
+              class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer border-0"
+              :style="{
+                backgroundColor: EVENT_COLORS.challenge.bg,
+                color: EVENT_COLORS.challenge.text,
+              }"
+            >
+              {{ EVENT_COLORS.challenge.name }}
+            </button>
+            <button
+              @click="openTypeFilter('custom')"
+              class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer border-0"
+              :style="{
+                backgroundColor: EVENT_COLORS.custom.bg,
+                color: EVENT_COLORS.custom.text,
+              }"
+            >
+              {{ EVENT_COLORS.custom.name }}
+            </button>
+          </div>
+        </div>
+
         <ClientOnly>
           <VCalendar
             expanded
@@ -29,19 +65,8 @@
             :rows="2"
             :min-date="today"
             :max-date="maxDate"
-            :show-pane="false"
             @dayclick="onDayClick"
           />
-          <template #fallback>
-            <div class="flex flex-col items-center justify-center h-96 gap-3">
-              <div
-                class="w-8 h-8 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"
-              ></div>
-              <span class="text-sm text-gray-600 font-medium"
-                >Initializing calendar component...</span
-              >
-            </div>
-          </template>
         </ClientOnly>
 
         <!-- Event Details Popover -->
@@ -51,30 +76,81 @@
           :formatted-date="formatSelectedDate"
           @close="closeEventDetails"
         />
+
+        <!-- Type Filter Modal -->
+        <EventDetailsPopover
+          v-if="showTypeFilterModal && filteredEventsByType.length > 0"
+          :events="filteredEventsByType"
+          :formatted-date="typeFilterModalTitle"
+          @close="closeTypeFilter"
+        />
+
+        <!-- No Events Toast -->
+        <Transition
+          enter-active-class="transition ease-out duration-300"
+          enter-from-class="translate-y-2 opacity-0"
+          enter-to-class="translate-y-0 opacity-100"
+          leave-active-class="transition ease-in duration-200"
+          leave-from-class="translate-y-0 opacity-100"
+          leave-to-class="translate-y-2 opacity-0"
+        >
+          <div
+            v-if="showNoEventsToast"
+            class="fixed bottom-4 right-4 z-50 max-w-md"
+          >
+            <div
+              class="bg-gray-700 text-white rounded-lg shadow-2xl p-4 flex items-start gap-3"
+            >
+              <div class="flex-shrink-0">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+              </div>
+              <div class="flex-1">
+                <p class="font-semibold">No Events Found</p>
+                <p class="text-sm text-gray-200 mt-1">{{ noEventsMessage }}</p>
+              </div>
+              <button
+                @click="showNoEventsToast = false"
+                class="flex-shrink-0 text-gray-300 hover:text-white transition-colors"
+              >
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </Transition>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, unref, watch } from "vue";
-
-// Explicit component import due to nested folder structure
+import { ref, computed, onMounted } from "vue";
 import EventDetailsPopover from "./EventDetailsPopover.vue";
+import { EVENT_COLORS } from "~/utils/eventColors";
 
 interface CalendarEvent {
   id: number | string;
   title: string;
   start: string;
-  end?: string;
   type: "external" | "cup" | "local" | "challenge" | "custom";
   isCustom?: boolean;
-  customEventData?: CustomEvent;
 }
 
 interface ParsedEvent {
   id: string;
   title: string;
+  name?: string;
   dateTime: string;
   time?: string;
   type: string;
@@ -86,6 +162,7 @@ interface ParsedEvent {
   streetAddress?: string;
   icon?: string;
   isCustomEvent?: boolean;
+  eventType?: string;
 }
 
 interface CustomEvent {
@@ -95,261 +172,213 @@ interface CustomEvent {
   venue: string;
   maxParticipants: number;
   participationFee: number;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
   registrationCount?: number;
-}
-
-interface ExternalEvent {
-  id: string;
-  title: string;
-  dateTime: string;
-  type: string;
-  venue: string;
-  location: string;
-  country: string;
-  link: string;
-  cost?: string;
-  streetAddress?: string;
-  icon?: string;
-  time?: string;
+  eventType?: "custom" | "challenge" | "cup" | "local";
 }
 
 const today = new Date();
 const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 
-const typeColors: Record<CalendarEvent["type"], string> = {
-  external: "#dc2626", // red-600
-  cup: "#dc2626", // red-600 (cups get red dots)
-  local: "#16a34a", // green-600 (friendly tournaments get green dots)
-  challenge: "#2563eb", // blue-600 (challenges get blue dots)
-  custom: "#9333ea", // purple-600 (custom events get purple dots)
-};
-
-const typeLabels: Record<CalendarEvent["type"], string> = {
-  external: "External Tournament",
-  cup: "Cup Tournament",
-  local: "Local Event",
-  challenge: "Challenge",
-  custom: "Custom Event",
-};
-
-// Helper function to handle client-side hydration
-const ensureClientSide = <T>(
-  clientCallback: () => T,
-  fallback: T = [] as T
-): T => {
-  return import.meta.client ? clientCallback() : fallback;
-};
-
-// State for event details modal
+const eventStore = useEventStore();
+const customEvents = ref<CustomEvent[]>([]);
+const isLoading = ref(false);
 const selectedDate = ref<string | null>(null);
 const selectedDateEvents = ref<ParsedEvent[]>([]);
+const selectedEventType = ref<string | null>(null);
+const showTypeFilterModal = ref(false);
+const showNoEventsToast = ref(false);
+const noEventsMessage = ref("");
 
-// Use the event store composable
-const eventStore = useEventStore();
-
-// Custom events data
-const customEvents = ref<CustomEvent[]>([]);
-const customEventsLoading = ref<boolean>(false);
-
-// Combined loading state - use ref and manual updates to avoid reactivity issues
-const isLoading = ref(false);
-
-// Watch individual loading states and manually update combined state
-watch(
-  () => eventStore.isLoading,
-  (newVal) => {
-    const storeLoadingValue = unref(newVal);
-    isLoading.value =
-      Boolean(storeLoadingValue) || Boolean(customEventsLoading.value);
-  },
-  { immediate: true }
-);
-
-watch(
-  customEventsLoading,
-  (newVal) => {
-    const storeLoadingValue = unref(eventStore.isLoading);
-    isLoading.value = Boolean(storeLoadingValue) || Boolean(newVal);
-  },
-  { immediate: true }
-);
-
-// Fetch custom events from public endpoint
-const fetchCustomEvents = async (): Promise<void> => {
+// Fetch custom events
+const fetchCustomEvents = async () => {
   try {
-    customEventsLoading.value = true;
     const response = await $fetch<{ success: boolean; events: CustomEvent[] }>(
       "/api/events/custom"
     );
-
     if (response.success && response.events) {
       customEvents.value = response.events;
-    } else {
-      customEvents.value = [];
     }
   } catch (error) {
     console.error("Failed to load custom events:", error);
-    customEvents.value = [];
-  } finally {
-    customEventsLoading.value = false;
   }
 };
 
-// Load events on mount
-onMounted(async (): Promise<void> => {
+onMounted(async () => {
+  isLoading.value = true;
   try {
-    // Only fetch events on client-side to avoid hydration issues
-    ensureClientSide(async () => {
-      await Promise.all([eventStore.fetchEvents(), fetchCustomEvents()]);
-    }, undefined);
+    await Promise.all([eventStore.fetchEvents(), fetchCustomEvents()]);
   } catch (error) {
     console.error("Failed to load events:", error);
+  } finally {
+    isLoading.value = false;
   }
 });
 
-const events = computed(() => {
-  return ensureClientSide(() => {
-    // Convert ParsedEvents to CalendarEvents for the calendar display
-    // Note: Hidden events are already filtered out at the server level in applyOverrides
-    const allEvents = unref(eventStore.events);
+// Build calendar attributes with automatic highlighting
+const calendarAttributes = computed(() => {
+  const attributes: Array<Record<string, unknown>> = [];
+  const eventsByDate = new Map<string, CalendarEvent[]>();
 
-    const regularEvents = allEvents.map((event: ExternalEvent) => {
-      // Determine event type based on the original type
-      let type: CalendarEvent["type"] = "local";
-      if (event.type?.toLowerCase().includes("cup")) {
-        type = "cup";
-      } else if (event.type?.toLowerCase().includes("challenge")) {
-        type = "challenge";
-      } else if (
-        event.type?.toLowerCase().includes("tournament") &&
-        !event.type?.toLowerCase().includes("friendly")
-      ) {
-        type = "external";
+  // Safely get events array - eventStore.events is a ref, need .value
+  const storeEvents = Array.isArray(eventStore.events.value)
+    ? eventStore.events.value
+    : [];
+
+  // Combine regular and custom events
+  const allEvents: CalendarEvent[] = [
+    ...storeEvents.map((event: any) => {
+      // Use icon field to determine event type
+      let eventType = "local";
+      if (event.icon === "cup") {
+        eventType = "cup";
+      } else if (event.icon === "chall") {
+        eventType = "challenge";
+      } else if (event.icon === "pre") {
+        eventType = "local"; // Pre-release events as local type
+      } else if (event.icon === "friendly") {
+        eventType = "local";
       }
+
+      // Handle date extraction - dateTime might be "YYYY-MM-DD" or "YYYY-MM-DD HH:MM:SS"
+      const dateOnly = event.dateTime.includes(" ")
+        ? event.dateTime.split(" ")[0]
+        : event.dateTime;
 
       return {
-        id: parseInt(event.id.replace(/[^0-9]/g, "")) || Math.random(),
-        title: event.title || event.type || "Event",
-        start: event.dateTime ? event.dateTime.split(" ")[0] : "", // Extract date part
-        type,
+        id: event.id,
+        title: event.title,
+        start: dateOnly,
+        type: eventType,
         isCustom: false,
       };
+    }),
+    ...customEvents.value.map((event: CustomEvent) => ({
+      id: event.id,
+      title: event.name,
+      start: new Date(event.eventDate).toISOString().split("T")[0],
+      type: (event.eventType || "custom") as CalendarEvent["type"],
+      isCustom: true,
+    })),
+  ];
+
+  // Group by date
+  allEvents.forEach((event) => {
+    if (!eventsByDate.has(event.start)) {
+      eventsByDate.set(event.start, []);
+    }
+    eventsByDate.get(event.start)!.push(event);
+  });
+
+  // Create highlights for each date
+  eventsByDate.forEach((dayEvents, dateKey) => {
+    const hasCustom = dayEvents.some((e) => e.type === "custom");
+    const hasCup = dayEvents.some((e) => e.type === "cup");
+    const hasChallenge = dayEvents.some((e) => e.type === "challenge");
+    const hasLocal = dayEvents.some((e) => e.type === "local");
+
+    // Determine background color/gradient based on event types
+    // Using centralized EVENT_COLORS
+    let bgColor = EVENT_COLORS.local.bg; // default fallback
+    let background = "";
+
+    if (hasCustom) {
+      // Custom events: soft orange
+      bgColor = EVENT_COLORS.custom.bg;
+      background = bgColor;
+    } else if (hasCup && hasChallenge) {
+      // Both cup and challenge: soft blue left, soft green right
+      background = `linear-gradient(to bottom right, ${EVENT_COLORS.challenge.bg} 0%, ${EVENT_COLORS.challenge.bg} 50%, ${EVENT_COLORS.cup.bg} 50%, ${EVENT_COLORS.cup.bg} 100%)`;
+      bgColor = EVENT_COLORS.cup.bg;
+    } else if (hasCup && hasLocal) {
+      // Cup and local: soft sky blue left, soft green right
+      background = `linear-gradient(to bottom right, ${EVENT_COLORS.local.bg} 0%, ${EVENT_COLORS.local.bg} 50%, ${EVENT_COLORS.cup.bg} 50%, ${EVENT_COLORS.cup.bg} 100%)`;
+      bgColor = EVENT_COLORS.cup.bg;
+    } else if (hasChallenge && hasLocal) {
+      // Challenge and local: soft sky blue left, soft blue right
+      background = `linear-gradient(to bottom right, ${EVENT_COLORS.local.bg} 0%, ${EVENT_COLORS.local.bg} 50%, ${EVENT_COLORS.challenge.bg} 50%, ${EVENT_COLORS.challenge.bg} 100%)`;
+      bgColor = EVENT_COLORS.challenge.bg;
+    } else if (hasCup) {
+      // Cup only: soft green
+      bgColor = EVENT_COLORS.cup.bg;
+      background = bgColor;
+    } else if (hasChallenge) {
+      // Challenge only: soft blue
+      bgColor = EVENT_COLORS.challenge.bg;
+      background = bgColor;
+    } else {
+      // Local events: soft sky blue
+      bgColor = EVENT_COLORS.local.bg;
+      background = bgColor;
+    }
+
+    attributes.push({
+      key: `highlight-${dateKey}`,
+      dates: new Date(dateKey),
+      highlight: {
+        style: {
+          background: background,
+        },
+        contentStyle: {
+          color: "#1f2937", // gray-800
+          fontWeight: "600",
+          background: background,
+        },
+      },
+      customData: {
+        hasEvents: true,
+      },
     });
 
-    // Convert custom events to CalendarEvents
-    const customCalendarEvents = customEvents.value.map(
-      (event: CustomEvent) => {
-        const eventDate = new Date(event.eventDate);
-        const dateString = eventDate.toISOString().split("T")[0]; // Get YYYY-MM-DD format
+    // Add dots for multiple event types - use darker shades for better visibility
+    const uniqueTypes = [...new Set(dayEvents.map((e) => e.type))];
+    uniqueTypes.forEach((type) => {
+      // Use text colors from EVENT_COLORS for dots (they're darker and more visible)
+      // Exception: cup uses medium green for better visibility
+      const dotColors: Record<string, string> = {
+        custom: EVENT_COLORS.custom.text,
+        cup: "#16a34a", // green-600 - lighter than text color
+        challenge: EVENT_COLORS.challenge.text,
+        local: EVENT_COLORS.local.text,
+      };
 
-        return {
-          id: event.id,
-          title: event.name,
-          start: dateString,
-          type: "custom" as CalendarEvent["type"],
-          isCustom: true,
-          customEventData: event, // Store full custom event data for popover
-        };
-      }
-    );
-
-    return [...regularEvents, ...customCalendarEvents];
-  }, []);
-});
-
-const calendarAttributes = computed(() => {
-  return ensureClientSide(() => {
-    const eventsByDate = new Map<string, CalendarEvent[]>();
-
-    // Group events by date
-    events.value.forEach((event) => {
-      const dateKey = event.start;
-      if (!eventsByDate.has(dateKey)) {
-        eventsByDate.set(dateKey, []);
-      }
-      eventsByDate.get(dateKey)!.push(event);
-    });
-
-    // VCalendar attributes - using Record<string, any> for compatibility with complex VCalendar types
-    const attributes: Array<Record<string, unknown>> = [];
-
-    // Create attributes for each date with events
-    eventsByDate.forEach((dayEvents, dateKey) => {
-      const date = new Date(dateKey);
-
-      // Add dots for each event type on this date
-      const eventTypes = [...new Set(dayEvents.map((e) => e.type))];
-
-      eventTypes.forEach((type, _) => {
-        const eventsOfType = dayEvents.filter((e) => e.type === type);
-
-        attributes.push({
-          key: `${dateKey}-${type}`,
-          dates: date,
-          dot: {
-            color: typeColors[type],
-            class: `event-dot event-${type}`,
+      attributes.push({
+        key: `dot-${dateKey}-${type}`,
+        dates: new Date(dateKey),
+        dot: {
+          style: {
+            backgroundColor: dotColors[type] || EVENT_COLORS.local.text,
           },
-          popover: {
-            label: `${typeLabels[type]} (${eventsOfType.length})`,
-            content: eventsOfType.map((e) => e.title).join("\n"),
-            visibility: "hover",
-          },
-        });
+        },
       });
-
-      // Add a highlight for the entire day if there are events
-      if (dayEvents.length > 0) {
-        // Check if there are custom events on this day
-        const hasCustomEvents = dayEvents.some((event) => event.isCustom);
-
-        attributes.push({
-          key: `${dateKey}-highlight`,
-          dates: date,
-          highlight: {
-            color: hasCustomEvents ? "purple" : "blue",
-            fillMode: "light",
-            class: hasCustomEvents ? "has-custom-events" : "has-events",
-          },
-        });
-      }
     });
+  });
 
-    return attributes;
-  }, []);
+  return attributes;
 });
-
-interface DayClickEvent {
-  id: string;
-  date: Date;
-}
 
 // Handle day click
-const onDayClick = (day: DayClickEvent) => {
-  const clickedDate = day.id; // This should be in YYYY-MM-DD format
+const onDayClick = (day: any) => {
+  const clickedDate = day.id;
   selectedDate.value = clickedDate;
 
-  // Find original events for this date using the store and mark them as regular events
-  // Note: Hidden events are already filtered out at server level
-  const regularEventsForDate = unref(eventStore.events)
-    .filter((event: ExternalEvent) => {
-      if (event.dateTime) {
-        const eventDate = event.dateTime.split(" ")[0]; // Extract YYYY-MM-DD part
-        return eventDate === clickedDate;
-      }
-      return false;
+  const storeEvents = Array.isArray(eventStore.events.value)
+    ? eventStore.events.value
+    : [];
+
+  const regularEvents = storeEvents
+    .filter((event: any) => {
+      const eventDate = event.dateTime.includes(" ")
+        ? event.dateTime.split(" ")[0]
+        : event.dateTime;
+      return eventDate === clickedDate;
     })
     .map(
-      (event: ExternalEvent): ParsedEvent => ({
+      (event: any): ParsedEvent => ({
         ...event,
-        isCustomEvent: false, // Explicitly mark as regular event
+        isCustomEvent: false,
       })
     );
 
-  // Find custom events for this date and mark them as custom events
   const customEventsForDate = customEvents.value
     .filter((event: CustomEvent) => {
       const eventDate = new Date(event.eventDate).toISOString().split("T")[0];
@@ -359,27 +388,26 @@ const onDayClick = (day: DayClickEvent) => {
       (event: CustomEvent): ParsedEvent => ({
         id: String(event.id),
         title: event.name,
+        name: event.name,
         dateTime: event.eventDate,
-        type: "Custom Event",
+        type: event.eventType || "custom",
         venue: event.venue,
         location: "",
         country: "",
         link: "",
-        isCustomEvent: true, // Explicitly mark as custom event
+        isCustomEvent: true,
+        eventType: event.eventType,
       })
     );
 
-  // Combine all events for the selected date - custom events first
-  selectedDateEvents.value = [...customEventsForDate, ...regularEventsForDate];
+  selectedDateEvents.value = [...customEventsForDate, ...regularEvents];
 };
 
-// Close event details modal
-const closeEventDetails = (): void => {
+const closeEventDetails = () => {
   selectedDate.value = null;
   selectedDateEvents.value = [];
 };
 
-// Format selected date for display
 const formatSelectedDate = computed(() => {
   if (!selectedDate.value) return "";
   const date = new Date(selectedDate.value);
@@ -388,6 +416,219 @@ const formatSelectedDate = computed(() => {
     year: "numeric",
     month: "long",
     day: "numeric",
+  });
+});
+
+// Type filter functions
+const openTypeFilter = (type: string) => {
+  selectedEventType.value = type;
+
+  // Check if there are any events for this type
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+
+  const storeEvents = Array.isArray(eventStore.events.value)
+    ? eventStore.events.value
+    : [];
+
+  // Count regular events of this type
+  let hasRegularEvents = false;
+  if (type === "cup" || type === "challenge") {
+    hasRegularEvents = storeEvents.some((event: any) => {
+      const eventDate = new Date(
+        event.dateTime.includes(" ")
+          ? event.dateTime.split(" ")[0]
+          : event.dateTime
+      );
+      eventDate.setHours(0, 0, 0, 0);
+
+      if (eventDate < todayDate) return false;
+
+      if (type === "cup") {
+        return (
+          event.type?.toLowerCase().includes("cup") ||
+          event.icon === "cup" ||
+          event.type === "cup"
+        );
+      } else {
+        return (
+          event.type?.toLowerCase().includes("challenge") ||
+          event.icon === "chall" ||
+          event.type === "challenge"
+        );
+      }
+    });
+  }
+
+  // Count custom events of this type
+  let hasCustomEvents = false;
+  if (type === "custom") {
+    hasCustomEvents = customEvents.value.some((event: CustomEvent) => {
+      const eventDate = new Date(event.eventDate);
+      eventDate.setHours(0, 0, 0, 0);
+      return (
+        eventDate >= todayDate &&
+        event.eventType !== "cup" &&
+        event.eventType !== "challenge"
+      );
+    });
+  } else if (type === "cup" || type === "challenge") {
+    hasCustomEvents = customEvents.value.some((event: CustomEvent) => {
+      const eventDate = new Date(event.eventDate);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate >= todayDate && event.eventType === type;
+    });
+  }
+
+  // If no events found, show toast
+  if (!hasRegularEvents && !hasCustomEvents) {
+    const typeNames: Record<string, string> = {
+      cup: EVENT_COLORS.cup.name,
+      challenge: EVENT_COLORS.challenge.name,
+      custom: EVENT_COLORS.custom.name,
+    };
+    noEventsMessage.value = `No upcoming ${typeNames[type] || "events"} found.`;
+    showNoEventsToast.value = true;
+
+    // Auto-hide toast after 3 seconds
+    setTimeout(() => {
+      showNoEventsToast.value = false;
+    }, 3000);
+
+    return;
+  }
+
+  // Otherwise, show the modal
+  showTypeFilterModal.value = true;
+};
+
+const closeTypeFilter = () => {
+  selectedEventType.value = null;
+  showTypeFilterModal.value = false;
+};
+
+const typeFilterModalTitle = computed(() => {
+  if (!selectedEventType.value) return "";
+  const typeNames: Record<string, string> = {
+    cup: EVENT_COLORS.cup.name,
+    challenge: EVENT_COLORS.challenge.name,
+    custom: EVENT_COLORS.custom.name,
+  };
+  return `Upcoming ${typeNames[selectedEventType.value] || "Events"}`;
+});
+
+const filteredEventsByType = computed(() => {
+  if (!selectedEventType.value) return [];
+
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+
+  // Filter regular events
+  const storeEvents = Array.isArray(eventStore.events.value)
+    ? eventStore.events.value
+    : [];
+
+  const regularEvents = storeEvents
+    .filter((event: any) => {
+      const eventDate = new Date(
+        event.dateTime.includes(" ")
+          ? event.dateTime.split(" ")[0]
+          : event.dateTime
+      );
+      eventDate.setHours(0, 0, 0, 0);
+
+      // Check if event is today or in the future
+      if (eventDate < todayDate) return false;
+
+      // Match event type
+      if (selectedEventType.value === "cup") {
+        return (
+          event.type?.toLowerCase().includes("cup") ||
+          event.icon === "cup" ||
+          event.type === "cup"
+        );
+      } else if (selectedEventType.value === "challenge") {
+        return (
+          event.type?.toLowerCase().includes("challenge") ||
+          event.icon === "chall" ||
+          event.type === "challenge"
+        );
+      }
+      return false;
+    })
+    .map(
+      (event: any): ParsedEvent => ({
+        ...event,
+        isCustomEvent: false,
+      })
+    );
+
+  // Filter custom events based on selectedEventType
+  let filteredCustomEvents: ParsedEvent[] = [];
+
+  if (selectedEventType.value === "custom") {
+    // For "Locals" button: only show custom events that are NOT cup or challenge
+    filteredCustomEvents = customEvents.value
+      .filter((event: CustomEvent) => {
+        const eventDate = new Date(event.eventDate);
+        eventDate.setHours(0, 0, 0, 0);
+        return (
+          eventDate >= todayDate &&
+          event.eventType !== "cup" &&
+          event.eventType !== "challenge"
+        );
+      })
+      .map(
+        (event: CustomEvent): ParsedEvent => ({
+          id: String(event.id),
+          title: event.name,
+          name: event.name,
+          dateTime: event.eventDate,
+          type: event.eventType || "custom",
+          venue: event.venue,
+          location: "",
+          country: "",
+          link: "",
+          isCustomEvent: true,
+          eventType: event.eventType,
+        })
+      );
+  } else if (
+    selectedEventType.value === "cup" ||
+    selectedEventType.value === "challenge"
+  ) {
+    // For Cup/Challenge buttons: include custom events with matching eventType
+    filteredCustomEvents = customEvents.value
+      .filter((event: CustomEvent) => {
+        const eventDate = new Date(event.eventDate);
+        eventDate.setHours(0, 0, 0, 0);
+        return (
+          eventDate >= todayDate && event.eventType === selectedEventType.value
+        );
+      })
+      .map(
+        (event: CustomEvent): ParsedEvent => ({
+          id: String(event.id),
+          title: event.name,
+          name: event.name,
+          dateTime: event.eventDate,
+          type: event.eventType || "custom",
+          venue: event.venue,
+          location: "",
+          country: "",
+          link: "",
+          isCustomEvent: true,
+          eventType: event.eventType,
+        })
+      );
+  }
+
+  // Combine and sort by date
+  const allEvents = [...regularEvents, ...filteredCustomEvents];
+  return allEvents.sort((a, b) => {
+    const dateA = new Date(a.dateTime);
+    const dateB = new Date(b.dateTime);
+    return dateA.getTime() - dateB.getTime();
   });
 });
 </script>
@@ -404,30 +645,63 @@ const formatSelectedDate = computed(() => {
 
 .calendar-wrapper :deep(.vc-container) {
   width: 100%;
-  max-width: 620px;
+  max-width: 100%;
   margin: 0 auto;
   border: none;
   box-shadow: none;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-:deep(.vc-pane-layout) {
   justify-content: center;
 }
 
-/* Modern Calendar Styles - Using :deep() for third-party component styling */
+:deep(.vc-pane-container) {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+:deep(.vc-pane) {
+  margin: 0 auto;
+  width: 100%;
+}
+
 :deep(.vc-calendar) {
   font-size: 1.08rem;
-  --vc-day-content-height: 2.8rem;
-  --vc-day-content-width: 2.8rem;
-  --vc-border-radius: 0.75rem;
   background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
   box-shadow: 0 6px 32px 0 rgba(60, 60, 120, 0.1);
   border: none;
   padding: 1.5rem 1rem;
+  border-radius: 1rem;
+  width: 100%;
+  --vc-day-content-width: 3rem;
+  --vc-day-content-height: 3rem;
+}
+
+@media (min-width: 768px) {
+  :deep(.vc-calendar) {
+    --vc-day-content-width: 4rem;
+    --vc-day-content-height: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :deep(.vc-calendar) {
+    font-size: 1.2rem;
+    padding: 2rem 1.5rem;
+    --vc-day-content-width: 5rem;
+    --vc-day-content-height: 5rem;
+  }
+
+  :deep(.vc-title),
+  :deep(.vc-weekday) {
+    font-size: 1.4rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  :deep(.vc-calendar) {
+    --vc-day-content-width: 6rem;
+    --vc-day-content-height: 6rem;
+  }
 }
 
 :deep(.vc-title),
@@ -435,8 +709,6 @@ const formatSelectedDate = computed(() => {
   font-size: 1.25rem;
   font-weight: 700;
   color: #4f46e5;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 0 #fff;
 }
 
 :deep(.vc-weekday) {
@@ -445,91 +717,39 @@ const formatSelectedDate = computed(() => {
   color: #6366f1;
 }
 
-:deep(.vc-popover-content) {
-  font-size: 1rem;
-  padding: 1rem 1.25rem;
-  min-width: 220px;
-  max-width: 340px;
-  white-space: pre-line;
-  background: #fff;
-  border: none;
-  border-radius: 0.75rem;
-  box-shadow: 0 8px 32px rgba(60, 60, 120, 0.18);
-  z-index: 1000;
-}
-
 :deep(.vc-day-content) {
   cursor: pointer;
   border-radius: 0.75rem;
-  background: #fff;
-  transition: box-shadow 0.2s, background 0.2s, transform 0.2s;
-  box-shadow: 0 1px 4px rgba(60, 60, 120, 0.07);
-  font-weight: 500;
-  color: #312e81;
+  transition: all 0.2s;
+  background-color: #f3f4f6; /* grey for days without events */
+}
+
+/* Override background for days with highlights (events) */
+:deep(.vc-highlights .vc-day-content) {
+  background-color: transparent !important;
 }
 
 :deep(.vc-day-content:hover) {
-  background: linear-gradient(90deg, #6366f1 0%, #a5b4fc 100%);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
-  transform: scale(1.07);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 }
 
-:deep(.vc-day-content:active) {
-  transform: scale(0.97);
-  background: #ede9fe;
+:deep(.vc-highlight) {
+  border-radius: 0.75rem !important;
+  opacity: 1 !important;
 }
 
-/* Event day highlights - targeting VCalendar's highlight structure */
-:deep(.vc-highlight.has-events) {
-  background-color: #dbeafe !important; /* blue-100 */
-}
-
-:deep(.vc-highlight.has-custom-events) {
-  background-color: #e9d5ff !important; /* purple-100 */
-}
-
-:deep(.vc-day.is-not-in-month .vc-highlight) {
-  opacity: 0.3;
-}
-
-:deep(.event-dot) {
-  width: 10px;
-  height: 10px;
-  margin: 2px;
-  border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(60, 60, 120, 0.1);
-}
-
-/* Specific dot colors for each event type */
-:deep(.event-external) {
-  background-color: #ef4444 !important;
-}
-:deep(.event-cup) {
-  background-color: #ef4444 !important;
-}
-:deep(.event-local) {
-  background-color: #22c55e !important;
-}
-:deep(.event-challenge) {
-  background-color: #6366f1 !important;
-}
-:deep(.event-custom) {
-  background-color: #a21caf !important;
-}
-
-/* Multiple dots arrangement */
-:deep(.vc-day-dots) {
+:deep(.vc-dots) {
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
   gap: 3px;
   margin-top: 4px;
 }
 
-/* Make days with events more clickable */
-:deep(.vc-day.has-events .vc-day-content) {
-  position: relative;
+:deep(.vc-dot) {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50%;
 }
 
 @media (max-width: 640px) {
@@ -538,8 +758,6 @@ const formatSelectedDate = computed(() => {
   }
   :deep(.vc-calendar) {
     font-size: 0.98rem;
-    --vc-day-content-height: 2.1rem;
-    --vc-day-content-width: 2.1rem;
     padding: 0.5rem 0.25rem;
   }
   :deep(.vc-title),

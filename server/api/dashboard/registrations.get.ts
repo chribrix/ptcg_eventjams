@@ -15,24 +15,34 @@ export default defineEventHandler(async (event) => {
   try {
     let supabaseUser = null;
 
-    // Try Supabase authentication FIRST (real auth takes priority)
-    try {
-      supabaseUser = await serverSupabaseUser(event);
-    } catch (supabaseError) {
-      console.log("Supabase auth failed:", supabaseError);
-      // Continue without Supabase auth
-    }
+    // Check for impersonation first
+    const impersonatedUserId = event.context.impersonatedUserId;
 
-    // Only fallback to dev authentication if no Supabase user AND in development
-    if (!supabaseUser && process.env.NODE_ENV !== "production") {
-      const devUserId = getCookie(event, "dev-user-id");
-      const devUserEmail = getCookie(event, "dev-user-email");
+    if (impersonatedUserId) {
+      supabaseUser = {
+        id: impersonatedUserId,
+        email: "",
+      } as any;
+    } else {
+      // Try Supabase authentication FIRST (real auth takes priority)
+      try {
+        supabaseUser = await serverSupabaseUser(event);
+      } catch (supabaseError) {
+        console.log("Supabase auth failed:", supabaseError);
+        // Continue without Supabase auth
+      }
 
-      if (devUserId && devUserEmail) {
-        supabaseUser = {
-          id: devUserId,
-          email: devUserEmail,
-        } as any;
+      // Only fallback to dev authentication if no Supabase user AND in development
+      if (!supabaseUser && process.env.NODE_ENV !== "production") {
+        const devUserId = getCookie(event, "dev-user-id");
+        const devUserEmail = getCookie(event, "dev-user-email");
+
+        if (devUserId && devUserEmail) {
+          supabaseUser = {
+            id: devUserId,
+            email: devUserEmail,
+          } as any;
+        }
       }
     }
 

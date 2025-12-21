@@ -46,7 +46,6 @@ export const useAuth = () => {
   watch(supabaseUser, (newSupabaseUser) => {
     if (newSupabaseUser && devUser.value) {
       // Real user logged in, clear dev auth
-      console.log("Real Supabase user detected, clearing dev auth");
       clearDevAuth();
 
       // Also clear dev cookies

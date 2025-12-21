@@ -88,6 +88,17 @@
               <div class="relative flex-shrink-0">
                 <!-- Player Avatar with status indicator -->
                 <div
+                  v-if="participant.isAnonymous"
+                  :class="
+                    compact
+                      ? 'w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-md'
+                      : 'w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg'
+                  "
+                >
+                  <UserGroupIcon :class="compact ? 'w-4 h-4' : 'w-5 h-5'" />
+                </div>
+                <div
+                  v-else
                   :class="
                     compact
                       ? 'w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-md'
@@ -97,6 +108,7 @@
                   {{ getInitials(participant.playerName) }}
                 </div>
                 <div
+                  v-if="!participant.isAnonymous"
                   :class="[
                     getStatusIndicatorClass(participant.status),
                     compact ? 'w-2.5 h-2.5' : 'w-3 h-3',
@@ -109,20 +121,27 @@
               <div class="min-w-0 flex-1">
                 <div class="flex items-center space-x-2">
                   <UserIcon
+                    v-if="!participant.isAnonymous"
                     :class="compact ? 'w-3 h-3' : 'w-4 h-4'"
                     class="text-gray-400 flex-shrink-0"
                   />
                   <p
-                    :class="
+                    :class="[
                       compact
-                        ? 'font-medium text-gray-900 truncate'
-                        : 'font-semibold text-gray-900 truncate'
-                    "
+                        ? 'font-medium truncate'
+                        : 'font-semibold truncate',
+                      participant.isAnonymous
+                        ? 'text-gray-500'
+                        : 'text-gray-900',
+                    ]"
                   >
                     {{ participant.playerName }}
                   </p>
                 </div>
-                <div v-if="!compact" class="flex items-center space-x-2 mt-1">
+                <div
+                  v-if="!compact && !participant.isAnonymous"
+                  class="flex items-center space-x-2 mt-1"
+                >
                   <ClockIcon class="w-3 h-3 text-gray-400 flex-shrink-0" />
                   <p class="text-xs text-gray-500">
                     Registered
@@ -132,8 +151,11 @@
               </div>
             </div>
 
-            <!-- Status Indicators -->
-            <div class="flex items-center space-x-3">
+            <!-- Status Indicators (not shown for anonymous group) -->
+            <div
+              v-if="!participant.isAnonymous"
+              class="flex items-center space-x-3"
+            >
               <!-- Registration Status -->
               <span
                 :class="getParticipantStatusBadgeClass(participant)"
@@ -252,6 +274,7 @@ interface Participant {
   playerName: string;
   hasDecklistSubmitted: boolean;
   isBringingDecklistOnsite: boolean;
+  isAnonymous: boolean;
 }
 
 interface ParticipantsResponse {

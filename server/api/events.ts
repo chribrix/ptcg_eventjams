@@ -1,6 +1,7 @@
 interface ParsedEvent {
   id: string;
   title: string;
+  name?: string; // Event name from API
   dateTime: string;
   time?: string; // Add separate time field
   type: string;
@@ -15,6 +16,7 @@ interface ParsedEvent {
 interface CalendarEvent {
   id: string;
   title: string;
+  name?: string; // Event name from API
   dateTime: string;
   time?: string; // Add separate time field
   type: string;
@@ -114,6 +116,30 @@ function groupEventsByDate(events: ParsedEvent[]): CalendarEvent[] {
 
 export default defineEventHandler(async (event) => {
   try {
+    // Define cache key and TTL (5 minutes)
+    const CACHE_KEY = "pokedata:events";
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+    // Try to get cached data
+    const storage = useStorage("cache");
+    const cached = await storage.getItem<{
+      data: CalendarEvent[];
+      totalFound: number;
+      timestamp: number;
+    }>(CACHE_KEY);
+
+    // Return cached data if valid
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log(
+        `Returning cached events (${
+          cached.data.length
+        } events, cached ${Math.round(
+          (Date.now() - cached.timestamp) / 1000
+        )}s ago)`
+      );
+      return createEventResponse(cached.data, cached.totalFound);
+    }
+
     console.log("Making direct API call to pokedata.ovh...");
 
     // Use the same API endpoint that the website uses
@@ -222,6 +248,7 @@ export default defineEventHandler(async (event) => {
         const displayTime = timeOnly.substring(0, 5); // Get HH:MM from HH:MM:SS
 
         const type = event.type || "TCG Event";
+        const eventName = event.name || ""; // Get the event name from API
         const venue = event.shop || event.name || "Unknown Venue";
         const location = event.city || "";
         const country = event.country_code || "DE";
@@ -244,9 +271,13 @@ export default defineEventHandler(async (event) => {
           event.guid ||
           `event-${index}-${fullDateTime.replace(/[^a-zA-Z0-9]/g, "-")}`;
 
+        // Use event name as title, fallback to venue/shop name, then type
+        const title = eventName || (venue !== "Unknown Venue" ? venue : type);
+
         return {
           id,
-          title: `${dateOnly} ${displayTime} - ${type}`,
+          title,
+          name: eventName, // Store the raw event name
           dateTime: dateOnly, // Keep date-only for calendar grouping
           time: displayTime, // Add separate time field for display
           type,
@@ -264,6 +295,16 @@ export default defineEventHandler(async (event) => {
 
     // Group events by date for calendar display
     const calendarEvents = groupEventsByDate(events);
+
+    // Cache the results
+    await storage.setItem(CACHE_KEY, {
+      data: calendarEvents,
+      totalFound: apiData.length,
+      timestamp: Date.now(),
+    });
+    console.log(
+      `Cached ${calendarEvents.length} events for ${CACHE_TTL / 1000} seconds`
+    );
 
     // Write debug file with the calendar events (after icon mapping)
     try {

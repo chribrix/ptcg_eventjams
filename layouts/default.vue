@@ -137,6 +137,9 @@ const { t } = useI18n();
   <div
     class="min-h-screen bg-gradient-to-r from-white via-purple-50 to-purple-100 overflow-x-hidden"
   >
+    <!-- Impersonation Banner -->
+    <ImpersonationBanner />
+
     <header class="bg-white shadow-lg border-b border-gray-200">
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
@@ -153,17 +156,6 @@ const { t } = useI18n();
               </div>
               <span>PTCG Events</span>
             </NuxtLink>
-          </div>
-
-          <!-- Center - User Greeting -->
-          <div
-            v-if="userName"
-            class="hidden md:flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full"
-          >
-            <UserCircleIcon class="w-5 h-5 text-blue-600" />
-            <span class="text-blue-800 font-semibold"
-              >{{ t("nav.hello") }}, {{ userName }}</span
-            >
           </div>
 
           <!-- Right side - Navigation and Mobile Menu Button -->
@@ -411,18 +403,6 @@ const { t } = useI18n();
             </div>
           </div>
         </div>
-
-        <!-- Mobile user greeting -->
-        <div v-if="userName" class="md:hidden pb-3 pt-2">
-          <div
-            class="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg"
-          >
-            <UserCircleIcon class="w-4 h-4 text-blue-600" />
-            <span class="text-blue-800 font-medium text-sm"
-              >{{ t("nav.hello") }}, {{ userName }}</span
-            >
-          </div>
-        </div>
       </nav>
     </header>
 
@@ -431,9 +411,6 @@ const { t } = useI18n();
         <slot />
       </div>
     </main>
-
-    <!-- Dev Login component - only shows in development -->
-    <DevLogin />
   </div>
 </template>
 

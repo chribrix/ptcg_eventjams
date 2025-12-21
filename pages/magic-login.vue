@@ -16,11 +16,7 @@ onMounted(async () => {
     return;
   }
 
-  // Session is valid, Supabase stores it automatically in localStorage
-  console.log("Logged in as:", data.session.user.email);
-
   const user = data.session.user;
-  console.log("User metadata:", user.user_metadata);
 
   // Check if there's a return URL
   const returnPath = route.query.return as string;

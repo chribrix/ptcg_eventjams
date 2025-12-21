@@ -5,6 +5,7 @@ const registrationSchema = z.object({
   playerId: z.string().min(1, "Player ID is required").max(50),
   name: z.string().min(1, "Full name is required").max(100),
   email: z.string().email("Valid email is required").max(100),
+  isAnonymous: z.boolean().optional().default(false),
 });
 
 export default defineEventHandler(async (event) => {
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const { playerId, name, email } = validationResult.data;
+    const { playerId, name, email, isAnonymous } = validationResult.data;
 
     // Check if this is a custom event or an external event override
     let customEvent = await prisma.customEvent.findUnique({
@@ -254,6 +255,7 @@ export default defineEventHandler(async (event) => {
           decklist: null, // Reset decklist
           bringingDecklistOnsite: false, // Reset onsite option
           notes: null, // Clear any notes
+          isAnonymous: isAnonymous || false, // Set anonymous preference
         },
       });
     } else {
@@ -266,6 +268,7 @@ export default defineEventHandler(async (event) => {
               status: initialStatus,
               decklist: null,
               bringingDecklistOnsite: false,
+              isAnonymous: isAnonymous || false,
             }
           : {
               customEventId: eventId,
@@ -273,6 +276,7 @@ export default defineEventHandler(async (event) => {
               status: initialStatus,
               decklist: null,
               bringingDecklistOnsite: false,
+              isAnonymous: isAnonymous || false,
             },
       });
     }

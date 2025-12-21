@@ -10,7 +10,7 @@
     >
       <div
         class="fixed inset-0 bg-black/50 flex justify-center items-center z-[99999]"
-        @click="$emit('close')"
+        @click="emit('close')"
       >
         <div
           class="bg-white rounded-xl shadow-xl max-w-2xl max-h-[80vh] w-[90%] overflow-hidden flex flex-col transform transition-transform min-w-0"
@@ -23,7 +23,7 @@
               Events on {{ formattedDate }}
             </h3>
             <button
-              @click="$emit('close')"
+              @click="emit('close')"
               class="bg-none border-none text-2xl text-gray-500 hover:bg-gray-100 hover:text-gray-700 cursor-pointer p-1 rounded transition-colors duration-200"
             >
               &times;
@@ -33,161 +33,188 @@
             <div
               v-for="event in events"
               :key="event.id"
-              class="border border-gray-200 rounded-lg p-4 mb-3 transition-all duration-200 hover:shadow-md hover:border-gray-300 last:mb-0 min-w-0"
-              :class="{
-                'border-l-4': isCustomEvent(event),
+              class="border border-gray-200 rounded-lg mb-2 transition-all duration-200 hover:shadow-md hover:border-gray-300 last:mb-0 min-w-0 border-l-4 cursor-pointer"
+              :style="{
+                borderLeftColor: getEventBadgeStyles(event).backgroundColor,
               }"
-              :style="
-                isCustomEvent(event)
-                  ? {
-                      borderLeftColor:
-                        getEventBadgeStyles(event).backgroundColor,
-                      background: `linear-gradient(to right, ${
-                        getEventBadgeStyles(event).backgroundColor
-                      }10, white)`,
-                    }
-                  : {}
-              "
-              style="word-break: break-word; overflow-wrap: anywhere"
+              @click="toggleEventExpanded(event.id)"
             >
-              <!-- Event Title Headline -->
-              <h4
-                class="text-lg font-bold text-gray-900 mb-3 leading-tight"
-                style="word-break: break-word; overflow-wrap: anywhere"
+              <!-- Compact View -->
+              <div class="p-3 flex items-center justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-sm font-semibold text-gray-900 mb-1 truncate">
+                    {{ getEventTitle(event) }}
+                  </h4>
+                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                    <MapPinIcon class="w-3 h-3 flex-shrink-0" />
+                    <span class="truncate">{{ getCityFromEvent(event) }}</span>
+                    <span class="text-gray-400">•</span>
+                    <CalendarIcon class="w-3 h-3 flex-shrink-0" />
+                    <span>{{ getCompactDate(event) }}</span>
+                  </div>
+                </div>
+                <svg
+                  class="w-5 h-5 flex-shrink-0 text-gray-400 transition-transform duration-200"
+                  :class="{ 'rotate-180': expandedEvents.has(event.id) }"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+
+              <!-- Expanded View -->
+              <Transition
+                enter-active-class="transition-all duration-200 ease-out"
+                enter-from-class="max-h-0 opacity-0"
+                enter-to-class="max-h-[1000px] opacity-100"
+                leave-active-class="transition-all duration-200 ease-in"
+                leave-from-class="max-h-[1000px] opacity-100"
+                leave-to-class="max-h-0 opacity-0"
               >
-                {{ getEventTitle(event) }}
-              </h4>
+                <div
+                  v-if="expandedEvents.has(event.id)"
+                  class="px-3 pb-3 border-t border-gray-100 overflow-hidden"
+                  @click.stop
+                >
+                  <div class="pt-3">
+                    <!-- Badges row: Type, Time, Cost -->
+                    <div class="flex flex-wrap gap-2 mb-3 items-center">
+                      <!-- Type badge with dynamic color -->
+                      <div
+                        class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold uppercase tracking-wide"
+                        :style="getEventBadgeStyles(event)"
+                      >
+                        {{ getEventTypeLabel(event) }}
+                      </div>
+                      <!-- Time badge -->
+                      <div
+                        v-if="getEventTime(event)"
+                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200"
+                      >
+                        <ClockIcon class="w-3 h-3 flex-shrink-0" />
+                        <span>{{ getEventTime(event) }}</span>
+                      </div>
+                      <!-- Cost badge -->
+                      <div
+                        v-if="getEventCost(event) !== undefined"
+                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200"
+                      >
+                        <CurrencyDollarIcon class="w-3 h-3 flex-shrink-0" />
+                        <span>{{ formatEventCost(event) }}</span>
+                      </div>
+                    </div>
 
-              <div class="flex justify-between items-center mb-3">
-                <div class="flex flex-col w-full gap-1">
-                  <!-- Top row: Event type badge -->
-                  <div class="w-full mb-1">
-                    <div
-                      class="inline-block w-full px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide min-w-0 text-center"
-                      :style="getEventBadgeStyles(event)"
-                      style="word-break: break-word; overflow-wrap: anywhere"
-                    >
-                      {{ getEventTypeLabel(event) }}
+                    <!-- Event details -->
+                    <div class="flex flex-col gap-2 mb-3">
+                      <div
+                        v-if="event.venue"
+                        class="flex items-start gap-2 text-gray-600 text-sm"
+                      >
+                        <BuildingOfficeIcon
+                          class="w-4 h-4 flex-shrink-0 mt-0.5"
+                        />
+                        <span class="flex-1 min-w-0">{{
+                          stripHtmlTags(event.venue)
+                        }}</span>
+                      </div>
+                      <div
+                        v-if="event.streetAddress"
+                        class="flex items-start gap-2 text-gray-600 text-sm"
+                      >
+                        <MapPinIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span class="flex-1 min-w-0">{{
+                          stripHtmlTags(event.streetAddress)
+                        }}</span>
+                      </div>
+                      <div
+                        v-if="event.location"
+                        class="flex items-start gap-2 text-gray-600 text-sm"
+                      >
+                        <GlobeAltIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span class="flex-1 min-w-0"
+                          >{{ stripHtmlTags(event.location)
+                          }}{{
+                            event.country
+                              ? `, ${stripHtmlTags(event.country)}`
+                              : ""
+                          }}</span
+                        >
+                      </div>
+                      <div
+                        v-if="isCustomEvent(event)"
+                        class="flex items-center gap-2 text-gray-600 text-sm"
+                      >
+                        <UsersIcon class="w-4 h-4 flex-shrink-0" />
+                        <span class="flex-1">{{
+                          getRegistrationCount(event)
+                        }}</span>
+                      </div>
                     </div>
-                  </div>
-                  <!-- Second row: Cost and time badges -->
-                  <div class="flex flex-wrap gap-2 w-full justify-center">
+
+                    <!-- Action buttons -->
                     <div
-                      v-if="getEventCost(event) !== undefined"
-                      class="flex items-center gap-1 text-sm font-semibold text-green-700 bg-green-100 px-2 py-1 rounded-full border border-green-200"
+                      class="flex justify-end gap-2 pt-2 border-t border-gray-100"
                     >
-                      <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
-                      {{ formatEventCost(event) }}
-                    </div>
-                    <div
-                      v-if="getEventTime(event)"
-                      class="text-base font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full"
-                    >
-                      {{ getEventTime(event) }}
+                      <a
+                        v-if="getGoogleMapsUrl(event)"
+                        :href="getGoogleMapsUrl(event)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm transition-all duration-200 no-underline"
+                        @click.stop
+                      >
+                        <MapIcon class="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>Routenplaner</span>
+                      </a>
+                      <NuxtLink
+                        v-if="
+                          isCustomEvent(event) || hasLocalRegistration(event)
+                        "
+                        :to="
+                          isUserLoggedIn
+                            ? `/events/register/${event.id}`
+                            : '/login'
+                        "
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-sm transition-all duration-200 no-underline"
+                        @click.stop
+                      >
+                        <UserPlusIcon class="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>Register</span>
+                      </NuxtLink>
+                      <a
+                        v-else-if="event.link && event.link !== '//'"
+                        :href="event.link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm transition-all duration-200 no-underline"
+                        @click.stop
+                      >
+                        <LinkIcon class="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>Details</span>
+                      </a>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="flex flex-col gap-2">
-                  <div
-                    v-if="event.venue"
-                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
-                  >
-                    <BuildingOfficeIcon class="w-4 h-4 flex-shrink-0" />
-                    <span
-                      class="flex-1 min-w-0"
-                      style="word-break: break-word; overflow-wrap: anywhere"
-                      >{{ stripHtmlTags(event.venue) }}</span
-                    >
-                  </div>
-                  <div
-                    v-if="event.streetAddress"
-                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
-                  >
-                    <MapPinIcon class="w-4 h-4 flex-shrink-0" />
-                    <span
-                      class="flex-1 min-w-0"
-                      style="word-break: break-word; overflow-wrap: anywhere"
-                      >{{ stripHtmlTags(event.streetAddress) }}</span
-                    >
-                  </div>
-                  <div
-                    v-if="event.location"
-                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
-                  >
-                    <GlobeAltIcon class="w-4 h-4 flex-shrink-0" />
-                    <span
-                      class="flex-1 min-w-0"
-                      style="word-break: break-word; overflow-wrap: anywhere"
-                      >{{ stripHtmlTags(event.location)
-                      }}{{
-                        event.country ? `, ${stripHtmlTags(event.country)}` : ""
-                      }}</span
-                    >
-                  </div>
-                  <div
-                    v-if="isCustomEvent(event)"
-                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
-                  >
-                    <UsersIcon class="w-4 h-4 flex-shrink-0" />
-                    <span class="flex-1">{{
-                      getRegistrationCount(event)
-                    }}</span>
-                  </div>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                  <div
-                    v-if="isCustomEvent(event)"
-                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
-                  >
-                    <NuxtLink
-                      :to="
-                        isUserLoggedIn
-                          ? `/events/register/${event.id}`
-                          : '/login'
-                      "
-                      class="flex items-center gap-2 text-blue-600 no-underline font-medium text-sm px-3 py-2 bg-blue-50 rounded-md transition-all duration-200 border border-blue-200 hover:bg-blue-100 hover:text-blue-700"
-                    >
-                      <UserPlusIcon class="w-4 h-4 flex-shrink-0" />
-                      <span>Register</span>
-                    </NuxtLink>
-                  </div>
-                  <div
-                    v-else-if="hasLocalRegistration(event)"
-                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
-                  >
-                    <NuxtLink
-                      :to="
-                        isUserLoggedIn
-                          ? `/events/register/${event.id}`
-                          : '/login'
-                      "
-                      class="flex items-center gap-2 text-blue-600 no-underline font-medium text-sm px-3 py-2 bg-blue-50 rounded-md transition-all duration-200 border border-blue-200 hover:bg-blue-100 hover:text-blue-700"
-                    >
-                      <UserPlusIcon class="w-4 h-4 flex-shrink-0" />
-                      <span>Register</span>
-                    </NuxtLink>
-                  </div>
-                  <div
-                    v-else-if="event.link && event.link !== '//'"
-                    class="flex items-center gap-2 text-gray-600 text-sm leading-relaxed"
-                  >
-                    <a
-                      :href="event.link"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="flex items-center gap-2 text-blue-600 no-underline font-medium text-sm px-3 py-2 bg-blue-50 rounded-md transition-all duration-200 border border-blue-200 hover:bg-blue-100 hover:text-blue-700"
-                    >
-                      <LinkIcon class="w-4 h-4 flex-shrink-0" />
-                      <span>Register</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
+              </Transition>
             </div>
+          </div>
+          <!-- Back button at bottom -->
+          <div
+            class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end"
+          >
+            <button
+              @click="emit('close')"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              <span>← Zurück</span>
+            </button>
           </div>
         </div>
       </div>
@@ -204,12 +231,16 @@ import {
   UsersIcon,
   UserPlusIcon,
   LinkIcon,
+  ClockIcon,
+  CalendarIcon,
+  MapIcon,
 } from "@heroicons/vue/24/outline";
 import { getEventBadgeStyles as getColorStyles } from "~/utils/eventColors";
 
 interface ParsedEvent {
   id: string;
   title: string;
+  name?: string; // Event name from API
   dateTime: string;
   time?: string;
   type: string;
@@ -239,20 +270,62 @@ interface CustomEvent {
 }
 
 // Props
-defineProps<{
+const props = defineProps<{
   events: ParsedEvent[];
   formattedDate: string;
 }>();
 
 // Emits
-defineEmits<{
-  close: [];
+const emit = defineEmits<{
+  (e: "close"): void;
 }>();
 
 // For accessing custom events data (assuming it's available globally or passed down)
 const customEvents = ref<CustomEvent[]>([]);
 const supabase = useSupabaseClient();
 const isUserLoggedIn = ref(false);
+const expandedEvents = ref<Set<string>>(new Set());
+
+// Auto-expand all events if there are 3 or fewer
+watch(
+  () => props.events,
+  (newEvents) => {
+    if (newEvents.length <= 3) {
+      expandedEvents.value = new Set(newEvents.map((e) => e.id));
+    } else {
+      expandedEvents.value.clear();
+    }
+  },
+  { immediate: true }
+);
+
+// Toggle event expanded state
+const toggleEventExpanded = (eventId: string) => {
+  if (expandedEvents.value.has(eventId)) {
+    expandedEvents.value.delete(eventId);
+  } else {
+    expandedEvents.value.add(eventId);
+  }
+};
+
+// Get city from location string
+const getCityFromEvent = (event: ParsedEvent): string => {
+  if (event.location) {
+    // Try to extract city from location string
+    const locationParts = event.location.split(",");
+    return locationParts[0].trim() || event.location;
+  }
+  return event.venue || "Location TBD";
+};
+
+// Get compact date format
+const getCompactDate = (event: ParsedEvent): string => {
+  const dateStr = event.dateTime.includes(" ")
+    ? event.dateTime.split(" ")[0]
+    : event.dateTime;
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
 
 // Load custom events if needed
 onMounted(async () => {
@@ -405,7 +478,41 @@ const getEventTitle = (event: ParsedEvent): string => {
       return customEvent.name;
     }
   }
-  // For external events, use title or venue
-  return event.title || event.venue || "Event";
+  // For external events, use name field first, then fall back to title or venue
+  return event.name || event.title || event.venue || "Event";
+};
+
+const getEventDate = (event: ParsedEvent): string => {
+  if (isCustomEvent(event)) {
+    const customEvent = customEvents.value.find(
+      (ce) => String(ce.id) === event.id
+    );
+    if (customEvent) {
+      const eventDate = new Date(customEvent.eventDate);
+      return eventDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+  }
+  // For external events, format the dateTime
+  if (event.dateTime) {
+    const eventDate = new Date(event.dateTime);
+    return eventDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+  return "";
+};
+
+const getGoogleMapsUrl = (event: ParsedEvent): string => {
+  const address = event.streetAddress || event.venue || event.location;
+  if (!address) return "";
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+    address
+  )}`;
 };
 </script>
