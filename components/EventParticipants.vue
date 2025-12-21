@@ -80,9 +80,11 @@
               : 'group bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200'
           "
         >
-          <div class="flex items-center justify-between">
+          <div
+            class="flex items-start sm:items-center justify-between gap-3 flex-wrap"
+          >
             <div
-              class="flex items-center"
+              class="flex items-center min-w-0 flex-1"
               :class="compact ? 'space-x-3' : 'space-x-4'"
             >
               <div class="relative flex-shrink-0">
@@ -154,12 +156,12 @@
             <!-- Status Indicators (not shown for anonymous group) -->
             <div
               v-if="!participant.isAnonymous"
-              class="flex items-center space-x-3"
+              class="flex items-center flex-shrink-0"
             >
               <!-- Registration Status -->
               <span
                 :class="getParticipantStatusBadgeClass(participant)"
-                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap"
               >
                 <div
                   :class="getParticipantStatusDotClass(participant)"
@@ -172,8 +174,8 @@
         </div>
       </div>
 
-      <!-- Cancelled Participants Section -->
-      <div v-if="cancelledParticipants.length > 0" class="mt-6">
+      <!-- Cancelled Participants Section (Admin Only) -->
+      <div v-if="cancelledParticipants.length > 0 && isAdmin" class="mt-6">
         <div class="flex items-center space-x-2 mb-3">
           <div class="h-px flex-1 bg-gray-300"></div>
           <h4
@@ -193,9 +195,11 @@
                 : 'group bg-white rounded-xl border border-gray-200 p-4 opacity-60'
             "
           >
-            <div class="flex items-center justify-between">
+            <div
+              class="flex items-start sm:items-center justify-between gap-3 flex-wrap"
+            >
               <div
-                class="flex items-center"
+                class="flex items-center min-w-0 flex-1"
                 :class="compact ? 'space-x-3' : 'space-x-4'"
               >
                 <div class="relative flex-shrink-0">
@@ -239,9 +243,9 @@
               </div>
 
               <!-- Cancelled Badge -->
-              <div class="flex items-center space-x-3">
+              <div class="flex items-center flex-shrink-0">
                 <span
-                  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200"
+                  class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200 whitespace-nowrap"
                 >
                   <div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
                   Cancelled
@@ -301,6 +305,14 @@ const participants = ref<Participant[]>([]);
 const cancelledParticipants = ref<Participant[]>([]);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+
+// Check if user is admin
+const { checkAdminStatus } = useAdmin();
+const isAdmin = ref(false);
+
+onMounted(async () => {
+  isAdmin.value = await checkAdminStatus();
+});
 
 function getInitials(name: string): string {
   return name

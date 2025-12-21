@@ -62,19 +62,22 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">
           {{ t("dashboard.currentRegistrations") }}
         </h2>
-        <div class="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2 mb-12">
-          <div
+        <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 mb-12">
+          <NuxtLink
             v-for="registration in registrations"
             :key="registration.id"
-            class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow duration-200"
+            :to="`/booking/${registration.id}`"
+            class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-lg hover:border-blue-300 transition-all duration-200 cursor-pointer block"
           >
             <!-- Event Header -->
             <div
-              class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-0 mb-4"
+              class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4"
             >
-              <div class="flex-1">
+              <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap mb-2">
-                  <h3 class="text-lg sm:text-xl font-semibold text-gray-900">
+                  <h3
+                    class="text-lg sm:text-xl font-semibold text-gray-900 truncate"
+                  >
                     {{ registration.customEvent.name }}
                   </h3>
                   <span
@@ -82,15 +85,35 @@
                       registration.eventType &&
                       registration.eventType !== 'custom'
                     "
-                    class="event-type-badge"
+                    class="event-type-badge flex-shrink-0"
                     :class="`type-${registration.eventType}`"
                   >
                     {{ getEventTypeName(registration.eventType) }}
                   </span>
                 </div>
+                <!-- Ticket Count Badge -->
+                <div
+                  v-if="registration.ticketCount > 1"
+                  class="flex items-center gap-1 text-sm text-blue-600 font-medium"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                    />
+                  </svg>
+                  {{ registration.ticketCount }} Tickets
+                </div>
               </div>
               <span
-                class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap self-start"
+                class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap self-start flex-shrink-0"
                 :class="{
                   'bg-green-100 text-green-800':
                     registration.status === 'registered',
@@ -142,10 +165,33 @@
               </div>
             </div>
 
+            <!-- Edit Booking Button -->
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <button
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                <span>Edit Booking</span>
+              </button>
+            </div>
+
             <!-- Decklist Section -->
             <div
               v-if="registration.customEvent.requiresDecklist"
               class="mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200"
+              @click.prevent.stop
             >
               <div class="flex justify-between items-center mb-3">
                 <h4 class="font-semibold text-gray-900 text-sm sm:text-base">
@@ -268,7 +314,7 @@
                 </div>
               </div>
             </div>
-          </div>
+          </NuxtLink>
         </div>
       </div>
 

@@ -22,10 +22,12 @@ export default defineEventHandler(async (event) => {
     });
 
     if (customEvent) {
-      // Count registrations for this custom event (excluding cancelled registrations)
-      const registrationCount = await prisma.eventRegistration.count({
+      // Count active tickets for this custom event (excluding cancelled tickets)
+      const registrationCount = await prisma.registrationTicket.count({
         where: {
-          customEventId: eventId,
+          registration: {
+            customEventId: eventId,
+          },
           status: {
             not: "cancelled",
           },
@@ -58,9 +60,12 @@ export default defineEventHandler(async (event) => {
     }
 
     // Transform external event override to match custom event structure
-    const registrationCount = await prisma.eventRegistration.count({
+    // Count active tickets for this external event (excluding cancelled tickets)
+    const registrationCount = await prisma.registrationTicket.count({
       where: {
-        externalEventId: eventId,
+        registration: {
+          externalEventId: eventId,
+        },
         status: {
           not: "cancelled",
         },

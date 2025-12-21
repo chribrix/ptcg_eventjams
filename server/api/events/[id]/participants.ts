@@ -72,80 +72,72 @@ export default defineEventHandler(async (event) => {
       eventName = overrides?.title || "External Event";
     }
 
-    // Fetch active participants (registered and reserved, excluding cancelled)
-    const activeParticipants = await prisma.eventRegistration.findMany({
-      where: isExternalEvent
-        ? {
-            externalEventId: eventId,
-            status: {
-              not: "cancelled",
-            },
-          }
-        : {
-            customEventId: eventId,
-            status: {
-              not: "cancelled",
-            },
-          },
+    // Fetch active tickets (registered and attended, excluding cancelled)
+    const activeTickets = await prisma.registrationTicket.findMany({
+      where: {
+        registration: isExternalEvent
+          ? { externalEventId: eventId }
+          : { customEventId: eventId },
+        status: {
+          not: "cancelled",
+        },
+      },
       select: {
         id: true,
+        participantName: true,
         status: true,
-        registeredAt: true,
+        isAnonymous: true,
         decklist: true,
         bringingDecklistOnsite: true,
-        isAnonymous: true,
-        player: {
+        createdAt: true,
+        registration: {
           select: {
-            name: true,
+            registeredAt: true,
           },
         },
       },
       orderBy: {
-        registeredAt: "asc",
+        createdAt: "asc",
       },
     });
 
-    // Fetch cancelled participants separately
-    const cancelledParticipants = await prisma.eventRegistration.findMany({
-      where: isExternalEvent
-        ? {
-            externalEventId: eventId,
-            status: "cancelled",
-          }
-        : {
-            customEventId: eventId,
-            status: "cancelled",
-          },
+    // Fetch cancelled tickets separately
+    const cancelledTickets = await prisma.registrationTicket.findMany({
+      where: {
+        registration: isExternalEvent
+          ? { externalEventId: eventId }
+          : { customEventId: eventId },
+        status: "cancelled",
+      },
       select: {
         id: true,
+        participantName: true,
         status: true,
-        registeredAt: true,
+        isAnonymous: true,
         decklist: true,
         bringingDecklistOnsite: true,
-        isAnonymous: true,
-        player: {
+        createdAt: true,
+        registration: {
           select: {
-            name: true,
+            registeredAt: true,
           },
         },
       },
       orderBy: {
-        registeredAt: "asc",
+        createdAt: "asc",
       },
     });
 
     // Separate anonymous and non-anonymous participants
-    const namedParticipants = activeParticipants.filter((p) => !p.isAnonymous);
-    const anonymousParticipants = activeParticipants.filter(
-      (p) => p.isAnonymous
-    );
+    const namedParticipants = activeTickets.filter((p) => !p.isAnonymous);
+    const anonymousParticipants = activeTickets.filter((p) => p.isAnonymous);
 
     // Build participants list
     const participantsList = namedParticipants.map((p) => ({
       id: p.id,
       status: p.status,
-      registeredAt: p.registeredAt,
-      playerName: p.player.name,
+      registeredAt: p.registration.registeredAt,
+      playerName: p.participantName,
       hasDecklistSubmitted: Boolean(p.decklist),
       isBringingDecklistOnsite: Boolean(p.bringingDecklistOnsite),
       isAnonymous: false,
@@ -157,8 +149,8 @@ export default defineEventHandler(async (event) => {
         ...anonymousParticipants.map((p) => ({
           id: p.id,
           status: p.status,
-          registeredAt: p.registeredAt,
-          playerName: p.player.name + " (Anonymous)",
+          registeredAt: p.registration.registeredAt,
+          playerName: p.participantName + " (Anonymous)",
           hasDecklistSubmitted: Boolean(p.decklist),
           isBringingDecklistOnsite: Boolean(p.bringingDecklistOnsite),
           isAnonymous: true,
@@ -185,11 +177,11 @@ export default defineEventHandler(async (event) => {
         isExternalEvent,
       },
       participants: participantsList,
-      cancelledParticipants: cancelledParticipants.map((p) => ({
+      cancelledParticipants: cancelledTickets.map((p) => ({
         id: p.id,
         status: p.status,
-        registeredAt: p.registeredAt,
-        playerName: p.isAnonymous ? "Anonymous Participant" : p.player.name,
+        registeredAt: p.registration.registeredAt,
+        playerName: p.isAnonymous ? "Anonymous Participant" : p.participantName,
         hasDecklistSubmitted: Boolean(p.decklist),
         isBringingDecklistOnsite: Boolean(p.bringingDecklistOnsite),
         isAnonymous: p.isAnonymous,

@@ -55,13 +55,25 @@ const error = ref("");
 const runtimeConfig = useRuntimeConfig();
 
 const getMagicLinkRedirect = () => {
+  console.log("--- getMagicLinkRedirect called ---");
   const configuredBase = runtimeConfig.public.appBaseUrl?.replace(/\/$/, "");
+  console.log("Configured base URL from config:", configuredBase);
+
   if (configuredBase) {
-    return `${configuredBase}/magic-login`;
+    const result = `${configuredBase}/magic-login`;
+    console.log("Using configured base, returning:", result);
+    return result;
   }
+
   if (process.client) {
-    return `${window.location.origin.replace(/\/$/, "")}/magic-login`;
+    const origin = window.location.origin.replace(/\/$/, "");
+    const result = `${origin}/magic-login`;
+    console.log("Using window.location.origin:", origin);
+    console.log("Returning:", result);
+    return result;
   }
+
+  console.log("No redirect URL determined (SSR without config)");
   return undefined;
 };
 
@@ -89,13 +101,26 @@ const submitLogin = async () => {
   linkSent.value = false;
   error.value = "";
 
+  console.log("=== Magic Link Login Debug ===");
+  console.log("Email:", email.value);
+  console.log("Supabase URL:", runtimeConfig.public.supabaseUrl);
+  console.log("Has Supabase Key:", !!runtimeConfig.public.supabaseAnonKey);
+  console.log("APP_BASE_URL:", runtimeConfig.public.appBaseUrl);
+
   const returnPath = route.query.redirect as string;
+  console.log("Return path from query:", returnPath);
+
   let redirectTo = getMagicLinkRedirect();
+  console.log("Base redirect URL:", redirectTo);
 
   // Append the return path if present
   if (redirectTo && returnPath) {
     redirectTo = `${redirectTo}?return=${encodeURIComponent(returnPath)}`;
+    console.log("Final redirect URL with return path:", redirectTo);
   }
+
+  console.log("Calling Supabase signInWithOtp...");
+  const startTime = Date.now();
 
   const { error: signInError } = await useSupabaseClient().auth.signInWithOtp({
     email: email.value,
@@ -106,9 +131,24 @@ const submitLogin = async () => {
       : undefined,
   });
 
+  const elapsed = Date.now() - startTime;
+  console.log(`Supabase API call completed in ${elapsed}ms`);
+
   if (signInError) {
+    console.error("=== Magic Link Error ===");
+    console.error("Error message:", signInError.message);
+    console.error("Error status:", signInError.status);
+    console.error("Error name:", signInError.name);
+    console.error("Full error object:", JSON.stringify(signInError, null, 2));
+    console.error("========================");
     error.value = signInError.message;
   } else {
+    console.log("✅ Magic link sent successfully");
+    console.log(
+      "Expected redirect after clicking link:",
+      redirectTo || "http://localhost:3000/magic-login"
+    );
+    console.log("=============================");
     linkSent.value = true;
   }
 };

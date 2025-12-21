@@ -226,8 +226,9 @@
               ✓ Registration Successful!
             </h3>
             <p class="text-green-700 mb-2">
-              <strong>{{ form.name }}</strong> (ID: {{ form.playerId }}) has
-              been registered for {{ event.name }}.
+              <strong>{{ form.tickets[0].name }}</strong> (ID:
+              {{ form.tickets[0].playerId }}) has been registered for
+              {{ event.name }}.
             </p>
             <p v-if="event.requiresDecklist" class="text-green-700 text-sm">
               Redirecting to your dashboard to submit your decklist...
@@ -264,20 +265,20 @@
                   </label>
                   <input
                     id="playerId"
-                    v-model="form.playerId"
+                    v-model="form.tickets[0].playerId"
                     type="text"
                     required
                     :disabled="submitting"
                     class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     :class="
-                      form.playerId
+                      form.tickets[0].playerId
                         ? 'border-green-300 bg-green-50'
                         : 'border-gray-300'
                     "
                     placeholder="Your player ID"
                   />
                   <p
-                    v-if="form.playerId"
+                    v-if="form.tickets[0].playerId"
                     class="mt-1.5 text-xs text-green-600 font-medium"
                   >
                     ✓ Auto-filled from your profile
@@ -293,20 +294,20 @@
                   </label>
                   <input
                     id="name"
-                    v-model="form.name"
+                    v-model="form.tickets[0].name"
                     type="text"
                     required
                     :disabled="submitting"
                     class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     :class="
-                      form.name
+                      form.tickets[0].name
                         ? 'border-green-300 bg-green-50'
                         : 'border-gray-300'
                     "
                     placeholder="Your full name"
                   />
                   <p
-                    v-if="form.name"
+                    v-if="form.tickets[0].name"
                     class="mt-1.5 text-xs text-green-600 font-medium"
                   >
                     ✓ Auto-filled from your profile
@@ -322,20 +323,20 @@
                   </label>
                   <input
                     id="email"
-                    v-model="form.email"
+                    v-model="form.bookerEmail"
                     type="email"
                     required
                     :disabled="submitting"
                     class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     :class="
-                      form.email
+                      form.bookerEmail
                         ? 'border-green-300 bg-green-50'
                         : 'border-gray-300'
                     "
                     placeholder="your@email.com"
                   />
                   <p
-                    v-if="form.email"
+                    v-if="form.bookerEmail"
                     class="mt-1.5 text-xs text-green-600 font-medium"
                   >
                     ✓ Auto-filled from your account
@@ -372,7 +373,7 @@
                   <label class="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
-                      v-model="form.isAnonymous"
+                      v-model="form.tickets[0].isAnonymous"
                       :disabled="submitting"
                       class="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                     />
@@ -460,10 +461,15 @@ interface CustomEvent {
 }
 
 interface RegistrationForm {
-  playerId: string;
-  name: string;
-  email: string;
-  isAnonymous: boolean;
+  bookerPlayerId: string;
+  bookerName: string;
+  bookerEmail: string;
+  tickets: Array<{
+    name: string;
+    playerId?: string;
+    isAnonymous: boolean;
+  }>;
+  allAnonymous: boolean;
 }
 
 const route = useRoute();
@@ -479,10 +485,17 @@ const registrationSuccess = ref<boolean>(false);
 const formError = ref<string>("");
 
 const form = reactive<RegistrationForm>({
-  playerId: "",
-  name: "",
-  email: "",
-  isAnonymous: false,
+  bookerPlayerId: "",
+  bookerName: "",
+  bookerEmail: "",
+  tickets: [
+    {
+      name: "",
+      playerId: "",
+      isAnonymous: false,
+    },
+  ],
+  allAnonymous: false,
 });
 
 // Supabase user data
@@ -503,7 +516,10 @@ const eventPassed = computed(() => {
 });
 
 const hasPrefilledData = computed(() => {
-  return !userLoading.value && (form.playerId || form.name || form.email);
+  return (
+    !userLoading.value &&
+    (form.bookerPlayerId || form.bookerName || form.bookerEmail)
+  );
 });
 
 // Methods
@@ -533,13 +549,15 @@ const loadUserData = async (): Promise<void> => {
 
         if (playerResponse) {
           if (playerResponse.playerId) {
-            form.playerId = playerResponse.playerId;
+            form.bookerPlayerId = playerResponse.playerId;
+            form.tickets[0].playerId = playerResponse.playerId;
           }
           if (playerResponse.name) {
-            form.name = playerResponse.name;
+            form.bookerName = playerResponse.name;
+            form.tickets[0].name = playerResponse.name;
           }
           if (playerResponse.email) {
-            form.email = playerResponse.email;
+            form.bookerEmail = playerResponse.email;
           }
         }
       } catch (playerErr) {
@@ -547,17 +565,19 @@ const loadUserData = async (): Promise<void> => {
         // Fallback to user metadata if player profile doesn't exist
         if (user.user_metadata) {
           if (user.user_metadata.playerId) {
-            form.playerId = user.user_metadata.playerId;
+            form.bookerPlayerId = user.user_metadata.playerId;
+            form.tickets[0].playerId = user.user_metadata.playerId;
           }
           if (user.user_metadata.name) {
-            form.name = user.user_metadata.name;
+            form.bookerName = user.user_metadata.name;
+            form.tickets[0].name = user.user_metadata.name;
           }
         }
       }
 
       // Always use auth email as fallback
-      if (!form.email && user.email) {
-        form.email = user.email;
+      if (!form.bookerEmail && user.email) {
+        form.bookerEmail = user.email;
       }
     } else {
       console.log("No user session found");

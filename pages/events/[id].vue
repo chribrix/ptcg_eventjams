@@ -27,10 +27,14 @@
           class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
         >
           <div
-            class="px-6 py-8 bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+            class="px-4 sm:px-6 py-6 sm:py-8 bg-gradient-to-r from-blue-600 to-blue-700 text-white"
           >
-            <h1 class="text-3xl font-bold mb-2">{{ event.name }}</h1>
-            <div class="flex flex-wrap gap-4 text-blue-100">
+            <h1 class="text-2xl sm:text-3xl font-bold mb-2 break-words">
+              {{ event.name }}
+            </h1>
+            <div
+              class="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 text-blue-100"
+            >
               <div class="flex items-center gap-2">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path
@@ -63,23 +67,27 @@
           </div>
 
           <!-- Event Info -->
-          <div class="px-6 py-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="px-4 sm:px-6 py-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div
                 v-if="event.participationFee"
-                class="flex items-center gap-2 text-gray-700"
+                class="flex items-center gap-2 text-gray-700 text-sm sm:text-base"
               >
                 <span class="font-medium">Entry Fee:</span>
                 <span>{{ event.participationFee }}</span>
               </div>
               <div
                 v-if="event.registrationDeadline"
-                class="flex items-center gap-2 text-gray-700"
+                class="flex items-center gap-2 text-gray-700 text-sm sm:text-base"
               >
                 <span class="font-medium">Registration Deadline:</span>
-                <span>{{ formatEventDate(event.registrationDeadline) }}</span>
+                <span class="break-words">{{
+                  formatEventDate(event.registrationDeadline)
+                }}</span>
               </div>
-              <div class="flex items-center gap-2 text-gray-700">
+              <div
+                class="flex items-center gap-2 text-gray-700 text-sm sm:text-base"
+              >
                 <span class="font-medium">Decklist Required:</span>
                 <span
                   :class="
@@ -89,7 +97,9 @@
                   {{ event.requiresDecklist ? "Yes" : "No" }}
                 </span>
               </div>
-              <div class="flex items-center gap-2 text-gray-700">
+              <div
+                class="flex items-center gap-2 text-gray-700 text-sm sm:text-base"
+              >
                 <span class="font-medium">Status:</span>
                 <span :class="getStatusColor(event.status)">
                   {{ event.status }}
@@ -101,8 +111,12 @@
               v-if="event.description"
               class="mt-4 pt-4 border-t border-gray-200"
             >
-              <h3 class="font-medium text-gray-900 mb-2">Description</h3>
-              <p class="text-gray-700 whitespace-pre-wrap">
+              <h3 class="font-medium text-gray-900 mb-2 text-sm sm:text-base">
+                Description
+              </h3>
+              <p
+                class="text-gray-700 whitespace-pre-wrap text-sm sm:text-base break-words"
+              >
                 {{ event.description }}
               </p>
             </div>
@@ -110,9 +124,13 @@
         </div>
 
         <!-- Registration Section -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div
+          class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6"
+        >
           <div v-if="user" class="space-y-4">
-            <h2 class="text-xl font-semibold text-gray-900">Registration</h2>
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900">
+              Registration
+            </h2>
 
             <!-- User Registration Status -->
             <div v-if="userRegistration" class="space-y-4">
@@ -200,10 +218,10 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex gap-3 mt-4">
+                <div class="flex flex-col sm:flex-row gap-3 mt-4">
                   <NuxtLink
-                    to="/dashboard"
-                    class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center font-medium"
+                    :to="`/booking/${userRegistration.id}`"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center font-medium text-sm sm:text-base"
                   >
                     {{
                       event.requiresDecklist &&
@@ -213,13 +231,6 @@
                         : "Edit Registration"
                     }}
                   </NuxtLink>
-                  <button
-                    @click="openCancelModal"
-                    :disabled="isCancelling"
-                    class="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Cancel Registration
-                  </button>
                 </div>
               </div>
             </div>
@@ -263,70 +274,6 @@
         />
       </div>
     </div>
-
-    <!-- Cancel Confirmation Modal -->
-    <div
-      v-if="showCancelModal"
-      class="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
-      @click="closeCancelModal"
-    >
-      <div
-        class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden"
-        @click.stop
-      >
-        <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
-          <h3 class="text-xl font-semibold text-red-900">
-            Cancel Registration?
-          </h3>
-        </div>
-        <div class="px-6 py-4">
-          <p class="text-gray-700 mb-4">
-            Are you sure you want to cancel your registration for this event?
-          </p>
-          <p class="text-sm text-gray-600">
-            This action cannot be undone. You will need to register again if you
-            change your mind.
-          </p>
-        </div>
-        <div class="px-6 py-4 bg-gray-50 flex gap-3 justify-end">
-          <button
-            @click="closeCancelModal"
-            :disabled="isCancelling"
-            class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
-          >
-            Keep Registration
-          </button>
-          <button
-            @click="cancelRegistration"
-            :disabled="isCancelling"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
-          >
-            <span
-              v-if="isCancelling"
-              class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-            ></span>
-            {{ isCancelling ? "Cancelling..." : "Yes, Cancel Registration" }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Success Message -->
-    <div
-      v-if="cancelSuccess"
-      class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in"
-    >
-      <div class="flex items-center gap-2">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fill-rule="evenodd"
-            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-        <span>Registration cancelled successfully</span>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -365,9 +312,6 @@ const registrationCount = ref(0);
 const userRegistration = ref<UserRegistration | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
-const isCancelling = ref(false);
-const showCancelModal = ref(false);
-const cancelSuccess = ref(false);
 
 function formatEventDate(dateString: string): string {
   const date = new Date(dateString);

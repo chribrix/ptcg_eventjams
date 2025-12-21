@@ -42,6 +42,13 @@ export default defineEventHandler(async (event) => {
             email: true,
           },
         },
+        tickets: {
+          select: {
+            id: true,
+            participantName: true,
+            status: true,
+          },
+        },
         customEvent: {
           select: {
             id: true,
@@ -69,10 +76,15 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (registration.status === "cancelled") {
+    // Check if all tickets are already cancelled
+    const activeTickets = registration.tickets.filter(
+      (t) => t.status !== "cancelled"
+    );
+
+    if (activeTickets.length === 0) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Registration already cancelled",
+        statusMessage: "All tickets already cancelled",
       });
     }
 
@@ -108,17 +120,16 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const updatedRegistration = await prisma.eventRegistration.update({
+    // Cancel all active tickets for this registration
+    await prisma.registrationTicket.updateMany({
       where: {
-        id: registrationId,
+        registrationId: registrationId,
+        status: {
+          not: "cancelled",
+        },
       },
       data: {
         status: "cancelled",
-        notes: registration.notes
-          ? `${
-              registration.notes
-            }\n\nCancelled by player on ${new Date().toISOString()}`
-          : `Cancelled by player on ${new Date().toISOString()}`,
       },
     });
 
@@ -126,13 +137,14 @@ export default defineEventHandler(async (event) => {
       success: true,
       message: "Registration cancelled successfully",
       registration: {
-        id: updatedRegistration.id,
+        id: registration.id,
         eventName:
           registration.customEvent?.name ||
           registration.externalEvent?.eventName ||
           "Unknown Event",
         eventDate: eventData.eventDate,
         cancelledAt: new Date().toISOString(),
+        cancelledTickets: activeTickets.length,
       },
     };
   } catch (error: unknown) {

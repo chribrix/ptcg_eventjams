@@ -411,6 +411,9 @@ const { t } = useI18n();
         <slot />
       </div>
     </main>
+
+    <!-- Dev Login Component (only shows in development) -->
+    <DevLogin />
   </div>
 </template>
 

@@ -175,60 +175,55 @@ model Participants {
 }
 
 model CustomEvent {
-  id                   String                   @id @default(cuid())
+  id                   String              @id @default(cuid())
   name                 String
   venue                String
-  maxParticipants      Int                      @map("max_participants")
-  participationFee     Decimal?                 @map("participation_fee") @db.Decimal(10, 2)
+  maxParticipants      Int                 @map("max_participants")
+  participationFee     Decimal?            @map("participation_fee") @db.Decimal(10, 2)
   description          String?
-  eventDate            DateTime                 @map("event_date")
-  registrationDeadline DateTime?                @map("registration_deadline")
-  status               String                   @default("upcoming") // upcoming, ongoing, completed, cancelled
-  eventType            String                   @default("custom") @map("event_type") // cup, challenge, local, custom
-  requiresDecklist     Boolean                  @default(false) @map("requires_decklist")
-  createdBy            String                   @map("created_by")
-  createdAt            DateTime                 @default(now()) @map("created_at")
-  updatedAt            DateTime                 @updatedAt @map("updated_at")
-  creator              AdminUser                @relation(fields: [createdBy], references: [id])
+  eventDate            DateTime            @map("event_date")
+  registrationDeadline DateTime?           @map("registration_deadline")
+  status               String              @default("upcoming") // upcoming, ongoing, completed, cancelled
+  eventType            String              @default("custom") @map("event_type") // cup, challenge, local, custom
+  requiresDecklist     Boolean             @default(false) @map("requires_decklist")
+  createdBy            String              @map("created_by")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  creator              AdminUser           @relation(fields: [createdBy], references: [id])
   registrations        EventRegistration[]
-  customParticipants   CustomEventParticipant[]
 
   @@map("custom_events")
   @@schema("public")
 }
 
 model Player {
-  id                      String                   @id @default(cuid())
-  playerId                String                   @unique @map("player_id") // External player ID provided by player
-  name                    String
-  birthDate               DateTime                 @map("birth_date")
-  email                   String?
-  phone                   String?
-  emergencyContact        String?                  @map("emergency_contact")
-  emergencyPhone          String?                  @map("emergency_phone")
-  createdAt               DateTime                 @default(now()) @map("created_at")
-  updatedAt               DateTime                 @updatedAt @map("updated_at")
-  registrations           EventRegistration[]
-  customEventParticipants CustomEventParticipant[]
+  id               String              @id @default(cuid())
+  playerId         String              @unique @map("player_id") // External player ID provided by player
+  name             String
+  birthDate        DateTime            @map("birth_date")
+  email            String?
+  phone            String?
+  emergencyContact String?             @map("emergency_contact")
+  emergencyPhone   String?             @map("emergency_phone")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  registrations    EventRegistration[]
 
   @@map("players")
   @@schema("public")
 }
 
 model EventRegistration {
-  id                     String                 @id @default(cuid())
-  customEventId          String?                @map("custom_event_id")
-  externalEventId        String?                @map("external_event_id") // For external events with local registration
-  playerId               String                 @map("player_id")
-  registeredAt           DateTime               @default(now()) @map("registered_at")
-  status                 String                 @default("registered") // registered, attended, no-show, cancelled
-  notes                  String?
-  decklist               String? // Player's decklist for this event
-  bringingDecklistOnsite Boolean?               @default(false) @map("bringing_decklist_onsite") // Whether player will bring physical decklist
-  isAnonymous            Boolean                @default(false) @map("is_anonymous") // Whether the participant wants to remain anonymous to other participants
-  customEvent            CustomEvent?           @relation(fields: [customEventId], references: [id], onDelete: Cascade)
-  externalEvent          ExternalEventOverride? @relation(fields: [externalEventId], references: [id], onDelete: Cascade)
-  player                 Player                 @relation(fields: [playerId], references: [id])
+  id              String                 @id @default(cuid())
+  customEventId   String?                @map("custom_event_id")
+  externalEventId String?                @map("external_event_id") // For external events with local registration
+  playerId        String                 @map("player_id") // The user who made the booking
+  registeredAt    DateTime               @default(now()) @map("registered_at")
+  notes           String?
+  customEvent     CustomEvent?           @relation(fields: [customEventId], references: [id], onDelete: Cascade)
+  externalEvent   ExternalEventOverride? @relation(fields: [externalEventId], references: [id], onDelete: Cascade)
+  player          Player                 @relation(fields: [playerId], references: [id])
+  tickets         RegistrationTicket[] // One registration can have multiple tickets
 
   @@unique([customEventId, playerId])
   @@unique([externalEventId, playerId])
@@ -236,18 +231,22 @@ model EventRegistration {
   @@schema("public")
 }
 
-model CustomEventParticipant {
-  id            String      @id @default(cuid())
-  customEventId String      @map("custom_event_id")
-  playerId      String      @map("player_id")
-  placement     Int? // Final tournament placement
-  points        Int? // Tournament points earned
-  createdAt     DateTime    @default(now()) @map("created_at")
-  customEvent   CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
-  player        Player      @relation(fields: [playerId], references: [id])
+model RegistrationTicket {
+  id                     String            @id @default(cuid())
+  registrationId         String            @map("registration_id")
+  participantName        String            @map("participant_name") // Name of this specific participant
+  participantPlayerId    String?           @map("participant_player_id") // Optional player ID for this participant
+  status                 String            @default("registered") // registered, attended, no-show, cancelled
+  isAnonymous            Boolean           @default(false) @map("is_anonymous") // Whether this participant wants to remain anonymous
+  decklist               String? // This participant's decklist
+  bringingDecklistOnsite Boolean?          @default(false) @map("bringing_decklist_onsite")
+  placement              Int? // Final tournament placement
+  points                 Int? // Tournament points earned
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
+  registration           EventRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
 
-  @@unique([customEventId, playerId])
-  @@map("custom_event_participants")
+  @@map("registration_tickets")
   @@schema("public")
 }
 

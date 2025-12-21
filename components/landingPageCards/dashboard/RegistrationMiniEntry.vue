@@ -116,18 +116,16 @@
           !registration.bringingDecklistOnsite
         "
         to="/dashboard"
-        class="group flex items-center px-4 py-2 bg-amber-50 text-amber-700 text-sm font-semibold rounded-lg hover:bg-amber-100 transition-all duration-200 border border-amber-300 hover:border-amber-400 shadow-sm hover:shadow-md"
+        class="group flex-1 flex items-center justify-center px-4 py-2 bg-amber-50 text-amber-700 text-sm font-semibold rounded-lg hover:bg-amber-100 transition-all duration-200 border border-amber-300 hover:border-amber-400 shadow-sm hover:shadow-md"
       >
-        <DocumentTextIcon class="w-4 h-4 mr-2" />
         Submit Decklist
       </NuxtLink>
 
       <!-- Event Details Button -->
       <NuxtLink
         :to="`/events/${registration.customEvent.id}`"
-        class="group flex items-center px-3 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition-all duration-200 border border-blue-200 hover:border-blue-300"
+        class="group flex-1 flex items-center justify-center px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition-all duration-200 border border-blue-200 hover:border-blue-300"
       >
-        <InformationCircleIcon class="w-4 h-4 mr-2" />
         View Event
       </NuxtLink>
 
@@ -135,26 +133,19 @@
       <NuxtLink
         v-if="registration.status === 'cancelled'"
         :to="`/events/${registration.customEvent.id}`"
-        class="group flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-all duration-200 border border-emerald-200 hover:border-emerald-300"
+        class="group flex-1 flex items-center justify-center px-4 py-2 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-all duration-200 border border-emerald-200 hover:border-emerald-300"
       >
-        <ArrowPathIcon class="w-4 h-4 mr-2" />
         Re-register
       </NuxtLink>
 
-      <!-- Cancel Registration Button -->
-      <button
+      <!-- Edit Booking Button -->
+      <NuxtLink
         v-else-if="canCancelRegistration(registration)"
-        @click="$emit('cancel', registration)"
-        :disabled="cancelling === registration.id"
-        class="group flex items-center px-4 py-2 bg-red-50 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 border border-red-200 hover:border-red-300"
+        :to="`/booking/${registration.id}`"
+        class="group flex-1 flex items-center justify-center px-4 py-2 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-all duration-200 border border-emerald-200 hover:border-emerald-300"
       >
-        <XMarkIcon v-if="cancelling !== registration.id" class="w-4 h-4 mr-2" />
-        <div
-          v-else
-          class="w-4 h-4 mr-2 border-2 border-red-600 border-t-transparent rounded-full animate-spin"
-        ></div>
-        {{ cancelling === registration.id ? "Cancelling..." : "Cancel" }}
-      </button>
+        Edit Booking
+      </NuxtLink>
 
       <!-- Cancellation Message -->
       <div

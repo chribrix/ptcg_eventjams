@@ -1,11 +1,18 @@
 import { z } from "zod";
 import prisma from "~/lib/prisma";
 
-const registrationSchema = z.object({
-  playerId: z.string().min(1, "Player ID is required").max(50),
-  name: z.string().min(1, "Full name is required").max(100),
-  email: z.string().email("Valid email is required").max(100),
+const ticketSchema = z.object({
+  name: z.string().min(1, "Participant name is required").max(100),
+  playerId: z.string().optional(),
   isAnonymous: z.boolean().optional().default(false),
+});
+
+const registrationSchema = z.object({
+  bookerPlayerId: z.string().min(1, "Your Player ID is required").max(50),
+  bookerName: z.string().min(1, "Your name is required").max(100),
+  bookerEmail: z.string().email("Valid email is required").max(100),
+  tickets: z.array(ticketSchema).min(1, "At least one participant required"),
+  allAnonymous: z.boolean().optional().default(false), // Apply to all tickets
 });
 
 export default defineEventHandler(async (event) => {
@@ -42,7 +49,8 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const { playerId, name, email, isAnonymous } = validationResult.data;
+    const { bookerPlayerId, bookerName, bookerEmail, tickets, allAnonymous } =
+      validationResult.data;
 
     // Check if this is a custom event or an external event override
     let customEvent = await prisma.customEvent.findUnique({
@@ -97,128 +105,83 @@ export default defineEventHandler(async (event) => {
 
     // Note: Decklist validation is now handled on the dashboard after registration
 
-    // Check current registration count (excluding cancelled registrations)
-    const currentRegistrations = await prisma.eventRegistration.count({
-      where: isExternalEvent
-        ? {
-            externalEventId: eventId,
-            status: {
-              not: "cancelled",
-            },
-          }
-        : {
-            customEventId: eventId,
-            status: {
-              not: "cancelled",
-            },
-          },
+    // Check current ticket count (excluding cancelled tickets)
+    const currentTickets = await prisma.registrationTicket.count({
+      where: {
+        registration: isExternalEvent
+          ? { externalEventId: eventId }
+          : { customEventId: eventId },
+        status: {
+          not: "cancelled",
+        },
+      },
     });
 
-    if (maxParticipants && currentRegistrations >= maxParticipants) {
+    // Check if adding these tickets would exceed capacity
+    const requestedTickets = tickets.length;
+    if (
+      maxParticipants &&
+      currentTickets + requestedTickets > maxParticipants
+    ) {
+      const availableSpots = maxParticipants - currentTickets;
       throw createError({
         statusCode: 400,
-        statusMessage: "Event is full",
-        data: { message: "This event has reached maximum capacity" },
+        statusMessage: "Not enough spots available",
+        data: {
+          message: `Only ${availableSpots} spot(s) remaining. You requested ${requestedTickets} ticket(s).`,
+        },
       });
     }
 
-    // Find player by playerId first, then by email
-    let player = await prisma.player.findUnique({
-      where: { playerId: playerId },
+    // Find or create the booker (person making the registration)
+    let booker = await prisma.player.findUnique({
+      where: { playerId: bookerPlayerId },
     });
 
-    if (!player) {
+    if (!booker) {
       // Try to find by email as backup
-      player = await prisma.player.findFirst({
-        where: { email: email.toLowerCase() },
+      booker = await prisma.player.findFirst({
+        where: { email: bookerEmail.toLowerCase() },
       });
     }
 
-    if (!player) {
-      // Create new player with provided playerId and name
-      player = await prisma.player.create({
+    if (!booker) {
+      // Create new player for the booker
+      booker = await prisma.player.create({
         data: {
-          playerId: playerId,
-          name: name,
+          playerId: bookerPlayerId,
+          name: bookerName,
           birthDate: new Date("2000-01-01"), // Temporary birthdate
-          email: email.toLowerCase(),
+          email: bookerEmail.toLowerCase(),
         },
       });
     } else {
-      // Update player info if provided
-      player = await prisma.player.update({
-        where: { id: player.id },
+      // Update booker info
+      booker = await prisma.player.update({
+        where: { id: booker.id },
         data: {
-          name: name,
-          email: email.toLowerCase(),
+          name: bookerName,
+          email: bookerEmail.toLowerCase(),
         },
       });
     }
 
-    // Check if a player with this playerId is already registered for this event
-    const existingPlayerRegistration = await prisma.eventRegistration.findFirst(
-      {
-        where: isExternalEvent
-          ? {
-              externalEventId: eventId,
-              status: {
-                not: "cancelled",
-              },
-              player: {
-                playerId: playerId,
-              },
-            }
-          : {
-              customEventId: eventId,
-              status: {
-                not: "cancelled",
-              },
-              player: {
-                playerId: playerId,
-              },
-            },
-        include: {
-          player: {
-            select: {
-              playerId: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-      }
-    );
-
-    if (existingPlayerRegistration) {
-      // Check if it's the same person (same email) trying to re-register
-      if (
-        existingPlayerRegistration.player.email?.toLowerCase() ===
-        email.toLowerCase()
-      ) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: "Already registered",
-          data: { message: "You are already registered for this event" },
-        });
-      } else {
-        // Different person trying to use the same playerId
-        throw createError({
-          statusCode: 400,
-          statusMessage: "Player ID already taken",
-          data: {
-            message: `Player ID "${playerId}" is already registered for this event by another participant. Please use a different Player ID.`,
-          },
-        });
-      }
-    }
-
-    // Check if player is already registered for this event (excluding cancelled registrations)
+    // Check if booker already has a registration for this event
     const existingRegistration = isExternalEvent
       ? await prisma.eventRegistration.findUnique({
           where: {
             externalEventId_playerId: {
               externalEventId: eventId,
-              playerId: player.id,
+              playerId: booker.id,
+            },
+          },
+          include: {
+            tickets: {
+              where: {
+                status: {
+                  not: "cancelled",
+                },
+              },
             },
           },
         })
@@ -226,70 +189,72 @@ export default defineEventHandler(async (event) => {
           where: {
             customEventId_playerId: {
               customEventId: eventId,
-              playerId: player.id,
+              playerId: booker.id,
+            },
+          },
+          include: {
+            tickets: {
+              where: {
+                status: {
+                  not: "cancelled",
+                },
+              },
             },
           },
         });
 
-    if (existingRegistration && existingRegistration.status !== "cancelled") {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "Already registered",
-        data: { message: "You are already registered for this event" },
-      });
-    }
-
-    // Create or update event registration
-    // Set status based on whether event requires decklist
+    let registration;
     const initialStatus = requiresDecklist ? "reserved" : "registered";
 
-    let registration;
-
-    if (existingRegistration && existingRegistration.status === "cancelled") {
-      // Update the cancelled registration
-      registration = await prisma.eventRegistration.update({
-        where: { id: existingRegistration.id },
-        data: {
-          status: initialStatus,
-          registeredAt: new Date(), // Update registration timestamp
-          decklist: null, // Reset decklist
-          bringingDecklistOnsite: false, // Reset onsite option
-          notes: null, // Clear any notes
-          isAnonymous: isAnonymous || false, // Set anonymous preference
-        },
-      });
+    if (existingRegistration) {
+      // Booker already has a registration - add new tickets to it
+      registration = existingRegistration;
     } else {
       // Create new registration
       registration = await prisma.eventRegistration.create({
         data: isExternalEvent
           ? {
               externalEventId: eventId,
-              playerId: player.id,
-              status: initialStatus,
-              decklist: null,
-              bringingDecklistOnsite: false,
-              isAnonymous: isAnonymous || false,
+              playerId: booker.id,
             }
           : {
               customEventId: eventId,
-              playerId: player.id,
-              status: initialStatus,
-              decklist: null,
-              bringingDecklistOnsite: false,
-              isAnonymous: isAnonymous || false,
+              playerId: booker.id,
             },
       });
     }
+
+    // Create tickets for all participants
+    const createdTickets = await Promise.all(
+      tickets.map((ticket) =>
+        prisma.registrationTicket.create({
+          data: {
+            registrationId: registration.id,
+            participantName: ticket.name,
+            participantPlayerId: ticket.playerId || null,
+            status: initialStatus,
+            isAnonymous: allAnonymous || ticket.isAnonymous || false,
+            bringingDecklistOnsite: false,
+          },
+        })
+      )
+    );
 
     return {
       success: true,
       message: "Registration successful",
       registration: {
         id: registration.id,
-        playerName: name,
-        playerId: playerId,
-        email: email.toLowerCase(),
+        bookerName: bookerName,
+        bookerPlayerId: bookerPlayerId,
+        bookerEmail: bookerEmail.toLowerCase(),
         eventName: eventName,
+        ticketCount: createdTickets.length,
+        tickets: createdTickets.map((t) => ({
+          id: t.id,
+          participantName: t.participantName,
+          status: t.status,
+        })),
       },
     };
   } catch (error: unknown) {
