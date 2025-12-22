@@ -230,39 +230,6 @@
         <!-- Getting Started Card (for non-logged users) -->
         <GetStartedCard v-else />
       </div>
-
-      <!-- Mobile View for non-logged users - Single Calendar Card -->
-      <div v-if="!userName" class="lg:hidden px-2 py-2">
-        <div
-          class="bg-white rounded-3xl shadow-2xl border-2 border-blue-100 overflow-hidden h-[750px] flex flex-col w-full"
-        >
-          <!-- Simple Header for non-logged users -->
-          <div class="flex-shrink-0 p-2">
-            <div
-              class="bg-gradient-to-r from-blue-600 to-purple-700 text-white px-5 py-4 rounded-2xl"
-            >
-              <div class="flex items-center gap-3">
-                <CalendarDaysIcon class="w-6 h-6 flex-shrink-0" />
-                <div class="text-left flex-1">
-                  <div class="text-base font-bold leading-tight">
-                    Event Calendar
-                  </div>
-                  <div class="text-xs text-blue-100 leading-tight mt-0.5">
-                    Discover tournaments
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Content -->
-          <div class="p-5 flex-1 overflow-hidden flex flex-col">
-            <div class="h-full">
-              <EventCalendarCard />
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>

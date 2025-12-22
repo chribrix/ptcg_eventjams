@@ -13,6 +13,7 @@ import {
   CalendarIcon,
   PlusCircleIcon,
   UsersIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/vue/24/outline";
 
 const supabase = useSupabaseClient();
@@ -126,17 +127,26 @@ const handleMobileLogout = async () => {
 onMounted(async () => {
   // Ensure session is valid on mount and cleanup if expired
   if (authUser.value) {
-    const validUser = await ensureValidSession();
-    // If session validation failed (expired/invalid), clean up
-    if (!validUser && authUser.value) {
-      console.log("Detected expired session on mount, cleaning up...");
-      // Clear everything to prevent in-between state
+    try {
+      const validUser = await ensureValidSession();
+      // If session validation failed (expired/invalid), clean up
+      if (!validUser && authUser.value) {
+        console.log("Detected expired session on mount, cleaning up...");
+        // Force sign out and reload
+        if (process.client) {
+          await supabase.auth.signOut();
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.reload();
+        }
+      }
+    } catch (sessionError) {
+      console.error("Session check on mount failed:", sessionError);
+      // Clean up on error
       if (process.client) {
+        await supabase.auth.signOut();
         localStorage.clear();
         sessionStorage.clear();
-        // Force sign out to clean server state
-        await supabase.auth.signOut();
-        // Reload to ensure clean state
         window.location.reload();
       }
     }
@@ -163,6 +173,9 @@ const { t } = useI18n();
   >
     <!-- Impersonation Banner -->
     <ImpersonationBanner />
+
+    <!-- Toast Container -->
+    <ToastContainer />
 
     <header class="bg-white shadow-lg border-b border-gray-200">
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -288,6 +301,14 @@ const { t } = useI18n();
                       <span>{{ t("nav.eventHistory") }}</span>
                     </NuxtLink>
                     <NuxtLink
+                      to="/admin/logs"
+                      class="admin-link"
+                      @click="hideAdminDropdown"
+                    >
+                      <ExclamationTriangleIcon class="w-4 h-4" />
+                      <span>Error Logs</span>
+                    </NuxtLink>
+                    <NuxtLink
                       to="/importer"
                       class="admin-link"
                       @click="hideAdminDropdown"
@@ -385,6 +406,15 @@ const { t } = useI18n();
               >
                 <UsersIcon class="w-4 h-4" />
                 <span>{{ t("nav.managePlayers") }}</span>
+              </NuxtLink>
+
+              <NuxtLink
+                to="/admin/logs"
+                @click="mobileMenuOpen = false"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                <ExclamationTriangleIcon class="w-4 h-4" />
+                <span>Error Logs</span>
               </NuxtLink>
 
               <NuxtLink

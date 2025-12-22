@@ -1,39 +1,9 @@
 [
   {
-    "id": "3b9af1df-b3da-4b38-a75e-6a4d0daf6b43",
-    "title": "Pokemon Challenge FUNtainment 20.12.25",
-    "name": "Pokemon Challenge FUNtainment 20.12.25",
-    "dateTime": "2025-12-20",
-    "time": "11:00",
-    "type": "League Challenge",
-    "venue": "FUNTAINMENT GMBH",
-    "location": "Munich",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-001936/",
-    "cost": "10€",
-    "streetAddress": "12A LANDWEHRSTRASSE MATHILDENSTR. 4, MÜNCHEN, BY 80336, DE",
-    "icon": "chall"
-  },
-  {
-    "id": "ae28f0e5-970c-418c-8ac4-b8a34a4b8756",
-    "title": "Liga Challenge Dezember",
-    "name": "Liga Challenge Dezember",
-    "dateTime": "2025-12-20",
-    "time": "12:00",
-    "type": "League Challenge",
-    "venue": "SPIELEWELT AMBERG",
-    "location": "Amberg",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-001960/",
-    "cost": "10€",
-    "streetAddress": "6 SALZGASSE, AM, BY 92224, DE",
-    "icon": "chall"
-  },
-  {
     "id": "e7790e23-3351-40bc-9636-7af6443230f0",
     "title": "Goblins and Gnomes League Cup",
     "name": "Goblins and Gnomes League Cup",
-    "dateTime": "2025-12-20",
+    "dateTime": "2025-12-27",
     "time": "12:00",
     "type": "League Cup",
     "venue": "GOBLINS AND GNOMES GAMING",
@@ -42,51 +12,6 @@
     "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-000166/",
     "cost": "15 Euro",
     "streetAddress": "24 WÜRZBURGER LANDSTRASSE, AN, BY 91522, DE",
-    "icon": "cup"
-  },
-  {
-    "id": "2955410e-81f7-4618-89a3-d6468f35a24b",
-    "title": "LA-Games Challenge 12/25",
-    "name": "LA-Games Challenge 12/25",
-    "dateTime": "2025-12-20",
-    "time": "14:30",
-    "type": "League Challenge",
-    "venue": "CINEPLEX VILSBIBURG",
-    "location": "Munchsdorf",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-000937/",
-    "cost": "15€",
-    "streetAddress": "8 FRAUNHOFERSTRASSE, VILSBIBURG, BY 84137, DE",
-    "icon": "chall"
-  },
-  {
-    "id": "008e2f10-2dce-42b0-91d8-c20d789a61c3",
-    "title": "1A Crazy Locals",
-    "name": "1A Crazy Locals",
-    "dateTime": "2025-12-20",
-    "time": "18:30",
-    "type": "League Challenge",
-    "venue": "1A PKM LOCALS",
-    "location": "Augsburg",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-003410/",
-    "cost": "5€",
-    "streetAddress": "JAKOBERSTRASSE 29, 86152 AUGSBURG, GERMANY",
-    "icon": "chall"
-  },
-  {
-    "id": "3500f6d6-bdac-461f-9917-07fa468fe5ab",
-    "title": "Dragonlord Games Würzburg - Pokemon Ligachallenge - Q4 Cup",
-    "name": "Dragonlord Games Würzburg - Pokemon Ligachallenge - Q4 Cup",
-    "dateTime": "2025-12-21",
-    "time": "10:00",
-    "type": "League Cup",
-    "venue": "DRAGONLORD GAMES WÜRZBURG",
-    "location": "Wurzburg",
-    "country": "DE",
-    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/25-12-001600/",
-    "cost": "10 €",
-    "streetAddress": "WENZELSTRASSE 18, 97084 WÜRZBURG, GERMANY",
     "icon": "cup"
   },
   {
@@ -117,6 +42,21 @@
     "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/26-01-001152/",
     "cost": "",
     "streetAddress": "9 KIRCHENSTRASSE, TÜRKHEIM, BY 86842, DE",
+    "icon": "chall"
+  },
+  {
+    "id": "5cb62af1-bccb-4ebf-bd8c-09812cedb806",
+    "title": "Januar Challenge",
+    "name": "Januar Challenge",
+    "dateTime": "2026-01-10",
+    "time": "13:00",
+    "type": "League Challenge",
+    "venue": "GAMES-CAFÉ",
+    "location": "Luhe am Forst",
+    "country": "DE",
+    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/26-01-002355/",
+    "cost": "3€",
+    "streetAddress": "9 LEUCHTENBERGER STR., LUHE-WILDENAU, BY 92706, DE",
     "icon": "chall"
   },
   {
@@ -225,6 +165,21 @@
     "icon": "chall"
   },
   {
+    "id": "3848813c-8b4f-49e8-a4e2-017c22239cfc",
+    "title": "Februar Challenge",
+    "name": "Februar Challenge",
+    "dateTime": "2026-02-07",
+    "time": "13:00",
+    "type": "League Challenge",
+    "venue": "GAMES-CAFÉ",
+    "location": "Luhe am Forst",
+    "country": "DE",
+    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/26-02-001137/",
+    "cost": "3€",
+    "streetAddress": "9 LEUCHTENBERGER STR., LUHE-WILDENAU, BY 92706, DE",
+    "icon": "chall"
+  },
+  {
     "id": "e18c8fe6-4d11-4900-93dc-eeccf029306b",
     "title": "Countdown League Challenge Februar",
     "name": "Countdown League Challenge Februar",
@@ -315,6 +270,21 @@
     "icon": "chall"
   },
   {
+    "id": "5a0db610-0a00-4880-a623-265e00af79c9",
+    "title": "Pokemon Cup Q1",
+    "name": "Pokemon Cup Q1",
+    "dateTime": "2026-03-07",
+    "time": "13:00",
+    "type": "League Cup",
+    "venue": "GAMES-CAFÉ",
+    "location": "Luhe am Forst",
+    "country": "DE",
+    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/26-03-001025/",
+    "cost": "20€",
+    "streetAddress": "9 LEUCHTENBERGER STR., LUHE-WILDENAU, BY 92706, DE",
+    "icon": "cup"
+  },
+  {
     "id": "a689dcb6-3bcf-419e-bca8-b99e08f4926e",
     "title": "Countdown League Cup Q1 2026",
     "name": "Countdown League Cup Q1 2026",
@@ -342,6 +312,21 @@
     "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/26-03-000117/",
     "cost": "10€",
     "streetAddress": "12A LANDWEHRSTRASSE MATHILDENSTR. 4, MÜNCHEN, BY 80336, DE",
+    "icon": "chall"
+  },
+  {
+    "id": "70b48f0a-1211-4010-9730-9517ef59376f",
+    "title": "Pokemon Challenge",
+    "name": "Pokemon Challenge",
+    "dateTime": "2026-03-21",
+    "time": "13:00",
+    "type": "League Challenge",
+    "venue": "GAMES-CAFÉ",
+    "location": "Luhe am Forst",
+    "country": "DE",
+    "link": "https://www.pokemon.com/us/pokemon-trainer-club/play-pokemon-tournaments/26-03-001026/",
+    "cost": "3€",
+    "streetAddress": "9 LEUCHTENBERGER STR., LUHE-WILDENAU, BY 92706, DE",
     "icon": "chall"
   }
 ]

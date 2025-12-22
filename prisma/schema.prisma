@@ -286,3 +286,25 @@ model ExternalEventOverride {
   @@map("external_event_overrides")
   @@schema("public")
 }
+
+// Error logging for session and authentication issues
+model ErrorLog {
+  id           String   @id @default(cuid())
+  userId       String?  @map("user_id") // User ID if available
+  userEmail    String?  @map("user_email") // User email if available
+  errorType    String   @map("error_type") // Type of error: session_expired, token_invalid, auth_failed, etc.
+  errorMessage String   @map("error_message") // Detailed error message
+  cookies      Json?    @db.JsonB // Cookies at time of error
+  userAgent    String?  @map("user_agent") // Browser/device info
+  ipAddress    String?  @map("ip_address") // IP address
+  url          String? // URL where error occurred
+  stackTrace   String?  @map("stack_trace") // Stack trace if available
+  metadata     Json?    @db.JsonB // Additional metadata
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([errorType])
+  @@index([createdAt])
+  @@map("error_logs")
+  @@schema("public")
+}

@@ -38,12 +38,14 @@ services:
       args:
         SUPABASE_URL: ${SUPABASE_URL}
         SUPABASE_KEY: ${SUPABASE_KEY}
+        DEPLOY_TIMESTAMP: ${DEPLOY_TIMESTAMP:-0}
     container_name: ptcg_app
     env_file:
       - .env
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       - NODE_ENV=production
+      - DEPLOY_TIMESTAMP=${DEPLOY_TIMESTAMP:-0}
     ports:
       - "8080:3000"
     depends_on:
