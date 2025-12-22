@@ -313,7 +313,7 @@ const { t } = useI18n();
                 </button>
 
                 <!-- Sign in/register for non-authenticated users -->
-                <NuxtLink v-else to="/register" class="signin-button">
+                <NuxtLink v-else to="/login" class="signin-button">
                   <UserPlusIcon class="w-4 h-4" />
                   <span>{{ t("nav.login") }}</span>
                 </NuxtLink>
@@ -417,7 +417,7 @@ const { t } = useI18n();
               <!-- Sign in/register for non-authenticated users -->
               <NuxtLink
                 v-else
-                to="/register"
+                to="/login"
                 @click="mobileMenuOpen = false"
                 class="flex items-center space-x-3 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg"
               >
