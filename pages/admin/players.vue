@@ -137,51 +137,113 @@
 
       <div v-if="loading" class="loading">Loading players...</div>
 
-      <div v-else-if="filteredPlayers.length > 0" class="admin-table-wrapper">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Player ID</th>
-              <th>Name</th>
-              <th>Birth Date</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="player in filteredPlayers" :key="player.id">
-              <td class="font-mono">{{ player.playerId }}</td>
-              <td>{{ player.name }}</td>
-              <td>{{ formatDate(player.birthDate) }}</td>
-              <td>{{ player.email || "N/A" }}</td>
-              <td>{{ player.phone || "N/A" }}</td>
-              <td>
-                <div class="action-buttons">
-                  <button
-                    @click="impersonatePlayer(player)"
-                    class="btn btn-small btn-info"
-                    title="Als dieser Spieler anmelden"
-                  >
-                    Imitieren
-                  </button>
-                  <button
-                    @click="editPlayer(player)"
-                    class="btn btn-small btn-secondary"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    @click="deletePlayer(player)"
-                    class="btn btn-small btn-danger"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-else-if="paginatedPlayers.length > 0">
+        <div class="admin-table-wrapper">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Player ID</th>
+                <th>Name</th>
+                <th>Birth Date</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="player in paginatedPlayers" :key="player.id">
+                <td class="font-mono">{{ player.playerId }}</td>
+                <td>{{ player.name }}</td>
+                <td>{{ formatDate(player.birthDate) }}</td>
+                <td>{{ player.email || "N/A" }}</td>
+                <td>
+                  <div class="action-buttons">
+                    <button
+                      @click="impersonatePlayer(player)"
+                      class="btn btn-small btn-info"
+                      title="Als dieser Spieler anmelden"
+                    >
+                      Imitieren
+                    </button>
+                    <button
+                      @click="editPlayer(player)"
+                      class="btn btn-small btn-secondary"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      @click="deletePlayer(player)"
+                      class="btn btn-small btn-danger"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination" v-if="totalPages > 1">
+          <button
+            @click="goToPage(currentPage - 1)"
+            :disabled="currentPage === 1"
+            class="pagination-btn"
+          >
+            &laquo; Previous
+          </button>
+
+          <button
+            v-if="pageNumbers[0] > 1"
+            @click="goToPage(1)"
+            class="pagination-btn"
+          >
+            1
+          </button>
+          <span v-if="pageNumbers[0] > 2" class="pagination-ellipsis">...</span>
+
+          <button
+            v-for="page in pageNumbers"
+            :key="page"
+            @click="goToPage(page)"
+            :class="['pagination-btn', { active: currentPage === page }]"
+          >
+            {{ page }}
+          </button>
+
+          <span
+            v-if="pageNumbers[pageNumbers.length - 1] < totalPages - 1"
+            class="pagination-ellipsis"
+            >...</span
+          >
+          <button
+            v-if="pageNumbers[pageNumbers.length - 1] < totalPages"
+            @click="goToPage(totalPages)"
+            class="pagination-btn"
+          >
+            {{ totalPages }}
+          </button>
+
+          <button
+            @click="goToPage(currentPage + 1)"
+            :disabled="currentPage === totalPages"
+            class="pagination-btn"
+          >
+            Next &raquo;
+          </button>
+        </div>
+
+        <!-- Results info -->
+        <div class="pagination-info">
+          Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
+          {{ Math.min(currentPage * itemsPerPage, filteredPlayers.length) }} of
+          {{ filteredPlayers.length }} player{{
+            filteredPlayers.length !== 1 ? "s" : ""
+          }}
+          <span v-if="searchTerm"
+            >(filtered from {{ players.length }} total)</span
+          >
+        </div>
       </div>
 
       <div v-else class="no-data">No players found. Add your first player!</div>
@@ -219,6 +281,8 @@ const saving = ref(false);
 const showCreateForm = ref(false);
 const editingPlayer = ref<Player | null>(null);
 const searchTerm = ref("");
+const currentPage = ref(1);
+const itemsPerPage = 10;
 
 // Form data
 const playerForm = ref({
@@ -233,6 +297,9 @@ const playerForm = ref({
 
 // Computed
 const filteredPlayers = computed(() => {
+  // Reset to first page when filter changes
+  currentPage.value = 1;
+
   if (!searchTerm.value) return players.value;
 
   const search = searchTerm.value.toLowerCase();
@@ -244,11 +311,46 @@ const filteredPlayers = computed(() => {
   );
 });
 
+const totalPages = computed(() => {
+  return Math.ceil(filteredPlayers.value.length / itemsPerPage);
+});
+
+const paginatedPlayers = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredPlayers.value.slice(start, end);
+});
+
+const pageNumbers = computed(() => {
+  const pages = [];
+  const maxVisible = 5;
+  let startPage = Math.max(1, currentPage.value - Math.floor(maxVisible / 2));
+  let endPage = Math.min(totalPages.value, startPage + maxVisible - 1);
+
+  if (endPage - startPage < maxVisible - 1) {
+    startPage = Math.max(1, endPage - maxVisible + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
+
 // Methods
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+
 const loadPlayers = async () => {
   try {
     loading.value = true;
-    const response = await $fetch<{ players: Player[] }>("/api/admin/players");
+    // Request all players by setting a high limit
+    const response = await $fetch<{ players: Player[] }>(
+      "/api/admin/players?limit=1000"
+    );
     players.value = response.players || [];
   } catch (error) {
     console.error("Error loading players:", error);
@@ -370,5 +472,54 @@ onMounted(loadPlayers);
 
 .player-form {
   padding: 1.5rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  min-width: 2.5rem;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.pagination-btn.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+  padding: 0.5rem;
+  color: #6b7280;
+}
+
+.pagination-info {
+  text-align: center;
+  margin-top: 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
 }
 </style>

@@ -116,9 +116,9 @@ function groupEventsByDate(events: ParsedEvent[]): CalendarEvent[] {
 
 export default defineEventHandler(async (event) => {
   try {
-    // Define cache key and TTL (5 minutes)
+    // Define cache key and TTL (18 hours)
     const CACHE_KEY = "pokedata:events";
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const CACHE_TTL = 18 * 60 * 60 * 1000; // 18 hours in milliseconds
 
     // Try to get cached data
     const storage = useStorage("cache");
@@ -130,17 +130,8 @@ export default defineEventHandler(async (event) => {
 
     // Return cached data if valid
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log(
-        `Returning cached events (${
-          cached.data.length
-        } events, cached ${Math.round(
-          (Date.now() - cached.timestamp) / 1000
-        )}s ago)`
-      );
       return createEventResponse(cached.data, cached.totalFound);
     }
-
-    console.log("Making direct API call to pokedata.ovh...");
 
     // Use the same API endpoint that the website uses
     const apiUrl = "https://pokedata.ovh/events/tableapi/";
@@ -171,9 +162,6 @@ export default defineEventHandler(async (event) => {
       width: 1920,
     };
 
-    console.log("Making API request to:", apiUrl);
-    console.log("With parameters:", postData);
-
     const response = await fetch(apiUrl, {
       method: "POST",
       body: JSON.stringify(postData),
@@ -188,29 +176,6 @@ export default defineEventHandler(async (event) => {
     }
 
     const apiData = await response.json();
-    console.log(`API returned ${apiData.length} events`);
-
-    // Store the raw API response from pokedata.ovh
-    try {
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const rawDataPath = path.join(
-        process.cwd(),
-        "debug",
-        "pokedata_raw_response.json"
-      );
-      await fs.mkdir(path.dirname(rawDataPath), { recursive: true });
-      await fs.writeFile(
-        rawDataPath,
-        JSON.stringify(apiData, null, 2),
-        "utf-8"
-      );
-      console.log(
-        `Debug: Stored raw pokedata.ovh API response (${apiData.length} events) to ${rawDataPath}`
-      );
-    } catch (writeError) {
-      console.error("Failed to write raw API response file:", writeError);
-    }
 
     // Sort events chronologically
     apiData.sort((a: ExternalAPIEvent, b: ExternalAPIEvent) => {
@@ -231,10 +196,6 @@ export default defineEventHandler(async (event) => {
         return diffB - diffA;
       }
     });
-
-    console.log(
-      `SUCCESS: Found ${apiData.length} events using direct API call`
-    );
 
     // Convert API events directly to our format using structured data
     const events: ParsedEvent[] = apiData.map(
@@ -291,8 +252,6 @@ export default defineEventHandler(async (event) => {
       }
     );
 
-    console.log(`Parsed ${events.length} events from API response`);
-
     // Group events by date for calendar display
     const calendarEvents = groupEventsByDate(events);
 
@@ -302,31 +261,6 @@ export default defineEventHandler(async (event) => {
       totalFound: apiData.length,
       timestamp: Date.now(),
     });
-    console.log(
-      `Cached ${calendarEvents.length} events for ${CACHE_TTL / 1000} seconds`
-    );
-
-    // Write debug file with the calendar events (after icon mapping)
-    try {
-      const fs = await import("fs/promises");
-      const path = await import("path");
-      const debugPath = path.join(
-        process.cwd(),
-        "debug",
-        "pokedata_events.json"
-      );
-      await fs.mkdir(path.dirname(debugPath), { recursive: true });
-      await fs.writeFile(
-        debugPath,
-        JSON.stringify(calendarEvents, null, 2),
-        "utf-8"
-      );
-      console.log(
-        `Debug: Wrote ${calendarEvents.length} calendar events to ${debugPath}`
-      );
-    } catch (writeError) {
-      console.error("Failed to write debug file:", writeError);
-    }
 
     return createEventResponse(calendarEvents, apiData.length);
   } catch (error: unknown) {

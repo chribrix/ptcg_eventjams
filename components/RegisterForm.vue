@@ -60,11 +60,33 @@
 
       <button
         type="submit"
-        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-blue-200"
+        :disabled="isLoading"
+        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-blue-400 disabled:to-purple-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-blue-200"
       >
         <div class="flex items-center justify-center space-x-2">
-          <PaperAirplaneIcon class="w-5 h-5" />
-          <span>Send Magic Link</span>
+          <svg
+            v-if="isLoading"
+            class="animate-spin h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <PaperAirplaneIcon v-else class="w-5 h-5" />
+          <span>{{ isLoading ? "Sending..." : "Send Magic Link" }}</span>
         </div>
       </button>
     </form>
@@ -95,6 +117,13 @@
       </div>
       <p class="text-sm mt-1 ml-7">Check your email for the login link.</p>
     </div>
+
+    <div
+      v-if="error"
+      class="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative"
+    >
+      <p class="font-medium">{{ error }}</p>
+    </div>
   </div>
 </template>
 
@@ -113,6 +142,8 @@ const email = ref("");
 const name = ref("");
 const playerId = ref("");
 const linkSent = ref(false);
+const isLoading = ref(false);
+const error = ref("");
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 
@@ -136,8 +167,12 @@ const getMagicLinkRedirect = () => {
 };
 
 const submitForm = async () => {
+  isLoading.value = true;
+  linkSent.value = false;
+  error.value = "";
+
   const redirectTo = getMagicLinkRedirect();
-  const { error } = await useSupabaseClient().auth.signInWithOtp({
+  const { error: signUpError } = await useSupabaseClient().auth.signInWithOtp({
     email: email.value,
     options: {
       data: {
@@ -148,8 +183,11 @@ const submitForm = async () => {
     },
   });
 
-  if (error) {
-    console.error("Error sending magic link:", error.message);
+  isLoading.value = false;
+
+  if (signUpError) {
+    console.error("Error sending magic link:", signUpError.message);
+    error.value = signUpError.message;
   } else {
     linkSent.value = true;
   }

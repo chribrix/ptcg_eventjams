@@ -17,9 +17,9 @@ interface ParsedEvent {
 
 export default defineEventHandler(
   async (event): Promise<{ events: ParsedEvent[] }> => {
-    // Define cache key and TTL (5 minutes)
+    // Define cache key and TTL (18 hours)
     const CACHE_KEY = "pokedata:detailed-events";
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const CACHE_TTL = 18 * 60 * 60 * 1000; // 18 hours in milliseconds
 
     // Try to get cached data
     const storage = useStorage("cache");
@@ -30,13 +30,6 @@ export default defineEventHandler(
 
     // Return cached data if valid
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log(
-        `Returning cached detailed events (${
-          cached.events.length
-        } events, cached ${Math.round(
-          (Date.now() - cached.timestamp) / 1000
-        )}s ago)`
-      );
       // Set cache headers for client-side caching
       setResponseHeader(
         event,
@@ -65,11 +58,6 @@ export default defineEventHandler(
           events: eventsWithOverrides,
           timestamp: Date.now(),
         });
-        console.log(
-          `Cached ${eventsWithOverrides.length} detailed events for ${
-            CACHE_TTL / 1000
-          } seconds`
-        );
 
         // Set cache headers for client-side caching
         setResponseHeader(
