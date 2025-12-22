@@ -1,79 +1,91 @@
 export const useAuth = () => {
   const supabaseUser = useSupabaseUser();
-  const devUser = ref<any>(null);
-  const isDevMode = process.dev;
+  const supabaseClient = useSupabaseClient();
+  const isRefreshing = ref(false);
 
-  // Check for dev authentication (manual trigger only)
-  const checkDevAuth = async () => {
-    if (!isDevMode) return null;
+  // Check and refresh session if needed
+  const ensureValidSession = async () => {
+    if (isRefreshing.value) return supabaseUser.value;
 
     try {
-      // Try to fetch user data using dev authentication
-      const response = await $fetch("/api/dev/me", {
-        method: "GET",
-        credentials: "include",
-      });
+      isRefreshing.value = true;
+      const {
+        data: { session },
+        error,
+      } = await supabaseClient.auth.getSession();
 
-      if (response?.user) {
-        devUser.value = {
-          id: response.user.playerId,
-          email: response.user.email,
-          user_metadata: {
-            name: response.user.name,
-          },
-        };
-        return devUser.value;
+      if (error) {
+        console.error("Session check error:", error);
+        return null;
       }
+
+      // If no session, user is logged out
+      if (!session) {
+        return null;
+      }
+
+      // Check if token is expired or about to expire (within 5 minutes)
+      const expiresAt = session.expires_at;
+      const now = Math.floor(Date.now() / 1000);
+      const fiveMinutes = 5 * 60;
+
+      if (expiresAt && expiresAt - now < fiveMinutes) {
+        // Token expired or expiring soon, try to refresh
+        const {
+          data: { session: newSession },
+          error: refreshError,
+        } = await supabaseClient.auth.refreshSession();
+
+        if (refreshError) {
+          console.error("Token refresh failed:", refreshError);
+          // Session is invalid, clear it
+          await supabaseClient.auth.signOut();
+          return null;
+        }
+
+        return newSession?.user || null;
+      }
+
+      return session.user;
     } catch (error) {
-      // No dev auth available
-      devUser.value = null;
+      console.error("Error ensuring valid session:", error);
+      return null;
+    } finally {
+      isRefreshing.value = false;
     }
-
-    return null;
   };
 
-  // Clear dev authentication
-  const clearDevAuth = () => {
-    devUser.value = null;
-  };
-
-  // Combined user - prioritize Supabase, fallback to dev
+  // User is just the Supabase user
   const user = computed(() => {
-    return supabaseUser.value || devUser.value;
+    return supabaseUser.value;
   });
 
-  // Watch for Supabase user changes and clear dev auth when real user logs in
-  watch(supabaseUser, (newSupabaseUser) => {
-    if (newSupabaseUser && devUser.value) {
-      // Real user logged in, clear dev auth
-      clearDevAuth();
-
-      // Also clear dev cookies
-      if (process.client) {
-        document.cookie =
-          "dev-user-id=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-        document.cookie =
-          "dev-user-email=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-      }
-    }
+  // Centralized userName for consistent display across all components
+  const userName = computed(() => {
+    const currentUser = user.value;
+    if (!currentUser) return null;
+    return currentUser.user_metadata?.name || currentUser.email || null;
   });
 
-  // Auto-check dev auth on client side (if no Supabase user exists)
-  if (process.client && isDevMode && !supabaseUser.value) {
-    // Use nextTick to ensure Supabase auth has been checked first
-    nextTick(() => {
-      if (!supabaseUser.value) {
-        checkDevAuth();
+  // Setup periodic session check on client side
+  if (process.client) {
+    // Check session every 5 minutes
+    const checkInterval = setInterval(() => {
+      if (supabaseUser.value) {
+        ensureValidSession();
       }
+    }, 5 * 60 * 1000);
+
+    // Clean up on unmount
+    onUnmounted(() => {
+      clearInterval(checkInterval);
     });
   }
 
   return {
     user,
+    userName,
     supabaseUser,
-    devUser,
-    checkDevAuth,
-    clearDevAuth,
-    isDevMode,
+    ensureValidSession,
   };
 };

@@ -38,6 +38,25 @@ export default defineNuxtConfig({
   },
   supabase: {
     redirect: false,
+    redirectOptions: {
+      login: "/login",
+      callback: "/confirm",
+      exclude: ["/", "/events", "/events/*", "/eventlist"],
+    },
+    cookieOptions: {
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
+    clientOptions: {
+      auth: {
+        flowType: "pkce",
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+        storage: process.client ? window.localStorage : undefined,
+      },
+    },
   },
   runtimeConfig: {
     public: {

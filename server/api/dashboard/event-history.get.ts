@@ -14,25 +14,12 @@ export default defineEventHandler(async (event) => {
   try {
     let supabaseUser = null;
 
-    // Try Supabase authentication FIRST (real auth takes priority)
+    // Try Supabase authentication
     try {
       supabaseUser = await serverSupabaseUser(event);
     } catch (supabaseError) {
       console.log("Supabase auth failed:", supabaseError);
       // Continue without Supabase auth
-    }
-
-    // Only fallback to dev authentication if no Supabase user AND in development
-    if (!supabaseUser && process.env.NODE_ENV !== "production") {
-      const devUserId = getCookie(event, "dev-user-id");
-      const devUserEmail = getCookie(event, "dev-user-email");
-
-      if (devUserId && devUserEmail) {
-        supabaseUser = {
-          id: devUserId,
-          email: devUserEmail,
-        } as any;
-      }
     }
 
     if (!supabaseUser) {

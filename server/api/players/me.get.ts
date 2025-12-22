@@ -34,19 +34,6 @@ export default defineEventHandler(async (event) => {
       console.log("Supabase auth failed:", supabaseError);
     }
 
-    // Fallback to dev authentication in development
-    if (!supabaseUser && process.env.NODE_ENV !== "production") {
-      const devUserId = getCookie(event, "dev-user-id");
-      const devUserEmail = getCookie(event, "dev-user-email");
-
-      if (devUserId && devUserEmail) {
-        supabaseUser = {
-          id: devUserId,
-          email: devUserEmail,
-        } as any;
-      }
-    }
-
     if (!supabaseUser) {
       throw createError({
         statusCode: 401,

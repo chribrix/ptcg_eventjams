@@ -15,14 +15,13 @@ import {
   UsersIcon,
 } from "@heroicons/vue/24/outline";
 
-const userName = ref<string | null>(null);
 const supabase = useSupabaseClient();
 
 // Mobile menu state
 const mobileMenuOpen = ref(false);
 
-// Use our enhanced auth composable
-const { user: authUser, checkDevAuth, clearDevAuth } = useAuth();
+// Use our enhanced auth composable with centralized state
+const { user: authUser, userName, ensureValidSession } = useAuth();
 
 // Admin composable - now uses server-side verification
 const { isAdmin, user: adminUser, loading } = useAdmin();
@@ -48,43 +47,69 @@ const hideAdminDropdown = () => {
 // Logout function
 const logout = async () => {
   try {
-    // Sign out from Supabase and wait for completion
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      console.error("Supabase signOut error:", error);
+    // Try to validate session, but don't block logout if it fails
+    try {
+      await ensureValidSession();
+    } catch (sessionError) {
+      console.log("Session validation skipped during logout:", sessionError);
     }
 
-    // Clear dev cookies and state if in dev mode
-    if (process.dev) {
-      document.cookie =
-        "dev-user-id=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-      document.cookie =
-        "dev-user-email=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-      clearDevAuth();
+    // Always attempt sign out, even if session is expired
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Supabase signOut error:", error);
+      }
+    } catch (signOutError) {
+      console.log("SignOut failed (likely already logged out):", signOutError);
     }
 
-    // Clear local storage (Supabase session storage)
+    // Clear all storage - critical for mobile browsers
     if (process.client) {
-      localStorage.clear();
-      sessionStorage.clear();
+      try {
+        // Clear localStorage
+        localStorage.clear();
+        // Clear sessionStorage
+        sessionStorage.clear();
+
+        // Also clear any Supabase-specific cookies explicitly
+        // This is important for iOS Safari which may not clear cookies immediately
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i];
+          const eqPos = cookie.indexOf("=");
+          const name =
+            eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+          // Clear with multiple path configurations to ensure removal
+          document.cookie =
+            name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+          document.cookie =
+            name +
+            "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=" +
+            window.location.hostname;
+        }
+      } catch (storageError) {
+        console.error("Storage clear error:", storageError);
+      }
     }
 
-    userName.value = null;
-
-    // Small delay to ensure signOut completes before reload
+    // Small delay to ensure all operations complete
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Reload the page to clear all user data
+    // Force reload to clear all state and re-initialize
     if (process.client) {
       window.location.href = "/";
     }
   } catch (error) {
     console.error("Error during logout:", error);
-    // Force reload even if there's an error
+    // Force complete cleanup and reload even if there's an error
     if (process.client) {
-      localStorage.clear();
-      sessionStorage.clear();
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {
+        console.error("Emergency storage clear failed:", e);
+      }
       window.location.href = "/";
     }
   }
@@ -99,32 +124,31 @@ const handleMobileLogout = async () => {
 };
 
 onMounted(async () => {
-  // Check Supabase auth first
-  const { data: sessionData } = await supabase.auth.getSession();
-  const sessionUser = sessionData?.session?.user;
-
-  if (sessionUser) {
-    userName.value = sessionUser.user_metadata.name || sessionUser.email;
-  } else if (process.dev) {
-    // In development, check for dev auth
-    const devAuthResult = await checkDevAuth();
-    if (devAuthResult) {
-      userName.value = devAuthResult.user_metadata.name || devAuthResult.email;
+  // Ensure session is valid on mount and cleanup if expired
+  if (authUser.value) {
+    const validUser = await ensureValidSession();
+    // If session validation failed (expired/invalid), clean up
+    if (!validUser && authUser.value) {
+      console.log("Detected expired session on mount, cleaning up...");
+      // Clear everything to prevent in-between state
+      if (process.client) {
+        localStorage.clear();
+        sessionStorage.clear();
+        // Force sign out to clean server state
+        await supabase.auth.signOut();
+        // Reload to ensure clean state
+        window.location.reload();
+      }
     }
   }
 });
 
-// Watch for auth state changes
+// Watch for auth state changes - no need to set userName, it's computed in useAuth
 watch(
   [authUser, adminUser],
   ([newAuthUser, newAdminUser]) => {
-    if (newAuthUser) {
-      userName.value = newAuthUser.user_metadata?.name || newAuthUser.email;
-    } else if (newAdminUser) {
-      userName.value = newAdminUser.user_metadata?.name || newAdminUser.email;
-    } else {
-      userName.value = null;
-    }
+    // Session validation happens automatically through useAuth
+    // userName is now a computed property from useAuth
   },
   { immediate: true }
 );
@@ -411,9 +435,6 @@ const { t } = useI18n();
         <slot />
       </div>
     </main>
-
-    <!-- Dev Login Component (only shows in development) -->
-    <DevLogin />
   </div>
 </template>
 

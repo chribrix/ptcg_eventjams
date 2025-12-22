@@ -284,11 +284,10 @@ import EventCalendarCard from "~/components/landingPageCards/calendar/EventCalen
 import EventMiniDashboardCard from "~/components/landingPageCards/dashboard/EventMiniDashboardCard.vue";
 import GetStartedCard from "~/components/landingPageCards/GetStartedCard.vue";
 
-const userName = ref<string | null>(null);
+const { userName, user } = useAuth();
 const activeTab = ref<"calendar" | "registrations">("calendar");
 const previousTab = ref<"calendar" | "registrations">("calendar");
 const registrationsCount = ref<number>(0);
-const supabase = useSupabaseClient();
 
 // Touch gesture tracking
 const touchStartX = ref(0);
@@ -334,20 +333,25 @@ const handleSwipe = () => {
 };
 
 onMounted(async () => {
-  const { data: session } = await supabase.auth.getSession();
-  if (session?.session) {
-    userName.value =
-      session.session.user.user_metadata.name || session.session.user.email;
-
-    // Fetch registrations count
-    try {
-      const response = await $fetch("/api/dashboard/registrations");
-      if (response && response.data && Array.isArray(response.data)) {
-        registrationsCount.value = response.data.length;
+  // Watch for userName changes to fetch registrations
+  watch(
+    userName,
+    async (newUserName) => {
+      if (newUserName) {
+        // Fetch registrations count
+        try {
+          const response = await $fetch("/api/dashboard/registrations");
+          if (response && response.data && Array.isArray(response.data)) {
+            registrationsCount.value = response.data.length;
+          }
+        } catch (error) {
+          console.error("Failed to fetch registrations count:", error);
+        }
+      } else {
+        registrationsCount.value = 0;
       }
-    } catch (error) {
-      console.error("Failed to fetch registrations count:", error);
-    }
-  }
+    },
+    { immediate: true }
+  );
 });
 </script>

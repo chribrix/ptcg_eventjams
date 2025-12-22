@@ -1,6 +1,7 @@
 // middleware/auth.global.ts
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { user, checkDevAuth } = useAuth();
+  const { user, ensureValidSession } = useAuth();
+  const supabase = useSupabaseClient();
   const isClient = import.meta.client;
 
   const publicPages = ["/", "/login", "/register", "/events", "/eventlist"];
@@ -14,20 +15,26 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // On client side, check for authentication
   if (isClient) {
-    // Give Supabase a chance to load first, then check dev auth as fallback
-    if (!user.value) {
+    // If we think we have a user, validate the session first
+    if (user.value) {
+      const validUser = await ensureValidSession();
+      if (!validUser) {
+        // Session expired, clean up and redirect
+        console.log("Session expired, cleaning up...");
+        localStorage.clear();
+        sessionStorage.clear();
+        await supabase.auth.signOut();
+        return navigateTo("/");
+      }
+    } else {
+      // Give Supabase a chance to load
       // Wait a moment for Supabase auth to potentially load
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Only check dev auth if still no Supabase user
+      // If still no user, redirect
       if (!user.value) {
-        await checkDevAuth();
+        return navigateTo("/");
       }
-    }
-
-    // If still no user after both checks, redirect
-    if (!user.value) {
-      return navigateTo("/");
     }
   }
 });
