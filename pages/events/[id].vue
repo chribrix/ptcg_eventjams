@@ -164,7 +164,10 @@
 
                   <!-- Decklist Submitted -->
                   <div
-                    v-if="userRegistration.decklist && userRegistration.decklist !== 'has_decklist'"
+                    v-if="
+                      userRegistration.decklist &&
+                      userRegistration.decklist !== 'has_decklist'
+                    "
                     class="bg-white rounded p-3 mb-3"
                   >
                     <div class="flex items-center justify-between mb-2">
@@ -327,7 +330,10 @@
                 id="bringingOnsite"
                 class="w-4 h-4 text-blue-600"
               />
-              <label for="bringingOnsite" class="text-sm font-medium text-gray-700">
+              <label
+                for="bringingOnsite"
+                class="text-sm font-medium text-gray-700"
+              >
                 I will bring my decklist on-site
               </label>
             </div>
@@ -358,7 +364,10 @@
             </button>
             <button
               @click="saveDecklist"
-              :disabled="isSavingDecklist || (!editDecklistForm.bringingOnsite && !editDecklistForm.decklist)"
+              :disabled="
+                isSavingDecklist ||
+                (!editDecklistForm.bringingOnsite && !editDecklistForm.decklist)
+              "
               class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {{ isSavingDecklist ? "Saving..." : "Save Decklist" }}
@@ -476,8 +485,11 @@ async function fetchUserRegistration(): Promise<void> {
       ? {
           id: registration.id,
           status: registration.status,
-          decklist: registration.tickets?.[0]?.decklist || registration.decklist,
-          bringingDecklistOnsite: registration.tickets?.[0]?.bringingDecklistOnsite || registration.bringingDecklistOnsite,
+          decklist:
+            registration.tickets?.[0]?.decklist || registration.decklist,
+          bringingDecklistOnsite:
+            registration.tickets?.[0]?.bringingDecklistOnsite ||
+            registration.bringingDecklistOnsite,
           ticketId: registration.tickets?.[0]?.id, // Store first ticket ID
         }
       : null;
@@ -489,9 +501,12 @@ async function fetchUserRegistration(): Promise<void> {
 
 function openEditDecklistModal(): void {
   if (!userRegistration.value) return;
-  
+
   editDecklistForm.value = {
-    decklist: userRegistration.value.decklist === 'has_decklist' ? '' : (userRegistration.value.decklist || ""),
+    decklist:
+      userRegistration.value.decklist === "has_decklist"
+        ? ""
+        : userRegistration.value.decklist || "",
     bringingOnsite: userRegistration.value.bringingDecklistOnsite || false,
   };
   showEditDecklistModal.value = true;
@@ -499,7 +514,7 @@ function openEditDecklistModal(): void {
 
 async function saveDecklist(): Promise<void> {
   if (!userRegistration.value || isSavingDecklist.value) return;
-if (!userRegistration.value.ticketId) {
+  if (!userRegistration.value.ticketId) {
     alert("Ticket ID not found. Please refresh the page.");
     return;
   }

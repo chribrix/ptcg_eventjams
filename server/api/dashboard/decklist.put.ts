@@ -164,7 +164,9 @@ export default defineEventHandler(async (event) => {
     }
 
     // Verify that the ticket belongs to this registration
-    const ticketToUpdate = existingRegistration.tickets.find(t => t.id === ticketId);
+    const ticketToUpdate = existingRegistration.tickets.find(
+      (t) => t.id === ticketId
+    );
     if (!ticketToUpdate) {
       throw createError({
         statusCode: 404,

@@ -67,7 +67,7 @@ export default defineEventHandler(async (event) => {
     // Get all upcoming/current event registrations for this player
     // Include events from up to 2 hours ago to account for ongoing events
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-    
+
     const registrations = await prisma.eventRegistration.findMany({
       where: {
         playerId: player.id,
@@ -126,7 +126,8 @@ export default defineEventHandler(async (event) => {
 
     // Filter registrations to only include future/current events
     const futureRegistrations = registrations.filter((reg) => {
-      const eventDate = reg.customEvent?.eventDate || reg.externalEvent?.eventDate;
+      const eventDate =
+        reg.customEvent?.eventDate || reg.externalEvent?.eventDate;
       if (!eventDate) return false;
       return new Date(eventDate) >= twoHoursAgo;
     });
@@ -149,7 +150,8 @@ export default defineEventHandler(async (event) => {
       // Get decklist from first ticket (for now, assuming all tickets have the same decklist)
       const firstTicket = reg.tickets[0];
       const decklist = firstTicket?.decklist || null;
-      const bringingDecklistOnsite = firstTicket?.bringingDecklistOnsite || false;
+      const bringingDecklistOnsite =
+        firstTicket?.bringingDecklistOnsite || false;
 
       if (isExternalEvent && reg.externalEvent) {
         const overrides = reg.externalEvent.overrides;
