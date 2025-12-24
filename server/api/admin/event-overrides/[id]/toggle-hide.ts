@@ -35,6 +35,10 @@ export default defineEventHandler(async (event) => {
         },
       });
 
+      // Invalidate the detailed events cache so changes are visible immediately
+      const storage = useStorage("cache");
+      await storage.removeItem("pokedata:detailed-events");
+
       return {
         success: true,
         override,

@@ -59,6 +59,10 @@ export default defineEventHandler(async (event) => {
         data: updateData,
       });
 
+      // Invalidate the detailed events cache so changes are visible immediately
+      const storage = useStorage("cache");
+      await storage.removeItem("pokedata:detailed-events");
+
       return {
         success: true,
         override,
@@ -93,6 +97,10 @@ export default defineEventHandler(async (event) => {
       await prisma.externalEventOverride.delete({
         where: { id },
       });
+
+      // Invalidate the detailed events cache so changes are visible immediately
+      const storage = useStorage("cache");
+      await storage.removeItem("pokedata:detailed-events");
 
       return {
         success: true,
