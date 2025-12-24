@@ -398,10 +398,11 @@ const shouldShowScrollbar = computed(() => registrations.value.length > 1);
 const { user } = useAuth();
 
 // Watch for user changes and load registrations when user becomes available
+// Only run on client to avoid SSR auth issues
 watch(
   user,
   async (newUser) => {
-    if (newUser) {
+    if (newUser && process.client) {
       await loadRegistrations();
     }
   },
