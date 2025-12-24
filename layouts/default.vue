@@ -409,6 +409,24 @@ const { t } = useI18n();
               </NuxtLink>
 
               <NuxtLink
+                to="/admin/external-events"
+                @click="mobileMenuOpen = false"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                <CogIcon class="w-4 h-4" />
+                <span>External Events</span>
+              </NuxtLink>
+
+              <NuxtLink
+                to="/admin/events/history"
+                @click="mobileMenuOpen = false"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                <ClockIcon class="w-4 h-4" />
+                <span>{{ t("nav.eventHistory") }}</span>
+              </NuxtLink>
+
+              <NuxtLink
                 to="/admin/logs"
                 @click="mobileMenuOpen = false"
                 class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"

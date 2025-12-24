@@ -12,8 +12,25 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Get user from Supabase authentication
-    const supabaseUser = await serverSupabaseUser(event);
+    let supabaseUser = null;
+
+    // Check for impersonation first
+    const impersonatedUserId = event.context.impersonatedUserId;
+
+    if (impersonatedUserId) {
+      supabaseUser = {
+        id: impersonatedUserId,
+        email: "",
+      } as any;
+    } else {
+      // Try Supabase authentication
+      try {
+        supabaseUser = await serverSupabaseUser(event);
+      } catch (supabaseError) {
+        console.log("Supabase auth failed:", supabaseError);
+        // Continue without Supabase auth
+      }
+    }
 
     if (!supabaseUser) {
       throw createError({
@@ -23,12 +40,19 @@ export default defineEventHandler(async (event) => {
     }
 
     const body = await readBody(event);
-    const { registrationId, decklist, bringingDecklistOnsite } = body;
+    const { registrationId, ticketId, decklist, bringingDecklistOnsite } = body;
 
     if (!registrationId) {
       throw createError({
         statusCode: 400,
         statusMessage: "Registration ID is required",
+      });
+    }
+
+    if (!ticketId) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Ticket ID is required",
       });
     }
 
@@ -72,6 +96,7 @@ export default defineEventHandler(async (event) => {
       include: {
         customEvent: true,
         externalEvent: true,
+        tickets: true, // Include tickets to update them
       },
     });
 
@@ -107,7 +132,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Prepare update data
+    // Prepare update data for tickets
     const updateData: any = {};
 
     if (decklist !== undefined) {
@@ -130,29 +155,41 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Determine status based on decklist fulfillment
-    const hasDecklist =
-      updateData.decklist !== undefined
-        ? updateData.decklist !== null
-        : existingRegistration.decklist !== null;
-    const bringingOnsite =
-      updateData.bringingDecklistOnsite !== undefined
-        ? updateData.bringingDecklistOnsite
-        : existingRegistration.bringingDecklistOnsite;
-
-    if (hasDecklist || bringingOnsite) {
+    // Determine status based on decklist fulfillment for this specific ticket
+    if (decklist || bringingDecklistOnsite) {
       updateData.status = "registered";
     } else {
       // If both decklist and bringing onsite are cleared/false, set back to reserved
       updateData.status = "reserved";
     }
 
-    // Update the registration
-    const updatedRegistration = await prisma.eventRegistration.update({
+    // Verify that the ticket belongs to this registration
+    const ticketToUpdate = existingRegistration.tickets.find(t => t.id === ticketId);
+    if (!ticketToUpdate) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Ticket not found in this registration",
+      });
+    }
+
+    // Update only the specific ticket
+    await prisma.registrationTicket.update({
+      where: {
+        id: ticketId,
+      },
+      data: updateData,
+    });
+
+    // Fetch updated registration with tickets
+    const updatedRegistration = await prisma.eventRegistration.findUnique({
       where: {
         id: registrationId,
       },
-      data: updateData,
+      include: {
+        tickets: true,
+        customEvent: true,
+        externalEvent: true,
+      },
     });
 
     return {

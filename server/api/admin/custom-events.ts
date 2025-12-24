@@ -58,6 +58,14 @@ const updateCustomEventSchema = z.object({
   status: z.enum(["upcoming", "ongoing", "completed", "cancelled"]).optional(),
 });
 
+// Helper to convert datetime-local string to UTC Date while preserving the local time
+// Input: "2025-12-24T14:00" -> Output: Date object representing 14:00 in Europe/Berlin
+const parseLocalDateTime = (dateTimeStr: string): Date => {
+  // Append timezone offset to treat the input as Europe/Berlin time
+  // This ensures the specified time is preserved
+  return new Date(dateTimeStr + ":00.000+01:00");
+};
+
 export default defineEventHandler(async (event) => {
   const method = getMethod(event);
   const query = getQuery(event);
@@ -137,11 +145,11 @@ export default defineEventHandler(async (event) => {
         const newEvent = await prisma.customEvent.create({
           data: {
             ...validatedData,
-            eventDate: new Date(validatedData.eventDate),
+            eventDate: parseLocalDateTime(validatedData.eventDate),
             registrationDeadline:
               validatedData.registrationDeadline &&
               validatedData.registrationDeadline.trim() !== ""
-                ? new Date(validatedData.registrationDeadline)
+                ? parseLocalDateTime(validatedData.registrationDeadline)
                 : null,
             createdBy: adminUser.id,
           },
@@ -172,12 +180,12 @@ export default defineEventHandler(async (event) => {
           data: {
             ...validatedUpdateData,
             eventDate: validatedUpdateData.eventDate
-              ? new Date(validatedUpdateData.eventDate)
+              ? parseLocalDateTime(validatedUpdateData.eventDate)
               : undefined,
             registrationDeadline:
               validatedUpdateData.registrationDeadline &&
               validatedUpdateData.registrationDeadline.trim() !== ""
-                ? new Date(validatedUpdateData.registrationDeadline)
+                ? parseLocalDateTime(validatedUpdateData.registrationDeadline)
                 : null,
           },
           include: {

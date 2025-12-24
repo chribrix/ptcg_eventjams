@@ -65,25 +65,12 @@ export default defineEventHandler(async (event) => {
     }
 
     // Get all upcoming/current event registrations for this player
+    // Include events from up to 2 hours ago to account for ongoing events
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    
     const registrations = await prisma.eventRegistration.findMany({
       where: {
         playerId: player.id,
-        OR: [
-          {
-            customEvent: {
-              eventDate: {
-                gte: new Date(), // Only future or current events
-              },
-            },
-          },
-          {
-            externalEvent: {
-              eventDate: {
-                gte: new Date(), // Only future or current events
-              },
-            },
-          },
-        ],
       },
       include: {
         tickets: {
@@ -137,8 +124,15 @@ export default defineEventHandler(async (event) => {
       },
     });
 
+    // Filter registrations to only include future/current events
+    const futureRegistrations = registrations.filter((reg) => {
+      const eventDate = reg.customEvent?.eventDate || reg.externalEvent?.eventDate;
+      if (!eventDate) return false;
+      return new Date(eventDate) >= twoHoursAgo;
+    });
+
     // Filter out registrations with no active tickets
-    const activeRegistrations = registrations.filter(
+    const activeRegistrations = futureRegistrations.filter(
       (reg) => reg.tickets.length > 0
     );
 
@@ -152,13 +146,10 @@ export default defineEventHandler(async (event) => {
       );
       const overallStatus = allTicketsRegistered ? "registered" : "reserved";
 
-      // Check if any ticket has a decklist or will bring one onsite
-      const hasDecklist = reg.tickets.some(
-        (t) => t.decklist || t.bringingDecklistOnsite
-      );
-      const bringingDecklistOnsite = reg.tickets.some(
-        (t) => t.bringingDecklistOnsite
-      );
+      // Get decklist from first ticket (for now, assuming all tickets have the same decklist)
+      const firstTicket = reg.tickets[0];
+      const decklist = firstTicket?.decklist || null;
+      const bringingDecklistOnsite = firstTicket?.bringingDecklistOnsite || false;
 
       if (isExternalEvent && reg.externalEvent) {
         const overrides = reg.externalEvent.overrides;
@@ -174,7 +165,7 @@ export default defineEventHandler(async (event) => {
           registeredAt: reg.registeredAt,
           status: overallStatus,
           notes: null,
-          decklist: hasDecklist ? "has_decklist" : null,
+          decklist: decklist,
           bringingDecklistOnsite: bringingDecklistOnsite,
           ticketCount: reg.tickets.length,
           tickets: reg.tickets,
@@ -210,7 +201,7 @@ export default defineEventHandler(async (event) => {
         registeredAt: reg.registeredAt,
         status: overallStatus,
         notes: null,
-        decklist: hasDecklist ? "has_decklist" : null,
+        decklist: decklist,
         bringingDecklistOnsite: bringingDecklistOnsite,
         ticketCount: reg.tickets.length,
         tickets: reg.tickets,

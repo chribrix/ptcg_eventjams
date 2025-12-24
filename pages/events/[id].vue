@@ -164,17 +164,25 @@
 
                   <!-- Decklist Submitted -->
                   <div
-                    v-if="userRegistration.decklist"
+                    v-if="userRegistration.decklist && userRegistration.decklist !== 'has_decklist'"
                     class="bg-white rounded p-3 mb-3"
                   >
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-sm font-medium text-gray-700"
                         >Your Decklist:</span
                       >
-                      <span
-                        class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded"
-                        >✓ Submitted</span
-                      >
+                      <div class="flex gap-2">
+                        <button
+                          @click="showEditDecklistModal = true"
+                          class="text-xs text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded"
+                        >
+                          ✎ Edit
+                        </button>
+                        <span
+                          class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded"
+                          >✓ Submitted</span
+                        >
+                      </div>
                     </div>
                     <pre
                       class="text-xs text-gray-600 whitespace-pre-wrap font-mono bg-gray-50 p-2 rounded max-h-32 overflow-y-auto"
@@ -185,23 +193,31 @@
                   <!-- Bringing Onsite -->
                   <div
                     v-else-if="userRegistration.bringingDecklistOnsite"
-                    class="bg-amber-50 border border-amber-200 rounded p-3 mb-3"
+                    class="bg-green-50 border border-green-200 rounded p-3 mb-3"
                   >
-                    <div class="flex items-center gap-2 text-amber-800">
-                      <svg
-                        class="w-5 h-5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2 text-green-800">
+                        <svg
+                          class="w-5 h-5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd"
+                          ></path>
+                        </svg>
+                        <span class="text-sm font-medium"
+                          >Bringing decklist on-site</span
+                        >
+                      </div>
+                      <button
+                        @click="showEditDecklistModal = true"
+                        class="text-xs text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded"
                       >
-                        <path
-                          fill-rule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                          clip-rule="evenodd"
-                        ></path>
-                      </svg>
-                      <span class="text-sm font-medium"
-                        >Bringing decklist on-site</span
-                      >
+                        ✎ Change
+                      </button>
                     </div>
                   </div>
 
@@ -210,10 +226,22 @@
                     v-else
                     class="bg-amber-50 border border-amber-200 rounded p-3 mb-3"
                   >
-                    <div class="text-amber-800 text-sm mb-2">
+                    <div class="text-amber-800 text-sm mb-3">
                       ⚠️ Decklist required - Your registration is reserved until
                       you submit a decklist
                     </div>
+                    <button
+                      @click="showEditDecklistModal = true"
+                      class="text-sm text-amber-800 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded font-medium"
+                    >
+                      Submit Decklist Now
+                    </button>
+                    <button
+                      @click="showEditDecklistModal = true"
+                      class="text-sm text-amber-800 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded font-medium"
+                    >
+                      Submit Decklist Now
+                    </button>
                   </div>
                 </div>
 
@@ -274,6 +302,71 @@
         />
       </div>
     </div>
+
+    <!-- Edit Decklist Modal -->
+    <div
+      v-if="showEditDecklistModal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+      @click="showEditDecklistModal = false"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        @click.stop
+      >
+        <div class="p-6">
+          <h3 class="text-xl font-bold text-gray-900 mb-4">
+            Submit/Edit Decklist
+          </h3>
+
+          <div class="space-y-4">
+            <!-- Bringing Onsite Checkbox -->
+            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded">
+              <input
+                v-model="editDecklistForm.bringingOnsite"
+                type="checkbox"
+                id="bringingOnsite"
+                class="w-4 h-4 text-blue-600"
+              />
+              <label for="bringingOnsite" class="text-sm font-medium text-gray-700">
+                I will bring my decklist on-site
+              </label>
+            </div>
+
+            <!-- Decklist Textarea (hidden if bringing onsite) -->
+            <div v-if="!editDecklistForm.bringingOnsite">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Decklist
+              </label>
+              <textarea
+                v-model="editDecklistForm.decklist"
+                rows="12"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                placeholder="Paste your decklist here..."
+              ></textarea>
+              <p class="text-xs text-gray-500 mt-1">
+                Paste your decklist in PTCGL or LimitlessTCG format
+              </p>
+            </div>
+          </div>
+
+          <div class="flex gap-3 mt-6">
+            <button
+              @click="showEditDecklistModal = false"
+              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              @click="saveDecklist"
+              :disabled="isSavingDecklist || (!editDecklistForm.bringingOnsite && !editDecklistForm.decklist)"
+              class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {{ isSavingDecklist ? "Saving..." : "Save Decklist" }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -301,6 +394,7 @@ interface UserRegistration {
   status: string;
   decklist?: string | null;
   bringingDecklistOnsite?: boolean;
+  ticketId?: string; // First ticket ID for single-ticket registrations
 }
 
 const { id } = useRoute().params;
@@ -312,6 +406,12 @@ const registrationCount = ref(0);
 const userRegistration = ref<UserRegistration | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+const showEditDecklistModal = ref(false);
+const editDecklistForm = ref({
+  decklist: "",
+  bringingOnsite: false,
+});
+const isSavingDecklist = ref(false);
 
 function formatEventDate(dateString: string): string {
   const date = new Date(dateString);
@@ -376,13 +476,57 @@ async function fetchUserRegistration(): Promise<void> {
       ? {
           id: registration.id,
           status: registration.status,
-          decklist: registration.decklist,
-          bringingDecklistOnsite: registration.bringingDecklistOnsite,
+          decklist: registration.tickets?.[0]?.decklist || registration.decklist,
+          bringingDecklistOnsite: registration.tickets?.[0]?.bringingDecklistOnsite || registration.bringingDecklistOnsite,
+          ticketId: registration.tickets?.[0]?.id, // Store first ticket ID
         }
       : null;
   } catch (err: unknown) {
     console.error("Failed to fetch user registration:", err);
     // Don't show error for this, as it's not critical
+  }
+}
+
+function openEditDecklistModal(): void {
+  if (!userRegistration.value) return;
+  
+  editDecklistForm.value = {
+    decklist: userRegistration.value.decklist === 'has_decklist' ? '' : (userRegistration.value.decklist || ""),
+    bringingOnsite: userRegistration.value.bringingDecklistOnsite || false,
+  };
+  showEditDecklistModal.value = true;
+}
+
+async function saveDecklist(): Promise<void> {
+  if (!userRegistration.value || isSavingDecklist.value) return;
+if (!userRegistration.value.ticketId) {
+    alert("Ticket ID not found. Please refresh the page.");
+    return;
+  }
+
+  try {
+    isSavingDecklist.value = true;
+
+    await $fetch(`/api/dashboard/decklist`, {
+      method: "PUT",
+      body: {
+        registrationId: userRegistration.value.id,
+        ticketId: userRegistration.value.ticketId,
+        decklist: editDecklistForm.value.bringingOnsite
+          ? null
+          : editDecklistForm.value.decklist,
+        bringingDecklistOnsite: editDecklistForm.value.bringingOnsite,
+      },
+    });
+
+    // Refresh registration data
+    await fetchUserRegistration();
+    showEditDecklistModal.value = false;
+  } catch (err: unknown) {
+    console.error("Failed to save decklist:", err);
+    alert("Failed to save decklist. Please try again.");
+  } finally {
+    isSavingDecklist.value = false;
   }
 }
 

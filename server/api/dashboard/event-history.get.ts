@@ -14,12 +14,22 @@ export default defineEventHandler(async (event) => {
   try {
     let supabaseUser = null;
 
-    // Try Supabase authentication
-    try {
-      supabaseUser = await serverSupabaseUser(event);
-    } catch (supabaseError) {
-      console.log("Supabase auth failed:", supabaseError);
-      // Continue without Supabase auth
+    // Check for impersonation first
+    const impersonatedUserId = event.context.impersonatedUserId;
+
+    if (impersonatedUserId) {
+      supabaseUser = {
+        id: impersonatedUserId,
+        email: "",
+      } as any;
+    } else {
+      // Try Supabase authentication
+      try {
+        supabaseUser = await serverSupabaseUser(event);
+      } catch (supabaseError) {
+        console.log("Supabase auth failed:", supabaseError);
+        // Continue without Supabase auth
+      }
     }
 
     if (!supabaseUser) {
