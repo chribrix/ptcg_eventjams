@@ -236,6 +236,7 @@ import {
   MapIcon,
 } from "@heroicons/vue/24/outline";
 import { getEventBadgeStyles as getColorStyles } from "~/utils/eventColors";
+import { parseEventTags, type TagType } from "~/types/eventTags";
 
 interface ParsedEvent {
   id: string;
@@ -253,6 +254,8 @@ interface ParsedEvent {
   icon?: string;
   isCustomEvent?: boolean;
   eventType?: string;
+  tags?: any;
+  tagType?: string;
 }
 
 interface CustomEvent {
@@ -359,36 +362,57 @@ const hasLocalRegistration = (event: ParsedEvent): boolean => {
   return !!(event as any).hasLocalRegistration;
 };
 
+// Helper to determine the actual event type from tags
+const getActualEventType = (event: ParsedEvent): string => {
+  if (!isCustomEvent(event)) {
+    // External events use icon field
+    return event.icon || event.type || "local";
+  }
+
+  // For custom events, check tags
+  if (event.tags && event.tagType) {
+    try {
+      const parsedTags = parseEventTags(event.tags, event.tagType as TagType);
+
+      // Riftbound events
+      if (event.tagType === "riftbound") {
+        return "riftbound";
+      }
+
+      // Pokemon events with type field
+      if (parsedTags.game === "Pokemon" && parsedTags.type) {
+        if (parsedTags.type === "league_cup") return "cup";
+        if (parsedTags.type === "league_challenge") return "challenge";
+      }
+    } catch (e) {
+      console.error("Error parsing tags:", e);
+    }
+  }
+
+  // Fallback to eventType or custom
+  return event.eventType || "custom";
+};
+
 const getEventBadgeStyles = (
   event: ParsedEvent
 ): { backgroundColor: string; color: string } => {
-  // Custom events - use their eventType
-  if (isCustomEvent(event)) {
-    const eventType = event.eventType || "custom";
-    return getColorStyles(eventType);
-  }
-
-  // Regular events get colors based on their icon/type
-  if (event.icon) {
-    return getColorStyles(event.icon);
-  }
-
-  // Fallback based on type string
-  return getColorStyles(event.type);
+  const actualType = getActualEventType(event);
+  return getColorStyles(actualType);
 };
 
 const getEventTypeLabel = (event: ParsedEvent): string => {
-  if (isCustomEvent(event)) {
-    const eventType = event.eventType || "custom";
-    const labels: Record<string, string> = {
-      cup: "League Cup",
-      challenge: "League Challenge",
-      local: "Local Event",
-      custom: "Custom Event",
-    };
-    return labels[eventType] || "Custom Event";
-  }
-  return event.type;
+  const actualType = getActualEventType(event);
+  const labels: Record<string, string> = {
+    cup: "League Cup",
+    challenge: "League Challenge",
+    chall: "League Challenge",
+    local: "Local Event",
+    custom: "Local Event",
+    riftbound: "Riftbound",
+    pre: "Pre-Release",
+    friendly: "Friendly",
+  };
+  return labels[actualType] || event.type || "Event";
 };
 
 const getEventCost = (event: ParsedEvent): number | string | undefined => {

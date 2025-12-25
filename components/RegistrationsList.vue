@@ -122,7 +122,7 @@ const getEventTypeName = (eventType: string): string => {
     cup: "League Cup",
     challenge: "League Challenge",
     local: "Local Event",
-    custom: "Custom Event",
+    custom: "Local Event",
   };
   return types[eventType] || eventType;
 };

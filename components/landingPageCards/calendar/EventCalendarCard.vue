@@ -54,6 +54,16 @@
             >
               {{ EVENT_COLORS.custom.name }}
             </button>
+            <button
+              @click="openTypeFilter('riftbound')"
+              class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer border-0"
+              :style="{
+                backgroundColor: EVENT_COLORS.riftbound.bg,
+                color: EVENT_COLORS.riftbound.text,
+              }"
+            >
+              {{ EVENT_COLORS.riftbound.name }}
+            </button>
           </div>
         </div>
 
@@ -138,12 +148,13 @@
 import { ref, computed, onMounted } from "vue";
 import EventDetailsPopover from "./EventDetailsPopover.vue";
 import { EVENT_COLORS } from "~/utils/eventColors";
+import { parseEventTags, type TagType } from "~/types/eventTags";
 
 interface CalendarEvent {
   id: number | string;
   title: string;
   start: string;
-  type: "external" | "cup" | "local" | "challenge" | "custom";
+  type: "external" | "cup" | "local" | "challenge" | "custom" | "riftbound";
   isCustom?: boolean;
 }
 
@@ -174,6 +185,8 @@ interface CustomEvent {
   participationFee: number;
   registrationCount?: number;
   eventType?: "custom" | "challenge" | "cup" | "local";
+  tags?: any;
+  tagType?: string;
 }
 
 const today = new Date();
@@ -213,6 +226,30 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+// Helper function to determine actual event type from tags
+const getActualEventType = (event: CustomEvent): CalendarEvent["type"] => {
+  // First, try to parse tags if they exist
+  if (event.tags && event.tagType) {
+    const parsedTags = parseEventTags(event.tags, event.tagType as TagType);
+
+    // Check if it's a Riftbound event (any game under riftbound tag)
+    if (event.tagType === "riftbound") {
+      return "riftbound";
+    }
+
+    // Check if it's a Pokemon event with a specific type
+    if (parsedTags.game === "Pokemon" && parsedTags.type) {
+      // Map Pokemon event types to calendar types
+      if (parsedTags.type === "league_cup") return "cup";
+      if (parsedTags.type === "league_challenge") return "challenge";
+      if (parsedTags.type === "local") return "local";
+    }
+  }
+
+  // Fall back to eventType or "custom"
+  return (event.eventType || "custom") as CalendarEvent["type"];
+};
 
 // Build calendar attributes with automatic highlighting
 const calendarAttributes = computed(() => {
@@ -256,7 +293,7 @@ const calendarAttributes = computed(() => {
       id: event.id,
       title: event.name,
       start: new Date(event.eventDate).toISOString().split("T")[0],
-      type: (event.eventType || "custom") as CalendarEvent["type"],
+      type: getActualEventType(event),
       isCustom: true,
     })),
   ];
@@ -275,17 +312,15 @@ const calendarAttributes = computed(() => {
     const hasCup = dayEvents.some((e) => e.type === "cup");
     const hasChallenge = dayEvents.some((e) => e.type === "challenge");
     const hasLocal = dayEvents.some((e) => e.type === "local");
+    const hasRiftbound = dayEvents.some((e) => e.type === "riftbound");
 
     // Determine background color/gradient based on event types
     // Using centralized EVENT_COLORS
+    // Priority: Cup/Challenge first (even if from custom events), then custom, then local
     let bgColor = EVENT_COLORS.local.bg; // default fallback
     let background = "";
 
-    if (hasCustom) {
-      // Custom events: soft orange
-      bgColor = EVENT_COLORS.custom.bg;
-      background = bgColor;
-    } else if (hasCup && hasChallenge) {
+    if (hasCup && hasChallenge) {
       // Both cup and challenge: soft blue left, soft green right
       background = `linear-gradient(to bottom right, ${EVENT_COLORS.challenge.bg} 0%, ${EVENT_COLORS.challenge.bg} 50%, ${EVENT_COLORS.cup.bg} 50%, ${EVENT_COLORS.cup.bg} 100%)`;
       bgColor = EVENT_COLORS.cup.bg;
@@ -297,6 +332,14 @@ const calendarAttributes = computed(() => {
       // Challenge and local: soft sky blue left, soft blue right
       background = `linear-gradient(to bottom right, ${EVENT_COLORS.local.bg} 0%, ${EVENT_COLORS.local.bg} 50%, ${EVENT_COLORS.challenge.bg} 50%, ${EVENT_COLORS.challenge.bg} 100%)`;
       bgColor = EVENT_COLORS.challenge.bg;
+    } else if (hasCup && hasCustom) {
+      // Cup and custom: soft orange left, soft green right
+      background = `linear-gradient(to bottom right, ${EVENT_COLORS.custom.bg} 0%, ${EVENT_COLORS.custom.bg} 50%, ${EVENT_COLORS.cup.bg} 50%, ${EVENT_COLORS.cup.bg} 100%)`;
+      bgColor = EVENT_COLORS.cup.bg;
+    } else if (hasChallenge && hasCustom) {
+      // Challenge and custom: soft orange left, soft blue right
+      background = `linear-gradient(to bottom right, ${EVENT_COLORS.custom.bg} 0%, ${EVENT_COLORS.custom.bg} 50%, ${EVENT_COLORS.challenge.bg} 50%, ${EVENT_COLORS.challenge.bg} 100%)`;
+      bgColor = EVENT_COLORS.challenge.bg;
     } else if (hasCup) {
       // Cup only: soft green
       bgColor = EVENT_COLORS.cup.bg;
@@ -304,6 +347,14 @@ const calendarAttributes = computed(() => {
     } else if (hasChallenge) {
       // Challenge only: soft blue
       bgColor = EVENT_COLORS.challenge.bg;
+      background = bgColor;
+    } else if (hasRiftbound) {
+      // Riftbound only: soft purple
+      bgColor = EVENT_COLORS.riftbound.bg;
+      background = bgColor;
+    } else if (hasCustom) {
+      // Custom events: soft orange
+      bgColor = EVENT_COLORS.custom.bg;
       background = bgColor;
     } else {
       // Local events: soft sky blue
@@ -328,6 +379,19 @@ const calendarAttributes = computed(() => {
         hasEvents: true,
       },
     });
+
+    // Add purple dot for riftbound events
+    if (hasRiftbound) {
+      attributes.push({
+        key: `riftbound-dot-${dateKey}`,
+        dates: new Date(dateKey),
+        dot: {
+          style: {
+            backgroundColor: EVENT_COLORS.riftbound.bg, // soft purple
+          },
+        },
+      });
+    }
 
     // Add dots for multiple event types - use darker shades for better visibility
     const uniqueTypes = [...new Set(dayEvents.map((e) => e.type))];
@@ -397,6 +461,8 @@ const onDayClick = (day: any) => {
         link: "",
         isCustomEvent: true,
         eventType: event.eventType,
+        tags: (event as any).tags,
+        tagType: (event as any).tagType,
       })
     );
 

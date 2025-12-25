@@ -24,6 +24,11 @@ export const EVENT_COLORS = {
     text: "#9a3412", // orange-800 - dark orange text
     name: "Crow's & Owl's Locals",
   },
+  riftbound: {
+    bg: "#e9d5ff", // purple-200 - soft purple for Riftbound events
+    text: "#6b21a8", // purple-800 - dark purple text
+    name: "Riftbound",
+  },
   prerelease: {
     bg: "#fef3c7", // amber-100 - soft yellow for prereleases
     text: "#92400e", // amber-800 - dark amber text
@@ -60,6 +65,9 @@ export function getEventColor(typeOrIcon: string): typeof EVENT_COLORS.cup {
   }
   if (normalized === "friendly" || normalized.includes("friendly")) {
     return EVENT_COLORS.friendly;
+  }
+  if (normalized === "riftbound" || normalized.includes("riftbound")) {
+    return EVENT_COLORS.riftbound;
   }
 
   // Default to local
