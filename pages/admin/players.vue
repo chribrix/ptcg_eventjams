@@ -25,11 +25,15 @@
               id="playerId"
               v-model="playerForm.playerId"
               type="text"
+              inputmode="numeric"
+              pattern="\d*"
               required
               class="form-input"
-              placeholder="e.g., TCG001"
+              placeholder="e.g., 123456"
               :disabled="!!editingPlayer"
+              @input="validatePlayerIdAdmin"
             />
+            <p class="form-hint">Player ID must contain only numbers</p>
           </div>
 
           <div class="form-group">
@@ -338,6 +342,20 @@ const pageNumbers = computed(() => {
 });
 
 // Methods
+const validatePlayerIdAdmin = (event: Event): void => {
+  const target = event.target as HTMLInputElement;
+  const value = target.value;
+
+  // Remove any non-numeric characters
+  const numericOnly = value.replace(/\D/g, "");
+
+  // Update the form with the cleaned value
+  playerForm.value.playerId = numericOnly;
+
+  // Update the input value directly to reflect the change
+  target.value = numericOnly;
+};
+
 const goToPage = (page: number) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
@@ -472,6 +490,12 @@ onMounted(loadPlayers);
 
 .player-form {
   padding: 1.5rem;
+}
+
+.form-hint {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
 .pagination {

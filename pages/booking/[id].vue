@@ -338,8 +338,11 @@
             <input
               v-model="newTicket.participantPlayerId"
               type="text"
+              inputmode="numeric"
+              pattern="\d*"
               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Player ID"
+              placeholder="Player ID (numbers only)"
+              @input="validateTicketPlayerId($event, 'new')"
             />
           </div>
           <div>
@@ -412,7 +415,11 @@
             <input
               v-model="editingTicket.participantPlayerId"
               type="text"
+              inputmode="numeric"
+              pattern="\d*"
               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Player ID (numbers only)"
+              @input="validateTicketPlayerId($event, 'edit')"
             />
           </div>
           <div>
@@ -739,6 +746,27 @@ const formatDate = (dateString: string): string => {
     month: "long",
     day: "numeric",
   });
+};
+
+const validateTicketPlayerId = (
+  event: Event,
+  context: "new" | "edit"
+): void => {
+  const target = event.target as HTMLInputElement;
+  const value = target.value;
+
+  // Remove any non-numeric characters
+  const numericOnly = value.replace(/\D/g, "");
+
+  // Update the appropriate form with the cleaned value
+  if (context === "new") {
+    newTicket.participantPlayerId = numericOnly;
+  } else if (context === "edit" && editingTicket.value) {
+    editingTicket.value.participantPlayerId = numericOnly;
+  }
+
+  // Update the input value directly to reflect the change
+  target.value = numericOnly;
 };
 
 const submitAddTicket = async () => {

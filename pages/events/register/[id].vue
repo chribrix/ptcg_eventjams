@@ -267,6 +267,8 @@
                     id="playerId"
                     v-model="form.tickets[0].playerId"
                     type="text"
+                    inputmode="numeric"
+                    pattern="\d*"
                     required
                     :disabled="submitting"
                     class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -275,7 +277,8 @@
                         ? 'border-green-300 bg-green-50'
                         : 'border-gray-300'
                     "
-                    placeholder="Your player ID"
+                    placeholder="Your player ID (numbers only)"
+                    @input="validatePlayerId($event, 0)"
                   />
                   <p
                     v-if="form.tickets[0].playerId"
@@ -613,6 +616,25 @@ const fetchEventDetails = async (): Promise<void> => {
   } finally {
     loading.value = false;
   }
+};
+
+const validatePlayerId = (event: Event, ticketIndex: number): void => {
+  const target = event.target as HTMLInputElement;
+  const value = target.value;
+
+  // Remove any non-numeric characters
+  const numericOnly = value.replace(/\D/g, "");
+
+  // Update the form with the cleaned value
+  if (ticketIndex === 0) {
+    form.tickets[0].playerId = numericOnly;
+    form.bookerPlayerId = numericOnly;
+  } else {
+    form.tickets[ticketIndex].playerId = numericOnly;
+  }
+
+  // Update the input value directly to reflect the change
+  target.value = numericOnly;
 };
 
 const submitRegistration = async (): Promise<void> => {

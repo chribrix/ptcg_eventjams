@@ -6,7 +6,14 @@ const prisma = new PrismaClient();
 
 const newTicketSchema = z.object({
   participantName: z.string().min(1).max(100),
-  participantPlayerId: z.string().max(50).optional().nullable(),
+  participantPlayerId: z
+    .string()
+    .max(50)
+    .regex(/^\d+$/, "Player ID must contain only numbers")
+    .optional()
+    .nullable()
+    .or(z.literal(""))
+    .transform((val) => (val === "" ? null : val)),
   isAnonymous: z.boolean().optional().default(false),
 });
 

@@ -3,12 +3,19 @@ import prisma from "~/lib/prisma";
 
 const ticketSchema = z.object({
   name: z.string().min(1, "Participant name is required").max(100),
-  playerId: z.string().optional(),
+  playerId: z
+    .string()
+    .regex(/^\d+$/, "Player ID must contain only numbers")
+    .optional(),
   isAnonymous: z.boolean().optional().default(false),
 });
 
 const registrationSchema = z.object({
-  bookerPlayerId: z.string().min(1, "Your Player ID is required").max(50),
+  bookerPlayerId: z
+    .string()
+    .min(1, "Your Player ID is required")
+    .max(50)
+    .regex(/^\d+$/, "Player ID must contain only numbers"),
   bookerName: z.string().min(1, "Your name is required").max(100),
   bookerEmail: z.string().email("Valid email is required").max(100),
   tickets: z.array(ticketSchema).min(1, "At least one participant required"),

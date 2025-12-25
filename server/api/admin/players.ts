@@ -5,7 +5,10 @@ const prisma = new PrismaClient();
 
 // Validation schemas
 const createPlayerSchema = z.object({
-  playerId: z.string().min(1),
+  playerId: z
+    .string()
+    .min(1, "Player ID is required")
+    .regex(/^\d+$/, "Player ID must contain only numbers"),
   name: z.string().min(1),
   birthDate: z.string().datetime(),
   email: z.string().email().optional(),
