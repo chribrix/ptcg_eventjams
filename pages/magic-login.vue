@@ -125,11 +125,31 @@ onMounted(async () => {
     const user = data.session.user;
 
     // Check if this is a registration flow (user has metadata with name and playerId)
-    const isRegistration =
+    const hasRegistrationMetadata =
       user.user_metadata?.name && user.user_metadata?.playerId;
 
-    if (isRegistration) {
-      // This is a new registration - create the Player record
+    if (hasRegistrationMetadata) {
+      // Check if player already exists in database first
+      try {
+        const playerResponse = await $fetch("/api/players/check", {
+          method: "POST",
+          body: {
+            email: user.email,
+          },
+        });
+
+        if (playerResponse.exists) {
+          // Player already exists - treat as login
+          console.log("Player already exists, treating as login");
+          const returnPath = route.query.return as string;
+          router.push(returnPath || "/");
+          return;
+        }
+      } catch (checkError) {
+        console.error("Error checking player existence:", checkError);
+      }
+
+      // Player doesn't exist - proceed with registration
       console.log("New registration detected, creating player record");
 
       try {
