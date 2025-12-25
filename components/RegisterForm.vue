@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md mx-auto mt-12 border border-gray-100"
+    class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md mx-auto border border-gray-100"
   >
     <div class="text-center mb-8">
       <div
@@ -9,7 +9,6 @@
         <UserPlusIcon class="w-8 h-8 text-white" />
       </div>
       <h2 class="text-3xl font-bold text-gray-900 mb-2">Create Account</h2>
-      <p class="text-gray-600">Join the Pokémon TCG community</p>
     </div>
 
     <form @submit.prevent="submitForm" class="space-y-6">
@@ -52,9 +51,12 @@
         <input
           v-model="playerId"
           type="text"
+          inputmode="numeric"
+          pattern="\d*"
           placeholder="Player ID"
           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
           required
+          @input="validatePlayerId"
         />
       </div>
 
@@ -147,6 +149,46 @@ const error = ref("");
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 
+// Pre-fill email if passed from failed login
+onMounted(() => {
+  const emailParam = route.query.email as string;
+  if (emailParam) {
+    email.value = emailParam;
+  }
+});
+
+const validatePlayerId = (event: Event): void => {
+  const target = event.target as HTMLInputElement;
+  const value = target.value;
+  const numericOnly = value.replace(/\D/g, "");
+  playerId.value = numericOnly;
+  target.value = numericOnly;
+};
+
+const logError = async (
+  errorType: string,
+  errorMessage: string,
+  additionalData?: any
+) => {
+  if (!process.client) return;
+  try {
+    await $fetch("/api/admin/error-logs/create", {
+      method: "POST",
+      body: {
+        userId: null,
+        userEmail: email.value || null,
+        errorType,
+        errorMessage,
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        metadata: additionalData || null,
+      },
+    });
+  } catch (logError) {
+    console.error("Failed to log error:", logError);
+  }
+};
+
 const getMagicLinkRedirect = () => {
   const returnPath = route.query.redirect as string;
   const configuredBase = runtimeConfig.public.appBaseUrl?.replace(/\/$/, "");
@@ -171,6 +213,37 @@ const submitForm = async () => {
   linkSent.value = false;
   error.value = "";
 
+  // First, check if a player account already exists with this email
+  try {
+    const playerCheck = await $fetch("/api/players/check", {
+      method: "POST",
+      body: {
+        email: email.value,
+      },
+    });
+
+    if (playerCheck.exists) {
+      console.log("Player account already exists for email:", email.value);
+      error.value = `An account already exists with ${email.value}. Please log in instead.`;
+      isLoading.value = false;
+      await logError(
+        "registration_duplicate_email",
+        "User tried to register with existing email",
+        {
+          email: email.value,
+        }
+      );
+      return;
+    }
+
+    console.log("✅ Email is available, proceeding with registration");
+  } catch (checkError) {
+    console.error("Error checking player existence:", checkError);
+    // If the check fails, we'll allow the registration to proceed
+    // The backend will handle any duplicate errors
+    console.log("Player check failed, proceeding anyway");
+  }
+
   const redirectTo = getMagicLinkRedirect();
   const { error: signUpError } = await useSupabaseClient().auth.signInWithOtp({
     email: email.value,
@@ -188,6 +261,11 @@ const submitForm = async () => {
   if (signUpError) {
     console.error("Error sending magic link:", signUpError.message);
     error.value = signUpError.message;
+    await logError("registration_magic_link_failed", signUpError.message, {
+      email: email.value,
+      hasName: !!name.value,
+      hasPlayerId: !!playerId.value,
+    });
   } else {
     linkSent.value = true;
   }
