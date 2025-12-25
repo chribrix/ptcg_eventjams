@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
-import { getEventTypeFromOverrides } from "~/utils/eventTypes";
+import { parseEventTags, type TagType } from "~/types/eventTags";
 
 const prisma = new PrismaClient();
 
@@ -94,7 +94,8 @@ export default defineEventHandler(async (event) => {
             id: true,
             name: true,
             venue: true,
-            eventType: true,
+            tagType: true,
+            tags: true,
             maxParticipants: true,
             participationFee: true,
             description: true,
@@ -156,8 +157,12 @@ export default defineEventHandler(async (event) => {
       if (isExternalEvent && reg.externalEvent) {
         const overrides = reg.externalEvent.overrides;
 
-        // Use centralized event type utility
-        const eventType = getEventTypeFromOverrides(overrides);
+        // Parse tags from overrides or use default
+        const tags =
+          overrides && typeof overrides === "object" && "tags" in overrides
+            ? parseEventTags(overrides.tags, "pokemon")
+            : { game: "Pokemon" };
+        const eventType = tags.type || "custom";
 
         return {
           id: reg.id,
@@ -189,11 +194,30 @@ export default defineEventHandler(async (event) => {
             registrationDeadline: reg.externalEvent.registrationDeadline,
             status: "published",
             requiresDecklist: reg.externalEvent.requiresDecklist,
+            tags:
+              overrides && typeof overrides === "object" && "tags" in overrides
+                ? overrides.tags
+                : null,
+            tagType:
+              overrides &&
+              typeof overrides === "object" &&
+              "tagType" in overrides
+                ? overrides.tagType
+                : "pokemon",
           },
           isExternalEvent: true,
           eventType: eventType,
         };
       }
+
+      // Parse tags from custom event
+      const customTags = reg.customEvent?.tags
+        ? parseEventTags(
+            reg.customEvent.tags,
+            (reg.customEvent.tagType as TagType) || "pokemon"
+          )
+        : { game: "Pokemon" };
+      const customEventType = customTags.type || "custom";
 
       return {
         id: reg.id,
@@ -209,7 +233,7 @@ export default defineEventHandler(async (event) => {
         tickets: reg.tickets,
         customEvent: reg.customEvent,
         isExternalEvent: false,
-        eventType: reg.customEvent?.eventType || "custom",
+        eventType: customEventType,
       };
     });
 

@@ -26,7 +26,7 @@
                   class="event-type"
                   :class="`type-${getEventTypeFromIcon(event.icon)}`"
                 >
-                  {{ getEventTypeName(getEventTypeFromIcon(event.icon)) }}
+                  {{ getEventTypeLabel(getEventTypeFromIcon(event.icon)) }}
                 </span>
                 <span v-if="event.location" class="event-location">
                   {{ event.location }}, {{ event.country }}
@@ -270,7 +270,7 @@
 </template>
 
 <script setup lang="ts">
-import { getEventTypeName } from "~/utils/eventTypes";
+import { getEventTypeLabel } from "~/types/eventTags";
 import { ref, computed, onMounted } from "vue";
 import { useAdmin } from "~/composables/useAdmin";
 
@@ -451,10 +451,10 @@ function formatDate(dateString: string | undefined): string {
 
 function getEventTypeFromIcon(icon: string | undefined): string {
   const iconMap: Record<string, string> = {
-    cup: "cup",
-    chall: "challenge",
-    pre: "local",
-    friendly: "local",
+    cup: "league_cup",
+    chall: "league_challenge",
+    pre: "prerelease",
+    friendly: "local_tournament",
   };
   return iconMap[icon || ""] || "custom";
 }

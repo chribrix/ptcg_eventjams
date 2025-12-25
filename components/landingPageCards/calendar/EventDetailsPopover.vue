@@ -13,18 +13,18 @@
         @click="emit('close')"
       >
         <div
-          class="bg-white rounded-xl shadow-xl max-w-2xl max-h-[80vh] w-[90%] overflow-hidden flex flex-col transform transition-transform min-w-0"
+          class="bg-[#2f3136] rounded-xl shadow-xl max-w-2xl max-h-[80vh] w-[90%] overflow-hidden flex flex-col transform transition-transform min-w-0"
           @click.stop
         >
           <div
-            class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50"
+            class="px-6 py-4 border-b border-[#202225] flex justify-between items-center bg-[#36393f]"
           >
-            <h3 class="text-xl font-semibold text-gray-900 m-0">
+            <h3 class="text-xl font-semibold text-white m-0">
               Events on {{ formattedDate }}
             </h3>
             <button
               @click="emit('close')"
-              class="bg-none border-none text-2xl text-gray-500 hover:bg-gray-100 hover:text-gray-700 cursor-pointer p-1 rounded transition-colors duration-200"
+              class="bg-none border-none text-2xl text-gray-400 hover:bg-[#40444b] hover:text-gray-300 cursor-pointer p-1 rounded transition-colors duration-200"
             >
               &times;
             </button>
@@ -33,7 +33,7 @@
             <div
               v-for="event in events"
               :key="event.id"
-              class="border border-gray-200 rounded-lg mb-2 transition-all duration-200 hover:shadow-md hover:border-gray-300 last:mb-0 min-w-0 border-l-4 cursor-pointer"
+              class="border border-[#202225] rounded-lg mb-2 transition-all duration-200 hover:shadow-md hover:border-[#40444b] last:mb-0 min-w-0 border-l-4 cursor-pointer bg-[#36393f]"
               :style="{
                 borderLeftColor: getEventBadgeStyles(event).backgroundColor,
               }"
@@ -42,10 +42,10 @@
               <!-- Compact View -->
               <div class="p-3 flex items-center justify-between gap-3">
                 <div class="flex-1 min-w-0">
-                  <h4 class="text-sm font-semibold text-gray-900 mb-1 truncate">
+                  <h4 class="text-sm font-semibold text-white mb-1 truncate">
                     {{ getEventTitle(event) }}
                   </h4>
-                  <div class="flex items-center gap-2 text-xs text-gray-600">
+                  <div class="flex items-center gap-2 text-xs text-gray-300">
                     <MapPinIcon class="w-3 h-3 flex-shrink-0" />
                     <span class="truncate">{{ getCityFromEvent(event) }}</span>
                     <span class="text-gray-400">•</span>
@@ -80,7 +80,7 @@
               >
                 <div
                   v-if="expandedEvents.has(event.id)"
-                  class="px-3 pb-3 border-t border-gray-100 overflow-hidden"
+                  class="px-3 pb-3 border-t border-[#202225] overflow-hidden"
                   @click.stop
                 >
                   <div class="pt-3">
@@ -96,7 +96,7 @@
                       <!-- Time badge -->
                       <div
                         v-if="getEventTime(event)"
-                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200"
+                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-300 bg-[#40444b] border border-[#202225]"
                       >
                         <ClockIcon class="w-3 h-3 flex-shrink-0" />
                         <span>{{ getEventTime(event) }}</span>
@@ -104,7 +104,7 @@
                       <!-- Cost badge -->
                       <div
                         v-if="getEventCost(event) !== undefined"
-                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200"
+                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-300 bg-[#40444b] border border-[#202225]"
                       >
                         <CurrencyDollarIcon class="w-3 h-3 flex-shrink-0" />
                         <span>{{ formatEventCost(event) }}</span>
@@ -115,7 +115,7 @@
                     <div class="flex flex-col gap-2 mb-3">
                       <div
                         v-if="event.venue"
-                        class="flex items-start gap-2 text-gray-600 text-sm"
+                        class="flex items-start gap-2 text-gray-300 text-sm"
                       >
                         <BuildingOfficeIcon
                           class="w-4 h-4 flex-shrink-0 mt-0.5"
@@ -126,7 +126,7 @@
                       </div>
                       <div
                         v-if="event.streetAddress"
-                        class="flex items-start gap-2 text-gray-600 text-sm"
+                        class="flex items-start gap-2 text-gray-300 text-sm"
                       >
                         <MapPinIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span class="flex-1 min-w-0">{{
@@ -135,7 +135,7 @@
                       </div>
                       <div
                         v-if="event.location"
-                        class="flex items-start gap-2 text-gray-600 text-sm"
+                        class="flex items-start gap-2 text-gray-300 text-sm"
                       >
                         <GlobeAltIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span class="flex-1 min-w-0"
@@ -149,7 +149,7 @@
                       </div>
                       <div
                         v-if="isCustomEvent(event)"
-                        class="flex items-center gap-2 text-gray-600 text-sm"
+                        class="flex items-center gap-2 text-gray-300 text-sm"
                       >
                         <UsersIcon class="w-4 h-4 flex-shrink-0" />
                         <span class="flex-1">{{
@@ -160,14 +160,14 @@
 
                     <!-- Action buttons -->
                     <div
-                      class="flex justify-end gap-2 pt-2 border-t border-gray-100"
+                      class="flex justify-end gap-2 pt-2 border-t border-[#202225]"
                     >
                       <a
                         v-if="getGoogleMapsUrl(event)"
                         :href="getGoogleMapsUrl(event)"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm transition-all duration-200 no-underline"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 bg-[#40444b] border border-[#202225] hover:bg-[#4f545c] hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
                         @click.stop
                       >
                         <MapIcon class="w-3.5 h-3.5 flex-shrink-0" />
@@ -182,7 +182,7 @@
                             ? `/events/register/${event.id}`
                             : '/login'
                         "
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-sm transition-all duration-200 no-underline"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black shadow-sm transition-all duration-200 no-underline"
                         @click.stop
                       >
                         <UserPlusIcon class="w-3.5 h-3.5 flex-shrink-0" />
@@ -193,7 +193,7 @@
                         :href="event.link"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm transition-all duration-200 no-underline"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 bg-[#40444b] border border-[#202225] hover:bg-[#4f545c] hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
                         @click.stop
                       >
                         <LinkIcon class="w-3.5 h-3.5 flex-shrink-0" />
@@ -207,11 +207,11 @@
           </div>
           <!-- Back button at bottom -->
           <div
-            class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end"
+            class="px-6 py-4 border-t border-[#202225] bg-[#2f3136] flex justify-end"
           >
             <button
               @click="emit('close')"
-              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 shadow-sm hover:shadow-md transition-all duration-200"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <span>← Zurück</span>
             </button>

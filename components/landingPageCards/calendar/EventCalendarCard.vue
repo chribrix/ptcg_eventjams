@@ -1,7 +1,7 @@
 <template>
   <div class="w-full h-full">
     <div
-      class="p-4 sm:p-6 flex flex-col justify-center items-center h-full min-h-[400px]"
+      class="p-4 sm:p-6 flex flex-col justify-center items-center h-full min-h-[400px] bg-[#36393f]"
     >
       <div
         class="relative w-full calendar-wrapper flex flex-col justify-center items-center flex-1"
@@ -9,13 +9,13 @@
         <!-- Loading indicator -->
         <div
           v-if="isLoading"
-          class="absolute inset-0 bg-white/80 flex justify-center items-center z-10 rounded-lg"
+          class="absolute inset-0 bg-[#2f3136]/95 flex justify-center items-center z-10 rounded-lg"
         >
           <div class="flex flex-col items-center gap-3">
             <div
-              class="w-8 h-8 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"
+              class="w-8 h-8 border-4 border-gray-300 border-t-gray-800 rounded-full animate-spin"
             ></div>
-            <span class="text-sm text-gray-600 font-medium"
+            <span class="text-sm text-gray-300 font-medium"
               >Loading events...</span
             >
           </div>
@@ -651,23 +651,26 @@ const filteredEventsByType = computed(() => {
   box-shadow: none;
   display: flex;
   justify-content: center;
+  background: #36393f;
 }
 
 :deep(.vc-pane-container) {
   width: 100%;
   display: flex;
   justify-content: center;
+  background: #36393f;
 }
 
 :deep(.vc-pane) {
   margin: 0 auto;
   width: 100%;
+  background: #36393f;
 }
 
 :deep(.vc-calendar) {
   font-size: 1.08rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-  box-shadow: 0 6px 32px 0 rgba(60, 60, 120, 0.1);
+  background: #36393f;
+  box-shadow: 0 6px 32px 0 rgba(0, 0, 0, 0.3);
   border: none;
   padding: 1.5rem 1rem;
   border-radius: 1rem;
@@ -708,20 +711,21 @@ const filteredEventsByType = computed(() => {
 :deep(.vc-weekday) {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #4f46e5;
+  color: #ffffff;
 }
 
 :deep(.vc-weekday) {
   text-transform: uppercase;
   font-size: 0.95rem;
-  color: #6366f1;
+  color: #d1d5db;
 }
 
 :deep(.vc-day-content) {
   cursor: pointer;
   border-radius: 0.75rem;
   transition: all 0.2s;
-  background-color: #f3f4f6; /* grey for days without events */
+  background-color: #40444b;
+  color: #d1d5db;
 }
 
 /* Override background for days with highlights (events) */
@@ -731,7 +735,8 @@ const filteredEventsByType = computed(() => {
 
 :deep(.vc-day-content:hover) {
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  background-color: #4f545c;
 }
 
 :deep(.vc-highlight) {

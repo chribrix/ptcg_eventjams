@@ -1,13 +1,13 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
+  <div class="min-h-screen bg-[#36393f] py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Loading State -->
       <div
         v-if="isLoading"
-        class="flex items-center gap-2 p-4 text-gray-600 bg-white rounded-lg shadow"
+        class="flex items-center gap-2 p-4 text-gray-300 bg-[#2f3136] rounded-lg shadow"
       >
         <div
-          class="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"
+          class="w-4 h-4 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin"
         ></div>
         <span>Loading event details...</span>
       </div>
@@ -15,132 +15,121 @@
       <!-- Error State -->
       <div
         v-else-if="error"
-        class="bg-red-50 border border-red-200 rounded-lg p-4"
+        class="bg-[#2f3136] border border-[#202225] rounded-lg p-4"
       >
-        <div class="text-red-600">Failed to load event: {{ error }}</div>
+        <div class="text-gray-300">Failed to load event: {{ error }}</div>
       </div>
 
       <!-- Event Details -->
       <div v-else-if="event" class="space-y-6">
         <!-- Event Header -->
-        <div
-          class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
-        >
+        <div class="mb-6">
+          <h1 class="text-3xl font-bold text-white mb-2 break-words">
+            {{ event.name }}
+          </h1>
           <div
-            class="px-4 sm:px-6 py-6 sm:py-8 bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+            class="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 text-gray-400"
           >
-            <h1 class="text-2xl sm:text-3xl font-bold mb-2 break-words">
-              {{ event.name }}
-            </h1>
-            <div
-              class="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4 text-blue-100"
-            >
-              <div class="flex items-center gap-2">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                    clip-rule="evenodd"
-                  ></path>
-                </svg>
-                {{ formatEventDate(event.eventDate) }}
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                    clip-rule="evenodd"
-                  ></path>
-                </svg>
-                {{ event.venue }}
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"
-                  ></path>
-                </svg>
-                {{ registrationCount }} / {{ event.maxParticipants }} registered
-              </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                  clip-rule="evenodd"
+                ></path>
+              </svg>
+              {{ formatEventDate(event.eventDate) }}
             </div>
-          </div>
-
-          <!-- Event Info -->
-          <div class="px-4 sm:px-6 py-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div
-                v-if="event.participationFee"
-                class="flex items-center gap-2 text-gray-700 text-sm sm:text-base"
-              >
-                <span class="font-medium">Entry Fee:</span>
-                <span>{{ event.participationFee }}</span>
-              </div>
-              <div
-                v-if="event.registrationDeadline"
-                class="flex items-center gap-2 text-gray-700 text-sm sm:text-base"
-              >
-                <span class="font-medium">Registration Deadline:</span>
-                <span class="break-words">{{
-                  formatEventDate(event.registrationDeadline)
-                }}</span>
-              </div>
-              <div
-                class="flex items-center gap-2 text-gray-700 text-sm sm:text-base"
-              >
-                <span class="font-medium">Decklist Required:</span>
-                <span
-                  :class="
-                    event.requiresDecklist ? 'text-orange-600' : 'text-gray-500'
-                  "
-                >
-                  {{ event.requiresDecklist ? "Yes" : "No" }}
-                </span>
-              </div>
-              <div
-                class="flex items-center gap-2 text-gray-700 text-sm sm:text-base"
-              >
-                <span class="font-medium">Status:</span>
-                <span :class="getStatusColor(event.status)">
-                  {{ event.status }}
-                </span>
-              </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                  clip-rule="evenodd"
+                ></path>
+              </svg>
+              {{ event.venue }}
             </div>
-
-            <div
-              v-if="event.description"
-              class="mt-4 pt-4 border-t border-gray-200"
-            >
-              <h3 class="font-medium text-gray-900 mb-2 text-sm sm:text-base">
-                Description
-              </h3>
-              <p
-                class="text-gray-700 whitespace-pre-wrap text-sm sm:text-base break-words"
-              >
-                {{ event.description }}
-              </p>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"
+                ></path>
+              </svg>
+              {{ registrationCount }} / {{ event.maxParticipants }} registered
             </div>
           </div>
         </div>
 
+        <!-- Event Info -->
+        <div class="bg-[#2f3136] rounded-lg shadow-lg p-6 mb-6">
+          <h2 class="text-xl font-bold text-white mb-4">Details</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div
+              v-if="event.participationFee"
+              class="flex items-center gap-2 text-gray-300 text-sm sm:text-base"
+            >
+              <span class="font-medium text-white">Entry Fee:</span>
+              <span>{{ event.participationFee }}</span>
+            </div>
+            <div
+              v-if="event.registrationDeadline"
+              class="flex items-center gap-2 text-gray-300 text-sm sm:text-base"
+            >
+              <span class="font-medium text-white">Registration Deadline:</span>
+              <span class="break-words">{{
+                formatEventDate(event.registrationDeadline)
+              }}</span>
+            </div>
+            <div
+              class="flex items-center gap-2 text-gray-300 text-sm sm:text-base"
+            >
+              <span class="font-medium text-white">Decklist Required:</span>
+              <span
+                :class="event.requiresDecklist ? 'text-white' : 'text-gray-400'"
+              >
+                {{ event.requiresDecklist ? "Yes" : "No" }}
+              </span>
+            </div>
+            <div
+              class="flex items-center gap-2 text-gray-300 text-sm sm:text-base"
+            >
+              <span class="font-medium text-white">Status:</span>
+              <span :class="getStatusColor(event.status)">
+                {{ event.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event Information Card -->
+        <div class="bg-[#2f3136] rounded-lg shadow-lg p-6 mb-6">
+          <h2 class="text-xl font-bold text-white mb-4">Event Information</h2>
+          <div v-if="event.description" class="mb-4">
+            <p
+              class="text-gray-300 whitespace-pre-wrap text-sm sm:text-base break-words"
+            >
+              {{ event.description }}
+            </p>
+          </div>
+        </div>
+
         <!-- Registration Section -->
-        <div
-          class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6"
-        >
+        <div class="bg-[#2f3136] rounded-lg shadow-lg p-4 sm:p-6">
           <div v-if="user" class="space-y-4">
-            <h2 class="text-lg sm:text-xl font-semibold text-gray-900">
+            <h2 class="text-lg sm:text-xl font-semibold text-white">
               Registration
             </h2>
 
             <!-- User Registration Status -->
             <div v-if="userRegistration" class="space-y-4">
-              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div class="bg-[#40444b] border border-[#202225] rounded-lg p-4">
                 <div class="flex items-center justify-between mb-3">
                   <div>
-                    <div class="font-medium text-blue-900">
+                    <div class="font-medium text-white">
                       You are registered for this event
                     </div>
-                    <div class="text-sm text-blue-700">
+                    <div class="text-sm text-gray-300">
                       Status:
                       {{
                         userRegistration.status === "registered"
@@ -156,11 +145,9 @@
                 <!-- Decklist Section (if event requires it) -->
                 <div
                   v-if="event.requiresDecklist"
-                  class="mt-4 pt-4 border-t border-blue-200"
+                  class="mt-4 pt-4 border-t border-[#202225]"
                 >
-                  <h4 class="font-medium text-blue-900 mb-2">
-                    Decklist Status
-                  </h4>
+                  <h4 class="font-medium text-white mb-2">Decklist Status</h4>
 
                   <!-- Decklist Submitted -->
                   <div
@@ -168,27 +155,27 @@
                       userRegistration.decklist &&
                       userRegistration.decklist !== 'has_decklist'
                     "
-                    class="bg-white rounded p-3 mb-3"
+                    class="bg-[#36393f] rounded p-3 mb-3"
                   >
                     <div class="flex items-center justify-between mb-2">
-                      <span class="text-sm font-medium text-gray-700"
+                      <span class="text-sm font-medium text-gray-300"
                         >Your Decklist:</span
                       >
                       <div class="flex gap-2">
                         <button
                           @click="showEditDecklistModal = true"
-                          class="text-xs text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded"
+                          class="text-xs text-gray-300 hover:text-white bg-[#40444b] hover:bg-[#4f545c] px-2 py-1 rounded"
                         >
                           ✎ Edit
                         </button>
                         <span
-                          class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded"
+                          class="text-xs text-white bg-gray-700 px-2 py-1 rounded"
                           >✓ Submitted</span
                         >
                       </div>
                     </div>
                     <pre
-                      class="text-xs text-gray-600 whitespace-pre-wrap font-mono bg-gray-50 p-2 rounded max-h-32 overflow-y-auto"
+                      class="text-xs text-gray-300 whitespace-pre-wrap font-mono bg-[#202225] p-2 rounded max-h-32 overflow-y-auto"
                       >{{ userRegistration.decklist }}</pre
                     >
                   </div>
@@ -196,10 +183,10 @@
                   <!-- Bringing Onsite -->
                   <div
                     v-else-if="userRegistration.bringingDecklistOnsite"
-                    class="bg-green-50 border border-green-200 rounded p-3 mb-3"
+                    class="bg-[#40444b] border border-[#202225] rounded p-3 mb-3"
                   >
                     <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2 text-green-800">
+                      <div class="flex items-center gap-2 text-gray-300">
                         <svg
                           class="w-5 h-5"
                           fill="currentColor"
@@ -217,7 +204,7 @@
                       </div>
                       <button
                         @click="showEditDecklistModal = true"
-                        class="text-xs text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded"
+                        class="text-xs text-gray-300 hover:text-white bg-[#40444b] hover:bg-[#4f545c] px-2 py-1 rounded"
                       >
                         ✎ Change
                       </button>
@@ -227,21 +214,21 @@
                   <!-- Pending Decklist -->
                   <div
                     v-else
-                    class="bg-amber-50 border border-amber-200 rounded p-3 mb-3"
+                    class="bg-[#40444b] border border-[#202225] rounded p-3 mb-3"
                   >
-                    <div class="text-amber-800 text-sm mb-3">
+                    <div class="text-gray-300 text-sm mb-3">
                       ⚠️ Decklist required - Your registration is reserved until
                       you submit a decklist
                     </div>
                     <button
                       @click="showEditDecklistModal = true"
-                      class="text-sm text-amber-800 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded font-medium"
+                      class="text-xs text-gray-800 hover:text-gray-900 bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded"
                     >
                       Submit Decklist Now
                     </button>
                     <button
                       @click="showEditDecklistModal = true"
-                      class="text-sm text-amber-800 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded font-medium"
+                      class="text-sm text-gray-800 hover:text-gray-900 bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded font-medium"
                     >
                       Submit Decklist Now
                     </button>
@@ -252,7 +239,7 @@
                 <div class="flex flex-col sm:flex-row gap-3 mt-4">
                   <NuxtLink
                     :to="`/booking/${userRegistration.id}`"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center font-medium text-sm sm:text-base"
+                    class="px-4 py-2 bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-lg hover:from-gray-900 hover:to-black transition-colors text-center font-medium text-sm sm:text-base"
                   >
                     {{
                       event.requiresDecklist &&
@@ -270,7 +257,7 @@
             <div v-else class="flex justify-center">
               <NuxtLink
                 :to="`/events/register/${event.id}`"
-                class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                class="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-lg hover:from-gray-900 hover:to-black transition-colors font-medium"
                 :class="{
                   'opacity-50 cursor-not-allowed':
                     registrationCount >= event.maxParticipants,
@@ -291,7 +278,7 @@
             </p>
             <NuxtLink
               to="/login"
-              class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              class="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-lg hover:from-gray-900 hover:to-black transition-colors font-medium"
             >
               Log In
             </NuxtLink>
@@ -313,26 +300,26 @@
       @click="showEditDecklistModal = false"
     >
       <div
-        class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        class="bg-[#2f3136] rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         @click.stop
       >
         <div class="p-6">
-          <h3 class="text-xl font-bold text-gray-900 mb-4">
+          <h3 class="text-xl font-bold text-white mb-4">
             Submit/Edit Decklist
           </h3>
 
           <div class="space-y-4">
             <!-- Bringing Onsite Checkbox -->
-            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded">
+            <div class="flex items-center gap-3 p-3 bg-[#40444b] rounded">
               <input
                 v-model="editDecklistForm.bringingOnsite"
                 type="checkbox"
                 id="bringingOnsite"
-                class="w-4 h-4 text-blue-600"
+                class="w-4 h-4 text-gray-300"
               />
               <label
                 for="bringingOnsite"
-                class="text-sm font-medium text-gray-700"
+                class="text-sm font-medium text-gray-300"
               >
                 I will bring my decklist on-site
               </label>
@@ -340,16 +327,16 @@
 
             <!-- Decklist Textarea (hidden if bringing onsite) -->
             <div v-if="!editDecklistForm.bringingOnsite">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
+              <label class="block text-sm font-medium text-gray-300 mb-2">
                 Decklist
               </label>
               <textarea
                 v-model="editDecklistForm.decklist"
                 rows="12"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                class="w-full px-3 py-2 bg-[#40444b] text-gray-300 border border-[#202225] rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 font-mono text-sm"
                 placeholder="Paste your decklist here..."
               ></textarea>
-              <p class="text-xs text-gray-500 mt-1">
+              <p class="text-xs text-gray-400 mt-1">
                 Paste your decklist in PTCGL or LimitlessTCG format
               </p>
             </div>
@@ -358,7 +345,7 @@
           <div class="flex gap-3 mt-6">
             <button
               @click="showEditDecklistModal = false"
-              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+              class="flex-1 px-4 py-2 border border-[#202225] text-gray-300 rounded-lg hover:bg-[#40444b] font-medium"
             >
               Cancel
             </button>
@@ -368,7 +355,7 @@
                 isSavingDecklist ||
                 (!editDecklistForm.bringingOnsite && !editDecklistForm.decklist)
               "
-              class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              class="flex-1 px-4 py-2 bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-lg hover:from-gray-900 hover:to-black disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
               {{ isSavingDecklist ? "Saving..." : "Save Decklist" }}
             </button>
@@ -437,13 +424,13 @@ function formatEventDate(dateString: string): string {
 function getStatusColor(status: string): string {
   switch (status.toLowerCase()) {
     case "upcoming":
-      return "text-green-600";
+      return "text-gray-800";
     case "ongoing":
-      return "text-blue-600";
+      return "text-gray-800";
     case "completed":
       return "text-gray-600";
     case "cancelled":
-      return "text-red-600";
+      return "text-gray-400";
     default:
       return "text-gray-600";
   }

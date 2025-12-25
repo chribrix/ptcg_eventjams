@@ -79,6 +79,12 @@
           <p>Customize pokedata.ovh event details</p>
         </NuxtLink>
 
+        <NuxtLink to="/admin/tags" class="action-card">
+          <div class="action-icon">🏷️</div>
+          <h3>Tag Management</h3>
+          <p>Manage event tags and categories</p>
+        </NuxtLink>
+
         <div class="action-card disabled">
           <div class="action-icon">📊</div>
           <h3>Reports</h3>

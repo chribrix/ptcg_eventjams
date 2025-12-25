@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8">
+  <div class="min-h-screen bg-[#36393f] py-8">
     <div class="max-w-5xl mx-auto px-4">
       <!-- Loading State -->
       <div
@@ -8,22 +8,22 @@
       >
         <div class="text-center">
           <div
-            class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"
+            class="w-12 h-12 border-4 border-gray-300 border-t-gray-800 rounded-full animate-spin mx-auto mb-4"
           ></div>
-          <p class="text-gray-600">Loading booking details...</p>
+          <p class="text-gray-300">Loading booking details...</p>
         </div>
       </div>
 
       <!-- Error State -->
       <div
         v-else-if="error"
-        class="bg-white rounded-2xl shadow-xl p-8 text-center"
+        class="bg-[#2f3136] rounded-2xl shadow-xl p-8 text-center"
       >
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">Error</h2>
-        <p class="text-red-600 mb-6">{{ error }}</p>
+        <h2 class="text-2xl font-bold text-white mb-2">Error</h2>
+        <p class="text-gray-300 mb-6">{{ error }}</p>
         <NuxtLink
           to="/dashboard"
-          class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          class="inline-block px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 transition shadow-lg hover:shadow-xl"
         >
           ← Back to Dashboard
         </NuxtLink>
@@ -38,7 +38,7 @@
           <div>
             <NuxtLink
               to="/dashboard"
-              class="text-blue-600 hover:text-blue-700 flex items-center gap-2 mb-2"
+              class="text-green-500 hover:text-green-400 flex items-center gap-2 mb-2 transition"
             >
               <svg
                 class="w-5 h-5"
@@ -55,50 +55,81 @@
               </svg>
               Back to Dashboard
             </NuxtLink>
-            <h1 class="text-3xl font-bold text-gray-900">
+            <h1 class="text-3xl font-bold text-white">
               {{ booking.event.name }}
             </h1>
-            <p class="text-gray-600">
+            <p class="text-gray-400">
               {{ formatEventDate(booking.event.eventDate) }}
             </p>
           </div>
         </div>
 
         <!-- Event Info Card -->
-        <div class="bg-white rounded-2xl shadow-lg p-6">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">
-            Event Information
-          </h2>
+        <div
+          class="bg-[#2f3136] rounded-2xl shadow-lg p-6 border-l-4"
+          :class="{
+            'border-l-orange-500':
+              (booking.event.tagType || 'pokemon') === 'pokemon',
+            'border-l-purple-500':
+              (booking.event.tagType || 'pokemon') === 'riftbound',
+            'border-l-gray-500':
+              (booking.event.tagType || 'pokemon') === 'generic',
+          }"
+        >
+          <h2 class="text-xl font-bold text-white mb-4">Event Information</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p class="text-sm text-gray-500">Venue</p>
-              <p class="font-medium">{{ booking.event.venue }}</p>
+              <p class="text-sm text-gray-400">Game</p>
+              <div class="flex items-center gap-2">
+                <p class="font-medium text-white">
+                  {{ getGameTypeLabel(booking.event.tagType || "pokemon") }}
+                </p>
+                <span
+                  v-for="tag in getDisplayTags(
+                    booking.event.tags || null,
+                    booking.event.tagType || 'pokemon'
+                  )"
+                  :key="tag.value"
+                  class="event-type-badge"
+                  :class="tag.badgeClass"
+                >
+                  {{ tag.label }}
+                </span>
+              </div>
             </div>
             <div>
-              <p class="text-sm text-gray-500">Date</p>
-              <p class="font-medium">
+              <p class="text-sm text-gray-400">Venue</p>
+              <p class="font-medium text-white">{{ booking.event.venue }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">Date</p>
+              <p class="font-medium text-white">
                 {{ formatEventDate(booking.event.eventDate) }}
               </p>
             </div>
             <div v-if="booking.event.participationFee">
-              <p class="text-sm text-gray-500">Participation Fee</p>
-              <p class="font-medium">{{ booking.event.participationFee }}€</p>
+              <p class="text-sm text-gray-400">Participation Fee</p>
+              <p class="font-medium text-white">
+                {{ booking.event.participationFee }}€
+              </p>
             </div>
             <div>
-              <p class="text-sm text-gray-500">Registered</p>
-              <p class="font-medium">{{ formatDate(booking.registeredAt) }}</p>
+              <p class="text-sm text-gray-400">Registered</p>
+              <p class="font-medium text-white">
+                {{ formatDate(booking.registeredAt) }}
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Tickets Section -->
-        <div class="bg-white rounded-2xl shadow-lg p-6">
+        <div class="bg-[#2f3136] rounded-2xl shadow-lg p-6">
           <div
             class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4"
           >
             <div>
-              <h2 class="text-xl font-bold text-gray-900">Tickets</h2>
-              <p class="text-gray-600">
+              <h2 class="text-xl font-bold text-white">Tickets</h2>
+              <p class="text-gray-400">
                 {{ booking.statistics.activeTickets }} active ticket{{
                   booking.statistics.activeTickets !== 1 ? "s" : ""
                 }}
@@ -107,7 +138,7 @@
             <button
               v-if="booking.permissions.canAddTickets"
               @click="showAddTicketModal = true"
-              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+              class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 transition flex items-center gap-2 shadow-lg"
             >
               <svg
                 class="w-5 h-5"
@@ -131,30 +162,30 @@
             <div
               v-for="ticket in activeTickets"
               :key="ticket.id"
-              class="border rounded-lg p-4 bg-white"
+              class="border border-[#202225] rounded-lg p-4 bg-[#40444b]"
             >
               <div
                 class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
               >
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
-                    <h3 class="font-semibold text-gray-900">
+                    <h3 class="font-semibold text-white">
                       {{ ticket.participantName }}
                     </h3>
                     <span
                       v-if="ticket.status === 'registered'"
-                      class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded"
+                      class="px-2 py-1 bg-gray-800 text-white text-xs rounded"
                     >
                       Registered
                     </span>
                     <span
                       v-else-if="ticket.status === 'reserved'"
-                      class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded"
+                      class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded"
                     >
                       Reserved
                     </span>
                   </div>
-                  <div class="text-sm text-gray-600 space-y-1">
+                  <div class="text-sm text-gray-300 space-y-1">
                     <p v-if="ticket.participantPlayerId">
                       Player ID: {{ ticket.participantPlayerId }}
                     </p>
@@ -181,11 +212,11 @@
                     <!-- Decklist Status -->
                     <div
                       v-if="booking.event.requiresDecklist"
-                      class="mt-2 pt-2 border-t border-gray-200"
+                      class="mt-2 pt-2 border-t border-[#202225]"
                     >
                       <div
                         v-if="ticket.decklist"
-                        class="flex items-center gap-1 text-green-600"
+                        class="flex items-center gap-1 text-gray-300"
                       >
                         <svg
                           class="w-4 h-4"
@@ -202,7 +233,7 @@
                       </div>
                       <div
                         v-else-if="ticket.bringingDecklistOnsite"
-                        class="flex items-center gap-1 text-blue-600"
+                        class="flex items-center gap-1 text-gray-300"
                       >
                         <svg
                           class="w-4 h-4"
@@ -217,10 +248,7 @@
                         </svg>
                         Bringing decklist on-site
                       </div>
-                      <div
-                        v-else
-                        class="flex items-center gap-1 text-amber-600"
-                      >
+                      <div v-else class="flex items-center gap-1 text-gray-400">
                         <svg
                           class="w-4 h-4"
                           fill="currentColor"
@@ -244,7 +272,7 @@
                   <button
                     v-if="booking.event.requiresDecklist"
                     @click="editTicketDecklist(ticket)"
-                    class="px-3 py-2 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition flex items-center gap-1"
+                    class="px-3 py-2 text-sm bg-[#36393f] text-gray-300 rounded hover:bg-[#2f3136] transition flex items-center gap-1"
                   >
                     <svg
                       class="w-4 h-4"
@@ -263,13 +291,13 @@
                   </button>
                   <button
                     @click="editTicket(ticket)"
-                    class="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+                    class="px-3 py-2 text-sm bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded hover:from-emerald-700 hover:to-green-700 transition"
                   >
                     Edit
                   </button>
                   <button
                     @click="confirmCancelTicket(ticket)"
-                    class="px-3 py-2 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
+                    class="px-3 py-2 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition"
                   >
                     Cancel
                   </button>
@@ -281,9 +309,9 @@
           <!-- No Modifications Warning -->
           <div
             v-if="!booking.permissions.canModify"
-            class="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4"
+            class="mt-4 bg-[#40444b] border border-[#202225] rounded-lg p-4"
           >
-            <p class="text-amber-800 text-sm">
+            <p class="text-gray-300 text-sm">
               <strong>Note:</strong> Modifications are no longer allowed
               (deadline: 24 hours before event)
             </p>
@@ -291,19 +319,19 @@
         </div>
 
         <!-- Cancel Entire Booking -->
-        <div class="bg-white rounded-2xl shadow-lg p-6">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">Cancel Booking</h2>
-          <p class="text-gray-600 mb-4">
+        <div class="bg-[#2f3136] rounded-2xl shadow-lg p-6">
+          <h2 class="text-xl font-bold text-white mb-4">Cancel Booking</h2>
+          <p class="text-gray-300 mb-4">
             Cancel all tickets and your entire booking for this event.
           </p>
           <button
             v-if="booking.permissions.canModify"
             @click="confirmCancelBooking"
-            class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition shadow-lg"
           >
             Cancel Entire Booking
           </button>
-          <p v-else class="text-amber-600 text-sm">
+          <p v-else class="text-gray-400 text-sm">
             Cancellation is no longer possible (deadline: 24 hours before event)
           </p>
         </div>
@@ -316,18 +344,18 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       @click.self="showAddTicketModal = false"
     >
-      <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full">
-        <h3 class="text-xl font-bold text-gray-900 mb-4">Add New Ticket</h3>
+      <div class="bg-[#2f3136] rounded-2xl shadow-xl p-6 max-w-md w-full">
+        <h3 class="text-xl font-bold text-white mb-4">Add New Ticket</h3>
         <form @submit.prevent="submitAddTicket" class="space-y-4">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
               Participant Name *
             </label>
             <input
               v-model="newTicket.participantName"
               type="text"
               required
-              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-3 bg-[#40444b] text-white border-2 border-[#202225] rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
               placeholder="Full name"
             />
           </div>
@@ -340,7 +368,7 @@
               type="text"
               inputmode="numeric"
               pattern="\d*"
-              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-3 bg-[#40444b] text-white border-2 border-[#202225] rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
               placeholder="Player ID (numbers only)"
               @input="validateTicketPlayerId($event, 'new')"
             />
@@ -350,13 +378,13 @@
               <input
                 type="checkbox"
                 v-model="newTicket.isAnonymous"
-                class="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                class="mt-0.5 w-4 h-4 text-gray-800 border-gray-300 rounded focus:ring-gray-500"
               />
               <div>
-                <span class="text-sm font-medium text-gray-900"
+                <span class="text-sm font-medium text-white"
                   >Anonymous Participation</span
                 >
-                <p class="text-xs text-gray-600 mt-0.5">
+                <p class="text-xs text-gray-400 mt-0.5">
                   Hide name from other participants
                 </p>
               </div>
@@ -364,22 +392,22 @@
           </div>
           <div
             v-if="addTicketError"
-            class="bg-red-50 border border-red-200 rounded-lg p-4"
+            class="bg-[#40444b] border border-[#202225] rounded-lg p-4"
           >
-            <p class="text-red-800 text-sm">{{ addTicketError }}</p>
+            <p class="text-gray-300 text-sm">{{ addTicketError }}</p>
           </div>
           <div class="flex gap-3">
             <button
               type="button"
               @click="showAddTicketModal = false"
-              class="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              class="flex-1 px-4 py-3 border-2 border-[#202225] text-gray-300 rounded-lg hover:bg-[#40444b] transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="addingTicket"
-              class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+              class="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 transition disabled:opacity-50 shadow-lg"
             >
               {{ addingTicket ? "Adding..." : "Add Ticket" }}
             </button>
@@ -394,22 +422,22 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       @click.self="showEditTicketModal = false"
     >
-      <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full">
-        <h3 class="text-xl font-bold text-gray-900 mb-4">Edit Ticket</h3>
+      <div class="bg-[#2f3136] rounded-2xl shadow-xl p-6 max-w-md w-full">
+        <h3 class="text-xl font-bold text-white mb-4">Edit Ticket</h3>
         <form @submit.prevent="submitEditTicket" class="space-y-4">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
               Participant Name *
             </label>
             <input
               v-model="editingTicket.participantName"
               type="text"
               required
-              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-3 bg-[#40444b] text-white border-2 border-[#202225] rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <label class="block text-sm font-semibold text-gray-300 mb-2">
               Player ID (optional)
             </label>
             <input
@@ -417,7 +445,7 @@
               type="text"
               inputmode="numeric"
               pattern="\d*"
-              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-4 py-3 bg-[#40444b] text-white border-2 border-[#202225] rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
               placeholder="Player ID (numbers only)"
               @input="validateTicketPlayerId($event, 'edit')"
             />
@@ -427,31 +455,31 @@
               <input
                 type="checkbox"
                 v-model="editingTicket.isAnonymous"
-                class="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                class="mt-0.5 w-4 h-4 text-gray-300 border-gray-300 rounded focus:ring-gray-500"
               />
-              <span class="text-sm font-medium text-gray-900"
+              <span class="text-sm font-medium text-white"
                 >Anonymous Participation</span
               >
             </label>
           </div>
           <div
             v-if="editTicketError"
-            class="bg-red-50 border border-red-200 rounded-lg p-4"
+            class="bg-[#40444b] border border-[#202225] rounded-lg p-4"
           >
-            <p class="text-red-800 text-sm">{{ editTicketError }}</p>
+            <p class="text-gray-300 text-sm">{{ editTicketError }}</p>
           </div>
           <div class="flex gap-3">
             <button
               type="button"
               @click="showEditTicketModal = false"
-              class="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              class="flex-1 px-4 py-3 border-2 border-[#202225] text-gray-300 rounded-lg hover:bg-[#40444b] transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               :disabled="updatingTicket"
-              class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+              class="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 transition disabled:opacity-50 shadow-lg"
             >
               {{ updatingTicket ? "Saving..." : "Save Changes" }}
             </button>
@@ -467,11 +495,11 @@
       @click.self="showCancelTicketModal = false"
     >
       <div
-        class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full"
+        class="bg-[#2f3136] rounded-2xl shadow-xl p-6 max-w-md w-full"
         @click.stop
       >
-        <h3 class="text-xl font-bold text-gray-900 mb-4">Cancel Ticket?</h3>
-        <p class="text-gray-700 mb-6">
+        <h3 class="text-xl font-bold text-white mb-4">Cancel Ticket?</h3>
+        <p class="text-gray-300 mb-6">
           Are you sure you want to cancel the ticket for
           <strong>{{ ticketToCancel.participantName }}</strong
           >? This action cannot be undone.
@@ -481,14 +509,14 @@
             type="button"
             @click="showCancelTicketModal = false"
             :disabled="cancellingTicket"
-            class="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+            class="flex-1 px-4 py-3 border-2 border-[#202225] text-gray-300 rounded-lg hover:bg-[#40444b] transition disabled:opacity-50"
           >
             Keep Ticket
           </button>
           <button
             @click="cancelTicket"
             :disabled="cancellingTicket"
-            class="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+            class="flex-1 px-4 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition disabled:opacity-50"
           >
             {{ cancellingTicket ? "Cancelling..." : "Yes, Cancel Ticket" }}
           </button>
@@ -503,13 +531,13 @@
       @click.self="showCancelBookingModal = false"
     >
       <div
-        class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full"
+        class="bg-[#2f3136] rounded-2xl shadow-xl p-6 max-w-md w-full"
         @click.stop
       >
-        <h3 class="text-xl font-bold text-gray-900 mb-4">
+        <h3 class="text-xl font-bold text-white mb-4">
           Cancel Entire Booking?
         </h3>
-        <p class="text-gray-700 mb-4">
+        <p class="text-gray-300 mb-4">
           Are you sure you want to cancel your entire booking with
           <strong
             >{{ booking.statistics.activeTickets }} active ticket{{
@@ -517,7 +545,7 @@
             }}</strong
           >?
         </p>
-        <p class="text-sm text-gray-600 mb-6">
+        <p class="text-sm text-gray-400 mb-6">
           This action cannot be undone. All tickets will be cancelled and you
           will need to register again if you change your mind.
         </p>
@@ -526,14 +554,14 @@
             type="button"
             @click="showCancelBookingModal = false"
             :disabled="cancellingBooking"
-            class="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+            class="flex-1 px-4 py-3 border-2 border-[#202225] text-gray-300 rounded-lg hover:bg-[#40444b] transition disabled:opacity-50"
           >
             Keep Booking
           </button>
           <button
             @click="cancelBooking"
             :disabled="cancellingBooking"
-            class="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+            class="flex-1 px-4 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition disabled:opacity-50"
           >
             {{ cancellingBooking ? "Cancelling..." : "Yes, Cancel Booking" }}
           </button>
@@ -548,28 +576,28 @@
       @click.self="showDecklistModal = false"
     >
       <div
-        class="bg-white rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        class="bg-[#2f3136] rounded-2xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         @click.stop
       >
-        <h3 class="text-xl font-bold text-gray-900 mb-2">
+        <h3 class="text-xl font-bold text-white mb-2">
           Decklist for {{ editingTicketForDecklist.participantName }}
         </h3>
-        <p class="text-sm text-gray-600 mb-6">
+        <p class="text-sm text-gray-400 mb-6">
           Submit or update the decklist for this participant
         </p>
 
         <div class="space-y-4">
           <!-- Bringing Onsite Checkbox -->
-          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div class="flex items-center gap-3 p-3 bg-[#40444b] rounded-lg">
             <input
               v-model="decklistForm.bringingOnsite"
               type="checkbox"
               id="bringingOnsite"
-              class="w-4 h-4 text-blue-600 rounded"
+              class="w-4 h-4 text-gray-300 rounded"
             />
             <label
               for="bringingOnsite"
-              class="text-sm font-medium text-gray-700"
+              class="text-sm font-medium text-gray-300"
             >
               I will bring my decklist on-site
             </label>
@@ -577,16 +605,16 @@
 
           <!-- Decklist Textarea (hidden if bringing onsite) -->
           <div v-if="!decklistForm.bringingOnsite">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="block text-sm font-medium text-gray-300 mb-2">
               Decklist
             </label>
             <textarea
               v-model="decklistForm.decklist"
               rows="12"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+              class="w-full px-3 py-2 bg-[#40444b] text-white border border-[#202225] rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 font-mono text-sm"
               placeholder="Paste your decklist here..."
             ></textarea>
-            <p class="text-xs text-gray-500 mt-1">
+            <p class="text-xs text-gray-400 mt-1">
               Paste your decklist in PTCGL or LimitlessTCG format
             </p>
           </div>
@@ -597,7 +625,7 @@
             type="button"
             @click="showDecklistModal = false"
             :disabled="savingDecklist"
-            class="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+            class="flex-1 px-4 py-3 border-2 border-[#202225] text-gray-300 rounded-lg hover:bg-[#40444b] transition disabled:opacity-50"
           >
             Cancel
           </button>
@@ -607,7 +635,7 @@
               savingDecklist ||
               (!decklistForm.bringingOnsite && !decklistForm.decklist)
             "
-            class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+            class="flex-1 px-4 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-lg hover:from-gray-900 hover:to-black transition disabled:opacity-50"
           >
             {{ savingDecklist ? "Saving..." : "Save Decklist" }}
           </button>
@@ -620,6 +648,10 @@
 <script setup lang="ts">
 const route = useRoute();
 const bookingId = route.params.id as string;
+
+// Use centralized composables
+const { getDisplayTags } = useTagDisplay();
+const { getGameTypeLabel } = useRegistrationCardStyle();
 
 interface Ticket {
   id: string;
@@ -646,6 +678,8 @@ interface Booking {
     id: string;
     name: string;
     venue: string;
+    tagType?: string | null;
+    tags?: any | null;
     eventDate: string;
     registrationDeadline: string | null;
     maxParticipants: number;
@@ -929,3 +963,57 @@ onMounted(() => {
   fetchBookingDetails();
 });
 </script>
+
+<style scoped>
+.event-type-badge {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* Tag type badges */
+.event-type-badge.type-league_cup {
+  background-color: #bbf7d0;
+  color: #166534;
+}
+
+.event-type-badge.type-league_challenge {
+  background-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.event-type-badge.type-local_tournament,
+.event-type-badge.type-store_tournament {
+  background-color: #e0f2fe;
+  color: #075985;
+}
+
+.event-type-badge.type-premier_challenge,
+.event-type-badge.type-special_event,
+.event-type-badge.type-custom {
+  background-color: #fed7aa;
+  color: #9a3412;
+}
+
+.event-type-badge.type-midseason_showdown,
+.event-type-badge.type-regional_championships {
+  background-color: #ddd6fe;
+  color: #5b21b6;
+}
+
+/* Format badges */
+.event-type-badge.format-standard,
+.event-type-badge.format-expanded,
+.event-type-badge.format-unlimited {
+  background-color: #cffafe;
+  color: #155e75;
+}
+
+/* Host badges */
+.event-type-badge.host {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+</style>

@@ -1,28 +1,49 @@
 <template>
   <div
-    class="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300 hover:border-emerald-300 group"
+    class="border rounded-xl p-4 hover:shadow-lg transition-all duration-300 group"
+    :class="
+      getCardBackgroundClass(registration.customEvent.tagType || 'pokemon')
+    "
   >
+    <!-- Game Type Header -->
+    <div
+      class="mb-2 pb-1.5 border-b border-opacity-20"
+      :class="getGameHeaderClass(registration.customEvent.tagType)"
+    >
+      <h4
+        class="text-xs font-semibold uppercase tracking-wide opacity-70"
+        :class="getGameHeaderTextClass(registration.customEvent.tagType)"
+      >
+        {{ getGameTypeLabel(registration.customEvent.tagType || "pokemon") }}
+      </h4>
+    </div>
+
     <!-- Event Header -->
     <div class="flex items-start justify-between mb-3">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 mb-1 flex-wrap">
-          <h3 class="text-lg font-semibold text-gray-900 truncate">
+          <h3 class="text-lg font-semibold text-white truncate">
             {{ registration.customEvent.name }}
           </h3>
           <span
+            v-for="tag in getDisplayTags(
+              registration.customEvent.tags || null,
+              registration.customEvent.tagType || 'pokemon'
+            )"
+            :key="tag.value"
             class="event-type-badge"
-            :class="`type-${registration.eventType || 'custom'}`"
+            :class="tag.badgeClass"
           >
-            {{ getEventTypeName(registration.eventType || "custom") }}
+            {{ tag.label }}
           </span>
         </div>
 
-        <div class="flex items-center gap-2 text-sm text-gray-600 mb-2">
+        <div class="flex items-center gap-2 text-sm text-gray-300 mb-2">
           <MapPinIcon class="w-4 h-4 flex-shrink-0" />
           <span class="truncate">{{ registration.customEvent.venue }}</span>
         </div>
 
-        <div class="flex items-center gap-2 text-sm text-gray-600">
+        <div class="flex items-center gap-2 text-sm text-gray-300">
           <CalendarIcon class="w-4 h-4 flex-shrink-0" />
           <span>{{ formatEventDate(registration.customEvent.eventDate) }}</span>
         </div>
@@ -44,7 +65,7 @@
     </div>
 
     <!-- Event Details Row -->
-    <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+    <div class="flex items-center justify-between text-sm text-gray-400 mb-4">
       <div class="flex items-center gap-4">
         <!-- Participation Fee -->
         <div
@@ -54,7 +75,7 @@
           <CurrencyEuroIcon class="w-4 h-4" />
           <span>€{{ registration.customEvent.participationFee }}</span>
         </div>
-        <div v-else class="flex items-center gap-1 text-green-600">
+        <div v-else class="flex items-center gap-1 text-gray-300">
           <CheckCircleIcon class="w-4 h-4" />
           <span>Free</span>
         </div>
@@ -68,7 +89,7 @@
         <!-- Decklist Required -->
         <div
           v-if="registration.customEvent.requiresDecklist"
-          class="flex items-center gap-1 text-amber-600"
+          class="flex items-center gap-1 text-amber-400"
         >
           <DocumentTextIcon class="w-4 h-4" />
           <span>Decklist required</span>
@@ -116,7 +137,7 @@
           !registration.bringingDecklistOnsite
         "
         to="/dashboard"
-        class="group flex-1 flex items-center justify-center px-4 py-2 bg-amber-50 text-amber-700 text-sm font-semibold rounded-lg hover:bg-amber-100 transition-all duration-200 border border-amber-300 hover:border-amber-400 shadow-sm hover:shadow-md"
+        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-semibold rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500 shadow-sm hover:shadow-md"
       >
         Submit Decklist
       </NuxtLink>
@@ -124,7 +145,7 @@
       <!-- Event Details Button -->
       <NuxtLink
         :to="`/events/${registration.customEvent.id}`"
-        class="group flex-1 flex items-center justify-center px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition-all duration-200 border border-blue-200 hover:border-blue-300"
+        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
       >
         View Event
       </NuxtLink>
@@ -133,33 +154,32 @@
       <NuxtLink
         v-if="registration.status === 'cancelled'"
         :to="`/events/${registration.customEvent.id}`"
-        class="group flex-1 flex items-center justify-center px-4 py-2 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-all duration-200 border border-emerald-200 hover:border-emerald-300"
+        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
       >
         Re-register
       </NuxtLink>
 
-      <!-- Edit Booking Button -->
+      <!-- Edit Booking Button - Always show for non-cancelled registrations -->
       <NuxtLink
-        v-else-if="canCancelRegistration(registration)"
+        v-else-if="registration.status !== 'cancelled'"
         :to="`/booking/${registration.id}`"
-        class="group flex-1 flex items-center justify-center px-4 py-2 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-100 transition-all duration-200 border border-emerald-200 hover:border-emerald-300"
+        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
       >
         Edit Booking
       </NuxtLink>
-
-      <!-- Cancellation Message -->
-      <div
-        v-else-if="!canCancelRegistration(registration)"
-        class="flex items-center px-3 py-2 bg-gray-50 text-gray-500 text-xs rounded-lg border border-gray-200"
-      >
-        <InformationCircleIcon class="w-4 h-4 mr-1" />
-        {{ getCancellationMessage(registration) }}
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+const { getDisplayTags } = useTagDisplay();
+const {
+  getCardBackgroundClass,
+  getGameTypeLabel,
+  getGameHeaderClass,
+  getGameHeaderTextClass,
+} = useRegistrationCardStyle();
+
 import { getEventTypeName } from "~/utils/eventTypes";
 import {
   MapPinIcon,
@@ -218,24 +238,24 @@ const CANCELLATION_DEADLINE_HOURS = 24;
 function getStatusBadgeClass(status: string): string {
   switch (status) {
     case "registered":
-      return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+      return "bg-emerald-600 text-white border border-emerald-600";
     case "reserved":
-      return "bg-amber-100 text-amber-800 border border-amber-200";
+      return "bg-[#40444b] text-gray-300 border border-gray-500";
     case "cancelled":
-      return "bg-red-100 text-red-800 border border-red-200";
+      return "bg-gray-600 text-gray-200 border border-gray-600";
     default:
-      return "bg-gray-100 text-gray-800 border border-gray-200";
+      return "bg-[#40444b] text-gray-300 border border-gray-500";
   }
 }
 
 function getStatusDotClass(status: string): string {
   switch (status) {
     case "registered":
-      return "bg-emerald-500";
+      return "bg-white";
     case "reserved":
-      return "bg-amber-500";
+      return "bg-gray-600";
     case "cancelled":
-      return "bg-red-500";
+      return "bg-gray-900";
     default:
       return "bg-gray-500";
   }
@@ -256,11 +276,11 @@ function getStatusLabel(status: string): string {
 
 function getDecklistStatusClasses(registration: EventRegistration): string {
   if (registration.decklist) {
-    return "bg-emerald-50 border-emerald-200 text-emerald-800";
+    return "bg-[#40444b] border-emerald-500 text-emerald-300";
   } else if (registration.bringingDecklistOnsite) {
-    return "bg-blue-50 border-blue-200 text-blue-800";
+    return "bg-[#40444b] border-blue-500 text-blue-300";
   } else {
-    return "bg-amber-50 border-amber-200 text-amber-800";
+    return "bg-[#40444b] border-amber-500 text-amber-300";
   }
 }
 
@@ -348,23 +368,63 @@ function formatRegistrationDate(dateString: string): string {
   white-space: nowrap;
 }
 
-.event-type-badge.type-cup {
+/* Tag type badges */
+.event-type-badge.type-league_cup {
   background-color: #bbf7d0;
   color: #166534;
 }
 
-.event-type-badge.type-challenge {
+.event-type-badge.type-league_challenge {
   background-color: #bfdbfe;
   color: #1e40af;
 }
 
-.event-type-badge.type-local {
+.event-type-badge.type-local_tournament,
+.event-type-badge.type-store_tournament {
   background-color: #e0f2fe;
   color: #075985;
 }
 
+.event-type-badge.type-premier_challenge,
+.event-type-badge.type-special_event,
 .event-type-badge.type-custom {
   background-color: #fed7aa;
   color: #9a3412;
+}
+
+.event-type-badge.type-midseason_showdown,
+.event-type-badge.type-regional_championships {
+  background-color: #ddd6fe;
+  color: #5b21b6;
+}
+
+/* Game badges */
+.event-type-badge.game-pokemon {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.event-type-badge.game-riftbound {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.event-type-badge.game-generic {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+/* Format badges */
+.event-type-badge.format-standard,
+.event-type-badge.format-expanded,
+.event-type-badge.format-unlimited {
+  background-color: #cffafe;
+  color: #155e75;
+}
+
+/* Host badges */
+.event-type-badge.host {
+  background-color: #f3e8ff;
+  color: #6b21a8;
 }
 </style>

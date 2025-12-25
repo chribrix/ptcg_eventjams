@@ -14,6 +14,7 @@ import {
   PlusCircleIcon,
   UsersIcon,
   ExclamationTriangleIcon,
+  TagIcon,
 } from "@heroicons/vue/24/outline";
 
 const supabase = useSupabaseClient();
@@ -168,26 +169,24 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <div
-    class="min-h-screen bg-gradient-to-r from-white via-purple-50 to-purple-100 overflow-x-hidden"
-  >
+  <div class="min-h-screen bg-[#36393f] overflow-x-hidden">
     <!-- Impersonation Banner -->
     <ImpersonationBanner />
 
     <!-- Toast Container -->
     <ToastContainer />
 
-    <header class="bg-white shadow-lg border-b border-gray-200">
+    <header class="bg-[#2f3136] shadow-lg border-b border-[#202225]">
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <!-- Left side - Logo/Brand -->
           <div class="flex items-center space-x-4">
             <NuxtLink
               to="/"
-              class="flex items-center space-x-2 text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors duration-200"
+              class="flex items-center space-x-2 text-xl font-bold text-white hover:text-gray-300 transition-colors duration-200"
             >
               <div
-                class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center"
+                class="w-8 h-8 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg flex items-center justify-center"
               >
                 <span class="text-white font-bold text-sm">P</span>
               </div>
@@ -200,7 +199,7 @@ const { t } = useI18n();
             <!-- Mobile Menu Button -->
             <button
               @click="mobileMenuOpen = !mobileMenuOpen"
-              class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="md:hidden p-2 rounded-lg text-gray-300 hover:bg-[#40444b] focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               <div class="w-5 h-5 flex flex-col justify-center items-center">
                 <span
@@ -293,6 +292,14 @@ const { t } = useI18n();
                       <span>External Events</span>
                     </NuxtLink>
                     <NuxtLink
+                      to="/admin/tags"
+                      class="admin-link"
+                      @click="hideAdminDropdown"
+                    >
+                      <TagIcon class="w-4 h-4" />
+                      <span>Tag Management</span>
+                    </NuxtLink>
+                    <NuxtLink
                       to="/admin/events/history"
                       class="admin-link"
                       @click="hideAdminDropdown"
@@ -322,7 +329,7 @@ const { t } = useI18n();
 
               <!-- Language Switcher & Auth Actions -->
               <div
-                class="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200"
+                class="flex items-center space-x-3 ml-4 pl-4 border-l border-[#202225]"
               >
                 <!-- Language Switcher -->
                 <LanguageSwitcher />
@@ -343,14 +350,14 @@ const { t } = useI18n();
         <!-- Mobile Navigation Panel -->
         <div
           v-if="mobileMenuOpen"
-          class="md:hidden border-t border-gray-200 bg-white"
+          class="md:hidden border-t border-[#202225] bg-[#2f3136]"
         >
           <div class="px-4 pt-2 pb-3 space-y-1">
             <!-- Mobile Navigation Links -->
             <NuxtLink
               to="/eventlist"
               @click="mobileMenuOpen = false"
-              class="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
             >
               <CalendarDaysIcon class="w-5 h-5" />
               <span>{{ t("nav.events") }}</span>
@@ -361,7 +368,7 @@ const { t } = useI18n();
               v-if="userName"
               to="/dashboard"
               @click="mobileMenuOpen = false"
-              class="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
             >
               <ChartBarIcon class="w-5 h-5" />
               <span>{{ t("nav.dashboard") }}</span>
@@ -372,7 +379,7 @@ const { t } = useI18n();
               <NuxtLink
                 to="/admin"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
               >
                 <CogIcon class="w-5 h-5" />
                 <span>{{ t("nav.admin") }}</span>
@@ -381,7 +388,7 @@ const { t } = useI18n();
               <NuxtLink
                 to="/admin/events"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
               >
                 <CalendarIcon class="w-4 h-4" />
                 <span>{{ t("nav.manageEvents") }}</span>
@@ -390,7 +397,7 @@ const { t } = useI18n();
               <NuxtLink
                 to="/admin/custom-events"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
               >
                 <PlusCircleIcon class="w-4 h-4" />
                 <span>{{ t("nav.customEvents") }}</span>
@@ -399,7 +406,7 @@ const { t } = useI18n();
               <NuxtLink
                 to="/admin/players"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
               >
                 <UsersIcon class="w-4 h-4" />
                 <span>{{ t("nav.managePlayers") }}</span>
@@ -408,16 +415,25 @@ const { t } = useI18n();
               <NuxtLink
                 to="/admin/external-events"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
               >
                 <CogIcon class="w-4 h-4" />
                 <span>External Events</span>
               </NuxtLink>
 
               <NuxtLink
+                to="/admin/tags"
+                @click="mobileMenuOpen = false"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
+              >
+                <TagIcon class="w-4 h-4" />
+                <span>Tag Management</span>
+              </NuxtLink>
+
+              <NuxtLink
                 to="/admin/events/history"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
               >
                 <ClockIcon class="w-4 h-4" />
                 <span>{{ t("nav.eventHistory") }}</span>
@@ -426,7 +442,7 @@ const { t } = useI18n();
               <NuxtLink
                 to="/admin/logs"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
               >
                 <ExclamationTriangleIcon class="w-4 h-4" />
                 <span>Error Logs</span>
@@ -435,7 +451,7 @@ const { t } = useI18n();
               <NuxtLink
                 to="/importer"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-600 hover:bg-gray-100 rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
               >
                 <DocumentIcon class="w-4 h-4" />
                 <span>{{ t("nav.importer") }}</span>
@@ -448,12 +464,12 @@ const { t } = useI18n();
             </div>
 
             <!-- Authentication buttons -->
-            <div class="border-t border-gray-200 pt-3 mt-3">
+            <div class="border-t border-[#202225] pt-3 mt-3">
               <!-- Logout button for authenticated users -->
               <button
                 v-if="userName"
                 @click="handleMobileLogout"
-                class="flex items-center space-x-3 w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                class="flex items-center space-x-3 w-full px-3 py-2 text-red-400 hover:bg-[#40444b] rounded-lg"
               >
                 <ArrowRightOnRectangleIcon class="w-5 h-5" />
                 <span>{{ t("nav.logout") }}</span>
@@ -464,7 +480,7 @@ const { t } = useI18n();
                 v-else
                 to="/login"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
               >
                 <UserPlusIcon class="w-5 h-5" />
                 <span>{{ t("nav.login") }}</span>
@@ -492,15 +508,15 @@ const { t } = useI18n();
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: #d1d5db;
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   text-decoration: none;
 }
 
 .nav-link:hover {
-  color: #2563eb;
-  background-color: #dbeafe;
+  color: #ffffff;
+  background-color: #40444b;
 }
 
 .nav-link-primary {
@@ -511,7 +527,7 @@ const { t } = useI18n();
   font-size: 0.875rem;
   font-weight: 500;
   color: white;
-  background-color: #2563eb;
+  background: linear-gradient(to right, #1f2937, #111827);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   text-decoration: none;
@@ -519,16 +535,16 @@ const { t } = useI18n();
 }
 
 .nav-link-primary:hover {
-  background-color: #1d4ed8;
+  background: linear-gradient(to right, #111827, #000000);
 }
 
 .router-link-exact-active.nav-link {
-  color: #2563eb;
-  background-color: #dbeafe;
+  color: #ffffff;
+  background-color: #40444b;
 }
 
 .router-link-exact-active.nav-link-primary {
-  background-color: #1d4ed8;
+  background: linear-gradient(to right, #111827, #000000);
 }
 
 /* Admin dropdown styles */
@@ -543,17 +559,17 @@ const { t } = useI18n();
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
-  background-color: #f3f4f6;
-  border: 1px solid #d1d5db;
+  color: #d1d5db;
+  background-color: #40444b;
+  border: 1px solid #202225;
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
 }
 
 .admin-menu-button:hover {
-  background-color: #e5e7eb;
-  border-color: #9ca3af;
+  background-color: #4f545c;
+  border-color: #40444b;
 }
 
 .admin-dropdown-content {
@@ -563,11 +579,11 @@ const { t } = useI18n();
   z-index: 50;
   min-width: 12rem;
   margin-top: 0.25rem;
-  background-color: white;
-  border: 1px solid #d1d5db;
+  background-color: #2f3136;
+  border: 1px solid #202225;
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
+    0 4px 6px -2px rgba(0, 0, 0, 0.2);
   overflow: hidden;
 }
 
@@ -578,10 +594,10 @@ const { t } = useI18n();
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  color: #374151;
+  color: #d1d5db;
   text-decoration: none;
   transition: all 0.2s ease-in-out;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #202225;
 }
 
 .admin-link:last-child {
@@ -589,13 +605,13 @@ const { t } = useI18n();
 }
 
 .admin-link:hover {
-  background-color: #f9fafb;
-  color: #2563eb;
+  background-color: #40444b;
+  color: #ffffff;
 }
 
 .admin-link:focus {
   outline: none;
-  background-color: #f3f4f6;
+  background-color: #40444b;
 }
 
 /* Auth button styles */
@@ -627,7 +643,7 @@ const { t } = useI18n();
   font-size: 0.875rem;
   font-weight: 500;
   color: white;
-  background: linear-gradient(to right, #10b981, #059669);
+  background: linear-gradient(to right, #1f2937, #111827);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -636,7 +652,7 @@ const { t } = useI18n();
 }
 
 .signin-button:hover {
-  background: linear-gradient(to right, #059669, #047857);
+  background: linear-gradient(to right, #111827, #000000);
   transform: translateY(-1px) scale(1.05);
 }
 

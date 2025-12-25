@@ -27,10 +27,15 @@
           <div class="event-title-row">
             <h4>{{ registration.customEvent.name }}</h4>
             <span
+              v-for="tag in getDisplayTags(
+                registration.customEvent.tags || null,
+                registration.customEvent.tagType || 'pokemon'
+              )"
+              :key="tag.value"
               class="event-type-badge"
-              :class="`type-${registration.eventType || 'custom'}`"
+              :class="tag.badgeClass"
             >
-              {{ getEventTypeName(registration.eventType || "custom") }}
+              {{ tag.label }}
             </span>
           </div>
           <span class="event-date">
@@ -70,6 +75,8 @@
 
 <script setup lang="ts">
 import { getEventTypeName } from "~/utils/eventTypes";
+const { getDisplayTags } = useTagDisplay();
+
 interface EventRegistration {
   id: string;
   customEventId: string | null;
@@ -92,6 +99,8 @@ interface EventRegistration {
     registrationDeadline?: string | null;
     requiresDecklist: boolean;
     status: string;
+    tags?: any;
+    tagType?: string;
   };
 }
 
@@ -125,6 +134,12 @@ const fetchUserRegistrations = async () => {
       "/api/dashboard/registrations"
     );
     registrations.value = data || [];
+    // Debug: log first registration to see what we're getting
+    if (registrations.value.length > 0) {
+      console.log("First registration:", registrations.value[0]);
+      console.log("Tags:", registrations.value[0].customEvent.tags);
+      console.log("TagType:", registrations.value[0].customEvent.tagType);
+    }
   } catch (error) {
     console.error("Failed to fetch user registrations:", error);
     registrations.value = [];
@@ -249,24 +264,64 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
-.event-type-badge.type-cup {
+/* Tag type badges */
+.event-type-badge.type-league_cup {
   background-color: #bbf7d0;
   color: #166534;
 }
 
-.event-type-badge.type-challenge {
+.event-type-badge.type-league_challenge {
   background-color: #bfdbfe;
   color: #1e40af;
 }
 
-.event-type-badge.type-local {
+.event-type-badge.type-local_tournament,
+.event-type-badge.type-store_tournament {
   background-color: #e0f2fe;
   color: #075985;
 }
 
+.event-type-badge.type-premier_challenge,
+.event-type-badge.type-special_event,
 .event-type-badge.type-custom {
   background-color: #fed7aa;
   color: #9a3412;
+}
+
+.event-type-badge.type-midseason_showdown,
+.event-type-badge.type-regional_championships {
+  background-color: #ddd6fe;
+  color: #5b21b6;
+}
+
+/* Game badges */
+.event-type-badge.game-pokemon {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.event-type-badge.game-riftbound {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.event-type-badge.game-generic {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+/* Format badges */
+.event-type-badge.format-standard,
+.event-type-badge.format-expanded,
+.event-type-badge.format-unlimited {
+  background-color: #cffafe;
+  color: #155e75;
+}
+
+/* Host badges */
+.event-type-badge.host {
+  background-color: #f3e8ff;
+  color: #6b21a8;
 }
 
 .event-date {

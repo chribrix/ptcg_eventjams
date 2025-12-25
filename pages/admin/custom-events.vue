@@ -53,15 +53,16 @@
                 <div class="flex items-start justify-between gap-3">
                   <div class="flex-1 min-w-0">
                     <h3
-                      class="font-semibold text-gray-900 mb-1 flex items-center gap-2"
+                      class="font-semibold text-gray-900 mb-1 flex items-center gap-2 flex-wrap"
                     >
-                      {{ event.name }}
+                      <span>{{ event.name }}</span>
                       <span
-                        v-if="event.eventType && event.eventType !== 'custom'"
+                        v-for="tag in getDisplayTags(event.tags, event.tagType)"
+                        :key="tag.label"
                         class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                        :class="getEventTypeBadgeClass(event.eventType)"
+                        :class="tag.badgeClass"
                       >
-                        {{ getEventTypeName(event.eventType) }}
+                        {{ tag.value }}
                       </span>
                     </h3>
                     <div class="flex flex-col gap-1 text-sm text-gray-600">
@@ -327,16 +328,17 @@
                   <h3 class="text-xl font-bold text-gray-900 mb-2">
                     {{ selectedEvent.name }}
                   </h3>
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
                     <span
-                      v-if="
-                        selectedEvent.eventType &&
-                        selectedEvent.eventType !== 'custom'
-                      "
+                      v-for="tag in getDisplayTags(
+                        selectedEvent.tags,
+                        selectedEvent.tagType
+                      )"
+                      :key="tag.label"
                       class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
-                      :class="getEventTypeBadgeClass(selectedEvent.eventType)"
+                      :class="tag.badgeClass"
                     >
-                      {{ getEventTypeName(selectedEvent.eventType) }}
+                      {{ tag.value }}
                     </span>
                     <span
                       class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
@@ -827,18 +829,75 @@
             />
           </div>
 
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tagType">Game Category *</label>
+              <select
+                id="tagType"
+                v-model="eventForm.tagType"
+                required
+                class="form-input"
+              >
+                <option value="pokemon">Pokémon</option>
+                <option value="riftbound">Riftbound</option>
+                <option value="generic">Generic</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="gameTag">Game *</label>
+              <input
+                id="gameTag"
+                v-model="eventForm.tags.game"
+                type="text"
+                required
+                class="form-input"
+                placeholder="Pokemon, Riftbound, etc."
+              />
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="eventType">Event Type *</label>
             <select
               id="eventType"
-              v-model="eventForm.eventType"
+              v-model="eventForm.tags.type"
               required
               class="form-input"
             >
               <option value="custom">Custom Event</option>
-              <option value="challenge">League Challenge</option>
-              <option value="cup">League Cup</option>
+              <option value="league_challenge">League Challenge</option>
+              <option value="league_cup">League Cup</option>
+              <option value="local_tournament">Local Tournament</option>
+              <option value="prerelease">Prerelease</option>
+              <option value="regional">Regional Championship</option>
+              <option value="international">International Championship</option>
+              <option value="worlds">World Championship</option>
             </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="formatTag">Format</label>
+              <input
+                id="formatTag"
+                v-model="eventForm.tags.format"
+                type="text"
+                class="form-input"
+                placeholder="Standard, Expanded, etc."
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="hostTag">Host Organization</label>
+              <input
+                id="hostTag"
+                v-model="eventForm.tags.host"
+                type="text"
+                class="form-input"
+                placeholder="League name, store name, etc."
+              />
+            </div>
           </div>
 
           <div class="form-row">
@@ -959,12 +1018,23 @@
 </template>
 
 <script setup lang="ts">
-import { getEventTypeName } from "~/utils/eventTypes";
+import {
+  parseEventTags,
+  getEventTypeLabel,
+  getEventTypeBadgeClass,
+  type TagType,
+  type PokemonEventTags,
+} from "~/types/eventTags";
+import { useTagDisplay } from "~/composables/useTagDisplay";
+
+const { getDisplayTags } = useTagDisplay();
+
 interface CustomEvent {
   id: string;
   name: string;
   venue: string;
-  eventType?: string;
+  tagType: string;
+  tags: any;
   maxParticipants: number;
   participationFee?: number;
   description?: string;
@@ -1019,7 +1089,11 @@ const upcomingEvents = computed(() => {
   const now = new Date();
   const filtered = filteredEvents.value.filter((event) => {
     const eventDate = new Date(event.eventDate);
-    return event.status === "upcoming" || eventDate >= now;
+    // Only show events that are explicitly "upcoming" or have future date AND not completed
+    return (
+      event.status !== "completed" &&
+      (event.status === "upcoming" || eventDate >= now)
+    );
   });
   return filtered.sort(
     (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
@@ -1072,16 +1146,6 @@ const formatCompactDate = (dateString: string): string => {
   });
 };
 
-// Event type badge classes
-const getEventTypeBadgeClass = (eventType: string): string => {
-  const classes = {
-    cup: "bg-green-100 text-green-800 border border-green-200",
-    challenge: "bg-purple-100 text-purple-800 border border-purple-200",
-    custom: "bg-blue-100 text-blue-800 border border-blue-200",
-  };
-  return classes[eventType as keyof typeof classes] || classes.custom;
-};
-
 // Status badge classes
 const getStatusBadgeClass = (status: string): string => {
   const classes = {
@@ -1107,7 +1171,11 @@ const closeEventDetails = () => {
 const eventForm = ref({
   name: "",
   venue: "",
-  eventType: "custom",
+  tagType: "pokemon" as TagType,
+  tags: {
+    type: "custom" as PokemonEventTags["type"],
+    game: "Pokemon",
+  },
   maxParticipants: 20,
   participationFee: 0,
   description: "",
@@ -1180,7 +1248,11 @@ const initializeEventForm = () => {
   eventForm.value = {
     name: "",
     venue: "",
-    eventType: "custom",
+    tagType: "pokemon" as TagType,
+    tags: {
+      type: "custom" as PokemonEventTags["type"],
+      game: "Pokemon",
+    },
     maxParticipants: 20,
     participationFee: 0,
     description: "",
@@ -1309,7 +1381,10 @@ const editEvent = (event: CustomEvent) => {
   eventForm.value = {
     name: event.name,
     venue: event.venue,
-    eventType: event.eventType || "custom",
+    tagType: (event.tagType as TagType) || "pokemon",
+    tags: event.tags
+      ? parseEventTags(event.tags, (event.tagType as TagType) || "pokemon")
+      : { game: "Pokemon" },
     maxParticipants: event.maxParticipants,
     participationFee: event.participationFee || 0,
     description: event.description || "",

@@ -10,14 +10,14 @@
           style="transition-property: background, border-color, box-shadow"
           :class="[
             activeTab === 'calendar'
-              ? 'bg-gradient-to-br from-blue-50 via-white to-purple-50 border-2 border-blue-100 border-l-8 border-l-blue-600 border-t-8 border-t-blue-600'
-              : 'bg-gradient-to-br from-emerald-50 via-white to-teal-50 border-2 border-emerald-100 border-r-8 border-r-teal-700 border-t-8 border-t-teal-700',
+              ? 'bg-[#2f3136] border-2 border-[#202225] border-l-8 border-l-gray-800 border-t-8 border-t-gray-800'
+              : 'bg-[#2f3136] border-2 border-[#202225] border-r-8 border-r-gray-900 border-t-8 border-t-gray-900',
           ]"
           :style="{
             boxShadow:
               activeTab === 'calendar'
-                ? '0 20px 60px -10px rgba(59, 130, 246, 0.3), 0 10px 30px -5px rgba(147, 51, 234, 0.2)'
-                : '0 20px 60px -10px rgba(16, 185, 129, 0.3), 0 10px 30px -5px rgba(20, 184, 166, 0.2)',
+                ? '0 20px 60px -10px rgba(0, 0, 0, 0.2), 0 10px 30px -5px rgba(0, 0, 0, 0.15)'
+                : '0 20px 60px -10px rgba(0, 0, 0, 0.2), 0 10px 30px -5px rgba(0, 0, 0, 0.15)',
           }"
         >
           <!-- Tab Navigation as Card Header -->
@@ -29,15 +29,17 @@
                 :class="[
                   'flex items-center gap-3 font-semibold transition-all duration-300 ease-out min-h-[60px] relative',
                   activeTab === 'calendar'
-                    ? 'flex-[3] bg-blue-600 text-white px-5 py-3 z-20'
-                    : 'flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 px-4 py-2 z-10',
+                    ? 'flex-[3] bg-gray-800 text-white px-5 py-3 z-20'
+                    : activeTab === 'registrations'
+                    ? 'flex-1 bg-[#40444b] text-green-500 hover:bg-[#4f545c] px-4 py-2 z-10'
+                    : 'flex-1 bg-[#40444b] text-gray-400 hover:bg-[#4f545c] px-4 py-2 z-10',
                 ]"
                 :style="
                   activeTab === 'calendar'
                     ? {
                         borderRadius: '1rem 0.25rem 0.25rem 0',
                         boxShadow:
-                          '0 10px 40px -5px rgba(59, 130, 246, 0.5), 0 20px 60px -10px rgba(147, 51, 234, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                          '0 10px 40px -5px rgba(0, 0, 0, 0.3), 0 20px 60px -10px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
                       }
                     : { borderRadius: '1rem 0 0 1rem' }
                 "
@@ -46,6 +48,7 @@
                   :class="[
                     'flex-shrink-0 transition-all duration-300',
                     activeTab === 'calendar' ? 'w-5 h-5' : 'w-4 h-4',
+                    activeTab === 'registrations' ? 'text-green-500' : '',
                   ]"
                 />
                 <span
@@ -67,15 +70,15 @@
                 :class="[
                   'flex items-center gap-3 font-semibold transition-all duration-300 ease-out min-h-[60px] relative',
                   activeTab === 'registrations'
-                    ? 'flex-[3] bg-teal-700 text-white px-5 py-3 z-20'
-                    : 'flex-1 bg-gray-50 text-gray-500 hover:bg-gray-100 px-4 py-2 z-10',
+                    ? 'flex-[3] bg-gray-800 text-white px-5 py-3 z-20'
+                    : 'flex-1 bg-[#40444b] text-gray-400 hover:bg-[#4f545c] px-4 py-2 z-10',
                 ]"
                 :style="
                   activeTab === 'registrations'
                     ? {
                         borderRadius: '0.25rem 1rem 0 0.25rem',
                         boxShadow:
-                          '0 10px 40px -5px rgba(16, 185, 129, 0.5), 0 20px 60px -10px rgba(20, 184, 166, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
+                          '0 10px 40px -5px rgba(0, 0, 0, 0.4), 0 20px 60px -10px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1)',
                       }
                     : { borderRadius: '0 1rem 1rem 0' }
                 "
@@ -97,7 +100,7 @@
                 <!-- When calendar is active and user has registrations: show count badge -->
                 <span
                   v-if="activeTab === 'calendar' && registrationsCount > 0"
-                  class="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs font-bold bg-teal-600 text-white shadow-sm"
+                  class="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full text-xs font-bold bg-green-600 text-white shadow-sm"
                 >
                   {{ registrationsCount }}
                 </span>
@@ -160,21 +163,21 @@
       <div class="hidden lg:grid grid-cols-2 gap-4 px-2 py-2">
         <!-- Event Calendar Card -->
         <div
-          class="rounded-3xl shadow-2xl overflow-hidden h-[calc(100vh-120px)] flex flex-col w-full relative transition-all duration-500 ease-in-out bg-gradient-to-br from-blue-50 via-white to-purple-50 border-2 border-blue-100 border-l-8 border-l-blue-600"
+          class="rounded-3xl shadow-2xl overflow-hidden h-[calc(100vh-120px)] flex flex-col w-full relative transition-all duration-500 ease-in-out bg-[#2f3136] border-2 border-[#202225] border-l-8 border-l-gray-800"
           style="
-            box-shadow: 0 20px 60px -10px rgba(59, 130, 246, 0.3),
-              0 10px 30px -5px rgba(147, 51, 234, 0.2);
+            box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.2),
+              0 10px 30px -5px rgba(0, 0, 0, 0.15);
           "
         >
           <!-- Calendar Header -->
           <div class="flex-shrink-0">
             <div class="p-2">
               <div
-                class="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-700 text-white relative"
+                class="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white relative"
                 style="
                   border-radius: 1rem 0.25rem 0.25rem 1rem;
-                  box-shadow: 0 10px 40px -5px rgba(59, 130, 246, 0.5),
-                    0 20px 60px -10px rgba(147, 51, 234, 0.4),
+                  box-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.3),
+                    0 20px 60px -10px rgba(0, 0, 0, 0.2),
                     0 4px 6px -2px rgba(0, 0, 0, 0.1),
                     inset 0 2px 4px 0 rgba(255, 255, 255, 0.2);
                 "
@@ -195,21 +198,21 @@
         <!-- User Dashboard or Welcome Card -->
         <div
           v-if="userName"
-          class="rounded-3xl shadow-2xl overflow-hidden h-[calc(100vh-120px)] flex flex-col w-full relative transition-all duration-500 ease-in-out bg-gradient-to-br from-emerald-50 via-white to-teal-50 border-2 border-emerald-100 border-r-8 border-r-teal-700"
+          class="rounded-3xl shadow-2xl overflow-hidden h-[calc(100vh-120px)] flex flex-col w-full relative transition-all duration-500 ease-in-out bg-[#2f3136] border-2 border-[#202225] border-r-8 border-r-gray-900"
           style="
-            box-shadow: 0 20px 60px -10px rgba(16, 185, 129, 0.3),
-              0 10px 30px -5px rgba(20, 184, 166, 0.2);
+            box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.2),
+              0 10px 30px -5px rgba(0, 0, 0, 0.15);
           "
         >
           <!-- Registrations Header -->
           <div class="flex-shrink-0">
             <div class="p-2">
               <div
-                class="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 text-white relative"
+                class="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white relative"
                 style="
                   border-radius: 0.25rem 1rem 1rem 0.25rem;
-                  box-shadow: 0 10px 40px -5px rgba(16, 185, 129, 0.5),
-                    0 20px 60px -10px rgba(20, 184, 166, 0.4),
+                  box-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.3),
+                    0 20px 60px -10px rgba(0, 0, 0, 0.2),
                     0 4px 6px -2px rgba(0, 0, 0, 0.1),
                     inset 0 2px 4px 0 rgba(255, 255, 255, 0.2);
                 "

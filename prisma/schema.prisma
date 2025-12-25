@@ -184,8 +184,9 @@ model CustomEvent {
   eventDate            DateTime            @map("event_date")
   registrationDeadline DateTime?           @map("registration_deadline")
   status               String              @default("upcoming") // upcoming, ongoing, completed, cancelled
-  eventType            String              @default("custom") @map("event_type") // cup, challenge, local, custom
   requiresDecklist     Boolean             @default(false) @map("requires_decklist")
+  tagType              String              @default("pokemon") @map("tag_type") // pokemon, riftbound, generic - defines which tag schema to use
+  tags                 Json?               @db.JsonB // Event tags: {type, game, format, host}
   createdBy            String              @map("created_by")
   createdAt            DateTime            @default(now()) @map("created_at")
   updatedAt            DateTime            @updatedAt @map("updated_at")
@@ -269,6 +270,8 @@ model ExternalEventOverride {
   registrationDeadline      DateTime? @map("registration_deadline") // Deadline for registration
   requiresDecklist          Boolean   @default(false) @map("requires_decklist") // Whether decklist is required
   description               String? // Event description for local registration
+  tagType                   String?   @map("tag_type") // pokemon, riftbound, generic - defines which tag schema to use
+  tags                      Json?     @db.JsonB // Event tags: {type, game, format, host}
 
   // Calendar visibility
   hideFromCalendar Boolean @default(false) @map("hide_from_calendar") // If true, hide this event from the calendar

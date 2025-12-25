@@ -7,15 +7,15 @@
     >
       <div class="relative">
         <div
-          class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"
+          class="w-12 h-12 border-4 border-gray-600 border-t-gray-400 rounded-full animate-spin"
         ></div>
         <div
-          class="absolute inset-0 w-12 h-12 border-4 border-transparent border-r-purple-600 rounded-full animate-spin"
+          class="absolute inset-0 w-12 h-12 border-4 border-transparent border-r-gray-500 rounded-full animate-spin"
           style="animation-delay: 0.1s"
         ></div>
       </div>
       <div class="text-center">
-        <p class="text-gray-600 font-medium">Loading your registrations...</p>
+        <p class="text-gray-300 font-medium">Loading your registrations...</p>
         <p class="text-gray-400 text-sm">Please wait a moment</p>
       </div>
     </div>
@@ -23,20 +23,20 @@
     <!-- Empty State -->
     <div v-else-if="!registrations.length" class="text-center py-16">
       <div
-        class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center"
+        class="w-20 h-20 mx-auto mb-6 bg-[#40444b] rounded-2xl flex items-center justify-center"
       >
         <TicketIcon class="w-10 h-10 text-gray-400" />
       </div>
-      <h3 class="text-xl font-semibold text-gray-900 mb-2">
+      <h3 class="text-xl font-semibold text-white mb-2">
         No registrations yet
       </h3>
-      <p class="text-gray-500 mb-8 max-w-md mx-auto">
+      <p class="text-gray-300 mb-8 max-w-md mx-auto">
         You haven't registered for any events yet. Start exploring tournaments
         in your area!
       </p>
       <NuxtLink
         to="/events"
-        class="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+        class="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-semibold rounded-xl hover:from-gray-900 hover:to-black transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
       >
         <MagnifyingGlassIcon
           class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"
@@ -53,14 +53,12 @@
       <!-- Scroll Indicator Header -->
       <div v-if="registrations.length > 2" class="mb-3 px-1">
         <div
-          class="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2"
+          class="flex items-center justify-between bg-[#40444b] border border-[#202225] rounded-lg px-3 py-2"
         >
-          <div class="flex items-center text-sm text-emerald-700 font-medium">
+          <div class="flex items-center text-sm text-gray-300 font-medium">
             <span class="mr-2">{{ registrations.length }} registrations</span>
           </div>
-          <div
-            class="flex items-center space-x-1 text-emerald-600 animate-bounce"
-          >
+          <div class="flex items-center space-x-1 text-gray-400">
             <ChevronUpIcon class="w-4 h-4" />
             <span class="text-xs font-semibold">Scroll to view all</span>
             <ChevronDownIcon class="w-4 h-4" />
@@ -72,7 +70,7 @@
       <div
         ref="scrollContainer"
         :class="[
-          'flex-1 overflow-y-auto max-h-[30rem] pr-1 space-y-4 relative border border-emerald-200 rounded-lg p-2',
+          'flex-1 overflow-y-auto max-h-[30rem] pr-1 space-y-4 relative border border-[#202225] rounded-lg p-2',
           shouldShowScrollbar
             ? 'scrollbar-always-visible'
             : 'scrollbar-prominent',
@@ -94,7 +92,7 @@
       <div class="pt-4 flex-shrink-0">
         <NuxtLink
           to="/dashboard"
-          class="group flex items-center justify-center w-full px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-800 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
+          class="group flex items-center justify-center w-full px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-semibold rounded-xl hover:from-gray-900 hover:to-black transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
         >
           <ChartBarSquareIcon
             class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"
@@ -114,22 +112,20 @@
       @click="closeCancelModal"
     >
       <div
-        class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+        class="bg-[#2f3136] rounded-xl shadow-2xl max-w-md w-full p-6"
         @click.stop
       >
         <div class="mb-4">
-          <h3 class="text-xl font-bold text-gray-900 mb-2">
-            Cancel Registration
-          </h3>
-          <p class="text-gray-600">
+          <h3 class="text-xl font-bold text-white mb-2">Cancel Registration</h3>
+          <p class="text-gray-300">
             Are you sure you want to cancel your registration for
-            <span class="font-semibold text-gray-900">{{
+            <span class="font-semibold text-white">{{
               registrationToCancel?.customEvent.name
             }}</span
             >?
           </p>
-          <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p class="text-sm text-amber-800">
+          <div class="mt-3 p-3 bg-[#40444b] border border-amber-500 rounded-lg">
+            <p class="text-sm text-amber-300">
               <strong>Event Date:</strong>
               {{
                 registrationToCancel
@@ -138,7 +134,7 @@
               }}
             </p>
           </div>
-          <p class="text-sm text-red-600 mt-3">
+          <p class="text-sm text-red-400 mt-3">
             ⚠️ This action cannot be undone. You can re-register later if spots
             are still available.
           </p>
@@ -146,9 +142,9 @@
           <!-- Error Message -->
           <div
             v-if="cancelError"
-            class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg"
+            class="mt-3 p-3 bg-[#40444b] border border-red-500 rounded-lg"
           >
-            <p class="text-sm text-red-800">
+            <p class="text-sm text-red-300">
               <strong>Error:</strong> {{ cancelError }}
             </p>
           </div>
@@ -158,14 +154,14 @@
           <button
             @click="closeCancelModal"
             :disabled="cancelling !== null"
-            class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+            class="flex-1 px-4 py-2 bg-[#40444b] text-gray-300 rounded-lg hover:bg-[#4f545c] transition-colors font-medium disabled:opacity-50"
           >
             Keep Registration
           </button>
           <button
             @click="proceedWithCancellation"
             :disabled="cancelling !== null"
-            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center"
+            class="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-colors font-medium disabled:opacity-50 flex items-center justify-center shadow-lg"
           >
             <div
               v-if="cancelling"

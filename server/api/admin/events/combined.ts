@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { getEventTypeFromOverrides } from "~/utils/eventTypes";
+import { parseEventTags } from "~/types/eventTags";
 
 const prisma = new PrismaClient();
 
@@ -53,6 +53,14 @@ export default defineEventHandler(async () => {
     const transformedExternalEvents = externalEventsWithRegistration.map(
       (event) => {
         const overrides = event.overrides as any;
+        // Parse tags from overrides or use tagType/tags from the event
+        const tags = event.tags
+          ? parseEventTags(event.tags, event.tagType || "pokemon")
+          : overrides?.tags
+          ? parseEventTags(overrides.tags, "pokemon")
+          : { game: "Pokemon" };
+        const eventType = tags.type || "custom";
+
         return {
           id: event.id,
           name: overrides.title || overrides.venue || event.eventName,
@@ -71,7 +79,9 @@ export default defineEventHandler(async () => {
           registrations: event.registrations,
           creator: event.creator,
           isExternalEvent: true, // Flag to identify external events
-          eventType: getEventTypeFromOverrides(overrides), // Add event type for color coding
+          tagType: event.tagType || "pokemon",
+          tags: event.tags || tags,
+          eventType: eventType, // Add event type for backward compatibility
           originalEventName: event.eventName,
           originalEventDate: event.eventDate,
         };
@@ -83,7 +93,9 @@ export default defineEventHandler(async () => {
       ...customEvents.map((e) => ({
         ...e,
         isExternalEvent: false,
-        eventType: e.eventType || "custom",
+        eventType: e.tags
+          ? parseEventTags(e.tags, e.tagType).type || "custom"
+          : "custom",
       })),
       ...transformedExternalEvents,
     ].sort(

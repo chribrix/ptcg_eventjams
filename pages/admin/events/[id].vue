@@ -45,11 +45,21 @@
               {{ event.requiresDecklist ? "Yes" : "No" }}
             </span>
           </div>
-          <div v-if="event.eventType" class="info-item">
+          <div
+            v-if="event.tags && parseEventTags(event.tags, event.tagType as TagType).type"
+            class="info-item"
+          >
             <span class="info-label">Event Type:</span>
             <span class="info-value">
-              <span class="event-type-badge" :class="`type-${event.eventType}`">
-                {{ getEventTypeName(event.eventType) }}
+              <span
+                class="event-type-badge"
+                :class="`type-${parseEventTags(event.tags, event.tagType as TagType).type}`"
+              >
+                {{
+                  getEventTypeLabel(
+                    parseEventTags(event.tags, event.tagType as TagType).type
+                  )
+                }}
               </span>
             </span>
           </div>
@@ -152,7 +162,11 @@
 </template>
 
 <script setup lang="ts">
-import { getEventTypeName } from "~/utils/eventTypes";
+import {
+  parseEventTags,
+  getEventTypeLabel,
+  type TagType,
+} from "~/types/eventTags";
 
 interface Player {
   id: string;
@@ -180,7 +194,8 @@ interface CustomEvent {
   participationFee: number;
   description: string | null;
   requiresDecklist: boolean;
-  eventType: string | null;
+  tagType: string;
+  tags: any;
 }
 
 const route = useRoute();

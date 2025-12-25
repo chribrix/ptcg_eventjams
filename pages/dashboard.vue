@@ -1,21 +1,21 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8 px-4">
+  <div class="min-h-screen bg-[#36393f] py-8 px-4">
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-8 text-center">
-        <h1 class="text-4xl font-bold text-gray-900 mb-2">
+        <h1 class="text-4xl font-bold text-white mb-2">
           {{ t("dashboard.title") }}
         </h1>
-        <p class="text-lg text-gray-600">
+        <p class="text-lg text-gray-300">
           {{ t("dashboard.subtitle") }}
         </p>
       </div>
 
       <!-- Loading State -->
       <div v-if="isLoading" class="flex items-center justify-center py-12">
-        <div class="flex items-center gap-3 text-gray-600">
+        <div class="flex items-center gap-3 text-gray-300">
           <div
-            class="w-5 h-5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"
+            class="w-5 h-5 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin"
           ></div>
           <span class="text-lg">{{ t("dashboard.loadingRegistrations") }}</span>
         </div>
@@ -24,15 +24,15 @@
       <!-- Error State -->
       <div
         v-else-if="error"
-        class="bg-red-50 border border-red-200 rounded-lg p-6 text-center"
+        class="bg-[#2f3136] border border-red-600 rounded-lg p-6 text-center"
       >
-        <h3 class="text-xl font-semibold text-red-800 mb-2">
+        <h3 class="text-xl font-semibold text-red-400 mb-2">
           {{ t("dashboard.errorLoading") }}
         </h3>
-        <p class="text-red-600 mb-4">{{ error }}</p>
+        <p class="text-red-300 mb-4">{{ error }}</p>
         <button
           @click="fetchRegistrations"
-          class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200"
+          class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 shadow-lg"
         >
           {{ t("dashboard.tryAgain") }}
         </button>
@@ -41,17 +41,17 @@
       <!-- Empty State -->
       <div
         v-else-if="registrations.length === 0"
-        class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center"
+        class="bg-[#2f3136] rounded-lg shadow-sm border border-[#202225] p-8 text-center"
       >
-        <h3 class="text-2xl font-semibold text-gray-900 mb-2">
+        <h3 class="text-2xl font-semibold text-white mb-2">
           No Event Registrations
         </h3>
-        <p class="text-gray-600 mb-6">
+        <p class="text-gray-300 mb-6">
           You haven't registered for any events yet.
         </p>
         <NuxtLink
           to="/events"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
+          class="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg"
         >
           Browse Events
         </NuxtLink>
@@ -59,7 +59,7 @@
 
       <!-- Current Registrations List -->
       <div v-else>
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        <h2 class="text-2xl font-bold text-white mb-6">
           {{ t("dashboard.currentRegistrations") }}
         </h2>
         <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 mb-12">
@@ -67,8 +67,32 @@
             v-for="registration in registrations"
             :key="registration.id"
             :to="`/booking/${registration.id}`"
-            class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-lg hover:border-blue-300 transition-all duration-200 cursor-pointer block"
+            class="rounded-lg shadow-sm border p-4 sm:p-6 hover:shadow-lg transition-all duration-200 cursor-pointer block"
+            :class="
+              getCardBackgroundClass(
+                registration.customEvent.tagType || 'pokemon'
+              )
+            "
           >
+            <!-- Game Type Header -->
+            <div
+              class="mb-2 pb-1.5 border-b border-opacity-20"
+              :class="getGameHeaderClass(registration.customEvent.tagType)"
+            >
+              <h4
+                class="text-xs font-semibold uppercase tracking-wide opacity-70"
+                :class="
+                  getGameHeaderTextClass(registration.customEvent.tagType)
+                "
+              >
+                {{
+                  getGameTypeLabel(
+                    registration.customEvent.tagType || "pokemon"
+                  )
+                }}
+              </h4>
+            </div>
+
             <!-- Event Header -->
             <div
               class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4"
@@ -76,19 +100,20 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap mb-2">
                   <h3
-                    class="text-lg sm:text-xl font-semibold text-gray-900 truncate"
+                    class="text-lg sm:text-xl font-semibold text-white truncate"
                   >
                     {{ registration.customEvent.name }}
                   </h3>
                   <span
-                    v-if="
-                      registration.eventType &&
-                      registration.eventType !== 'custom'
-                    "
+                    v-for="tag in getDisplayTags(
+                      registration.customEvent.tags || null,
+                      registration.customEvent.tagType || 'pokemon'
+                    )"
+                    :key="tag.value"
                     class="event-type-badge flex-shrink-0"
-                    :class="`type-${registration.eventType}`"
+                    :class="tag.badgeClass"
                   >
-                    {{ getEventTypeName(registration.eventType) }}
+                    {{ tag.label }}
                   </span>
                 </div>
                 <!-- Ticket Count Badge -->
@@ -132,14 +157,14 @@
 
             <!-- Event Details -->
             <div class="space-y-2">
-              <div class="flex items-start gap-2 text-gray-600">
+              <div class="flex items-start gap-2 text-gray-300">
                 <CalendarIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span class="text-sm break-words">{{
                   formatEventDate(registration.customEvent.eventDate)
                 }}</span>
               </div>
 
-              <div class="flex items-start gap-2 text-gray-600">
+              <div class="flex items-start gap-2 text-gray-300">
                 <MapPinIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span class="text-sm break-words">{{
                   registration.customEvent.venue
@@ -148,7 +173,7 @@
 
               <div
                 v-if="registration.customEvent.participationFee"
-                class="flex items-center gap-2 text-gray-600"
+                class="flex items-center gap-2 text-gray-300"
               >
                 <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
                 <span class="text-sm"
@@ -156,7 +181,7 @@
                 >
               </div>
 
-              <div class="flex items-center gap-2 text-gray-600">
+              <div class="flex items-center gap-2 text-gray-300">
                 <ClockIcon class="w-4 h-4 flex-shrink-0" />
                 <span class="text-sm">
                   Registered:
@@ -166,9 +191,9 @@
             </div>
 
             <!-- Edit Booking Button -->
-            <div class="mt-4 pt-4 border-t border-gray-200">
+            <div class="mt-4 pt-4 border-t border-[#202225]">
               <button
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                class="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg"
               >
                 <svg
                   class="w-5 h-5"
@@ -192,8 +217,8 @@
               v-if="registration.customEvent.requiresDecklist"
               class="mt-4 p-3 sm:p-4 rounded-lg border"
               :class="{
-                'bg-yellow-50 border-yellow-200': needsAttention(registration),
-                'bg-green-50 border-green-200': !needsAttention(registration),
+                'bg-[#40444b] border-yellow-500': needsAttention(registration),
+                'bg-[#40444b] border-green-500': !needsAttention(registration),
               }"
               @click.prevent.stop
             >
@@ -201,18 +226,18 @@
                 <div class="flex items-center gap-2">
                   <ExclamationTriangleIcon
                     v-if="needsAttention(registration)"
-                    class="w-5 h-5 text-yellow-600 flex-shrink-0"
+                    class="w-5 h-5 text-yellow-400 flex-shrink-0"
                   />
                   <CheckCircleIcon
                     v-else
-                    class="w-5 h-5 text-green-600 flex-shrink-0"
+                    class="w-5 h-5 text-green-400 flex-shrink-0"
                   />
                   <div>
                     <h4
                       class="font-semibold text-sm sm:text-base"
                       :class="{
-                        'text-yellow-900': needsAttention(registration),
-                        'text-green-900': !needsAttention(registration),
+                        'text-yellow-300': needsAttention(registration),
+                        'text-green-300': !needsAttention(registration),
                       }"
                     >
                       Decklist Status
@@ -220,8 +245,8 @@
                     <p
                       class="text-xs sm:text-sm"
                       :class="{
-                        'text-yellow-700': needsAttention(registration),
-                        'text-green-700': !needsAttention(registration),
+                        'text-yellow-200': needsAttention(registration),
+                        'text-green-200': !needsAttention(registration),
                       }"
                     >
                       <span v-if="needsAttention(registration)">
@@ -234,7 +259,7 @@
                 </div>
                 <span
                   v-if="needsAttention(registration)"
-                  class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full flex-shrink-0"
+                  class="px-2 py-1 text-xs font-medium bg-yellow-500 text-gray-900 rounded-full flex-shrink-0"
                 >
                   Action Required
                 </span>
@@ -264,7 +289,20 @@ import {
   CheckCircleIcon,
   ClipboardDocumentIcon,
 } from "@heroicons/vue/24/outline";
-import { getEventTypeName } from "~/utils/eventTypes";
+import {
+  parseEventTags,
+  getEventTypeLabel,
+  type TagType,
+} from "~/types/eventTags";
+
+// Use centralized composables
+const { getDisplayTags } = useTagDisplay();
+const {
+  getCardBackgroundClass,
+  getGameTypeLabel,
+  getGameHeaderClass,
+  getGameHeaderTextClass,
+} = useRegistrationCardStyle();
 
 // Use i18n for translations
 const { t } = useI18n();
@@ -398,23 +436,63 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.event-type-badge.type-cup {
+/* Tag type badges */
+.event-type-badge.type-league_cup {
   background-color: #bbf7d0;
   color: #166534;
 }
 
-.event-type-badge.type-challenge {
+.event-type-badge.type-league_challenge {
   background-color: #bfdbfe;
   color: #1e40af;
 }
 
-.event-type-badge.type-local {
+.event-type-badge.type-local_tournament,
+.event-type-badge.type-store_tournament {
   background-color: #e0f2fe;
   color: #075985;
 }
 
+.event-type-badge.type-premier_challenge,
+.event-type-badge.type-special_event,
 .event-type-badge.type-custom {
   background-color: #fed7aa;
   color: #9a3412;
+}
+
+.event-type-badge.type-midseason_showdown,
+.event-type-badge.type-regional_championships {
+  background-color: #ddd6fe;
+  color: #5b21b6;
+}
+
+/* Game badges */
+.event-type-badge.game-pokemon {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.event-type-badge.game-riftbound {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.event-type-badge.game-generic {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+/* Format badges */
+.event-type-badge.format-standard,
+.event-type-badge.format-expanded,
+.event-type-badge.format-unlimited {
+  background-color: #cffafe;
+  color: #155e75;
+}
+
+/* Host badges */
+.event-type-badge.host {
+  background-color: #f3e8ff;
+  color: #6b21a8;
 }
 </style>
