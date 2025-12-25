@@ -432,10 +432,12 @@ const formatEventDate = (dateString: string): string => {
 };
 
 const formatStatus = (status: string): string => {
+  if (!status) return "Unknown";
   return status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ");
 };
 
 const formatUserStatus = (status: string): string => {
+  if (!status) return "Unknown";
   const statusMap: Record<string, string> = {
     attended: "Attended",
     "no-show": "No Show",

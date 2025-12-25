@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
+import {
+  logError,
+  logDatabaseError,
+  logAuthError,
+} from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
 
@@ -203,9 +208,20 @@ export default defineEventHandler(async (event) => {
 
     // Re-throw createError instances
     if (error && typeof error === "object" && "statusCode" in error) {
+      const statusCode = (error as any).statusCode;
+      if (statusCode === 401 || statusCode === 403) {
+        await logAuthError(
+          event,
+          error as Error,
+          "decklist_update_unauthorized"
+        );
+      } else if (statusCode >= 500) {
+        await logDatabaseError(event, error as Error, "decklist_update");
+      }
       throw error;
     }
 
+    await logDatabaseError(event, error as Error, "decklist_update");
     throw createError({
       statusCode: 500,
       statusMessage: "Internal server error",

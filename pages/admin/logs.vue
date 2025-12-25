@@ -12,6 +12,13 @@
           </p>
         </div>
         <div class="flex items-center gap-3">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search errors, users, messages..."
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-64"
+            @keyup.enter="refreshLogs"
+          />
           <select
             v-model="selectedErrorType"
             class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -28,6 +35,12 @@
             <option value="session_validation_exception">
               Session Validation Exception
             </option>
+            <option value="magic_login">Magic Login Errors</option>
+            <option value="registration">Registration Errors</option>
+            <option value="api_error">API Errors</option>
+            <option value="database_error">Database Errors</option>
+            <option value="auth_error">Auth Errors</option>
+            <option value="validation_error">Validation Errors</option>
           </select>
           <button
             @click="refreshLogs"
@@ -321,6 +334,7 @@ const pagination = ref({
 });
 const currentPage = ref(1);
 const selectedErrorType = ref("");
+const searchQuery = ref("");
 const selectedLog = ref<any>(null);
 
 const fetchLogs = async () => {
@@ -335,6 +349,10 @@ const fetchLogs = async () => {
 
     if (selectedErrorType.value) {
       params.errorType = selectedErrorType.value;
+    }
+
+    if (searchQuery.value.trim()) {
+      params.search = searchQuery.value.trim();
     }
 
     const response = await $fetch("/api/admin/error-logs", {
@@ -380,6 +398,17 @@ const getErrorTypeColor = (errorType: string) => {
     return "bg-red-100 text-red-800";
   } else if (errorType.includes("deployment")) {
     return "bg-blue-100 text-blue-800";
+  } else if (
+    errorType.includes("magic_login") ||
+    errorType.includes("registration")
+  ) {
+    return "bg-purple-100 text-purple-800";
+  } else if (errorType.includes("database")) {
+    return "bg-red-100 text-red-800";
+  } else if (errorType.includes("validation")) {
+    return "bg-yellow-100 text-yellow-800";
+  } else if (errorType.includes("auth")) {
+    return "bg-orange-100 text-orange-800";
   }
   return "bg-gray-100 text-gray-800";
 };

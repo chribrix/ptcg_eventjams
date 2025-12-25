@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
+import {
+  logError,
+  logDatabaseError,
+  logAuthError,
+} from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
 
@@ -72,6 +77,16 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     console.error("Error fetching player profile:", error);
+
+    if (error && typeof error === "object" && "statusCode" in error) {
+      const statusCode = (error as any).statusCode;
+      if (statusCode === 401) {
+        await logAuthError(event, error as Error, "player_me_unauthorized");
+      }
+      throw error;
+    }
+
+    await logDatabaseError(event, error as Error, "player_me");
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to fetch player profile",

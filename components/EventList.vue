@@ -1,5 +1,5 @@
 <template>
-  <div class="w-[60vw] h-[50vh] flex flex-col gap-4">
+  <div class="w-full max-w-7xl mx-auto flex flex-col gap-4">
     <div
       v-if="error"
       class="flex justify-center items-center h-48 text-lg text-red-600 bg-red-50 border border-red-200 rounded-lg p-4"
@@ -12,7 +12,9 @@
       <h2 class="text-xl font-semibold text-gray-900 mb-4">All Events</h2>
 
       <!-- Search and Filter Controls -->
-      <div class="flex gap-4 items-center">
+      <div
+        class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center"
+      >
         <div class="relative flex-1">
           <input
             v-model="searchQuery"
@@ -27,7 +29,7 @@
 
         <select
           v-model="selectedType"
-          class="py-2 px-3 border border-gray-300 rounded-md text-sm bg-white cursor-pointer min-w-[150px] focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+          class="py-2 px-3 border border-gray-300 rounded-md text-sm bg-white cursor-pointer w-full sm:w-auto sm:min-w-[150px] focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
         >
           <option value="">All Types</option>
           <option value="League Cup">League Cup</option>
@@ -50,7 +52,10 @@
     </div>
 
     <!-- Event List -->
-    <div v-else class="flex-1 overflow-hidden flex flex-col">
+    <div
+      v-else
+      class="flex-1 overflow-hidden flex flex-col min-h-[400px] max-h-[600px] lg:max-h-[70vh]"
+    >
       <div
         v-if="filteredEvents.length === 0"
         class="flex flex-col items-center justify-center h-48 text-gray-500 gap-4"
@@ -66,7 +71,7 @@
         <div
           v-for="event in filteredEvents"
           :key="event.id"
-          class="flex items-center p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 gap-4 hover:bg-gray-50 hover:translate-x-1 last:border-b-0"
+          class="flex flex-col sm:flex-row items-start sm:items-center p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 gap-4 hover:bg-gray-50 hover:sm:translate-x-1 last:border-b-0"
           @click="openEventDetails(event)"
         >
           <!-- Date badge -->
@@ -82,9 +87,9 @@
           </div>
 
           <!-- Event content -->
-          <div class="flex-1 min-w-0">
+          <div class="flex-1 min-w-0 w-full sm:w-auto">
             <div class="mb-2">
-              <div class="flex items-center gap-3 mb-2">
+              <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                 <div
                   class="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"
                   :class="{
@@ -107,7 +112,7 @@
 
               <div class="flex items-center gap-2 text-gray-600 text-sm mb-1">
                 <BuildingOfficeIcon class="w-4 h-4 flex-shrink-0" />
-                <span>{{ stripHtmlTags(event.venue) }}</span>
+                <span class="truncate">{{ stripHtmlTags(event.venue) }}</span>
               </div>
 
               <div
@@ -115,7 +120,7 @@
                 class="flex items-center gap-2 text-gray-600 text-sm mb-0"
               >
                 <MapPinIcon class="w-4 h-4 flex-shrink-0" />
-                <span
+                <span class="truncate"
                   >{{ stripHtmlTags(event.location)
                   }}{{
                     event.country ? `, ${stripHtmlTags(event.country)}` : ""
@@ -125,7 +130,7 @@
             </div>
 
             <!-- Event details row -->
-            <div class="flex items-center gap-4 mt-2">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
               <div
                 v-if="event.cost !== undefined"
                 class="flex items-center gap-1 text-sm font-semibold text-green-700"
@@ -163,7 +168,7 @@
           </div>
 
           <!-- Expand arrow -->
-          <div class="text-gray-400 flex-shrink-0">
+          <div class="text-gray-400 flex-shrink-0 hidden sm:block">
             <ChevronRightIcon class="w-4 h-4" />
           </div>
         </div>

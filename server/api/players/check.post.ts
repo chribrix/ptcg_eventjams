@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import {
+  logError,
+  logValidationError,
+  logDatabaseError,
+} from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
 
@@ -18,6 +23,7 @@ export default defineEventHandler(async (event) => {
     const validation = checkPlayerSchema.safeParse(body);
 
     if (!validation.success) {
+      await logValidationError(event, validation.error, "player_check");
       throw createError({
         statusCode: 400,
         statusMessage: "Invalid request data",
@@ -59,6 +65,7 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     console.error("Error checking player:", error);
+    await logDatabaseError(event, error, "player_check");
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to check player existence",

@@ -33,14 +33,35 @@ export default defineEventHandler(async (event) => {
     const limit = parseInt(query.limit as string) || 50;
     const errorType = query.errorType as string | undefined;
     const userId = query.userId as string | undefined;
+    const search = query.search as string | undefined;
 
     // Build where clause
     const where: any = {};
+
     if (errorType) {
-      where.errorType = errorType;
+      // Support partial matching for error types
+      if (errorType.includes("*") || errorType.length < 10) {
+        where.errorType = {
+          contains: errorType.replace("*", ""),
+        };
+      } else {
+        where.errorType = errorType;
+      }
     }
+
     if (userId) {
       where.userId = userId;
+    }
+
+    // Add search functionality - searches across multiple fields
+    if (search) {
+      where.OR = [
+        { errorMessage: { contains: search, mode: "insensitive" } },
+        { userEmail: { contains: search, mode: "insensitive" } },
+        { errorType: { contains: search, mode: "insensitive" } },
+        { userId: { contains: search, mode: "insensitive" } },
+        { url: { contains: search, mode: "insensitive" } },
+      ];
     }
 
     // Get total count

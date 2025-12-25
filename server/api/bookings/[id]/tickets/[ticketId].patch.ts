@@ -1,6 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
 import { z } from "zod";
+import {
+  logError,
+  logValidationError,
+  logDatabaseError,
+  logAuthError,
+} from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
 
@@ -45,6 +51,7 @@ export default defineEventHandler(async (h3Event) => {
     const validation = updateTicketSchema.safeParse(body);
 
     if (!validation.success) {
+      await logValidationError(h3Event, validation.error, "ticket_update");
       throw createError({
         statusCode: 400,
         statusMessage: "Invalid ticket data",
@@ -156,9 +163,26 @@ export default defineEventHandler(async (h3Event) => {
     console.error("Ticket update error:", error);
 
     if (error && typeof error === "object" && "statusCode" in error) {
+      const statusCode = (error as any).statusCode;
+      if (statusCode === 401) {
+        await logAuthError(
+          h3Event,
+          error as Error,
+          "ticket_update_unauthorized"
+        );
+      } else if (statusCode >= 500) {
+        await logDatabaseError(h3Event, error as Error, "ticket_update", {
+          bookingId,
+          ticketId,
+        });
+      }
       throw error;
     }
 
+    await logDatabaseError(h3Event, error as Error, "ticket_update", {
+      bookingId,
+      ticketId,
+    });
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to update ticket",

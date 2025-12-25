@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import {
+  logError,
+  logValidationError,
+  logDatabaseError,
+} from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
 
@@ -21,6 +26,7 @@ export default defineEventHandler(async (event) => {
 
     if (!validation.success) {
       console.error("Validation error:", validation.error);
+      await logValidationError(event, validation.error, "player_register");
       throw createError({
         statusCode: 400,
         statusMessage:
@@ -36,6 +42,12 @@ export default defineEventHandler(async (event) => {
     });
 
     if (existingPlayerById) {
+      await logError(
+        event,
+        new Error("Player ID already exists"),
+        "registration_duplicate_player_id",
+        { playerId, email }
+      );
       throw createError({
         statusCode: 409,
         statusMessage: "Player ID already exists",
@@ -48,6 +60,12 @@ export default defineEventHandler(async (event) => {
     });
 
     if (existingPlayerByEmail) {
+      await logError(
+        event,
+        new Error("Email already registered"),
+        "registration_duplicate_email",
+        { playerId, email }
+      );
       throw createError({
         statusCode: 409,
         statusMessage: "Email already registered",
@@ -77,6 +95,18 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     console.error("Error registering player:", error);
+
+    // Log the error if it hasn't been logged yet
+    if (
+      !(
+        error &&
+        typeof error === "object" &&
+        "statusCode" in error &&
+        (error as any).statusCode < 500
+      )
+    ) {
+      await logDatabaseError(event, error, "player_registration");
+    }
 
     // Re-throw if it's already a createError
     if (error && typeof error === "object" && "statusCode" in error) {

@@ -1,6 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { serverSupabaseUser } from "#supabase/server";
+import {
+  logError,
+  logValidationError,
+  logDatabaseError,
+  logAuthError,
+} from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
 
@@ -43,6 +49,11 @@ export default defineEventHandler(async (event) => {
 
     if (!validation.success) {
       console.error("Validation error:", validation.error);
+      await logValidationError(
+        event,
+        validation.error,
+        "player_profile_update"
+      );
       throw createError({
         statusCode: 400,
         statusMessage:
@@ -59,6 +70,14 @@ export default defineEventHandler(async (event) => {
       });
 
       if (existingPlayerById) {
+        await logError(
+          event,
+          "player_profile_update_duplicate_player_id",
+          "Player ID already exists",
+          {
+            attemptedPlayerId: playerId,
+          }
+        );
         throw createError({
           statusCode: 409,
           statusMessage: "Player ID already exists",
@@ -76,6 +95,14 @@ export default defineEventHandler(async (event) => {
       });
 
       if (existingPlayerByEmail) {
+        await logError(
+          event,
+          "player_profile_update_duplicate_email",
+          "Email already registered to another account",
+          {
+            attemptedEmail: email,
+          }
+        );
         throw createError({
           statusCode: 409,
           statusMessage: "Email already registered to another account",
@@ -112,9 +139,20 @@ export default defineEventHandler(async (event) => {
 
     // Re-throw if it's already a createError
     if (error && typeof error === "object" && "statusCode" in error) {
+      const statusCode = (error as any).statusCode;
+      if (statusCode === 401 || statusCode === 404 || statusCode === 403) {
+        await logAuthError(
+          event,
+          error as Error,
+          "player_profile_update_unauthorized"
+        );
+      } else if (statusCode >= 500) {
+        await logDatabaseError(event, error as Error, "player_profile_update");
+      }
       throw error;
     }
 
+    await logDatabaseError(event, error as Error, "player_profile_update");
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to update profile",

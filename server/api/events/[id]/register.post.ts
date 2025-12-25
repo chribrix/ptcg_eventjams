@@ -1,5 +1,10 @@
 import { z } from "zod";
 import prisma from "~/lib/prisma";
+import {
+  logError,
+  logValidationError,
+  logDatabaseError,
+} from "~/server/util/errorLogger";
 
 const ticketSchema = z.object({
   name: z.string().min(1, "Participant name is required").max(100),
@@ -33,6 +38,11 @@ export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
 
   if (!eventId) {
+    await logError(
+      event,
+      new Error("Event ID is required"),
+      "registration_missing_event_id"
+    );
     throw createError({
       statusCode: 400,
       statusMessage: "Event ID is required",
@@ -45,6 +55,11 @@ export default defineEventHandler(async (event) => {
     // Validate request body
     const validationResult = registrationSchema.safeParse(body);
     if (!validationResult.success) {
+      await logValidationError(
+        event,
+        validationResult.error,
+        "event_registration"
+      );
       throw createError({
         statusCode: 400,
         statusMessage: "Invalid registration data",
@@ -266,6 +281,18 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error: unknown) {
     console.error("Registration error:", error);
+
+    // Log to database unless it's already a user-facing error (<500)
+    if (
+      !(
+        error &&
+        typeof error === "object" &&
+        "statusCode" in error &&
+        (error as any).statusCode < 500
+      )
+    ) {
+      await logDatabaseError(event, error, "event_registration", { eventId });
+    }
 
     if (error && typeof error === "object" && "statusCode" in error) {
       throw error;

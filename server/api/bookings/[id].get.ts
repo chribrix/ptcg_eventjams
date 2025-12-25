@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
+import {
+  logError,
+  logDatabaseError,
+  logAuthError,
+} from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
 
@@ -169,9 +174,24 @@ export default defineEventHandler(async (h3Event) => {
     console.error("Booking details error:", error);
 
     if (error && typeof error === "object" && "statusCode" in error) {
+      const statusCode = (error as any).statusCode;
+      if (statusCode === 401 || statusCode === 404) {
+        await logAuthError(
+          h3Event,
+          error as Error,
+          "booking_details_unauthorized"
+        );
+      } else if (statusCode >= 500) {
+        await logDatabaseError(h3Event, error as Error, "booking_details", {
+          bookingId,
+        });
+      }
       throw error;
     }
 
+    await logDatabaseError(h3Event, error as Error, "booking_details", {
+      bookingId,
+    });
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to fetch booking details",

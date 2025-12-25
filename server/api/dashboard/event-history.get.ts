@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
+import {
+  logError,
+  logDatabaseError,
+  logAuthError,
+} from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
 
@@ -113,6 +118,16 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     console.error("Error fetching user event history:", error);
+
+    if (error && typeof error === "object" && "statusCode" in error) {
+      const statusCode = (error as any).statusCode;
+      if (statusCode === 401) {
+        await logAuthError(event, error as Error, "event_history_unauthorized");
+      }
+      throw error;
+    }
+
+    await logDatabaseError(event, error as Error, "event_history");
     throw createError({
       statusCode: 500,
       statusMessage:

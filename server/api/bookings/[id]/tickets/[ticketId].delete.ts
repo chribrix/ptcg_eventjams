@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
+import {
+  logError,
+  logDatabaseError,
+  logAuthError,
+} from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
 const CANCELLATION_DEADLINE_HOURS = 24;
@@ -142,9 +147,26 @@ export default defineEventHandler(async (h3Event) => {
     console.error("Ticket cancellation error:", error);
 
     if (error && typeof error === "object" && "statusCode" in error) {
+      const statusCode = (error as any).statusCode;
+      if (statusCode === 401) {
+        await logAuthError(
+          h3Event,
+          error as Error,
+          "ticket_delete_unauthorized"
+        );
+      } else if (statusCode >= 500) {
+        await logDatabaseError(h3Event, error as Error, "ticket_delete", {
+          bookingId,
+          ticketId,
+        });
+      }
       throw error;
     }
 
+    await logDatabaseError(h3Event, error as Error, "ticket_delete", {
+      bookingId,
+      ticketId,
+    });
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to cancel ticket",

@@ -1,6 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
 import { parseEventTags, type TagType } from "~/types/eventTags";
+import {
+  logError,
+  logDatabaseError,
+  logAuthError,
+} from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
 
@@ -250,6 +255,20 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     console.error("Dashboard registrations error:", error);
+
+    if (error && typeof error === "object" && "statusCode" in error) {
+      const statusCode = (error as any).statusCode;
+      if (statusCode === 401) {
+        await logAuthError(
+          event,
+          error as Error,
+          "dashboard_registrations_unauthorized"
+        );
+      }
+      throw error;
+    }
+
+    await logDatabaseError(event, error as Error, "dashboard_registrations");
     throw createError({
       statusCode: 500,
       statusMessage:

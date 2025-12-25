@@ -1,5 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
+import {
+  logError,
+  logDatabaseError,
+  logAuthError,
+} from "~/server/util/errorLogger";
 
 const CANCELLATION_DEADLINE_HOURS = 24;
 const prisma = new PrismaClient();
@@ -169,9 +174,24 @@ export default defineEventHandler(async (event) => {
     console.error("Registration cancellation error:", error);
 
     if (error && typeof error === "object" && "statusCode" in error) {
+      const statusCode = (error as any).statusCode;
+      if (statusCode === 401 || statusCode === 404) {
+        await logAuthError(
+          event,
+          error as Error,
+          "registration_cancel_unauthorized"
+        );
+      } else if (statusCode >= 500) {
+        await logDatabaseError(event, error as Error, "registration_cancel", {
+          registrationId,
+        });
+      }
       throw error;
     }
 
+    await logDatabaseError(event, error as Error, "registration_cancel", {
+      registrationId,
+    });
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to cancel registration",

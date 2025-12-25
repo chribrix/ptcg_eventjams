@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+  <div class="min-h-screen bg-[#36393f]">
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <div
-          class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"
+          class="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"
         ></div>
-        <p class="text-gray-600">Loading event details...</p>
+        <p class="text-gray-300">Loading event details...</p>
       </div>
     </div>
 
@@ -16,13 +16,13 @@
       class="flex items-center justify-center min-h-screen px-4"
     >
       <div
-        class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center"
+        class="bg-[#2f3136] rounded-2xl shadow-xl p-8 max-w-md w-full text-center border border-[#202225]"
       >
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">Event Not Found</h2>
-        <p class="text-gray-600 mb-6">{{ error }}</p>
+        <h2 class="text-2xl font-bold text-gray-100 mb-2">Event Not Found</h2>
+        <p class="text-gray-400 mb-6">{{ error }}</p>
         <NuxtLink
           to="/"
-          class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          class="inline-block px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 transition"
         >
           ← Back to Events
         </NuxtLink>
@@ -33,15 +33,17 @@
     <div v-else-if="event" class="max-w-5xl mx-auto px-4 py-8">
       <div class="grid lg:grid-cols-[350px_1fr] gap-6">
         <!-- Event Info Card (Sidebar on desktop, top on mobile) -->
-        <aside class="bg-white rounded-2xl shadow-lg p-6 h-fit sticky top-8">
-          <h1 class="text-2xl font-bold text-gray-900 mb-4">
+        <aside
+          class="bg-[#2f3136] rounded-2xl shadow-lg p-6 h-fit sticky top-8 border border-[#202225]"
+        >
+          <h1 class="text-2xl font-bold text-gray-100 mb-4">
             {{ event.name }}
           </h1>
 
           <div class="space-y-4">
             <div class="flex items-start gap-3">
               <svg
-                class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+                class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -54,10 +56,10 @@
                 ></path>
               </svg>
               <div>
-                <div class="text-xs text-gray-500 font-medium uppercase">
+                <div class="text-xs text-gray-400 font-medium uppercase">
                   Date & Time
                 </div>
-                <div class="text-sm text-gray-900 font-medium">
+                <div class="text-sm text-gray-200 font-medium">
                   {{ formatEventDate(event.eventDate) }}
                 </div>
               </div>
@@ -65,7 +67,7 @@
 
             <div class="flex items-start gap-3">
               <svg
-                class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+                class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -84,10 +86,10 @@
                 ></path>
               </svg>
               <div>
-                <div class="text-xs text-gray-500 font-medium uppercase">
+                <div class="text-xs text-gray-400 font-medium uppercase">
                   Venue
                 </div>
-                <div class="text-sm text-gray-900 font-medium">
+                <div class="text-sm text-gray-200 font-medium">
                   {{ event.venue }}
                 </div>
               </div>
@@ -95,7 +97,7 @@
 
             <div class="flex items-start gap-3">
               <svg
-                class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+                class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -108,18 +110,18 @@
                 ></path>
               </svg>
               <div>
-                <div class="text-xs text-gray-500 font-medium uppercase">
+                <div class="text-xs text-gray-400 font-medium uppercase">
                   Participants
                 </div>
-                <div class="text-sm text-gray-900 font-medium">
+                <div class="text-sm text-gray-200 font-medium">
                   <span
                     :class="
-                      registrationFull ? 'text-red-600' : 'text-green-600'
+                      registrationFull ? 'text-red-500' : 'text-green-500'
                     "
                   >
                     {{ registrationCount }}
                   </span>
-                  <span class="text-gray-400"
+                  <span class="text-gray-500"
                     >/{{ event.maxParticipants }}</span
                   >
                 </div>
@@ -128,7 +130,7 @@
 
             <div class="flex items-start gap-3">
               <svg
-                class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+                class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -141,15 +143,15 @@
                 ></path>
               </svg>
               <div>
-                <div class="text-xs text-gray-500 font-medium uppercase">
+                <div class="text-xs text-gray-400 font-medium uppercase">
                   Entry Fee
                 </div>
                 <div
                   class="text-sm font-semibold"
                   :class="
                     event.participationFee > 0
-                      ? 'text-gray-900'
-                      : 'text-green-600'
+                      ? 'text-gray-200'
+                      : 'text-green-500'
                   "
                 >
                   {{
@@ -164,9 +166,9 @@
 
           <div
             v-if="event.requiresDecklist"
-            class="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg"
+            class="mt-6 p-3 bg-amber-900/30 border border-amber-700/50 rounded-lg"
           >
-            <div class="flex items-center gap-2 text-amber-800">
+            <div class="flex items-center gap-2 text-amber-400">
               <svg
                 class="w-4 h-4 flex-shrink-0"
                 fill="none"
@@ -186,7 +188,7 @@
 
           <NuxtLink
             to="/"
-            class="mt-6 block text-center text-sm text-gray-600 hover:text-blue-600 transition"
+            class="mt-6 block text-center text-sm text-gray-400 hover:text-emerald-500 transition"
           >
             ← Back to Events
           </NuxtLink>
@@ -197,10 +199,10 @@
           <!-- Status Messages -->
           <div
             v-if="registrationFull"
-            class="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6"
+            class="bg-red-900/20 border border-red-700/50 rounded-2xl p-6 mb-6"
           >
-            <h3 class="text-lg font-bold text-red-900 mb-2">Event Full</h3>
-            <p class="text-red-700">
+            <h3 class="text-lg font-bold text-red-400 mb-2">Event Full</h3>
+            <p class="text-red-300">
               This event has reached maximum capacity ({{
                 event.maxParticipants
               }}
@@ -210,37 +212,40 @@
 
           <div
             v-else-if="eventPassed"
-            class="bg-red-50 border border-red-200 rounded-2xl p-6 mb-6"
+            class="bg-red-900/20 border border-red-700/50 rounded-2xl p-6 mb-6"
           >
-            <h3 class="text-lg font-bold text-red-900 mb-2">
+            <h3 class="text-lg font-bold text-red-400 mb-2">
               Registration Closed
             </h3>
-            <p class="text-red-700">This event has already taken place.</p>
+            <p class="text-red-300">This event has already taken place.</p>
           </div>
 
           <div
             v-else-if="registrationSuccess"
-            class="bg-green-50 border border-green-200 rounded-2xl p-6 mb-6"
+            class="bg-green-900/20 border border-green-700/50 rounded-2xl p-6 mb-6"
           >
-            <h3 class="text-lg font-bold text-green-900 mb-2">
+            <h3 class="text-lg font-bold text-green-400 mb-2">
               ✓ Registration Successful!
             </h3>
-            <p class="text-green-700 mb-2">
+            <p class="text-green-300 mb-2">
               <strong>{{ form.tickets[0].name }}</strong> (ID:
               {{ form.tickets[0].playerId }}) has been registered for
               {{ event.name }}.
             </p>
-            <p v-if="event.requiresDecklist" class="text-green-700 text-sm">
+            <p v-if="event.requiresDecklist" class="text-green-300 text-sm">
               Redirecting to your dashboard to submit your decklist...
             </p>
-            <p v-else class="text-green-700 text-sm">
+            <p v-else class="text-green-300 text-sm">
               Redirecting to your dashboard...
             </p>
           </div>
 
           <!-- Form Card -->
-          <div v-else class="bg-white rounded-2xl shadow-lg p-6 lg:p-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+          <div
+            v-else
+            class="bg-[#2f3136] rounded-2xl shadow-lg p-6 lg:p-8 border border-[#202225]"
+          >
+            <h2 class="text-2xl font-bold text-gray-100 mb-6">
               Complete Registration
             </h2>
 
@@ -250,16 +255,16 @@
                 class="flex items-center justify-center py-8"
               >
                 <div
-                  class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mr-3"
+                  class="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mr-3"
                 ></div>
-                <p class="text-gray-600">Loading your profile...</p>
+                <p class="text-gray-300">Loading your profile...</p>
               </div>
 
               <div v-else class="space-y-5">
                 <div>
                   <label
                     for="playerId"
-                    class="block text-sm font-semibold text-gray-700 mb-2"
+                    class="block text-sm font-semibold text-gray-200 mb-2"
                   >
                     Player ID *
                   </label>
@@ -271,18 +276,18 @@
                     pattern="\d*"
                     required
                     :disabled="submitting"
-                    class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-[#40444b] text-gray-200"
                     :class="
                       form.tickets[0].playerId
-                        ? 'border-green-300 bg-green-50'
-                        : 'border-gray-300'
+                        ? 'border-green-600'
+                        : 'border-gray-600'
                     "
                     placeholder="Your player ID (numbers only)"
                     @input="validatePlayerId($event, 0)"
                   />
                   <p
                     v-if="form.tickets[0].playerId"
-                    class="mt-1.5 text-xs text-green-600 font-medium"
+                    class="mt-1.5 text-xs text-green-500 font-medium"
                   >
                     ✓ Auto-filled from your profile
                   </p>
@@ -291,7 +296,7 @@
                 <div>
                   <label
                     for="name"
-                    class="block text-sm font-semibold text-gray-700 mb-2"
+                    class="block text-sm font-semibold text-gray-200 mb-2"
                   >
                     Full Name *
                   </label>
@@ -301,17 +306,17 @@
                     type="text"
                     required
                     :disabled="submitting"
-                    class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-[#40444b] text-gray-200"
                     :class="
                       form.tickets[0].name
-                        ? 'border-green-300 bg-green-50'
-                        : 'border-gray-300'
+                        ? 'border-green-600'
+                        : 'border-gray-600'
                     "
                     placeholder="Your full name"
                   />
                   <p
                     v-if="form.tickets[0].name"
-                    class="mt-1.5 text-xs text-green-600 font-medium"
+                    class="mt-1.5 text-xs text-green-500 font-medium"
                   >
                     ✓ Auto-filled from your profile
                   </p>
@@ -320,7 +325,7 @@
                 <div>
                   <label
                     for="email"
-                    class="block text-sm font-semibold text-gray-700 mb-2"
+                    class="block text-sm font-semibold text-gray-200 mb-2"
                   >
                     Email Address *
                   </label>
@@ -330,27 +335,27 @@
                     type="email"
                     required
                     :disabled="submitting"
-                    class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-[#40444b] text-gray-200"
                     :class="
-                      form.bookerEmail
-                        ? 'border-green-300 bg-green-50'
-                        : 'border-gray-300'
+                      form.bookerEmail ? 'border-green-600' : 'border-gray-600'
                     "
                     placeholder="your@email.com"
                   />
                   <p
                     v-if="form.bookerEmail"
-                    class="mt-1.5 text-xs text-green-600 font-medium"
+                    class="mt-1.5 text-xs text-green-500 font-medium"
                   >
                     ✓ Auto-filled from your account
                   </p>
                 </div>
 
                 <!-- Privacy Notice & Anonymous Participation -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div
+                  class="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4"
+                >
                   <div class="flex items-start gap-3 mb-3">
                     <svg
-                      class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+                      class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -363,10 +368,10 @@
                       ></path>
                     </svg>
                     <div>
-                      <p class="font-semibold text-blue-900 text-sm">
+                      <p class="font-semibold text-blue-300 text-sm">
                         Privacy Notice
                       </p>
-                      <p class="text-blue-800 text-xs mt-1">
+                      <p class="text-blue-200 text-xs mt-1">
                         Your name will be visible to other event participants in
                         the participant list.
                       </p>
@@ -378,13 +383,13 @@
                       type="checkbox"
                       v-model="form.tickets[0].isAnonymous"
                       :disabled="submitting"
-                      class="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      class="mt-0.5 w-4 h-4 text-emerald-600 border-gray-500 rounded focus:ring-emerald-500 focus:ring-2 bg-[#40444b]"
                     />
                     <div class="flex-1">
-                      <span class="text-sm font-medium text-gray-900"
+                      <span class="text-sm font-medium text-gray-200"
                         >Anonymous Participation</span
                       >
-                      <p class="text-xs text-gray-600 mt-0.5">
+                      <p class="text-xs text-gray-400 mt-0.5">
                         Your name will be hidden from other participants and
                         shown as part of "anonymous participants" count. Your
                         name will still be visible to event organizers.
@@ -396,11 +401,11 @@
 
               <div
                 v-if="event.requiresDecklist"
-                class="bg-amber-50 border border-amber-200 rounded-lg p-4"
+                class="bg-amber-900/20 border border-amber-700/50 rounded-lg p-4"
               >
                 <div class="flex items-start gap-3">
                   <svg
-                    class="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0"
+                    class="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -413,10 +418,10 @@
                     ></path>
                   </svg>
                   <div>
-                    <p class="font-semibold text-amber-900 text-sm">
+                    <p class="font-semibold text-amber-300 text-sm">
                       Decklist Required
                     </p>
-                    <p class="text-amber-800 text-xs mt-1">
+                    <p class="text-amber-200 text-xs mt-1">
                       After registration, you'll be redirected to submit your
                       decklist or select to bring it on-site.
                     </p>
@@ -426,15 +431,15 @@
 
               <div
                 v-if="formError"
-                class="bg-red-50 border border-red-200 rounded-lg p-4"
+                class="bg-red-900/20 border border-red-700/50 rounded-lg p-4"
               >
-                <p class="text-red-800 text-sm">{{ formError }}</p>
+                <p class="text-red-300 text-sm">{{ formError }}</p>
               </div>
 
               <button
                 type="submit"
                 :disabled="submitting || registrationFull"
-                class="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                class="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-green-700 transition transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 <span v-if="submitting">Registering...</span>
                 <span v-else>Complete Registration →</span>
