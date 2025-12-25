@@ -124,7 +124,75 @@ onMounted(async () => {
 
     const user = data.session.user;
 
-    // Check if player exists in our database
+    // Check if this is a registration flow (user has metadata with name and playerId)
+    const isRegistration =
+      user.user_metadata?.name && user.user_metadata?.playerId;
+
+    if (isRegistration) {
+      // This is a new registration - create the Player record
+      console.log("New registration detected, creating player record");
+
+      try {
+        // Create the player record using the registration endpoint
+        await $fetch("/api/players/register", {
+          method: "POST",
+          body: {
+            playerId: user.user_metadata.playerId,
+            name: user.user_metadata.name,
+            email: user.email,
+            userId: user.id,
+            birthDate: new Date("2000-01-01T00:00:00.000Z").toISOString(), // Default birthdate
+          },
+        });
+
+        console.log("Player record created successfully");
+
+        // Proceed to return path or home
+        const returnPath = route.query.return as string;
+        router.push(returnPath || "/");
+        return;
+      } catch (createError: any) {
+        console.error("Error creating player record:", createError);
+
+        // Get more detailed error information
+        const errorMessage =
+          createError?.data?.message || createError?.message || "Unknown error";
+        const statusCode = createError?.statusCode || createError?.status;
+
+        console.error("Detailed error:", {
+          message: errorMessage,
+          statusCode,
+          data: createError?.data,
+        });
+
+        errorTitle.value = "Registration Failed";
+
+        // Provide more specific error messages based on the error
+        if (statusCode === 409 || errorMessage.includes("already exists")) {
+          error.value = `A player with ID ${user.user_metadata.playerId} already exists in our system.`;
+          errorAction.value =
+            "If this is your Player ID and you've already registered, try logging in instead. Otherwise, please verify your Player ID is correct.";
+        } else if (errorMessage.includes("must contain only numbers")) {
+          error.value = `The Player ID "${user.user_metadata.playerId}" is invalid. Player IDs must contain only numbers.`;
+          errorAction.value =
+            "Please go back to the registration page and enter a valid numeric Player ID.";
+        } else {
+          error.value = `We couldn't complete your registration: ${errorMessage}`;
+          errorAction.value =
+            "Please try registering again. If this problem persists, contact support with this error message.";
+        }
+
+        await logError(
+          "registration_player_creation_failed",
+          createError instanceof Error ? createError.message : "Unknown error",
+          { createError, userId: user.id, metadata: user.user_metadata }
+        );
+        checking.value = false;
+        return;
+      }
+    }
+
+    // This is a login flow - check if player exists in our database
     try {
       const playerResponse = await $fetch("/api/players/check", {
         method: "POST",

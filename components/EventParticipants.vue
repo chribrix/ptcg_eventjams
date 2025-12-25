@@ -81,11 +81,11 @@
           "
         >
           <div
-            class="flex items-start sm:items-center justify-between gap-3 flex-wrap"
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full"
           >
             <div
-              class="flex items-center min-w-0 flex-1"
-              :class="compact ? 'space-x-3' : 'space-x-4'"
+              class="flex items-center space-x-3 sm:space-x-4 min-w-0"
+              :class="compact ? '' : ''"
             >
               <div class="relative flex-shrink-0">
                 <!-- Player Avatar with status indicator -->
@@ -129,9 +129,7 @@
                   />
                   <p
                     :class="[
-                      compact
-                        ? 'font-medium truncate'
-                        : 'font-semibold truncate',
+                      compact ? 'font-medium' : 'font-semibold',
                       participant.isAnonymous
                         ? 'text-gray-500'
                         : 'text-gray-900',
@@ -156,7 +154,7 @@
             <!-- Status Indicators (not shown for anonymous group) -->
             <div
               v-if="!participant.isAnonymous"
-              class="flex items-center flex-shrink-0"
+              class="flex items-center flex-shrink-0 ml-auto sm:ml-0"
             >
               <!-- Registration Status -->
               <span

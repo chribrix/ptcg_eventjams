@@ -327,11 +327,8 @@ const { t } = useI18n();
                 <!-- Language Switcher -->
                 <LanguageSwitcher />
 
-                <!-- Logout button for authenticated users -->
-                <button v-if="userName" @click="logout" class="logout-button">
-                  <ArrowRightOnRectangleIcon class="w-4 h-4" />
-                  <span class="hidden sm:inline">{{ t("nav.logout") }}</span>
-                </button>
+                <!-- User Menu for authenticated users -->
+                <UserMenu v-if="userName" />
 
                 <!-- Sign in/register for non-authenticated users -->
                 <NuxtLink v-else to="/login" class="signin-button">
