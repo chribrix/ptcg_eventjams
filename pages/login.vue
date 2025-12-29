@@ -259,8 +259,7 @@ const submitLogin = async () => {
   error.value = "";
   isLoading.value = true;
 
-  console.log("=== Magic Link Login Debug ===");
-  console.log("Email:", email.value);
+  console.log("🔑 Login attempt started for:", email.value);
 
   // First, check if a player account exists with this email
   try {
@@ -272,7 +271,7 @@ const submitLogin = async () => {
     });
 
     if (!playerCheck.exists) {
-      console.log("Player account not found for email:", email.value);
+      console.log("⚠️ Player account not found for email:", email.value);
       error.value = `No account found for ${email.value}. Please register first before logging in.`;
       isLoading.value = false;
       await logError(
@@ -297,8 +296,12 @@ const submitLogin = async () => {
     }
 
     console.log("✅ Player account exists, proceeding with magic link");
+    await logError("info_login_player_found", "Player account found, sending magic link", {
+      email: email.value,
+      playerId: playerCheck.player?.playerId,
+    });
   } catch (checkError) {
-    console.error("Error checking player existence:", checkError);
+    console.error("❌ Error checking player existence:", checkError);
     error.value =
       "We couldn't verify your account. Redirecting you to registration...";
     isLoading.value = false;
@@ -324,23 +327,15 @@ const submitLogin = async () => {
     return;
   }
 
-  console.log("Supabase URL:", runtimeConfig.public.supabaseUrl);
-  console.log("Has Supabase Key:", !!runtimeConfig.public.supabaseAnonKey);
-  console.log("APP_BASE_URL:", runtimeConfig.public.appBaseUrl);
-
   const returnPath = route.query.redirect as string;
-  console.log("Return path from query:", returnPath);
-
   let redirectTo = getMagicLinkRedirect();
-  console.log("Base redirect URL:", redirectTo);
 
   // Append the return path if present
   if (redirectTo && returnPath) {
     redirectTo = `${redirectTo}?return=${encodeURIComponent(returnPath)}`;
-    console.log("Final redirect URL with return path:", redirectTo);
   }
 
-  console.log("Calling Supabase signInWithOtp...");
+  console.log("📧 Sending login magic link to:", email.value);
   const startTime = Date.now();
 
   const { error: signInError } = await useSupabaseClient().auth.signInWithOtp({
@@ -353,30 +348,28 @@ const submitLogin = async () => {
   });
 
   const elapsed = Date.now() - startTime;
-  console.log(`Supabase API call completed in ${elapsed}ms`);
+  console.log(`⏱️ Supabase API call completed in ${elapsed}ms`);
 
   isLoading.value = false;
 
   if (signInError) {
-    console.error("=== Magic Link Error ===");
-    console.error("Error message:", signInError.message);
-    console.error("Error status:", signInError.status);
-    console.error("Error name:", signInError.name);
-    console.error("Full error object:", JSON.stringify(signInError, null, 2));
-    console.error("========================");
+    console.error("❌ Magic link error:", signInError.message);
     error.value = signInError.message;
     await logError("login_magic_link_failed", signInError.message, {
       email: email.value,
       errorStatus: signInError.status,
       errorName: signInError.name,
+      elapsed,
+      redirectTo,
     });
   } else {
     console.log("✅ Magic link sent successfully");
-    console.log(
-      "Expected redirect after clicking link:",
-      redirectTo || "http://localhost:3000/magic-login"
-    );
-    console.log("=============================");
+    await logError("info_login_magic_link_sent", "Login magic link sent successfully", {
+      email: email.value,
+      elapsed,
+      redirectTo,
+      hasReturnPath: !!returnPath,
+    });
     linkSent.value = true;
   }
 };

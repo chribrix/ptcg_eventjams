@@ -24,6 +24,7 @@
             class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Error Types</option>
+            <option value="info_">Info/Success Logs</option>
             <option value="session_check_failed">Session Check Failed</option>
             <option value="session_deployment_invalidated">
               Deployment Invalidated
@@ -35,8 +36,9 @@
             <option value="session_validation_exception">
               Session Validation Exception
             </option>
-            <option value="magic_login">Magic Login Errors</option>
-            <option value="registration">Registration Errors</option>
+            <option value="magic_login">Magic Login Flow</option>
+            <option value="registration">Registration Flow</option>
+            <option value="login">Login Flow</option>
             <option value="api_error">API Errors</option>
             <option value="database_error">Database Errors</option>
             <option value="auth_error">Auth Errors</option>

@@ -213,6 +213,12 @@ const submitForm = async () => {
   linkSent.value = false;
   error.value = "";
 
+  console.log("📝 Registration form submitted", {
+    email: email.value,
+    hasName: !!name.value,
+    hasPlayerId: !!playerId.value,
+  });
+
   // First, check if a player account already exists with this email
   try {
     const playerCheck = await $fetch("/api/players/check", {
@@ -223,7 +229,7 @@ const submitForm = async () => {
     });
 
     if (playerCheck.exists) {
-      console.log("Player account already exists for email:", email.value);
+      console.log("⚠️ Player account already exists for email:", email.value);
       error.value = `An account already exists with ${email.value}. Please log in instead.`;
       isLoading.value = false;
       await logError(
@@ -238,12 +244,21 @@ const submitForm = async () => {
 
     console.log("✅ Email is available, proceeding with registration");
   } catch (checkError) {
-    console.error("Error checking player existence:", checkError);
+    console.error("❌ Error checking player existence:", checkError);
+    await logError(
+      "registration_check_failed",
+      checkError instanceof Error ? checkError.message : "Unknown error",
+      {
+        email: email.value,
+        checkError,
+      }
+    );
     // If the check fails, we'll allow the registration to proceed
     // The backend will handle any duplicate errors
-    console.log("Player check failed, proceeding anyway");
+    console.log("⚠️ Player check failed, proceeding anyway");
   }
 
+  console.log("📧 Sending magic link to:", email.value);
   const redirectTo = getMagicLinkRedirect();
   const { error: signUpError } = await useSupabaseClient().auth.signInWithOtp({
     email: email.value,
@@ -259,14 +274,22 @@ const submitForm = async () => {
   isLoading.value = false;
 
   if (signUpError) {
-    console.error("Error sending magic link:", signUpError.message);
+    console.error("❌ Error sending magic link:", signUpError.message);
     error.value = signUpError.message;
     await logError("registration_magic_link_failed", signUpError.message, {
       email: email.value,
       hasName: !!name.value,
       hasPlayerId: !!playerId.value,
+      redirectTo,
     });
   } else {
+    console.log("✅ Magic link sent successfully");
+    await logError("info_registration_magic_link_sent", "Magic link sent successfully", {
+      email: email.value,
+      name: name.value,
+      playerId: playerId.value,
+      redirectTo,
+    });
     linkSent.value = true;
   }
 };

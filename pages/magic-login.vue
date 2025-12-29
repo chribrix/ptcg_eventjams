@@ -101,8 +101,41 @@ const logError = async (
   }
 };
 
+// Log successful operations too (as info-level logs)
+const logInfo = async (
+  infoType: string,
+  infoMessage: string,
+  additionalData?: any
+) => {
+  try {
+    const { data } = await useSupabaseClient().auth.getSession();
+    const user = data.session?.user;
+
+    await $fetch("/api/admin/error-logs/create", {
+      method: "POST",
+      body: {
+        userId: user?.id || null,
+        userEmail: user?.email || null,
+        errorType: `info_${infoType}`,
+        errorMessage: infoMessage,
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        metadata: additionalData || null,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to log info:", err);
+  }
+};
+
 onMounted(async () => {
   try {
+    console.log("🔐 Magic login process started");
+    await logInfo("magic_login_started", "User clicked magic link", {
+      hasReturnPath: !!route.query.return,
+      returnPath: route.query.return,
+    });
+
     const { data, error: sessionError } =
       await useSupabaseClient().auth.getSession();
 
@@ -123,12 +156,30 @@ onMounted(async () => {
     }
 
     const user = data.session.user;
+    console.log("✅ Session validated, user:", user.email);
+    await logInfo("magic_login_session_valid", "Magic link session validated successfully", {
+      userId: user.id,
+      email: user.email,
+      hasMetadata: !!user.user_metadata,
+      metadataKeys: user.user_metadata ? Object.keys(user.user_metadata) : [],
+    });
 
     // Check if this is a registration flow (user has metadata with name and playerId)
     const hasRegistrationMetadata =
       user.user_metadata?.name && user.user_metadata?.playerId;
 
     if (hasRegistrationMetadata) {
+      console.log("📝 Registration flow detected", {
+        name: user.user_metadata.name,
+        playerId: user.user_metadata.playerId,
+      });
+      await logInfo("magic_login_registration_flow", "New user registration detected", {
+        userId: user.id,
+        email: user.email,
+        name: user.user_metadata.name,
+        playerId: user.user_metadata.playerId,
+      });
+
       // Check if player already exists in database first
       try {
         const playerResponse = await $fetch("/api/players/check", {
@@ -140,17 +191,36 @@ onMounted(async () => {
 
         if (playerResponse.exists) {
           // Player already exists - treat as login
-          console.log("Player already exists, treating as login");
+          console.log("✅ Player already exists, treating as login");
+          await logInfo("magic_login_existing_player", "Player record already exists, treating as login", {
+            userId: user.id,
+            email: user.email,
+            playerId: playerResponse.player?.playerId,
+          });
+          checking.value = false;
           const returnPath = route.query.return as string;
-          router.push(returnPath || "/");
+          await router.push(returnPath || "/");
           return;
         }
+
+        console.log("➡️ Player does not exist, proceeding with registration");
+        await logInfo("magic_login_new_player", "Player record does not exist, will create new", {
+          userId: user.id,
+          email: user.email,
+        });
       } catch (checkError) {
         console.error("Error checking player existence:", checkError);
+        // If check fails, log and continue with registration attempt
+        await logError(
+          "magic_login_check_error",
+          checkError instanceof Error ? checkError.message : "Unknown error",
+          { checkError, userId: user.id, email: user.email }
+        );
+        // Continue to try registration - the register endpoint will handle duplicates
       }
 
       // Player doesn't exist - proceed with registration
-      console.log("New registration detected, creating player record");
+      console.log("🆕 Creating new player record");
 
       try {
         // Create the player record using the registration endpoint
@@ -165,11 +235,23 @@ onMounted(async () => {
           },
         });
 
-        console.log("Player record created successfully");
+        console.log("✅ Player record created successfully");
+        await logInfo("magic_login_player_created", "Player record created successfully", {
+          userId: user.id,
+          email: user.email,
+          playerId: user.user_metadata.playerId,
+          name: user.user_metadata.name,
+        });
 
         // Proceed to return path or home
+        checking.value = false;
         const returnPath = route.query.return as string;
-        router.push(returnPath || "/");
+        await logInfo("magic_login_registration_complete", "Registration complete, redirecting user", {
+          userId: user.id,
+          email: user.email,
+          returnPath: returnPath || "/",
+        });
+        await router.push(returnPath || "/");
         return;
       } catch (createError: any) {
         console.error("Error creating player record:", createError);
@@ -213,11 +295,16 @@ onMounted(async () => {
     }
 
     // This is a login flow - check if player exists in our database
+    console.log("🔑 Login flow detected (no registration metadata)");
+    await logInfo("magic_login_login_flow", "Existing user login detected", {
+      userId: user.id,
+      email: user.email,
+    });
+
     try {
       const playerResponse = await $fetch("/api/players/check", {
         method: "POST",
         body: {
-          userId: user.id,
           email: user.email,
         },
       });
@@ -260,8 +347,16 @@ onMounted(async () => {
       }
 
       // Player exists, proceed with login
+      console.log("✅ Player found, login successful");
+      await logInfo("magic_login_success", "Login completed successfully", {
+        userId: user.id,
+        email: user.email,
+        playerId: playerResponse.player?.playerId,
+        returnPath: route.query.return as string || "/",
+      });
+      checking.value = false;
       const returnPath = route.query.return as string;
-      router.push(returnPath || "/");
+      await router.push(returnPath || "/");
     } catch (checkError) {
       console.error("Error checking player existence:", checkError);
       errorTitle.value = "Account Verification Failed";

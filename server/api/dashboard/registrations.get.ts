@@ -45,15 +45,12 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Find the player by their Supabase user ID first, then by email as fallback
-    let player = await prisma.player.findUnique({
-      where: {
-        playerId: supabaseUser.id,
-      },
-    });
+    // Find the player by email
+    // Note: Player model doesn't store Supabase userId, only Pokemon TCG playerId
+    // So we must look up by email
+    let player = null;
 
-    if (!player && supabaseUser.email) {
-      // Try to find by email as fallback
+    if (supabaseUser.email) {
       player = await prisma.player.findFirst({
         where: {
           email: supabaseUser.email.toLowerCase(),

@@ -46,15 +46,11 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Find the player by their Supabase user ID first
-    let player = await prisma.player.findUnique({
-      where: {
-        playerId: supabaseUser.id,
-      },
-    });
+    // Find the player by email
+    // Note: Player model doesn't store Supabase userId, only Pokemon TCG playerId
+    let player = null;
 
-    // Fallback to email lookup
-    if (!player && supabaseUser.email) {
+    if (supabaseUser.email) {
       player = await prisma.player.findFirst({
         where: {
           email: supabaseUser.email.toLowerCase(),

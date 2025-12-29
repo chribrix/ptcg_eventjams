@@ -34,23 +34,20 @@ export default defineEventHandler(async (event) => {
 
     let player = null;
 
-    // Check if player exists by Supabase user ID first (if provided)
-    if (userId) {
-      player = await prisma.player.findUnique({
-        where: {
-          playerId: userId,
-        },
-      });
-    }
+    // Note: The Player model doesn't store Supabase userId, only Pokemon TCG playerId
+    // So when checking by userId, we need to get the email from Supabase and check by email
 
-    // Fallback to email lookup if user ID not found or not provided
-    if (!player && email) {
+    // If we have an email, use it directly for lookup
+    if (email) {
       player = await prisma.player.findFirst({
         where: {
           email: email.toLowerCase(),
         },
       });
     }
+
+    // Note: userId parameter is kept for API compatibility but is not used
+    // because Player model doesn't track Supabase auth userId
 
     return {
       exists: !!player,
