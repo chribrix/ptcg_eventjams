@@ -160,9 +160,62 @@ export default defineEventHandler(async (event) => {
           });
         }
 
+        // Get player to check if they have a linked Supabase account
+        const playerToDelete = await prisma.player.findUnique({
+          where: { id: deletePlayerId },
+          select: { supabaseId: true, email: true, name: true },
+        });
+
+        if (!playerToDelete) {
+          throw createError({
+            statusCode: 404,
+            statusMessage: "Player not found",
+          });
+        }
+
+        // Delete from database first
         await prisma.player.delete({
           where: { id: deletePlayerId },
         });
+
+        // Then delete from Supabase auth if linked
+        if (playerToDelete.supabaseId) {
+          try {
+            const supabaseAdmin = useSupabaseServiceRole();
+            const { error: deleteError } =
+              await supabaseAdmin.auth.admin.deleteUser(
+                playerToDelete.supabaseId
+              );
+
+            if (deleteError) {
+              console.error(
+                "Failed to delete Supabase auth user:",
+                deleteError
+              );
+              // Log error but don't fail the request since player is already deleted
+              await prisma.errorLog.create({
+                data: {
+                  errorType: "supabase_user_delete_failed",
+                  errorMessage: `Failed to delete Supabase user after player deletion: ${deleteError.message}`,
+                  userEmail: playerToDelete.email || null,
+                  userId: playerToDelete.supabaseId,
+                  metadata: {
+                    playerId: deletePlayerId,
+                    playerName: playerToDelete.name,
+                    error: deleteError,
+                  },
+                },
+              });
+            } else {
+              console.log(
+                `✅ Deleted Supabase auth user: ${playerToDelete.supabaseId}`
+              );
+            }
+          } catch (supabaseError) {
+            console.error("Error deleting Supabase auth user:", supabaseError);
+            // Log but don't fail the request
+          }
+        }
 
         return { success: true, message: "Player deleted successfully" };
 

@@ -194,9 +194,14 @@ onMounted(async () => {
           playerId: playerResponse.player?.playerId,
           returnPath: (route.query.return as string) || "/",
         });
-        checking.value = false;
-        const returnPath = route.query.return as string;
-        await router.push(returnPath || "/");
+
+        const returnPath = (route.query.return as string) || "/";
+        console.log("🔄 Navigating to:", returnPath);
+
+        // Use window.location for guaranteed redirect (avoids Vue Router issues)
+        if (process.client) {
+          window.location.href = returnPath;
+        }
         return;
       }
 
@@ -233,9 +238,12 @@ onMounted(async () => {
 
         if (retryResponse.exists) {
           console.log("✅ Player found after retry");
-          checking.value = false;
-          const returnPath = route.query.return as string;
-          await router.push(returnPath || "/");
+          const returnPath = (route.query.return as string) || "/";
+          console.log("🔄 Navigating to:", returnPath);
+
+          if (process.client) {
+            window.location.href = returnPath;
+          }
           return;
         }
 
@@ -275,9 +283,12 @@ onMounted(async () => {
             }
           );
 
-          checking.value = false;
-          const returnPath = route.query.return as string;
-          await router.push(returnPath || "/");
+          const returnPath = (route.query.return as string) || "/";
+          console.log("🔄 Navigating to:", returnPath);
+
+          if (process.client) {
+            window.location.href = returnPath;
+          }
           return;
         } catch (createError: any) {
           console.error("❌ Manual player creation failed:", createError);

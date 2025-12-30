@@ -47,10 +47,11 @@ export async function verifyAdmin(event: H3Event) {
 
 // Middleware function for admin routes
 export default defineEventHandler(async (event) => {
-  // Only apply to admin API routes (except the check endpoint)
+  // Only apply to admin API routes (except the check endpoint and error-logs/create)
   if (
     event.node.req.url?.startsWith("/api/admin/") &&
-    !event.node.req.url.includes("/api/admin/check")
+    !event.node.req.url.includes("/api/admin/check") &&
+    !event.node.req.url.includes("/api/admin/error-logs/create")
   ) {
     await verifyAdmin(event);
   }
