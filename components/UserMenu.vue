@@ -130,7 +130,59 @@ const goToProfile = () => {
 
 const logout = async () => {
   isOpen.value = false;
-  await useSupabaseClient().auth.signOut();
-  navigateTo("/login");
+
+  try {
+    // Log logout action first (before clearing state)
+    try {
+      await $fetch("/api/admin/error-logs/create", {
+        method: "POST",
+        body: {
+          userId: user.value?.id || null,
+          userEmail: user.value?.email || null,
+          errorType: "info_user_logout",
+          errorMessage: "User logged out",
+          userAgent: navigator.userAgent,
+          url: window.location.href,
+          metadata: {
+            userName: user.value?.user_metadata?.name,
+          },
+        },
+      });
+    } catch (logError) {
+      console.error("Failed to log logout:", logError);
+      // Continue with logout even if logging fails
+    }
+
+    // Sign out from Supabase
+    const { error } = await useSupabaseClient().auth.signOut();
+    if (error) {
+      console.error("Supabase signOut error:", error);
+      // Continue with cleanup even if signOut fails
+    }
+
+    // Force clear all storage to prevent limbo state
+    if (process.client) {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // Clear cookies manually (important for Safari/iOS)
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+          const name = cookie.split("=")[0].trim();
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+        }
+      } catch (storageError) {
+        console.error("Storage cleanup error:", storageError);
+      }
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+  } finally {
+    // Always navigate to login, even if there were errors
+    // Use replace to prevent back button issues
+    await navigateTo("/login", { replace: true });
+  }
 };
 </script>

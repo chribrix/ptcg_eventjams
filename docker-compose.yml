@@ -46,6 +46,11 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       - NODE_ENV=production
       - DEPLOY_TIMESTAMP=${DEPLOY_TIMESTAMP:-0}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_WEBHOOK_SECRET=${SUPABASE_WEBHOOK_SECRET}
+      # Nuxt runtime config overrides (no rebuild needed)
+      - NUXT_SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NUXT_SUPABASE_WEBHOOK_SECRET=${SUPABASE_WEBHOOK_SECRET}
     ports:
       - "8080:3000"
     depends_on:

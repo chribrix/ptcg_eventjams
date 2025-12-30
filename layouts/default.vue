@@ -48,7 +48,32 @@ const hideAdminDropdown = () => {
 
 // Logout function
 const logout = async () => {
+  const userId = authUser.value?.id;
+  const userEmail = authUser.value?.email;
+
   try {
+    // Log logout attempt
+    if (process.client) {
+      try {
+        await $fetch("/api/admin/error-logs/create", {
+          method: "POST",
+          body: {
+            userId: userId || null,
+            userEmail: userEmail || null,
+            errorType: "info_user_logout",
+            errorMessage: "User initiated logout",
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+            metadata: {
+              userName: authUser.value?.user_metadata?.name,
+            },
+          },
+        });
+      } catch (logError) {
+        console.error("Failed to log logout:", logError);
+      }
+    }
+
     // Try to validate session, but don't block logout if it fails
     try {
       await ensureValidSession();
@@ -104,6 +129,28 @@ const logout = async () => {
     }
   } catch (error) {
     console.error("Error during logout:", error);
+
+    // Log the error
+    if (process.client) {
+      try {
+        await $fetch("/api/admin/error-logs/create", {
+          method: "POST",
+          body: {
+            userId: userId || null,
+            userEmail: userEmail || null,
+            errorType: "logout_error",
+            errorMessage:
+              error instanceof Error ? error.message : "Logout failed",
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+            metadata: { error },
+          },
+        });
+      } catch (logError) {
+        console.error("Failed to log logout error:", logError);
+      }
+    }
+
     // Force complete cleanup and reload even if there's an error
     if (process.client) {
       try {

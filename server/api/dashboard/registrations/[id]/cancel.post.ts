@@ -156,6 +156,26 @@ export default defineEventHandler(async (event) => {
       },
     });
 
+    // Log successful cancellation
+    await prisma.errorLog.create({
+      data: {
+        errorType: "info_registration_cancelled",
+        errorMessage: `User cancelled registration for event`,
+        userEmail: registration.player.email,
+        userId: supabaseUser.id,
+        url: `/dashboard/registrations/${registrationId}/cancel`,
+        metadata: {
+          registrationId,
+          eventName:
+            registration.customEvent?.name ||
+            registration.externalEvent?.eventName ||
+            "Unknown Event",
+          eventDate: eventData.eventDate,
+          cancelledTickets: activeTickets.length,
+        },
+      },
+    });
+
     return {
       success: true,
       message: "Registration cancelled successfully",

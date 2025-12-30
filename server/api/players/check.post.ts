@@ -10,11 +10,12 @@ const prisma = new PrismaClient();
 
 const checkPlayerSchema = z
   .object({
-    userId: z.string().optional(),
+    supabaseId: z.string().optional(), // Supabase auth user ID
+    userId: z.string().optional(), // Deprecated: backward compatibility
     email: z.string().email().optional(),
   })
-  .refine((data) => data.userId || data.email, {
-    message: "Either userId or email must be provided",
+  .refine((data) => data.supabaseId || data.userId || data.email, {
+    message: "Either supabaseId, userId, or email must be provided",
   });
 
 export default defineEventHandler(async (event) => {
@@ -30,15 +31,22 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const { userId, email } = validation.data;
+    const { supabaseId, userId, email } = validation.data;
 
     let player = null;
 
-    // Note: The Player model doesn't store Supabase userId, only Pokemon TCG playerId
-    // So when checking by userId, we need to get the email from Supabase and check by email
+    // Check by supabaseId first (most direct link)
+    const authId = supabaseId || userId;
+    if (authId) {
+      player = await prisma.player.findUnique({
+        where: {
+          supabaseId: authId,
+        },
+      });
+    }
 
-    // If we have an email, use it directly for lookup
-    if (email) {
+    // If not found and we have an email, try email lookup
+    if (!player && email) {
       player = await prisma.player.findFirst({
         where: {
           email: email.toLowerCase(),
@@ -46,11 +54,34 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Note: userId parameter is kept for API compatibility but is not used
-    // because Player model doesn't track Supabase auth userId
+    // If still no player found but we have an email, check if user exists in Supabase auth
+    // This prevents registration with emails that already have Supabase accounts
+    let supabaseUserExists = false;
+    if (!player && email) {
+      try {
+        const supabaseAdmin = useSupabaseServiceRole();
+        // More efficient: use getUserByEmail instead of listing all users
+        const { data: authUser, error: authError } =
+          await supabaseAdmin.auth.admin.getUserByEmail(email);
+
+        if (!authError && authUser?.user) {
+          supabaseUserExists = true;
+          console.log(
+            `⚠️ User exists in Supabase auth but not in players table: ${email}`,
+            {
+              userId: authUser.user.id,
+              hasMetadata: !!authUser.user.user_metadata,
+            }
+          );
+        }
+      } catch (authCheckError) {
+        console.error("Error checking Supabase auth user:", authCheckError);
+        // Don't fail the request if auth check fails
+      }
+    }
 
     return {
-      exists: !!player,
+      exists: !!player || supabaseUserExists,
       player: player
         ? {
             id: player.id,
@@ -59,6 +90,8 @@ export default defineEventHandler(async (event) => {
             email: player.email,
           }
         : null,
+      // Indicate if user exists in auth but not in players table
+      authOnly: !player && supabaseUserExists,
     };
   } catch (error) {
     console.error("Error checking player:", error);

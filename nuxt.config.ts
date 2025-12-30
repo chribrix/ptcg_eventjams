@@ -59,11 +59,27 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
+    supabaseWebhookSecret: process.env.SUPABASE_WEBHOOK_SECRET || "",
+    supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
     public: {
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_KEY,
       appBaseUrl: process.env.APP_BASE_URL || "",
       deployTimestamp: process.env.DEPLOY_TIMESTAMP || "",
+    },
+  },
+
+  vite: {
+    server: {
+      hmr: {
+        clientPort: process.env.GITPOD_WORKSPACE_ID ? 443 : 3000,
+      },
+      allowedHosts: [
+        "localhost",
+        ".ngrok-free.dev", // Allow all ngrok-free.dev subdomains
+        ".ngrok.io", // Legacy ngrok domains
+        ".ngrok-free.app", // Alternative ngrok domains
+      ],
     },
   },
 

@@ -121,6 +121,23 @@ export default defineEventHandler(async (event) => {
       },
     });
 
+    // Log successful profile update
+    await prisma.errorLog.create({
+      data: {
+        errorType: "info_profile_updated",
+        errorMessage: `User updated their profile`,
+        userEmail: user.email || null,
+        userId: user.id,
+        url: "/api/players/profile",
+        metadata: {
+          playerId: updatedPlayer.playerId,
+          playerName: updatedPlayer.name,
+          emailChanged: currentPlayer.email !== email.toLowerCase(),
+          playerIdChanged: currentPlayer.playerId !== playerId,
+        },
+      },
+    });
+
     return {
       success: true,
       player: {

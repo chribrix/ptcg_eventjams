@@ -296,10 +296,14 @@ const submitLogin = async () => {
     }
 
     console.log("✅ Player account exists, proceeding with magic link");
-    await logError("info_login_player_found", "Player account found, sending magic link", {
-      email: email.value,
-      playerId: playerCheck.player?.playerId,
-    });
+    await logError(
+      "info_login_player_found",
+      "Player account found, sending magic link",
+      {
+        email: email.value,
+        playerId: playerCheck.player?.playerId,
+      }
+    );
   } catch (checkError) {
     console.error("❌ Error checking player existence:", checkError);
     error.value =
@@ -364,12 +368,16 @@ const submitLogin = async () => {
     });
   } else {
     console.log("✅ Magic link sent successfully");
-    await logError("info_login_magic_link_sent", "Login magic link sent successfully", {
-      email: email.value,
-      elapsed,
-      redirectTo,
-      hasReturnPath: !!returnPath,
-    });
+    await logError(
+      "info_login_magic_link_sent",
+      "Login magic link sent successfully",
+      {
+        email: email.value,
+        elapsed,
+        redirectTo,
+        hasReturnPath: !!returnPath,
+      }
+    );
     linkSent.value = true;
   }
 };

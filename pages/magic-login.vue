@@ -157,146 +157,22 @@ onMounted(async () => {
 
     const user = data.session.user;
     console.log("✅ Session validated, user:", user.email);
-    await logInfo("magic_login_session_valid", "Magic link session validated successfully", {
-      userId: user.id,
-      email: user.email,
-      hasMetadata: !!user.user_metadata,
-      metadataKeys: user.user_metadata ? Object.keys(user.user_metadata) : [],
-    });
-
-    // Check if this is a registration flow (user has metadata with name and playerId)
-    const hasRegistrationMetadata =
-      user.user_metadata?.name && user.user_metadata?.playerId;
-
-    if (hasRegistrationMetadata) {
-      console.log("📝 Registration flow detected", {
-        name: user.user_metadata.name,
-        playerId: user.user_metadata.playerId,
-      });
-      await logInfo("magic_login_registration_flow", "New user registration detected", {
+    await logInfo(
+      "magic_login_session_valid",
+      "Magic link session validated successfully",
+      {
         userId: user.id,
         email: user.email,
-        name: user.user_metadata.name,
-        playerId: user.user_metadata.playerId,
-      });
-
-      // Check if player already exists in database first
-      try {
-        const playerResponse = await $fetch("/api/players/check", {
-          method: "POST",
-          body: {
-            email: user.email,
-          },
-        });
-
-        if (playerResponse.exists) {
-          // Player already exists - treat as login
-          console.log("✅ Player already exists, treating as login");
-          await logInfo("magic_login_existing_player", "Player record already exists, treating as login", {
-            userId: user.id,
-            email: user.email,
-            playerId: playerResponse.player?.playerId,
-          });
-          checking.value = false;
-          const returnPath = route.query.return as string;
-          await router.push(returnPath || "/");
-          return;
-        }
-
-        console.log("➡️ Player does not exist, proceeding with registration");
-        await logInfo("magic_login_new_player", "Player record does not exist, will create new", {
-          userId: user.id,
-          email: user.email,
-        });
-      } catch (checkError) {
-        console.error("Error checking player existence:", checkError);
-        // If check fails, log and continue with registration attempt
-        await logError(
-          "magic_login_check_error",
-          checkError instanceof Error ? checkError.message : "Unknown error",
-          { checkError, userId: user.id, email: user.email }
-        );
-        // Continue to try registration - the register endpoint will handle duplicates
+        hasMetadata: !!user.user_metadata,
+        metadataKeys: user.user_metadata ? Object.keys(user.user_metadata) : [],
       }
+    );
 
-      // Player doesn't exist - proceed with registration
-      console.log("🆕 Creating new player record");
-
-      try {
-        // Create the player record using the registration endpoint
-        await $fetch("/api/players/register", {
-          method: "POST",
-          body: {
-            playerId: user.user_metadata.playerId,
-            name: user.user_metadata.name,
-            email: user.email,
-            userId: user.id,
-            birthDate: new Date("2000-01-01T00:00:00.000Z").toISOString(), // Default birthdate
-          },
-        });
-
-        console.log("✅ Player record created successfully");
-        await logInfo("magic_login_player_created", "Player record created successfully", {
-          userId: user.id,
-          email: user.email,
-          playerId: user.user_metadata.playerId,
-          name: user.user_metadata.name,
-        });
-
-        // Proceed to return path or home
-        checking.value = false;
-        const returnPath = route.query.return as string;
-        await logInfo("magic_login_registration_complete", "Registration complete, redirecting user", {
-          userId: user.id,
-          email: user.email,
-          returnPath: returnPath || "/",
-        });
-        await router.push(returnPath || "/");
-        return;
-      } catch (createError: any) {
-        console.error("Error creating player record:", createError);
-
-        // Get more detailed error information
-        const errorMessage =
-          createError?.data?.message || createError?.message || "Unknown error";
-        const statusCode = createError?.statusCode || createError?.status;
-
-        console.error("Detailed error:", {
-          message: errorMessage,
-          statusCode,
-          data: createError?.data,
-        });
-
-        errorTitle.value = "Registration Failed";
-
-        // Provide more specific error messages based on the error
-        if (statusCode === 409 || errorMessage.includes("already exists")) {
-          error.value = `A player with ID ${user.user_metadata.playerId} already exists in our system.`;
-          errorAction.value =
-            "If this is your Player ID and you've already registered, try logging in instead. Otherwise, please verify your Player ID is correct.";
-        } else if (errorMessage.includes("must contain only numbers")) {
-          error.value = `The Player ID "${user.user_metadata.playerId}" is invalid. Player IDs must contain only numbers.`;
-          errorAction.value =
-            "Please go back to the registration page and enter a valid numeric Player ID.";
-        } else {
-          error.value = `We couldn't complete your registration: ${errorMessage}`;
-          errorAction.value =
-            "Please try registering again. If this problem persists, contact support with this error message.";
-        }
-
-        await logError(
-          "registration_player_creation_failed",
-          createError instanceof Error ? createError.message : "Unknown error",
-          { createError, userId: user.id, metadata: user.user_metadata }
-        );
-        checking.value = false;
-        return;
-      }
-    }
-
-    // This is a login flow - check if player exists in our database
-    console.log("🔑 Login flow detected (no registration metadata)");
-    await logInfo("magic_login_login_flow", "Existing user login detected", {
+    // Check if player exists in database
+    // Note: Player creation is now handled by Supabase webhook automatically
+    // So we just need to check if the player record exists
+    console.log("🔍 Checking if player exists in database");
+    await logInfo("magic_login_checking_player", "Checking player existence", {
       userId: user.id,
       email: user.email,
     });
@@ -309,61 +185,167 @@ onMounted(async () => {
         },
       });
 
-      if (!playerResponse.exists) {
-        // Player doesn't exist, log them out and redirect to register
-        console.log("Player not found in database, redirecting to register");
-        await logError(
-          "login_without_registration",
-          "User attempted to login without completing registration",
-          {
-            userId: user.id,
-            email: user.email,
-            metadata: user.user_metadata,
-          }
-        );
-
-        // Sign them out
-        await useSupabaseClient().auth.signOut();
-
-        // Show user-friendly error before redirect
-        errorTitle.value = "Account Not Found";
-        error.value = `We couldn't find an account for ${user.email}. You need to register first before you can log in.`;
-        errorAction.value =
-          "Click 'Create Account' below to register with your email address, name, and Pokemon TCG Player ID.";
-        showRegisterButton.value = true;
+      if (playerResponse.exists) {
+        // Player exists - proceed with login/registration complete
+        console.log("✅ Player found, proceeding to app");
+        await logInfo("magic_login_success", "Login completed successfully", {
+          userId: user.id,
+          email: user.email,
+          playerId: playerResponse.player?.playerId,
+          returnPath: (route.query.return as string) || "/",
+        });
         checking.value = false;
-
-        // Auto-redirect after showing the message
-        setTimeout(() => {
-          const returnPath = route.query.return as string;
-          const redirectQuery = returnPath
-            ? `?redirect=${encodeURIComponent(
-                returnPath
-              )}&noAccount=true&email=${encodeURIComponent(user.email || "")}`
-            : `?noAccount=true&email=${encodeURIComponent(user.email || "")}`;
-          router.push(`/register${redirectQuery}`);
-        }, 4000);
+        const returnPath = route.query.return as string;
+        await router.push(returnPath || "/");
         return;
       }
 
-      // Player exists, proceed with login
-      console.log("✅ Player found, login successful");
-      await logInfo("magic_login_success", "Login completed successfully", {
-        userId: user.id,
-        email: user.email,
-        playerId: playerResponse.player?.playerId,
-        returnPath: route.query.return as string || "/",
-      });
+      // Player doesn't exist yet
+      // This can happen if:
+      // 1. User is logging in without registering (old account)
+      // 2. Webhook hasn't fired yet (rare - webhook should be instant)
+      const hasRegistrationMetadata =
+        user.user_metadata?.name && user.user_metadata?.playerId;
+
+      if (hasRegistrationMetadata) {
+        // Registration flow - webhook should create player, but might have lag
+        console.log(
+          "⏳ Registration detected but player not found - webhook may still be processing"
+        );
+        await logInfo(
+          "magic_login_webhook_lag",
+          "Player not found after registration - waiting for webhook",
+          {
+            userId: user.id,
+            email: user.email,
+            name: user.user_metadata.name,
+            playerId: user.user_metadata.playerId,
+          }
+        );
+
+        // Wait a moment and retry
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        const retryResponse = await $fetch("/api/players/check", {
+          method: "POST",
+          body: { email: user.email },
+        });
+
+        if (retryResponse.exists) {
+          console.log("✅ Player found after retry");
+          checking.value = false;
+          const returnPath = route.query.return as string;
+          await router.push(returnPath || "/");
+          return;
+        }
+
+        // Still not found - webhook may have failed
+        // Fallback: create player manually
+        console.log("⚠️ Webhook may have failed, creating player manually");
+        await logError(
+          "magic_login_webhook_failed",
+          "Player not found after registration and retry - webhook may have failed",
+          {
+            userId: user.id,
+            email: user.email,
+            name: user.user_metadata.name,
+            playerId: user.user_metadata.playerId,
+          }
+        );
+
+        try {
+          await $fetch("/api/players/register", {
+            method: "POST",
+            body: {
+              playerId: user.user_metadata.playerId,
+              name: user.user_metadata.name,
+              email: user.email,
+              supabaseId: user.id,
+              birthDate: new Date("2000-01-01T00:00:00.000Z").toISOString(),
+            },
+          });
+
+          console.log("✅ Player created manually via fallback");
+          await logInfo(
+            "magic_login_manual_creation_success",
+            "Player created manually after webhook failure",
+            {
+              userId: user.id,
+              email: user.email,
+            }
+          );
+
+          checking.value = false;
+          const returnPath = route.query.return as string;
+          await router.push(returnPath || "/");
+          return;
+        } catch (createError: any) {
+          console.error("❌ Manual player creation failed:", createError);
+          const errorMessage =
+            createError?.data?.message ||
+            createError?.message ||
+            "Unknown error";
+
+          errorTitle.value = "Registration Failed";
+          if (errorMessage.includes("already exists")) {
+            error.value = `A player with this ID or email already exists.`;
+            errorAction.value =
+              "Try logging in instead, or contact support if you believe this is an error.";
+          } else {
+            error.value = `We couldn't complete your registration: ${errorMessage}`;
+            errorAction.value =
+              "Please try registering again. If this problem persists, contact support.";
+          }
+
+          await logError("magic_login_manual_creation_failed", errorMessage, {
+            createError,
+            userId: user.id,
+            metadata: user.user_metadata,
+          });
+          checking.value = false;
+          return;
+        }
+      }
+
+      // Login flow without registration - player doesn't exist
+      console.log("❌ Login attempt without registration");
+      await logError(
+        "login_without_registration",
+        "User attempted to login without completing registration",
+        {
+          userId: user.id,
+          email: user.email,
+          metadata: user.user_metadata,
+        }
+      );
+
+      // Sign them out
+      await useSupabaseClient().auth.signOut();
+
+      errorTitle.value = "Account Not Found";
+      error.value = `We couldn't find an account for ${user.email}. You need to register first before you can log in.`;
+      errorAction.value =
+        "Click 'Create Account' below to register with your email address, name, and Pokemon TCG Player ID.";
+      showRegisterButton.value = true;
       checking.value = false;
-      const returnPath = route.query.return as string;
-      await router.push(returnPath || "/");
+
+      // Auto-redirect to register
+      setTimeout(() => {
+        const returnPath = route.query.return as string;
+        const redirectQuery = returnPath
+          ? `?redirect=${encodeURIComponent(
+              returnPath
+            )}&noAccount=true&email=${encodeURIComponent(user.email || "")}`
+          : `?noAccount=true&email=${encodeURIComponent(user.email || "")}`;
+        router.push(`/register${redirectQuery}`);
+      }, 4000);
     } catch (checkError) {
-      console.error("Error checking player existence:", checkError);
+      console.error("❌ Error checking player existence:", checkError);
       errorTitle.value = "Account Verification Failed";
       error.value =
         "We encountered a problem while verifying your account. This might be a temporary server issue.";
       errorAction.value =
-        "Please try logging in again. If the problem persists, contact support with your email address.";
+        "Please try logging in again. If the problem persists, contact support.";
       await logError(
         "magic_login_check_failed",
         checkError instanceof Error ? checkError.message : "Unknown error",

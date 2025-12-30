@@ -39,14 +39,14 @@ export default defineEventHandler(async (event) => {
     const where: any = {};
 
     if (errorType) {
-      // Support partial matching for error types
-      if (errorType.includes("*") || errorType.length < 10) {
-        where.errorType = {
-          contains: errorType.replace("*", ""),
-        };
-      } else {
-        where.errorType = errorType;
-      }
+      // Always treat UI-provided errorType as a category filter.
+      // This makes filters like 'magic_login' include both:
+      // - magic_login_* errors
+      // - info_magic_login_* success logs
+      where.errorType = {
+        contains: errorType.replaceAll("*", ""),
+        mode: "insensitive",
+      };
     }
 
     if (userId) {

@@ -262,6 +262,24 @@ export default defineEventHandler(async (event) => {
       )
     );
 
+    // Log successful registration
+    await prisma.errorLog.create({
+      data: {
+        errorType: "info_event_registration_success",
+        errorMessage: `User registered for event: ${eventName}`,
+        userEmail: bookerEmail.toLowerCase(),
+        userId: null,
+        url: `/events/${eventId}/register`,
+        metadata: {
+          eventId,
+          eventName,
+          bookerPlayerId,
+          ticketCount: createdTickets.length,
+          registrationId: registration.id,
+        },
+      },
+    });
+
     return {
       success: true,
       message: "Registration successful",

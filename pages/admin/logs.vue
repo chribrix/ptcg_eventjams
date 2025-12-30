@@ -1,56 +1,94 @@
 <template>
   <AdminPageLayout
-    title="Error Logs"
-    subtitle="System error logs and authentication issues"
+    title="System Logs"
+    subtitle="Error logs, authentication events, and system information"
   >
-    <template #header>
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Error Logs</h1>
-          <p class="mt-1 text-sm text-gray-600">
-            System error logs and authentication issues
-          </p>
-        </div>
-        <div class="flex items-center gap-3">
+    <template #actions>
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="relative">
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search errors, users, messages..."
-            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-64"
+            class="px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-80"
             @keyup.enter="refreshLogs"
           />
-          <select
-            v-model="selectedErrorType"
-            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Error Types</option>
-            <option value="info_">Info/Success Logs</option>
-            <option value="session_check_failed">Session Check Failed</option>
-            <option value="session_deployment_invalidated">
-              Deployment Invalidated
-            </option>
-            <option value="token_refresh_failed">Token Refresh Failed</option>
-            <option value="token_refresh_exception">
-              Token Refresh Exception
-            </option>
-            <option value="session_validation_exception">
-              Session Validation Exception
-            </option>
-            <option value="magic_login">Magic Login Flow</option>
-            <option value="registration">Registration Flow</option>
-            <option value="login">Login Flow</option>
-            <option value="api_error">API Errors</option>
-            <option value="database_error">Database Errors</option>
-            <option value="auth_error">Auth Errors</option>
-            <option value="validation_error">Validation Errors</option>
-          </select>
           <button
-            @click="refreshLogs"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            v-if="searchQuery"
+            @click="
+              searchQuery = '';
+              refreshLogs();
+            "
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            title="Clear search"
           >
-            Refresh
+            <XMarkIcon class="w-5 h-5" />
           </button>
         </div>
+        <select
+          v-model="selectedErrorType"
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+          @change="refreshLogs"
+        >
+          <option value="">All Logs</option>
+          <optgroup label="System">
+            <option value="account_mismatch">🔗 Account Mismatch</option>
+            <option value="session_check_failed">
+              🔒 Session Check Failed
+            </option>
+            <option value="session_deployment_invalidated">
+              🚀 Deployment Invalidated
+            </option>
+            <option value="token_refresh">🔑 Token Refresh</option>
+            <option value="session_validation">✓ Session Validation</option>
+          </optgroup>
+          <optgroup label="Authentication">
+            <option value="magic_login">✉️ Magic Login</option>
+            <option value="registration">📝 Registration</option>
+            <option value="login">🔐 Login</option>
+            <option value="auth_error">❌ Auth Errors</option>
+          </optgroup>
+          <optgroup label="Application">
+            <option value="api_error">🌐 API Errors</option>
+            <option value="database">💾 Database Errors</option>
+            <option value="validation">⚠️ Validation Errors</option>
+            <option value="webhook">🔔 Webhook</option>
+          </optgroup>
+          <optgroup label="Info Logs">
+            <option value="info_">✅ All Info Logs</option>
+          </optgroup>
+        </select>
+        <button
+          @click="refreshLogs"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          title="Refresh logs"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Refresh
+        </button>
+        <button
+          v-if="searchQuery || selectedErrorType"
+          @click="
+            searchQuery = '';
+            selectedErrorType = '';
+            refreshLogs();
+          "
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+          title="Clear all filters"
+        >
+          Clear Filters
+        </button>
       </div>
     </template>
 
@@ -69,6 +107,44 @@
     </div>
 
     <div v-else>
+      <!-- Active Filters Display -->
+      <div
+        v-if="searchQuery || selectedErrorType"
+        class="mb-4 flex items-center gap-2 flex-wrap"
+      >
+        <span class="text-sm text-gray-600 font-medium">Active filters:</span>
+        <span
+          v-if="searchQuery"
+          class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+        >
+          Search: "{{ searchQuery }}"
+          <button
+            @click="
+              searchQuery = '';
+              refreshLogs();
+            "
+            class="hover:text-blue-900"
+          >
+            <XMarkIcon class="w-4 h-4" />
+          </button>
+        </span>
+        <span
+          v-if="selectedErrorType"
+          class="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
+        >
+          Type: {{ getFilterLabel(selectedErrorType) }}
+          <button
+            @click="
+              selectedErrorType = '';
+              refreshLogs();
+            "
+            class="hover:text-purple-900"
+          >
+            <XMarkIcon class="w-4 h-4" />
+          </button>
+        </span>
+      </div>
+
       <!-- Stats -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-white rounded-lg shadow p-4">
@@ -112,7 +188,7 @@
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Error Type
+                Log Type
               </th>
               <th
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -124,15 +200,15 @@
               >
                 Message
               </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Actions
-              </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="log in errorLogs" :key="log.id" class="hover:bg-gray-50">
+            <tr
+              v-for="log in errorLogs"
+              :key="log.id"
+              class="hover:bg-gray-50 cursor-pointer transition-colors"
+              @click="selectedLog = log"
+            >
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ formatDate(log.createdAt) }}
               </td>
@@ -157,14 +233,6 @@
               </td>
               <td class="px-6 py-4 text-sm text-gray-900 max-w-md truncate">
                 {{ log.errorMessage }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button
-                  @click="selectedLog = log"
-                  class="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Details
-                </button>
               </td>
             </tr>
           </tbody>
@@ -394,7 +462,9 @@ const isToday = (date: Date) => {
 };
 
 const getErrorTypeColor = (errorType: string) => {
-  if (errorType.includes("session")) {
+  if (errorType.includes("account_mismatch")) {
+    return "bg-yellow-100 text-yellow-800 border border-yellow-300";
+  } else if (errorType.includes("session")) {
     return "bg-orange-100 text-orange-800";
   } else if (errorType.includes("token")) {
     return "bg-red-100 text-red-800";
@@ -405,14 +475,38 @@ const getErrorTypeColor = (errorType: string) => {
     errorType.includes("registration")
   ) {
     return "bg-purple-100 text-purple-800";
+  } else if (errorType.includes("webhook")) {
+    return "bg-indigo-100 text-indigo-800";
   } else if (errorType.includes("database")) {
     return "bg-red-100 text-red-800";
   } else if (errorType.includes("validation")) {
     return "bg-yellow-100 text-yellow-800";
   } else if (errorType.includes("auth")) {
     return "bg-orange-100 text-orange-800";
+  } else if (errorType.startsWith("info_")) {
+    return "bg-green-100 text-green-800";
   }
   return "bg-gray-100 text-gray-800";
+};
+
+const getFilterLabel = (filterValue: string) => {
+  const labels: Record<string, string> = {
+    account_mismatch: "Account Mismatch",
+    session_check_failed: "Session Check Failed",
+    session_deployment_invalidated: "Deployment Invalidated",
+    token_refresh: "Token Refresh",
+    session_validation: "Session Validation",
+    magic_login: "Magic Login",
+    registration: "Registration",
+    login: "Login",
+    auth_error: "Auth Errors",
+    api_error: "API Errors",
+    database: "Database Errors",
+    validation: "Validation Errors",
+    webhook: "Webhook",
+    info_: "Info Logs",
+  };
+  return labels[filterValue] || filterValue;
 };
 
 watch([currentPage, selectedErrorType], () => {

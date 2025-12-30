@@ -229,14 +229,23 @@ const submitForm = async () => {
     });
 
     if (playerCheck.exists) {
-      console.log("⚠️ Player account already exists for email:", email.value);
-      error.value = `An account already exists with ${email.value}. Please log in instead.`;
+      console.log("⚠️ Account already exists for email:", email.value);
+
+      if (playerCheck.authOnly) {
+        // User exists in Supabase auth but not in players table
+        error.value = `An account exists with ${email.value}, but registration was not completed. Please click the login link we sent to complete your registration.`;
+      } else {
+        // Full player account exists
+        error.value = `An account already exists with ${email.value}. Please log in instead.`;
+      }
+
       isLoading.value = false;
       await logError(
         "registration_duplicate_email",
         "User tried to register with existing email",
         {
           email: email.value,
+          authOnly: playerCheck.authOnly,
         }
       );
       return;
@@ -284,12 +293,16 @@ const submitForm = async () => {
     });
   } else {
     console.log("✅ Magic link sent successfully");
-    await logError("info_registration_magic_link_sent", "Magic link sent successfully", {
-      email: email.value,
-      name: name.value,
-      playerId: playerId.value,
-      redirectTo,
-    });
+    await logError(
+      "info_registration_magic_link_sent",
+      "Magic link sent successfully",
+      {
+        email: email.value,
+        name: name.value,
+        playerId: playerId.value,
+        redirectTo,
+      }
+    );
     linkSent.value = true;
   }
 };
