@@ -313,7 +313,7 @@
           >
             <p class="text-gray-300 text-sm">
               <strong>Note:</strong> Modifications are no longer allowed
-              (deadline: 24 hours before event)
+              (deadline: 2 hours before event)
             </p>
           </div>
         </div>
@@ -332,7 +332,7 @@
             Cancel Entire Booking
           </button>
           <p v-else class="text-gray-400 text-sm">
-            Cancellation is no longer possible (deadline: 24 hours before event)
+            Cancellation is no longer possible (deadline: 2 hours before event)
           </p>
         </div>
       </div>

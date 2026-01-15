@@ -113,20 +113,20 @@ export default defineEventHandler(async (h3Event) => {
       });
     }
 
-    // Check if modifications are allowed (24h before event)
+    // Check if modifications are allowed (2h before event)
     const eventDetails = booking.customEvent || booking.externalEvent;
     if (eventDetails) {
       const eventDate = new Date(eventDetails.eventDate);
       const now = new Date();
       const cancellationDeadline = new Date(
-        eventDate.getTime() - 24 * 60 * 60 * 1000
+        eventDate.getTime() - 2 * 60 * 60 * 1000
       );
 
       if (now > cancellationDeadline) {
         throw createError({
           statusCode: 400,
           statusMessage:
-            "Modification deadline has passed (24 hours before event)",
+            "Modification deadline has passed (2 hours before event)",
         });
       }
 

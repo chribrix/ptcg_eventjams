@@ -21,52 +21,6 @@
           </div>
         </div>
 
-        <!-- Legend -->
-        <div class="w-full max-w-[620px] mb-4 px-2">
-          <div class="flex flex-wrap gap-2 justify-center items-center">
-            <button
-              @click="openTypeFilter('cup')"
-              class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer border-0"
-              :style="{
-                backgroundColor: EVENT_COLORS.cup.bg,
-                color: EVENT_COLORS.cup.text,
-              }"
-            >
-              {{ EVENT_COLORS.cup.name }}
-            </button>
-            <button
-              @click="openTypeFilter('challenge')"
-              class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer border-0"
-              :style="{
-                backgroundColor: EVENT_COLORS.challenge.bg,
-                color: EVENT_COLORS.challenge.text,
-              }"
-            >
-              {{ EVENT_COLORS.challenge.name }}
-            </button>
-            <button
-              @click="openTypeFilter('custom')"
-              class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer border-0"
-              :style="{
-                backgroundColor: EVENT_COLORS.custom.bg,
-                color: EVENT_COLORS.custom.text,
-              }"
-            >
-              {{ EVENT_COLORS.custom.name }}
-            </button>
-            <button
-              @click="openTypeFilter('riftbound')"
-              class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105 cursor-pointer border-0"
-              :style="{
-                backgroundColor: EVENT_COLORS.riftbound.bg,
-                color: EVENT_COLORS.riftbound.text,
-              }"
-            >
-              {{ EVENT_COLORS.riftbound.name }}
-            </button>
-          </div>
-        </div>
-
         <ClientOnly>
           <VCalendar
             expanded
@@ -78,6 +32,110 @@
             @dayclick="onDayClick"
           />
         </ClientOnly>
+
+        <!-- Legend -->
+        <div class="w-full max-w-[620px] mt-4 px-2 sm:px-4">
+          <div
+            class="flex flex-wrap gap-1.5 sm:gap-2 justify-center items-center"
+          >
+            <button
+              @click="openTypeFilter('cup')"
+              class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 hover:brightness-110 cursor-pointer border-0 whitespace-nowrap flex-shrink-0 active:scale-95"
+              :style="{
+                backgroundColor: EVENT_COLORS.cup.bg,
+                color: EVENT_COLORS.cup.text,
+              }"
+              title="Click to filter League Cup events"
+            >
+              {{ EVENT_COLORS.cup.name }}
+              <svg
+                class="w-3 h-3 opacity-70"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
+            <button
+              @click="openTypeFilter('challenge')"
+              class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 hover:brightness-110 cursor-pointer border-0 whitespace-nowrap flex-shrink-0 active:scale-95"
+              :style="{
+                backgroundColor: EVENT_COLORS.challenge.bg,
+                color: EVENT_COLORS.challenge.text,
+              }"
+              title="Click to filter League Challenge events"
+            >
+              {{ EVENT_COLORS.challenge.name }}
+              <svg
+                class="w-3 h-3 opacity-70"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
+            <button
+              @click="openTypeFilter('custom')"
+              class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 hover:brightness-110 cursor-pointer border-0 whitespace-nowrap flex-shrink-0 active:scale-95"
+              :style="{
+                backgroundColor: EVENT_COLORS.custom.bg,
+                color: EVENT_COLORS.custom.text,
+              }"
+              title="Click to filter Custom events"
+            >
+              {{ EVENT_COLORS.custom.name }}
+              <svg
+                class="w-3 h-3 opacity-70"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
+            <button
+              @click="openTypeFilter('riftbound')"
+              class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 hover:brightness-110 cursor-pointer border-0 whitespace-nowrap flex-shrink-0 active:scale-95"
+              :style="{
+                backgroundColor: EVENT_COLORS.riftbound.bg,
+                color: EVENT_COLORS.riftbound.text,
+              }"
+              title="Click to filter Riftbound events"
+            >
+              {{ EVENT_COLORS.riftbound.name }}
+              <svg
+                class="w-3 h-3 opacity-70"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
 
         <!-- Event Details Popover -->
         <EventDetailsPopover

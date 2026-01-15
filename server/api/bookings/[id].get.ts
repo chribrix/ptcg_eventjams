@@ -109,7 +109,7 @@ export default defineEventHandler(async (h3Event) => {
     const eventDate = new Date(eventDetails.eventDate);
     const now = new Date();
     const cancellationDeadline = new Date(
-      eventDate.getTime() - 24 * 60 * 60 * 1000
+      eventDate.getTime() - 2 * 60 * 60 * 1000
     );
     const canModify = now < cancellationDeadline && eventDate > now;
 

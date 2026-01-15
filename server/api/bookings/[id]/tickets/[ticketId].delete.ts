@@ -7,7 +7,7 @@ import {
 } from "~/server/util/errorLogger";
 
 const prisma = new PrismaClient();
-const CANCELLATION_DEADLINE_HOURS = 24;
+const CANCELLATION_DEADLINE_HOURS = 2;
 
 export default defineEventHandler(async (h3Event) => {
   const bookingId = getRouterParam(h3Event, "id");
@@ -119,7 +119,7 @@ export default defineEventHandler(async (h3Event) => {
       throw createError({
         statusCode: 400,
         statusMessage:
-          "Cancellation deadline has passed (24 hours before event)",
+          "Cancellation deadline has passed (2 hours before event)",
       });
     }
 

@@ -4,13 +4,13 @@
     subtitle="Error logs, authentication events, and system information"
   >
     <template #actions>
-      <div class="flex items-center gap-3 flex-wrap">
-        <div class="relative">
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <div class="relative w-full sm:w-auto">
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search errors, users, messages..."
-            class="px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-80"
+            class="px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-80"
             @keyup.enter="refreshLogs"
           />
           <button
@@ -27,7 +27,7 @@
         </div>
         <select
           v-model="selectedErrorType"
-          class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-auto sm:min-w-[200px]"
           @change="refreshLogs"
         >
           <option value="">All Logs</option>
@@ -60,7 +60,7 @@
         </select>
         <button
           @click="refreshLogs"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
           title="Refresh logs"
         >
           <svg
@@ -75,7 +75,7 @@
               clip-rule="evenodd"
             />
           </svg>
-          Refresh
+          <span class="hidden sm:inline">Refresh</span>
         </button>
         <button
           v-if="searchQuery || selectedErrorType"
@@ -84,7 +84,7 @@
             selectedErrorType = '';
             refreshLogs();
           "
-          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors w-full sm:w-auto"
           title="Clear all filters"
         >
           Clear Filters
@@ -175,81 +175,116 @@
         </div>
       </div>
 
-      <!-- Error Logs Table -->
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Timestamp
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Log Type
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                User
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Message
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr
-              v-for="log in errorLogs"
-              :key="log.id"
-              class="hover:bg-gray-50 cursor-pointer transition-colors"
-              @click="selectedLog = log"
-            >
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ formatDate(log.createdAt) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span
-                  :class="[
-                    'px-2 py-1 text-xs font-medium rounded-full',
-                    getErrorTypeColor(log.errorType),
-                  ]"
+      <!-- Error Logs Table - Desktop -->
+      <div class="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  {{ log.errorType }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <div v-if="log.userEmail" class="text-gray-900">
-                  {{ log.userEmail }}
-                </div>
-                <div v-if="log.userId" class="text-gray-500 text-xs">
-                  {{ log.userId.slice(0, 8) }}...
-                </div>
-                <div v-else class="text-gray-400 italic">Anonymous</div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-900 max-w-md truncate">
-                {{ log.errorMessage }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  Timestamp
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Log Type
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  User
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Message
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr
+                v-for="log in errorLogs"
+                :key="log.id"
+                class="hover:bg-gray-50 cursor-pointer transition-colors"
+                @click="selectedLog = log"
+              >
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ formatDate(log.createdAt) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    :class="[
+                      'px-2 py-1 text-xs font-medium rounded-full',
+                      getErrorTypeColor(log.errorType),
+                    ]"
+                  >
+                    {{ log.errorType }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <div v-if="log.userEmail" class="text-gray-900">
+                    {{ log.userEmail }}
+                  </div>
+                  <div v-if="log.userId" class="text-gray-500 text-xs">
+                    {{ log.userId.slice(0, 8) }}...
+                  </div>
+                  <div v-else class="text-gray-400 italic">Anonymous</div>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900 max-w-md truncate">
+                  {{ log.errorMessage }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Error Logs Cards - Mobile -->
+      <div class="md:hidden space-y-3">
+        <div
+          v-for="log in errorLogs"
+          :key="log.id"
+          class="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition-shadow"
+          @click="selectedLog = log"
+        >
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <span
+              :class="[
+                'px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap',
+                getErrorTypeColor(log.errorType),
+              ]"
+            >
+              {{ log.errorType }}
+            </span>
+            <span class="text-xs text-gray-500 whitespace-nowrap">
+              {{ formatDate(log.createdAt).split(',')[0] }}
+            </span>
+          </div>
+          <div class="mb-2">
+            <div v-if="log.userEmail" class="text-sm font-medium text-gray-900">
+              {{ log.userEmail }}
+            </div>
+            <div v-else class="text-sm text-gray-400 italic">Anonymous</div>
+          </div>
+          <p class="text-sm text-gray-700 line-clamp-2">
+            {{ log.errorMessage }}
+          </p>
+        </div>
       </div>
 
       <!-- Pagination -->
       <div
         v-if="pagination.totalPages > 1"
-        class="mt-6 flex justify-center gap-2"
+        class="mt-6 flex justify-center gap-1 sm:gap-2 flex-wrap"
       >
         <button
           v-for="page in pagination.totalPages"
           :key="page"
           @click="currentPage = page"
           :class="[
-            'px-4 py-2 rounded-lg transition-colors',
+            'px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm',
             currentPage === page
               ? 'bg-blue-600 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-100',
@@ -263,14 +298,14 @@
     <!-- Detail Modal -->
     <div
       v-if="selectedLog"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4"
       @click="selectedLog = null"
     >
       <div
         class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
         @click.stop
       >
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
           <div class="flex items-start justify-between mb-4">
             <h2 class="text-xl font-bold text-gray-900">Error Details</h2>
             <button

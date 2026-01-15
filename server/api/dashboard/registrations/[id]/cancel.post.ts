@@ -6,7 +6,7 @@ import {
   logAuthError,
 } from "~/server/util/errorLogger";
 
-const CANCELLATION_DEADLINE_HOURS = 24;
+const CANCELLATION_DEADLINE_HOURS = 2;
 const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
@@ -139,7 +139,7 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 400,
         statusMessage:
-          "Cancellation deadline has passed (24 hours before event)",
+          "Cancellation deadline has passed (2 hours before event)",
       });
     }
 
