@@ -89,6 +89,11 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
   },
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => false,
+    },
+  },
   app: {
     head: {
       title: "PTCG Event Manager",

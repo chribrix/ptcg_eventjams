@@ -22,15 +22,24 @@
         </div>
 
         <ClientOnly>
-          <VCalendar
-            expanded
-            :attributes="calendarAttributes"
-            :columns="1"
-            :rows="2"
-            :min-date="today"
-            :max-date="maxDate"
-            @dayclick="onDayClick"
-          />
+          <template #default>
+            <VCalendar
+              expanded
+              :attributes="calendarAttributes"
+              :columns="1"
+              :rows="2"
+              :min-date="today"
+              :max-date="maxDate"
+              @dayclick="onDayClick"
+            />
+          </template>
+          <template #fallback>
+            <div
+              class="w-full h-64 flex items-center justify-center text-gray-400"
+            >
+              <div class="animate-pulse">Loading calendar...</div>
+            </div>
+          </template>
         </ClientOnly>
 
         <!-- Legend -->

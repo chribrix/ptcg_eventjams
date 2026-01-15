@@ -259,7 +259,7 @@
               {{ log.errorType }}
             </span>
             <span class="text-xs text-gray-500 whitespace-nowrap">
-              {{ formatDate(log.createdAt).split(',')[0] }}
+              {{ formatDate(log.createdAt).split(",")[0] }}
             </span>
           </div>
           <div class="mb-2">
