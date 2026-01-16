@@ -54,7 +54,65 @@ export default defineNuxtConfig({
         detectSessionInUrl: true,
         persistSession: true,
         autoRefreshToken: true,
-        storage: process.client ? window.localStorage : undefined,
+        // Custom storage implementation with better iOS Safari compatibility
+        storage: import.meta.client
+          ? {
+              getItem: (key: string) => {
+                try {
+                  return window.localStorage.getItem(key);
+                } catch (e) {
+                  // Fallback for iOS private browsing mode
+                  console.warn("localStorage getItem failed:", e);
+                  // Log to database for tracking
+                  $fetch("/api/admin/error-logs/create", {
+                    method: "POST",
+                    body: {
+                      errorType: "storage_getItem_failed",
+                      errorMessage: `Failed to get localStorage item: ${key}`,
+                      userAgent: navigator.userAgent,
+                      metadata: { key, error: String(e) },
+                    },
+                  }).catch(() => {});
+                  return null;
+                }
+              },
+              setItem: (key: string, value: string) => {
+                try {
+                  window.localStorage.setItem(key, value);
+                } catch (e) {
+                  // Fallback for iOS private browsing mode
+                  console.warn("localStorage setItem failed:", e);
+                  // Log to database for tracking
+                  $fetch("/api/admin/error-logs/create", {
+                    method: "POST",
+                    body: {
+                      errorType: "storage_setItem_failed",
+                      errorMessage: `Failed to set localStorage item: ${key}`,
+                      userAgent: navigator.userAgent,
+                      metadata: { key, error: String(e) },
+                    },
+                  }).catch(() => {});
+                }
+              },
+              removeItem: (key: string) => {
+                try {
+                  window.localStorage.removeItem(key);
+                } catch (e) {
+                  console.warn("localStorage removeItem failed:", e);
+                  // Log to database for tracking
+                  $fetch("/api/admin/error-logs/create", {
+                    method: "POST",
+                    body: {
+                      errorType: "storage_removeItem_failed",
+                      errorMessage: `Failed to remove localStorage item: ${key}`,
+                      userAgent: navigator.userAgent,
+                      metadata: { key, error: String(e) },
+                    },
+                  }).catch(() => {});
+                }
+              },
+            }
+          : undefined,
       },
     },
   },

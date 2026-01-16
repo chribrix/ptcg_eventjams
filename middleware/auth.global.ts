@@ -4,7 +4,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const supabase = useSupabaseClient();
   const isClient = import.meta.client;
 
-  const publicPages = ["/", "/login", "/register", "/events", "/eventlist"];
+  const publicPages = [
+    "/",
+    "/login",
+    "/register",
+    "/events",
+    "/eventlist",
+    "/magic-login",
+  ];
 
   // Check if path starts with public patterns
   const isPublicPath =

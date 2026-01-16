@@ -131,29 +131,105 @@ const logInfo = async (
 onMounted(async () => {
   try {
     console.log("🔐 Magic login process started");
+
+    // Detect device/browser info
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
+    const isSafari =
+      /safari/.test(userAgent) && !/chrome|crios|fxios/.test(userAgent);
+    const deviceInfo = {
+      isIOS,
+      isSafari,
+      iosVersion: isIOS ? userAgent.match(/os (\d+)_/)?.[1] : null,
+      userAgent: navigator.userAgent,
+    };
+
     await logInfo("magic_login_started", "User clicked magic link", {
       hasReturnPath: !!route.query.return,
       returnPath: route.query.return,
+      ...deviceInfo,
     });
 
-    const { data, error: sessionError } =
-      await useSupabaseClient().auth.getSession();
+    // Wait for Supabase to process the session, especially important for mobile browsers
+    // iOS Safari can be slow to process the auth hash fragments
+    let session = null;
+    let sessionError = null;
+    const maxRetries = 10;
+    const retryDelay = 300; // ms
 
-    if (sessionError || !data.session) {
+    await logInfo("session_retry_start", "Starting session retry loop", {
+      maxRetries,
+      retryDelay,
+      ...deviceInfo,
+    });
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      const { data, error } = await useSupabaseClient().auth.getSession();
+
+      if (data.session) {
+        session = data.session;
+        console.log(`✅ Session found on attempt ${attempt + 1}`);
+        await logInfo(
+          "session_found",
+          `Session found on attempt ${attempt + 1}`,
+          {
+            attempt: attempt + 1,
+            totalAttempts: maxRetries,
+            timeElapsed: attempt * retryDelay,
+            userId: session.user?.id,
+            userEmail: session.user?.email,
+            ...deviceInfo,
+          }
+        );
+        break;
+      }
+
+      sessionError = error;
+
+      if (attempt < maxRetries - 1) {
+        console.log(
+          `⏳ Session not ready, waiting... (attempt ${
+            attempt + 1
+          }/${maxRetries})`
+        );
+        if (attempt === 0 || attempt === 4 || attempt === 9) {
+          // Log on first, middle, and last attempts
+          await logInfo(
+            "session_retry_waiting",
+            `Waiting for session (attempt ${attempt + 1})`,
+            {
+              attempt: attempt + 1,
+              maxRetries,
+              ...deviceInfo,
+            }
+          );
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      }
+    }
+
+    if (sessionError || !session) {
       console.error("Login failed or session missing:", sessionError);
+      await logError(
+        "magic_login_session_failed",
+        sessionError?.message || "No session found after retries",
+        {
+          sessionError,
+          attempts: maxRetries,
+          totalWaitTime: maxRetries * retryDelay,
+          ...deviceInfo,
+        }
+      );
       errorTitle.value = "Login Link Invalid or Expired";
       error.value =
         "The login link you clicked may have expired or is no longer valid. Magic links can only be used once and expire after a short time.";
       errorAction.value =
         "Request a new magic link from the login page. Make sure to click the link shortly after receiving the email.";
-      await logError(
-        "magic_login_session_failed",
-        sessionError?.message || "No session found",
-        { sessionError }
-      );
       checking.value = false;
       return;
     }
+
+    const data = { session };
 
     const user = data.session.user;
     console.log("✅ Session validated, user:", user.email);
@@ -198,9 +274,28 @@ onMounted(async () => {
         const returnPath = (route.query.return as string) || "/";
         console.log("🔄 Navigating to:", returnPath);
 
-        // Use window.location for guaranteed redirect (avoids Vue Router issues)
-        if (process.client) {
-          window.location.href = returnPath;
+        await logInfo("navigation_start", "Starting navigation", {
+          returnPath,
+          navigationType: "external_replace",
+          userId: user.id,
+        });
+
+        // Use navigateTo with external: true for better mobile compatibility
+        // This ensures proper navigation on iOS Safari
+        try {
+          await navigateTo(returnPath, {
+            external: true,
+            replace: true,
+          });
+          await logInfo("navigation_success", "Navigation initiated", {
+            returnPath,
+          });
+        } catch (navError) {
+          await logError("navigation_failed", "Navigation failed", {
+            returnPath,
+            error:
+              navError instanceof Error ? navError.message : "Unknown error",
+          });
         }
         return;
       }
@@ -238,11 +333,46 @@ onMounted(async () => {
 
         if (retryResponse.exists) {
           console.log("✅ Player found after retry");
+          await logInfo(
+            "player_found_retry",
+            "Player found after webhook retry",
+            {
+              userId: user.id,
+              email: user.email,
+            }
+          );
           const returnPath = (route.query.return as string) || "/";
           console.log("🔄 Navigating to:", returnPath);
 
-          if (process.client) {
-            window.location.href = returnPath;
+          await logInfo("navigation_retry", "Navigation after retry", {
+            returnPath,
+            userId: user.id,
+          });
+
+          try {
+            await navigateTo(returnPath, {
+              external: true,
+              replace: true,
+            });
+            await logInfo(
+              "navigation_retry_success",
+              "Retry navigation succeeded",
+              {
+                returnPath,
+              }
+            );
+          } catch (navError) {
+            await logError(
+              "navigation_retry_failed",
+              "Retry navigation failed",
+              {
+                returnPath,
+                error:
+                  navError instanceof Error
+                    ? navError.message
+                    : "Unknown error",
+              }
+            );
           }
           return;
         }
@@ -286,8 +416,39 @@ onMounted(async () => {
           const returnPath = (route.query.return as string) || "/";
           console.log("🔄 Navigating to:", returnPath);
 
-          if (process.client) {
-            window.location.href = returnPath;
+          await logInfo(
+            "navigation_manual_creation",
+            "Navigation after manual player creation",
+            {
+              returnPath,
+              userId: user.id,
+            }
+          );
+
+          try {
+            await navigateTo(returnPath, {
+              external: true,
+              replace: true,
+            });
+            await logInfo(
+              "navigation_manual_success",
+              "Manual creation navigation succeeded",
+              {
+                returnPath,
+              }
+            );
+          } catch (navError) {
+            await logError(
+              "navigation_manual_failed",
+              "Manual creation navigation failed",
+              {
+                returnPath,
+                error:
+                  navError instanceof Error
+                    ? navError.message
+                    : "Unknown error",
+              }
+            );
           }
           return;
         } catch (createError: any) {
