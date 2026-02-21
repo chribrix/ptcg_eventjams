@@ -168,7 +168,7 @@ const validatePlayerId = (event: Event): void => {
 const logError = async (
   errorType: string,
   errorMessage: string,
-  additionalData?: any
+  additionalData?: any,
 ) => {
   if (!process.client) return;
   try {
@@ -195,12 +195,12 @@ const getMagicLinkRedirect = () => {
   let redirectTo = "";
 
   if (configuredBase) {
-    redirectTo = `${configuredBase}/magic-login`;
+    redirectTo = `${configuredBase}/confirm`;
   } else if (process.client) {
-    redirectTo = `${window.location.origin.replace(/\/$/, "")}/magic-login`;
+    redirectTo = `${window.location.origin.replace(/\/$/, "")}/confirm`;
   }
 
-  // Append the return path if present
+  // Append the return path if present (confirm page passes it along to magic-login)
   if (redirectTo && returnPath) {
     redirectTo = `${redirectTo}?return=${encodeURIComponent(returnPath)}`;
   }
@@ -246,7 +246,7 @@ const submitForm = async () => {
         {
           email: email.value,
           authOnly: playerCheck.authOnly,
-        }
+        },
       );
       return;
     }
@@ -260,7 +260,7 @@ const submitForm = async () => {
       {
         email: email.value,
         checkError,
-      }
+      },
     );
     // If the check fails, we'll allow the registration to proceed
     // The backend will handle any duplicate errors
@@ -301,7 +301,7 @@ const submitForm = async () => {
         name: name.value,
         playerId: playerId.value,
         redirectTo,
-      }
+      },
     );
     linkSent.value = true;
   }

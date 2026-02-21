@@ -163,7 +163,7 @@ const eventDetails = ref<any>(null);
 const logError = async (
   errorType: string,
   errorMessage: string,
-  additionalData?: any
+  additionalData?: any,
 ) => {
   if (!process.client) return;
   try {
@@ -190,14 +190,14 @@ const getMagicLinkRedirect = () => {
   console.log("Configured base URL from config:", configuredBase);
 
   if (configuredBase) {
-    const result = `${configuredBase}/magic-login`;
+    const result = `${configuredBase}/confirm`;
     console.log("Using configured base, returning:", result);
     return result;
   }
 
   if (process.client) {
     const origin = window.location.origin.replace(/\/$/, "");
-    const result = `${origin}/magic-login`;
+    const result = `${origin}/confirm`;
     console.log("Using window.location.origin:", origin);
     console.log("Returning:", result);
     return result;
@@ -279,7 +279,7 @@ const submitLogin = async () => {
         "User tried to login without an account",
         {
           email: email.value,
-        }
+        },
       );
 
       // Suggest registering instead
@@ -287,7 +287,7 @@ const submitLogin = async () => {
         const returnPath = route.query.redirect as string;
         const redirectQuery = returnPath
           ? `?redirect=${encodeURIComponent(
-              returnPath
+              returnPath,
             )}&email=${encodeURIComponent(email.value)}`
           : `?email=${encodeURIComponent(email.value)}`;
         navigateTo(`/register${redirectQuery}`);
@@ -302,7 +302,7 @@ const submitLogin = async () => {
       {
         email: email.value,
         playerId: playerCheck.player?.playerId,
-      }
+      },
     );
   } catch (checkError) {
     console.error("❌ Error checking player existence:", checkError);
@@ -315,7 +315,7 @@ const submitLogin = async () => {
       {
         email: email.value,
         checkError,
-      }
+      },
     );
 
     // Redirect to register page with noAccount flag
@@ -323,7 +323,7 @@ const submitLogin = async () => {
       const returnPath = route.query.redirect as string;
       const redirectQuery = returnPath
         ? `?redirect=${encodeURIComponent(
-            returnPath
+            returnPath,
           )}&noAccount=true&email=${encodeURIComponent(email.value)}`
         : `?noAccount=true&email=${encodeURIComponent(email.value)}`;
       navigateTo(`/register${redirectQuery}`);
@@ -376,7 +376,7 @@ const submitLogin = async () => {
         elapsed,
         redirectTo,
         hasReturnPath: !!returnPath,
-      }
+      },
     );
     linkSent.value = true;
   }

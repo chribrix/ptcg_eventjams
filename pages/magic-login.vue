@@ -46,6 +46,33 @@
             </div>
           </div>
         </div>
+        <div
+          v-if="resendSent"
+          class="mb-4 bg-green-50 border border-green-200 text-green-800 rounded-lg p-3 text-sm text-center"
+        >
+          ✅ New magic link sent! Check your inbox.
+        </div>
+        <div class="mb-4">
+          <input
+            v-model="resendEmail"
+            type="email"
+            placeholder="Your email address"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            @click="resendMagicLink"
+            :disabled="!resendEmail || resendLoading || resendSent"
+            class="mt-2 w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {{
+              resendLoading
+                ? "Sending..."
+                : resendSent
+                  ? "Link Sent!"
+                  : "Resend Magic Link"
+            }}
+          </button>
+        </div>
         <div class="flex gap-3">
           <NuxtLink
             to="/login"
@@ -74,11 +101,33 @@ const error = ref("");
 const errorTitle = ref("Login Failed");
 const errorAction = ref("");
 const showRegisterButton = ref(false);
+const resendEmail = ref("");
+const resendLoading = ref(false);
+const resendSent = ref(false);
+
+const resendMagicLink = async () => {
+  if (!resendEmail.value || resendLoading.value) return;
+  resendLoading.value = true;
+  resendSent.value = false;
+  try {
+    const { error: sendError } = await useSupabaseClient().auth.signInWithOtp({
+      email: resendEmail.value,
+      options: {
+        emailRedirectTo: `${window.location.origin}/magic-login${route.query.return ? `?return=${encodeURIComponent(route.query.return as string)}` : ""}`,
+      },
+    });
+    if (!sendError) resendSent.value = true;
+  } catch (e) {
+    console.error("Resend failed:", e);
+  } finally {
+    resendLoading.value = false;
+  }
+};
 
 const logError = async (
   errorType: string,
   errorMessage: string,
-  additionalData?: any
+  additionalData?: any,
 ) => {
   try {
     const { data } = await useSupabaseClient().auth.getSession();
@@ -105,7 +154,7 @@ const logError = async (
 const logInfo = async (
   infoType: string,
   infoMessage: string,
-  additionalData?: any
+  additionalData?: any,
 ) => {
   try {
     const { data } = await useSupabaseClient().auth.getSession();
@@ -132,6 +181,44 @@ onMounted(async () => {
   try {
     console.log("🔐 Magic login process started");
 
+    // Check for error params in URL immediately — fail fast instead of retrying
+    const urlError = route.query.error as string;
+    const urlErrorCode = route.query.error_code as string;
+    if (urlError || urlErrorCode) {
+      console.warn("❌ Error in URL params:", urlError, urlErrorCode);
+      // Try to recover the email from localStorage (Supabase stores it during OTP flow)
+      try {
+        const stored = Object.keys(localStorage).find(
+          (k) => k.startsWith("sb-") && k.includes("-auth-token"),
+        );
+        if (!stored) {
+          // Supabase PKCE stores the email in a supabase.auth.token key or similar
+          const emailKey = Object.keys(localStorage).find((k) =>
+            k.includes("email"),
+          );
+          if (emailKey)
+            resendEmail.value = localStorage.getItem(emailKey) || "";
+        }
+      } catch (e) {
+        /* ignore */
+      }
+      if (urlErrorCode === "otp_expired" || urlError === "access_denied") {
+        errorTitle.value = "Login Link Invalid or Expired";
+        error.value =
+          "The login link you clicked may have expired or is no longer valid. Magic links can only be used once and expire after a short time.";
+        errorAction.value =
+          "Request a new magic link from the login page. Make sure to click the link shortly after receiving the email.";
+      } else {
+        errorTitle.value = "Login Failed";
+        error.value =
+          (route.query.error_description as string) ||
+          "An unexpected error occurred.";
+        errorAction.value = "Please try again or request a new magic link.";
+      }
+      checking.value = false;
+      return;
+    }
+
     // Detect device/browser info
     const userAgent = navigator.userAgent.toLowerCase();
     const isIOS = /iphone|ipad|ipod/.test(userAgent);
@@ -152,9 +239,11 @@ onMounted(async () => {
 
     // Wait for Supabase to process the session, especially important for mobile browsers
     // iOS Safari can be slow to process the auth hash fragments
+    // If a code= param is present and Supabase can't exchange it quickly, it's invalid — fail fast.
     let session = null;
     let sessionError = null;
-    const maxRetries = 10;
+    const hasCode = !!route.query.code;
+    const maxRetries = hasCode ? 4 : 10; // fail faster when code exchange is expected
     const retryDelay = 300; // ms
 
     await logInfo("session_retry_start", "Starting session retry loop", {
@@ -179,7 +268,7 @@ onMounted(async () => {
             userId: session.user?.id,
             userEmail: session.user?.email,
             ...deviceInfo,
-          }
+          },
         );
         break;
       }
@@ -190,7 +279,7 @@ onMounted(async () => {
         console.log(
           `⏳ Session not ready, waiting... (attempt ${
             attempt + 1
-          }/${maxRetries})`
+          }/${maxRetries})`,
         );
         if (attempt === 0 || attempt === 4 || attempt === 9) {
           // Log on first, middle, and last attempts
@@ -201,7 +290,7 @@ onMounted(async () => {
               attempt: attempt + 1,
               maxRetries,
               ...deviceInfo,
-            }
+            },
           );
         }
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
@@ -218,7 +307,7 @@ onMounted(async () => {
           attempts: maxRetries,
           totalWaitTime: maxRetries * retryDelay,
           ...deviceInfo,
-        }
+        },
       );
       errorTitle.value = "Login Link Invalid or Expired";
       error.value =
@@ -241,7 +330,7 @@ onMounted(async () => {
         email: user.email,
         hasMetadata: !!user.user_metadata,
         metadataKeys: user.user_metadata ? Object.keys(user.user_metadata) : [],
-      }
+      },
     );
 
     // Check if player exists in database
@@ -310,7 +399,7 @@ onMounted(async () => {
       if (hasRegistrationMetadata) {
         // Registration flow - webhook should create player, but might have lag
         console.log(
-          "⏳ Registration detected but player not found - webhook may still be processing"
+          "⏳ Registration detected but player not found - webhook may still be processing",
         );
         await logInfo(
           "magic_login_webhook_lag",
@@ -320,7 +409,7 @@ onMounted(async () => {
             email: user.email,
             name: user.user_metadata.name,
             playerId: user.user_metadata.playerId,
-          }
+          },
         );
 
         // Wait a moment and retry
@@ -339,7 +428,7 @@ onMounted(async () => {
             {
               userId: user.id,
               email: user.email,
-            }
+            },
           );
           const returnPath = (route.query.return as string) || "/";
           console.log("🔄 Navigating to:", returnPath);
@@ -359,7 +448,7 @@ onMounted(async () => {
               "Retry navigation succeeded",
               {
                 returnPath,
-              }
+              },
             );
           } catch (navError) {
             await logError(
@@ -371,7 +460,7 @@ onMounted(async () => {
                   navError instanceof Error
                     ? navError.message
                     : "Unknown error",
-              }
+              },
             );
           }
           return;
@@ -388,7 +477,7 @@ onMounted(async () => {
             email: user.email,
             name: user.user_metadata.name,
             playerId: user.user_metadata.playerId,
-          }
+          },
         );
 
         try {
@@ -410,7 +499,7 @@ onMounted(async () => {
             {
               userId: user.id,
               email: user.email,
-            }
+            },
           );
 
           const returnPath = (route.query.return as string) || "/";
@@ -422,7 +511,7 @@ onMounted(async () => {
             {
               returnPath,
               userId: user.id,
-            }
+            },
           );
 
           try {
@@ -435,7 +524,7 @@ onMounted(async () => {
               "Manual creation navigation succeeded",
               {
                 returnPath,
-              }
+              },
             );
           } catch (navError) {
             await logError(
@@ -447,7 +536,7 @@ onMounted(async () => {
                   navError instanceof Error
                     ? navError.message
                     : "Unknown error",
-              }
+              },
             );
           }
           return;
@@ -488,7 +577,7 @@ onMounted(async () => {
           userId: user.id,
           email: user.email,
           metadata: user.user_metadata,
-        }
+        },
       );
 
       // Sign them out
@@ -506,7 +595,7 @@ onMounted(async () => {
         const returnPath = route.query.return as string;
         const redirectQuery = returnPath
           ? `?redirect=${encodeURIComponent(
-              returnPath
+              returnPath,
             )}&noAccount=true&email=${encodeURIComponent(user.email || "")}`
           : `?noAccount=true&email=${encodeURIComponent(user.email || "")}`;
         router.push(`/register${redirectQuery}`);
@@ -521,7 +610,7 @@ onMounted(async () => {
       await logError(
         "magic_login_check_failed",
         checkError instanceof Error ? checkError.message : "Unknown error",
-        { checkError, userId: user.id }
+        { checkError, userId: user.id },
       );
       checking.value = false;
     }
@@ -535,7 +624,7 @@ onMounted(async () => {
     await logError(
       "magic_login_exception",
       err instanceof Error ? err.message : "Unknown error",
-      { err }
+      { err },
     );
     checking.value = false;
   }

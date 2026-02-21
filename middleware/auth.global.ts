@@ -11,6 +11,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     "/events",
     "/eventlist",
     "/magic-login",
+    "/confirm",
   ];
 
   // Check if path starts with public patterns
