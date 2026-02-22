@@ -1,5 +1,29 @@
 <template>
   <div>
+    <div class="px-2 pt-2">
+      <div
+        class="w-full rounded-xl border-2 border-yellow-300 bg-yellow-100 text-yellow-900 px-4 py-3 shadow-lg"
+      >
+        <div class="flex items-start gap-3">
+          <div
+            class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500 text-white font-bold"
+            aria-hidden="true"
+          >
+            !
+          </div>
+          <div>
+            <h3 class="text-base font-semibold">
+              <strong>NEU</strong>: Login mit Passwort nun möglich!
+            </h3>
+            <p class="mt-1 text-sm font-medium">
+              Da der Login via Magic Link einigen Nutzern Probleme bereitet hat,
+              ist nun auch das Registrieren/Login über Passwort möglich.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Content -->
     <div class="w-full">
       <!-- Mobile View with integrated tabs -->
@@ -31,8 +55,8 @@
                   activeTab === 'calendar'
                     ? 'flex-[3] bg-gray-800 text-white px-5 py-3 z-20'
                     : activeTab === 'registrations'
-                    ? 'flex-1 bg-[#40444b] text-green-500 hover:bg-[#4f545c] px-4 py-2 z-10'
-                    : 'flex-1 bg-[#40444b] text-gray-400 hover:bg-[#4f545c] px-4 py-2 z-10',
+                      ? 'flex-1 bg-[#40444b] text-green-500 hover:bg-[#4f545c] px-4 py-2 z-10'
+                      : 'flex-1 bg-[#40444b] text-gray-400 hover:bg-[#4f545c] px-4 py-2 z-10',
                 ]"
                 :style="
                   activeTab === 'calendar'
@@ -165,7 +189,8 @@
         <div
           class="rounded-3xl shadow-2xl overflow-hidden h-[calc(100vh-120px)] flex flex-col w-full relative transition-all duration-500 ease-in-out bg-[#2f3136] border-2 border-[#202225] border-l-8 border-l-gray-800"
           style="
-            box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.2),
+            box-shadow:
+              0 20px 60px -10px rgba(0, 0, 0, 0.2),
               0 10px 30px -5px rgba(0, 0, 0, 0.15);
           "
         >
@@ -176,7 +201,8 @@
                 class="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white relative"
                 style="
                   border-radius: 1rem 0.25rem 0.25rem 1rem;
-                  box-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.3),
+                  box-shadow:
+                    0 10px 40px -5px rgba(0, 0, 0, 0.3),
                     0 20px 60px -10px rgba(0, 0, 0, 0.2),
                     0 4px 6px -2px rgba(0, 0, 0, 0.1),
                     inset 0 2px 4px 0 rgba(255, 255, 255, 0.2);
@@ -200,7 +226,8 @@
           v-if="userName"
           class="rounded-3xl shadow-2xl overflow-hidden h-[calc(100vh-120px)] flex flex-col w-full relative transition-all duration-500 ease-in-out bg-[#2f3136] border-2 border-[#202225] border-r-8 border-r-gray-900"
           style="
-            box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.2),
+            box-shadow:
+              0 20px 60px -10px rgba(0, 0, 0, 0.2),
               0 10px 30px -5px rgba(0, 0, 0, 0.15);
           "
         >
@@ -211,7 +238,8 @@
                 class="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white relative"
                 style="
                   border-radius: 0.25rem 1rem 1rem 0.25rem;
-                  box-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.3),
+                  box-shadow:
+                    0 10px 40px -5px rgba(0, 0, 0, 0.3),
                     0 20px 60px -10px rgba(0, 0, 0, 0.2),
                     0 4px 6px -2px rgba(0, 0, 0, 0.1),
                     inset 0 2px 4px 0 rgba(255, 255, 255, 0.2);
@@ -321,7 +349,7 @@ onMounted(async () => {
         registrationsCount.value = 0;
       }
     },
-    { immediate: true }
+    { immediate: true },
   );
 });
 </script>
