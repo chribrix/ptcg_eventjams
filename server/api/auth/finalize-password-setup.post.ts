@@ -166,22 +166,56 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const appMetadata = { ...(authUser?.app_metadata || {}) };
-  appMetadata.pending_password_setup = null;
-  appMetadata.has_password = true;
+  // Two separate admin REST calls are required here.
+  //
+  // When password + app_metadata are combined in a single updateUserById call,
+  // GoTrue applies the password update but silently drops the app_metadata changes.
+  // This left has_password: false / pending_password_setup intact, causing the
+  // user to be forced through password-setup again on the next login.
+  //
+  // Fix: app_metadata first (raw REST PUT), then password (raw REST PUT).
 
-  const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-    user.id,
-    {
-      password: pepperedPassword,
-      app_metadata: appMetadata,
+  // Step 1 – update app_metadata via raw admin REST API
+  const metaRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
     },
-  );
+    body: JSON.stringify({
+      app_metadata: {
+        ...(authUser?.app_metadata || {}),
+        has_password: true,
+        pending_password_setup: null,
+      },
+    }),
+  });
 
-  if (updateError) {
+  if (!metaRes.ok) {
+    const metaErr = await metaRes.json().catch(() => ({}));
     throw createError({
       statusCode: 500,
-      statusMessage: "Failed to activate password",
+      statusMessage: metaErr?.message || "Failed to update password metadata",
+    });
+  }
+
+  // Step 2 – update password via raw admin REST API
+  const pwRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+    },
+    body: JSON.stringify({ password: pepperedPassword }),
+  });
+
+  if (!pwRes.ok) {
+    const pwErr = await pwRes.json().catch(() => ({}));
+    throw createError({
+      statusCode: 500,
+      statusMessage: pwErr?.message || "Failed to activate password",
     });
   }
 

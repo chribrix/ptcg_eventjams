@@ -172,22 +172,59 @@ export default defineEventHandler(async (event) => {
   const hasLoggedInBefore = Boolean(authUser.email_confirmed_at);
 
   if (!hasLoggedInBefore) {
-    // Path A: direktes Passwort-Setzen und sofortiger Login
-    const directAppMetadata = { ...(authUser.app_metadata || {}) };
-    directAppMetadata.has_password = true;
-    directAppMetadata.pending_password_setup = null;
+    // Path A: direktes Passwort-Setzen und sofortiger Login.
+    //
+    // Zwei getrennte Raw-REST-Calls (gleicher Grund wie in finalize-password-setup):
+    // GoTrue ignorierts app_metadata-Änderungen wenn password + app_metadata kombiniert werden.
 
-    const { error: updateError } =
-      await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
-        password: pepperedPassword,
-        email_confirm: true,
-        app_metadata: directAppMetadata,
-      });
+    // Step 1 – app_metadata + email bestätigen
+    const metaResA = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({
+          email_confirm: true,
+          app_metadata: {
+            ...(authUser.app_metadata || {}),
+            has_password: true,
+            pending_password_setup: null,
+          },
+        }),
+      },
+    );
 
-    if (updateError) {
+    if (!metaResA.ok) {
+      const metaErr = await metaResA.json().catch(() => ({}));
       throw createError({
         statusCode: 500,
-        statusMessage: "Failed to activate password",
+        statusMessage: metaErr?.message || "Failed to update password metadata",
+      });
+    }
+
+    // Step 2 – Passwort setzen
+    const pwResA = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({ password: pepperedPassword }),
+      },
+    );
+
+    if (!pwResA.ok) {
+      const pwErr = await pwResA.json().catch(() => ({}));
+      throw createError({
+        statusCode: 500,
+        statusMessage: pwErr?.message || "Failed to activate password",
       });
     }
 
