@@ -31,18 +31,16 @@ const prisma = new PrismaClient();
 // Database webhooks send a static secret, not an HMAC signature
 const verifyWebhookSignature = (
   signature: string | undefined,
-  secret: string
+  secret: string,
 ): boolean => {
   if (!signature) {
-    console.error("No signature provided in webhook request");
     return false;
   }
 
   try {
     // For Database Webhooks, just compare the static secret
     return signature === secret;
-  } catch (error) {
-    console.error("Error verifying webhook signature:", error);
+  } catch {
     return false;
   }
 };
@@ -55,42 +53,18 @@ export default defineEventHandler(async (event) => {
   const rawBody = await readRawBody(event);
   const signature = getHeader(event, "x-webhook-signature");
 
-  console.log("📥 Webhook request received:", {
-    hasBody: !!rawBody,
-    hasSignature: !!signature,
-    signatureLength: signature?.length,
-    headers: getHeaders(event),
-  });
-
   // Verify webhook signature if secret is configured
   if (webhookSecret) {
     if (!verifyWebhookSignature(signature, webhookSecret)) {
-      console.error("Invalid webhook signature", {
-        hasSignature: !!signature,
-        webhookSecretConfigured: !!webhookSecret,
-      });
       throw createError({
         statusCode: 401,
         statusMessage: "Invalid webhook signature",
       });
     }
-    console.log("✅ Webhook signature verified");
-  } else {
-    console.warn(
-      "⚠️ SUPABASE_WEBHOOK_SECRET not configured - webhook signature not verified!"
-    );
   }
 
   // Parse the payload
   const payload = JSON.parse(rawBody || "{}");
-
-  console.log("🔔 Received Supabase webhook:", {
-    type: payload.type,
-    table: payload.table,
-    schema: payload.schema,
-    userId: payload.record?.id,
-    email: payload.record?.email,
-  });
 
   try {
     // Handle INSERT event on auth.users table
@@ -103,11 +77,10 @@ export default defineEventHandler(async (event) => {
       const user = payload.record;
 
       if (!user || !user.id || !user.email) {
-        console.error("Invalid user data in webhook payload");
         await logValidationError(
           event,
           new Error("Invalid user data"),
-          "webhook_invalid_user"
+          "webhook_invalid_user",
         );
         throw createError({
           statusCode: 400,
@@ -119,24 +92,9 @@ export default defineEventHandler(async (event) => {
       const { id: supabaseId, email, raw_user_meta_data, user_metadata } = user;
       const metadata = raw_user_meta_data || user_metadata || {};
 
-      console.log("👤 New user created:", {
-        supabaseId,
-        email,
-        hasMetadata: !!metadata,
-        metadataKeys: metadata ? Object.keys(metadata) : [],
-        metadata, // Log full metadata for debugging
-      });
-
       // Only create Player if we have registration metadata (name + playerId)
       // This distinguishes registration from login
       if (metadata?.playerId && metadata?.name) {
-        console.log("📝 Registration detected, creating Player record:", {
-          supabaseId,
-          email,
-          name: metadata.name,
-          playerId: metadata.playerId,
-        });
-
         try {
           // Check if player already exists
           const existingPlayer = await prisma.player.findUnique({
@@ -166,26 +124,17 @@ export default defineEventHandler(async (event) => {
             });
           }
 
-          console.log("✅ Player record created/updated successfully:", {
-            playerId: player.playerId,
-            supabaseId: player.supabaseId,
-            email: player.email,
-          });
-
           return {
             success: true,
             message: "Player record created",
             playerId: player.id,
           };
         } catch (dbError: any) {
-          console.error("❌ Database error creating player:", dbError);
-
           // Check for duplicate playerId error
           if (
             dbError.code === "P2002" &&
             dbError.meta?.target?.includes("playerId")
           ) {
-            console.error("Player ID already exists:", metadata.playerId);
             await logError(
               event,
               new Error("Duplicate playerId"),
@@ -194,7 +143,7 @@ export default defineEventHandler(async (event) => {
                 supabaseId,
                 email,
                 playerId: metadata.playerId,
-              }
+              },
             );
 
             // Return success but log the issue - user already has an account
@@ -215,9 +164,6 @@ export default defineEventHandler(async (event) => {
           });
         }
       } else {
-        console.log(
-          "🔑 Login detected (no metadata), skipping Player creation"
-        );
         // This is a login, not a registration - Player should already exist
         return {
           success: true,
@@ -229,13 +175,8 @@ export default defineEventHandler(async (event) => {
 
     // Handle other webhook events if needed in the future
     // Database webhooks can send INSERT, UPDATE, DELETE
-    console.log(
-      `ℹ️ Unhandled webhook event: ${payload.type} on ${payload.schema}.${payload.table}`
-    );
     return { success: true, message: "Event received but not processed" };
   } catch (error) {
-    console.error("Webhook handler error:", error);
-
     // Don't re-throw errors that have already been logged and thrown
     if (error && typeof error === "object" && "statusCode" in error) {
       throw error;
@@ -245,7 +186,7 @@ export default defineEventHandler(async (event) => {
       event,
       error instanceof Error ? error : new Error(String(error)),
       "webhook_handler_error",
-      { payload }
+      { payload },
     );
 
     throw createError({

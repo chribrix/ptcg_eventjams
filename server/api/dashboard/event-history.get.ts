@@ -31,8 +31,7 @@ export default defineEventHandler(async (event) => {
       // Try Supabase authentication
       try {
         supabaseUser = await serverSupabaseUser(event);
-      } catch (supabaseError) {
-        console.log("Supabase auth failed:", supabaseError);
+      } catch {
         // Continue without Supabase auth
       }
     }
@@ -113,8 +112,6 @@ export default defineEventHandler(async (event) => {
       data: eventHistory,
     };
   } catch (error) {
-    console.error("Error fetching user event history:", error);
-
     if (error && typeof error === "object" && "statusCode" in error) {
       const statusCode = (error as any).statusCode;
       if (statusCode === 401) {

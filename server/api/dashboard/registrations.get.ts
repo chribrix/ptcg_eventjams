@@ -32,8 +32,7 @@ export default defineEventHandler(async (event) => {
       // Try Supabase authentication
       try {
         supabaseUser = await serverSupabaseUser(event);
-      } catch (supabaseError) {
-        console.log("Supabase auth failed:", supabaseError);
+      } catch {
         // Continue without Supabase auth
       }
     }
@@ -137,7 +136,7 @@ export default defineEventHandler(async (event) => {
 
     // Filter out registrations with no active tickets
     const activeRegistrations = futureRegistrations.filter(
-      (reg) => reg.tickets.length > 0
+      (reg) => reg.tickets.length > 0,
     );
 
     // Transform registrations to have a consistent structure
@@ -146,7 +145,7 @@ export default defineEventHandler(async (event) => {
 
       // Get overall status from tickets (all tickets must be registered for overall "registered" status)
       const allTicketsRegistered = reg.tickets.every(
-        (t) => t.status === "registered"
+        (t) => t.status === "registered",
       );
       const overallStatus = allTicketsRegistered ? "registered" : "reserved";
 
@@ -216,7 +215,7 @@ export default defineEventHandler(async (event) => {
       const customTags = reg.customEvent?.tags
         ? parseEventTags(
             reg.customEvent.tags,
-            (reg.customEvent.tagType as TagType) || "pokemon"
+            (reg.customEvent.tagType as TagType) || "pokemon",
           )
         : { game: "Pokemon" };
       const customEventType = customTags.type || "custom";
@@ -251,15 +250,13 @@ export default defineEventHandler(async (event) => {
       error: null,
     };
   } catch (error) {
-    console.error("Dashboard registrations error:", error);
-
     if (error && typeof error === "object" && "statusCode" in error) {
       const statusCode = (error as any).statusCode;
       if (statusCode === 401) {
         await logAuthError(
           event,
           error as Error,
-          "dashboard_registrations_unauthorized"
+          "dashboard_registrations_unauthorized",
         );
       }
       throw error;

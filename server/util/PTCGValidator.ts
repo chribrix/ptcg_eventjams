@@ -78,7 +78,7 @@ class PTCGDeckValidator {
             currentSection === "pokemonCards"
               ? "<count> <name> <setId> <setNum>"
               : "<count> <name> [setId setNum]"
-          }`
+          }`,
         );
       }
 
@@ -96,7 +96,7 @@ class PTCGDeckValidator {
     const trainerTokens = trainerCards.map((card) => this.toCardToken(card));
 
     const energyTokens = await this.sanitizeEnergyTokens(
-      energyCards.map((card) => this.toCardToken(card))
+      energyCards.map((card) => this.toCardToken(card)),
     );
 
     return {
@@ -115,7 +115,7 @@ class PTCGDeckValidator {
 
     writeFileSync(
       "./debug/data/decktokens.json",
-      JSON.stringify(deckTokens, null, 2)
+      JSON.stringify(deckTokens, null, 2),
     );
 
     if (parseErrors.length > 0) {
@@ -163,7 +163,7 @@ class PTCGDeckValidator {
     for (const [name, total] of Object.entries(nameCountMap)) {
       if (total > 4) {
         errors.push(
-          `Card "${name}" exceeds limit: ${total} copies in deck (max 4 allowed).`
+          `Card "${name}" exceeds limit: ${total} copies in deck (max 4 allowed).`,
         );
       }
     }
@@ -178,7 +178,6 @@ class PTCGDeckValidator {
         aceSpecs.add(card.name);
       }
       if (!card.legal?.standard) {
-        console.log(card);
         notStandardLegal.add(`${card.name} ${card.set} ${card.setId}`);
       }
     });
@@ -186,15 +185,15 @@ class PTCGDeckValidator {
     if (aceSpecCount > 1) {
       errors.push(
         `Deck can contain at most 1 ACE SPEC card, but found ${Array.from(
-          aceSpecs
-        ).join(", ")}`
+          aceSpecs,
+        ).join(", ")}`,
       );
     }
     if (notStandardLegal.size > 0) {
       errors.push(
         `Deck contains not standard legal cards: ${Array.from(
-          notStandardLegal
-        ).join(", ")}`
+          notStandardLegal,
+        ).join(", ")}`,
       );
     }
 
@@ -242,12 +241,12 @@ class PTCGDeckValidator {
 
     const card = await this.cardRepository.getCardByNameAndId(
       cardToken.name,
-      id
+      id,
     );
 
     if (!card) {
       throw new Error(
-        `Card with name "${cardToken.name}" and set code "${cardToken.set} ${cardToken.setId}" not found.`
+        `Card with name "${cardToken.name}" and set code "${cardToken.set} ${cardToken.setId}" not found.`,
       );
     }
 
@@ -259,7 +258,7 @@ class PTCGDeckValidator {
 
     if (!card) {
       throw new Error(
-        `Card with name "${cardToken.name}" and set code "${cardToken.set} ${cardToken.setId}" not found.`
+        `Card with name "${cardToken.name}" and set code "${cardToken.set} ${cardToken.setId}" not found.`,
       );
     }
 
@@ -272,7 +271,7 @@ class PTCGDeckValidator {
         const res = await this.getCardByNameAndId(token);
 
         return { ...token, legal: res.legal, rarity: res.rarity };
-      })
+      }),
     )) as PromiseSettledResult<CardToken>[];
 
     return this.buildValidationResponse(results);
@@ -284,7 +283,7 @@ class PTCGDeckValidator {
         const res = await this.getCardByName(token);
 
         return { ...token, legal: res.legal, rarity: res.rarity };
-      })
+      }),
     )) as PromiseSettledResult<CardToken>[];
 
     return this.buildValidationResponse(results);
@@ -296,7 +295,7 @@ class PTCGDeckValidator {
         const res = await this.getCardByName(token);
 
         return { ...token, legal: res.legal, rarity: res.rarity };
-      })
+      }),
     )) as PromiseSettledResult<CardToken>[];
 
     return this.buildValidationResponse(results);
@@ -318,7 +317,7 @@ class PTCGDeckValidator {
   }
 
   hasSetId(
-    token: CardToken
+    token: CardToken,
   ): token is CardToken & { setId: number; set: string } {
     return typeof token.setId === "number" && typeof token.set === "string";
   }
@@ -344,7 +343,7 @@ class PTCGDeckValidator {
   }
 
   async buildCardId(
-    cardToken: CardToken & { setId: number; set: string }
+    cardToken: CardToken & { setId: number; set: string },
   ): Promise<string> {
     const setCodes = await this.cardRepository.getSetCodesMap();
 

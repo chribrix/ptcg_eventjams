@@ -80,6 +80,7 @@ const code = computed(() => route.query.code as string | undefined);
 const returnPath = computed(
   () => (route.query.return as string) || "/magic-login",
 );
+const flow = computed(() => route.query.flow as string | undefined);
 
 const confirmLogin = async () => {
   try {
@@ -91,8 +92,12 @@ const confirmLogin = async () => {
     if (returnPath.value && returnPath.value !== "/magic-login") {
       params.set("return", returnPath.value);
     }
+    if (flow.value) {
+      params.set("flow", flow.value);
+    }
     const qs = params.toString();
-    await navigateTo(`/magic-login${qs ? `?${qs}` : ""}`, {
+    const hash = process.client ? window.location.hash : "";
+    await navigateTo(`/magic-login${qs ? `?${qs}` : ""}${hash || ""}`, {
       external: true,
       replace: true,
     });
@@ -107,7 +112,14 @@ const resendLink = async () => {
   if (!resendEmail.value || resendLoading.value) return;
   resendLoading.value = true;
   try {
-    const redirectTo = `${window.location.origin}/confirm${returnPath.value !== "/magic-login" ? `?return=${encodeURIComponent(returnPath.value)}` : ""}`;
+    const params = new URLSearchParams();
+    if (returnPath.value !== "/magic-login") {
+      params.set("return", returnPath.value);
+    }
+    if (flow.value) {
+      params.set("flow", flow.value);
+    }
+    const redirectTo = `${window.location.origin}/confirm${params.toString() ? `?${params.toString()}` : ""}`;
     await supabase.auth.signInWithOtp({
       email: resendEmail.value,
       options: { emailRedirectTo: redirectTo },

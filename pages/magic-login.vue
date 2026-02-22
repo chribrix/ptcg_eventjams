@@ -104,6 +104,9 @@ const showRegisterButton = ref(false);
 const resendEmail = ref("");
 const resendLoading = ref(false);
 const resendSent = ref(false);
+const isPasswordSetupFlow = computed(
+  () => (route.query.flow as string) === "set-password",
+);
 
 const resendMagicLink = async () => {
   if (!resendEmail.value || resendLoading.value) return;
@@ -117,8 +120,7 @@ const resendMagicLink = async () => {
       },
     });
     if (!sendError) resendSent.value = true;
-  } catch (e) {
-    console.error("Resend failed:", e);
+  } catch {
   } finally {
     resendLoading.value = false;
   }
@@ -145,9 +147,7 @@ const logError = async (
         metadata: additionalData || null,
       },
     });
-  } catch (logError) {
-    console.error("Failed to log error:", logError);
-  }
+  } catch {}
 };
 
 // Log successful operations too (as info-level logs)
@@ -172,20 +172,15 @@ const logInfo = async (
         metadata: additionalData || null,
       },
     });
-  } catch (err) {
-    console.error("Failed to log info:", err);
-  }
+  } catch {}
 };
 
 onMounted(async () => {
   try {
-    console.log("🔐 Magic login process started");
-
     // Check for error params in URL immediately — fail fast instead of retrying
     const urlError = route.query.error as string;
     const urlErrorCode = route.query.error_code as string;
     if (urlError || urlErrorCode) {
-      console.warn("❌ Error in URL params:", urlError, urlErrorCode);
       // Try to recover the email from localStorage (Supabase stores it during OTP flow)
       try {
         const stored = Object.keys(localStorage).find(
@@ -237,14 +232,13 @@ onMounted(async () => {
       ...deviceInfo,
     });
 
-    // Wait for Supabase to process the session, especially important for mobile browsers
-    // iOS Safari can be slow to process the auth hash fragments
-    // If a code= param is present and Supabase can't exchange it quickly, it's invalid — fail fast.
+    // Wait for Supabase to process the session, especially important for mobile browsers.
+    // If session is still missing with code= present, attempt an explicit code exchange fallback.
     let session = null;
     let sessionError = null;
     const hasCode = !!route.query.code;
-    const maxRetries = hasCode ? 4 : 10; // fail faster when code exchange is expected
-    const retryDelay = 300; // ms
+    const maxRetries = hasCode ? 20 : 12;
+    const retryDelay = hasCode ? 400 : 300; // ms
 
     await logInfo("session_retry_start", "Starting session retry loop", {
       maxRetries,
@@ -257,7 +251,6 @@ onMounted(async () => {
 
       if (data.session) {
         session = data.session;
-        console.log(`✅ Session found on attempt ${attempt + 1}`);
         await logInfo(
           "session_found",
           `Session found on attempt ${attempt + 1}`,
@@ -276,11 +269,6 @@ onMounted(async () => {
       sessionError = error;
 
       if (attempt < maxRetries - 1) {
-        console.log(
-          `⏳ Session not ready, waiting... (attempt ${
-            attempt + 1
-          }/${maxRetries})`,
-        );
         if (attempt === 0 || attempt === 4 || attempt === 9) {
           // Log on first, middle, and last attempts
           await logInfo(
@@ -297,8 +285,76 @@ onMounted(async () => {
       }
     }
 
+    if (!session && process.client) {
+      const hash = window.location.hash?.replace(/^#/, "") || "";
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+
+      if (accessToken && refreshToken) {
+        try {
+          const { data: fromHash, error: hashSessionError } =
+            await useSupabaseClient().auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+          if (!hashSessionError && fromHash?.session) {
+            session = fromHash.session;
+            if (window.location.hash) {
+              history.replaceState(
+                null,
+                "",
+                window.location.pathname + window.location.search,
+              );
+            }
+            await logInfo(
+              "session_hash_fallback_success",
+              "Session established from URL hash tokens",
+              { ...deviceInfo },
+            );
+          } else {
+            sessionError = hashSessionError || sessionError;
+          }
+        } catch (hashException: any) {
+          sessionError = hashException || sessionError;
+        }
+      }
+    }
+
+    if (!session && hasCode && typeof route.query.code === "string") {
+      try {
+        const { data: exchanged, error: exchangeError } =
+          await useSupabaseClient().auth.exchangeCodeForSession(
+            route.query.code,
+          );
+
+        if (!exchangeError && exchanged?.session) {
+          session = exchanged.session;
+          await logInfo(
+            "session_code_exchange_success",
+            "Session established via explicit code exchange",
+            {
+              ...deviceInfo,
+            },
+          );
+        } else {
+          sessionError = exchangeError || sessionError;
+          await logInfo(
+            "session_code_exchange_failed",
+            "Explicit code exchange failed",
+            {
+              error: exchangeError?.message,
+              ...deviceInfo,
+            },
+          );
+        }
+      } catch (exchangeException: any) {
+        sessionError = exchangeException || sessionError;
+      }
+    }
+
     if (sessionError || !session) {
-      console.error("Login failed or session missing:", sessionError);
       await logError(
         "magic_login_session_failed",
         sessionError?.message || "No session found after retries",
@@ -321,7 +377,6 @@ onMounted(async () => {
     const data = { session };
 
     const user = data.session.user;
-    console.log("✅ Session validated, user:", user.email);
     await logInfo(
       "magic_login_session_valid",
       "Magic link session validated successfully",
@@ -333,10 +388,40 @@ onMounted(async () => {
       },
     );
 
+    if (isPasswordSetupFlow.value) {
+      try {
+        await $fetch("/api/auth/finalize-password-setup", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${data.session.access_token}`,
+          },
+        });
+
+        try {
+          await useSupabaseClient().auth.signOut();
+        } catch {
+          // no-op
+        }
+
+        await navigateTo("/password-set-success", {
+          external: true,
+          replace: true,
+        });
+        return;
+      } catch (finalizeError) {
+        errorTitle.value = "Passwort konnte nicht aktiviert werden";
+        error.value =
+          "Die Passwort-Bestätigung ist fehlgeschlagen oder abgelaufen. Bitte starte den Vorgang erneut.";
+        errorAction.value =
+          "Gehe zurück zum Login, wähle Passwort und fordere eine neue Bestätigungs-E-Mail an.";
+        checking.value = false;
+        return;
+      }
+    }
+
     // Check if player exists in database
     // Note: Player creation is now handled by Supabase webhook automatically
     // So we just need to check if the player record exists
-    console.log("🔍 Checking if player exists in database");
     await logInfo("magic_login_checking_player", "Checking player existence", {
       userId: user.id,
       email: user.email,
@@ -351,8 +436,18 @@ onMounted(async () => {
       });
 
       if (playerResponse.exists) {
+        {
+          try {
+            await $fetch("/api/players/preferred-login-method", {
+              method: "POST",
+              body: { method: "magiclink" },
+            });
+          } catch {
+            // best-effort only
+          }
+        }
+
         // Player exists - proceed with login/registration complete
-        console.log("✅ Player found, proceeding to app");
         await logInfo("magic_login_success", "Login completed successfully", {
           userId: user.id,
           email: user.email,
@@ -361,7 +456,6 @@ onMounted(async () => {
         });
 
         const returnPath = (route.query.return as string) || "/";
-        console.log("🔄 Navigating to:", returnPath);
 
         await logInfo("navigation_start", "Starting navigation", {
           returnPath,
@@ -398,9 +492,6 @@ onMounted(async () => {
 
       if (hasRegistrationMetadata) {
         // Registration flow - webhook should create player, but might have lag
-        console.log(
-          "⏳ Registration detected but player not found - webhook may still be processing",
-        );
         await logInfo(
           "magic_login_webhook_lag",
           "Player not found after registration - waiting for webhook",
@@ -421,7 +512,6 @@ onMounted(async () => {
         });
 
         if (retryResponse.exists) {
-          console.log("✅ Player found after retry");
           await logInfo(
             "player_found_retry",
             "Player found after webhook retry",
@@ -431,7 +521,6 @@ onMounted(async () => {
             },
           );
           const returnPath = (route.query.return as string) || "/";
-          console.log("🔄 Navigating to:", returnPath);
 
           await logInfo("navigation_retry", "Navigation after retry", {
             returnPath,
@@ -468,7 +557,6 @@ onMounted(async () => {
 
         // Still not found - webhook may have failed
         // Fallback: create player manually
-        console.log("⚠️ Webhook may have failed, creating player manually");
         await logError(
           "magic_login_webhook_failed",
           "Player not found after registration and retry - webhook may have failed",
@@ -492,7 +580,6 @@ onMounted(async () => {
             },
           });
 
-          console.log("✅ Player created manually via fallback");
           await logInfo(
             "magic_login_manual_creation_success",
             "Player created manually after webhook failure",
@@ -503,7 +590,6 @@ onMounted(async () => {
           );
 
           const returnPath = (route.query.return as string) || "/";
-          console.log("🔄 Navigating to:", returnPath);
 
           await logInfo(
             "navigation_manual_creation",
@@ -541,7 +627,6 @@ onMounted(async () => {
           }
           return;
         } catch (createError: any) {
-          console.error("❌ Manual player creation failed:", createError);
           const errorMessage =
             createError?.data?.message ||
             createError?.message ||
@@ -569,7 +654,6 @@ onMounted(async () => {
       }
 
       // Login flow without registration - player doesn't exist
-      console.log("❌ Login attempt without registration");
       await logError(
         "login_without_registration",
         "User attempted to login without completing registration",
@@ -601,7 +685,6 @@ onMounted(async () => {
         router.push(`/register${redirectQuery}`);
       }, 4000);
     } catch (checkError) {
-      console.error("❌ Error checking player existence:", checkError);
       errorTitle.value = "Account Verification Failed";
       error.value =
         "We encountered a problem while verifying your account. This might be a temporary server issue.";
@@ -615,7 +698,6 @@ onMounted(async () => {
       checking.value = false;
     }
   } catch (err) {
-    console.error("Magic login error:", err);
     errorTitle.value = "Unexpected Error";
     error.value =
       "Something went wrong during the login process. This might be due to a connection issue or a temporary server problem.";

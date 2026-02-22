@@ -23,11 +23,10 @@
           ></path>
         </svg>
         <div>
-          <h3 class="font-semibold mb-1">No Account Found</h3>
-          <p class="text-sm">
-            We couldn't find an account with your email address. Please complete
-            registration below to create your account.
-          </p>
+          <h3 class="font-semibold mb-1">
+            {{ $t("registerPage.noAccountTitle") }}
+          </h3>
+          <p class="text-sm">{{ $t("registerPage.noAccountText") }}</p>
         </div>
       </div>
     </div>

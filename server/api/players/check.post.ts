@@ -34,9 +34,51 @@ export default defineEventHandler(async (event) => {
     const { supabaseId, userId, email } = validation.data;
 
     let player = null;
+    const normalizedEmail = email?.toLowerCase();
+
+    const getSupabaseUserByEmail = async (targetEmail: string) => {
+      const config = useRuntimeConfig();
+      const supabaseUrl = config.public.supabaseUrl;
+      const serviceKey = config.supabaseServiceKey;
+
+      if (!supabaseUrl || !serviceKey) return null;
+
+      const res = await fetch(
+        `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(targetEmail)}`,
+        {
+          headers: {
+            apikey: serviceKey,
+            Authorization: `Bearer ${serviceKey}`,
+          },
+        },
+      );
+
+      if (!res.ok) return null;
+
+      const data = await res.json();
+      const users = data?.users ?? [];
+      return (
+        users.find((user: any) => user.email?.toLowerCase() === targetEmail) ||
+        null
+      );
+    };
+
+    let authUser: { id: string; user_metadata?: unknown } | null = null;
+    let supabaseUserExists = false;
+
+    if (normalizedEmail) {
+      try {
+        authUser = await getSupabaseUserByEmail(normalizedEmail);
+        supabaseUserExists = !!authUser;
+
+        if (supabaseUserExists && !process.dev) {
+          // no-op in production logs
+        }
+      } catch {}
+    }
 
     // Check by supabaseId first (most direct link)
-    const authId = supabaseId || userId;
+    const authId = supabaseId || userId || authUser?.id;
     if (authId) {
       player = await prisma.player.findUnique({
         where: {
@@ -46,55 +88,41 @@ export default defineEventHandler(async (event) => {
     }
 
     // If not found and we have an email, try email lookup
-    if (!player && email) {
+    if (!player && normalizedEmail) {
       player = await prisma.player.findFirst({
         where: {
-          email: email.toLowerCase(),
+          email: normalizedEmail,
         },
       });
     }
 
-    // If still no player found but we have an email, check if user exists in Supabase auth
-    // This prevents registration with emails that already have Supabase accounts
-    let supabaseUserExists = false;
-    if (!player && email) {
-      try {
-        const supabaseAdmin = useSupabaseServiceRole();
-        // More efficient: use getUserByEmail instead of listing all users
-        const { data: authUser, error: authError } =
-          await supabaseAdmin.auth.admin.getUserByEmail(email);
-
-        if (!authError && authUser?.user) {
-          supabaseUserExists = true;
-          console.log(
-            `⚠️ User exists in Supabase auth but not in players table: ${email}`,
-            {
-              userId: authUser.user.id,
-              hasMetadata: !!authUser.user.user_metadata,
-            }
-          );
-        }
-      } catch (authCheckError) {
-        console.error("Error checking Supabase auth user:", authCheckError);
-        // Don't fail the request if auth check fails
-      }
+    let preferredLoginMethod: "password" | "magiclink" = "password";
+    if (player) {
+      const result = await prisma.$queryRaw<
+        Array<{ preferred_login_method: string | null }>
+      >`SELECT preferred_login_method FROM public.players WHERE id = ${player.id} LIMIT 1`;
+      preferredLoginMethod =
+        result[0]?.preferred_login_method === "magiclink"
+          ? "magiclink"
+          : "password";
     }
 
     return {
       exists: !!player || supabaseUserExists,
+      authExists: supabaseUserExists,
       player: player
         ? {
             id: player.id,
             playerId: player.playerId,
             name: player.name,
             email: player.email,
+            preferredLoginMethod,
           }
         : null,
       // Indicate if user exists in auth but not in players table
       authOnly: !player && supabaseUserExists,
     };
   } catch (error) {
-    console.error("Error checking player:", error);
     await logDatabaseError(event, error, "player_check");
     throw createError({
       statusCode: 500,

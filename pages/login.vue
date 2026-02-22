@@ -1,18 +1,14 @@
 <template>
   <div class="max-w-md mx-auto">
-    <!-- Event Context Card -->
     <EventDetailsCard :event-details="eventDetails" />
 
-    <!-- Login Form Card -->
-    <div
-      class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md mx-auto border border-gray-100"
-    >
+    <div class="bg-white shadow-xl rounded-2xl p-8 border border-gray-100">
       <div class="text-center mb-8">
         <div
-          class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center"
+          class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center"
         >
           <svg
-            class="w-8 h-8 text-white"
+            class="w-7 h-7 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -21,364 +17,351 @@
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+              d="M15 12H3m0 0l4-4m-4 4l4 4m13-8v8a2 2 0 01-2 2h-5"
             />
           </svg>
         </div>
-        <h2 class="text-3xl font-bold text-gray-900 mb-2">Log In</h2>
-        <p class="text-gray-600">Welcome back to the Pokémon TCG community</p>
+        <h1 class="text-2xl font-bold text-gray-900">Login</h1>
+        <p class="text-sm text-gray-600 mt-1">
+          Melde dich mit E-Mail + Passwort oder Magic Link an
+        </p>
       </div>
 
-      <form @submit.prevent="submitLogin" class="space-y-6">
-        <div class="relative">
-          <div
-            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+      <form
+        v-if="step === 'email'"
+        class="space-y-4"
+        @submit.prevent="checkEmail"
+      >
+        <label class="block text-sm font-medium text-gray-700"
+          >E-Mail-Adresse</label
+        >
+        <input
+          v-model="email"
+          type="email"
+          autocomplete="email"
+          required
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="name@example.com"
+        />
+
+        <button
+          type="submit"
+          :disabled="isLoading"
+          class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition"
+        >
+          {{ isLoading ? "Prüfe..." : "Weiter" }}
+        </button>
+      </form>
+
+      <div v-else-if="step === 'method'" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >E-Mail-Adresse</label
           >
-            <svg
-              class="w-5 h-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div
+            class="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg"
+          >
+            <span class="text-sm text-gray-800 truncate">{{ email }}</span>
+            <button
+              type="button"
+              class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              @click="backToEmail"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
+              ändern
+            </button>
           </div>
-          <input
-            v-model="email"
-            type="email"
-            placeholder="Email address"
-            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-            required
-          />
+        </div>
+
+        <button
+          type="button"
+          :disabled="isLoading"
+          class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition"
+          @click="selectMagicLink"
+        >
+          Mit Magic Link anmelden
+        </button>
+
+        <button
+          type="button"
+          :disabled="isLoading"
+          class="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed font-semibold py-3 px-4 rounded-lg transition"
+          @click="selectPassword"
+        >
+          Mit Passwort anmelden
+        </button>
+      </div>
+
+      <form
+        v-else-if="step === 'password'"
+        class="space-y-4"
+        @submit.prevent="submitPasswordLogin"
+      >
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >E-Mail-Adresse</label
+          >
+          <div
+            class="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg"
+          >
+            <span class="text-sm text-gray-800 truncate">{{ email }}</span>
+            <button
+              type="button"
+              class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              @click="backToEmail"
+            >
+              ändern
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Passwort</label
+          >
+          <div class="relative">
+            <input
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              autocomplete="current-password"
+              required
+              class="w-full px-4 py-3 pr-11 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Passwort"
+            />
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              @click="showPassword = !showPassword"
+            >
+              {{ showPassword ? "🙈" : "👁️" }}
+            </button>
+          </div>
         </div>
 
         <button
           type="submit"
           :disabled="isLoading"
-          class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-blue-400 disabled:to-purple-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-blue-200"
+          class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition"
         >
-          <div class="flex items-center justify-center space-x-2">
-            <svg
-              v-if="isLoading"
-              class="animate-spin h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            <svg
-              v-else
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-            <span>{{ isLoading ? "Sending..." : "Send Magic Link" }}</span>
-          </div>
+          {{ isLoading ? "Einloggen..." : "Mit Passwort einloggen" }}
+        </button>
+
+        <button
+          type="button"
+          :disabled="isLoading"
+          class="w-full text-sm text-gray-500 hover:text-blue-600"
+          @click="backToMethod"
+        >
+          Zurück zur Methoden-Auswahl
         </button>
       </form>
 
-      <div class="mt-6 text-center">
-        <p class="text-sm text-gray-600">
-          Don't have an account?
-          <NuxtLink
-            :to="
-              route.query.redirect
-                ? `/register?redirect=${route.query.redirect}`
-                : '/register'
-            "
-            class="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
-          >
-            Create account
-          </NuxtLink>
-        </p>
-      </div>
-
-      <div
-        v-if="linkSent"
-        class="mt-6 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg relative"
+      <form
+        v-else-if="step === 'passwordSetup'"
+        class="space-y-4"
+        @submit.prevent="submitInitialPasswordAndLogin"
       >
-        <div class="flex items-center space-x-2">
-          <svg
-            class="w-5 h-5 text-emerald-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >E-Mail-Adresse</label
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span class="font-medium">Magic link sent!</span>
+          <div
+            class="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg"
+          >
+            <span class="text-sm text-gray-800 truncate">{{ email }}</span>
+            <button
+              type="button"
+              class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              @click="backToEmail"
+            >
+              ändern
+            </button>
+          </div>
         </div>
-        <p class="text-sm mt-1 ml-7">Check your email for the login link.</p>
+
+        <p class="text-sm text-amber-700">
+          Für diesen Account ist noch kein Passwort gesetzt. Bitte jetzt
+          Passwort setzen.
+        </p>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Neues Passwort</label
+          >
+          <div class="relative">
+            <input
+              v-model="newPassword"
+              :type="showNewPassword ? 'text' : 'password'"
+              autocomplete="new-password"
+              required
+              minlength="8"
+              class="w-full px-4 py-3 pr-11 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Mindestens 8 Zeichen"
+            />
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              @click="showNewPassword = !showNewPassword"
+            >
+              {{ showNewPassword ? "🙈" : "👁️" }}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Passwort wiederholen</label
+          >
+          <div class="relative">
+            <input
+              v-model="newPasswordConfirm"
+              :type="showNewPasswordConfirm ? 'text' : 'password'"
+              autocomplete="new-password"
+              required
+              minlength="8"
+              class="w-full px-4 py-3 pr-11 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Passwort wiederholen"
+            />
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              @click="showNewPasswordConfirm = !showNewPasswordConfirm"
+            >
+              {{ showNewPasswordConfirm ? "🙈" : "👁️" }}
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          :disabled="isLoading"
+          class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition"
+        >
+          {{
+            isLoading ? "Sende Bestätigung..." : "Passwort setzen bestätigen"
+          }}
+        </button>
+
+        <button
+          type="button"
+          :disabled="isLoading"
+          class="w-full text-sm text-gray-500 hover:text-blue-600"
+          @click="backToMethod"
+        >
+          Zurück zur Methoden-Auswahl
+        </button>
+      </form>
+
+      <div v-else class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >E-Mail-Adresse</label
+          >
+          <div
+            class="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg"
+          >
+            <span class="text-sm text-gray-800 truncate">{{ email }}</span>
+            <button
+              type="button"
+              class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              @click="backToEmail"
+            >
+              ändern
+            </button>
+          </div>
+        </div>
+
+        <p class="text-sm text-gray-600">
+          Wir senden dir einen Login-Link per E-Mail.
+        </p>
+
+        <p v-if="passwordSetupRequested" class="text-sm text-amber-700">
+          Bitte bestätige die E-Mail. Nach Klick wird dein Passwort aktiviert
+          und du direkt eingeloggt.
+        </p>
+
+        <button
+          type="button"
+          :disabled="isLoading"
+          class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition"
+          @click="submitMagicLink"
+        >
+          {{ isLoading ? "Sende Link..." : "Magic Link senden" }}
+        </button>
+
+        <button
+          type="button"
+          :disabled="isLoading"
+          class="w-full text-sm text-gray-500 hover:text-blue-600"
+          @click="backToMethod"
+        >
+          Zurück zur Methoden-Auswahl
+        </button>
+
+        <div
+          v-if="linkSent"
+          class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm"
+        >
+          Magic Link gesendet. Bitte prüfe dein E-Mail-Postfach.
+        </div>
       </div>
 
       <div
         v-if="error"
-        class="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg relative"
+        class="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
       >
-        <p class="font-medium">{{ error }}</p>
+        {{ error }}
+      </div>
+
+      <div class="mt-6 pt-6 border-t border-gray-100 text-center">
+        <p class="text-sm text-gray-600">
+          Noch kein Account?
+          <NuxtLink
+            :to="registerLink"
+            class="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
+          >
+            Jetzt registrieren
+          </NuxtLink>
+        </p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const email = ref("");
-const linkSent = ref(false);
-const error = ref("");
-const isLoading = ref(false);
-const runtimeConfig = useRuntimeConfig();
-const eventDetails = ref<any>(null);
+import { useLoginWorkflow } from "~/composables/useLoginWorkflow";
 
-const logError = async (
-  errorType: string,
-  errorMessage: string,
-  additionalData?: any,
-) => {
-  if (!process.client) return;
-  try {
-    await $fetch("/api/admin/error-logs/create", {
-      method: "POST",
-      body: {
-        userId: null,
-        userEmail: email.value || null,
-        errorType,
-        errorMessage,
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        metadata: additionalData || null,
-      },
-    });
-  } catch (logError) {
-    console.error("Failed to log error:", logError);
-  }
-};
-
-const getMagicLinkRedirect = () => {
-  console.log("--- getMagicLinkRedirect called ---");
-  const configuredBase = runtimeConfig.public.appBaseUrl?.replace(/\/$/, "");
-  console.log("Configured base URL from config:", configuredBase);
-
-  if (configuredBase) {
-    const result = `${configuredBase}/confirm`;
-    console.log("Using configured base, returning:", result);
-    return result;
-  }
-
-  if (process.client) {
-    const origin = window.location.origin.replace(/\/$/, "");
-    const result = `${origin}/confirm`;
-    console.log("Using window.location.origin:", origin);
-    console.log("Returning:", result);
-    return result;
-  }
-
-  console.log("No redirect URL determined (SSR without config)");
-  return undefined;
-};
-
-// Check if user is already authenticated and redirect
-const { user } = useAuth();
 const route = useRoute();
 
-onMounted(async () => {
-  // If user is already authenticated, redirect to intended page or home
-  if (user.value) {
-    const redirectTo = route.query.redirect as string;
-    navigateTo(redirectTo || "/");
-    return;
-  }
+const {
+  step,
+  email,
+  password,
+  newPassword,
+  newPasswordConfirm,
+  showPassword,
+  showNewPassword,
+  showNewPasswordConfirm,
+  hasPassword,
+  linkSent,
+  passwordSetupRequested,
+  error,
+  isLoading,
+  eventDetails,
+  backToEmail,
+  backToMethod,
+  checkEmail,
+  selectPassword,
+  selectMagicLink,
+  submitPasswordLogin,
+  submitInitialPasswordAndLogin,
+  submitMagicLink,
+} = useLoginWorkflow();
 
-  // Check if redirected from an event page
-  const redirectTo = route.query.redirect as string;
-  if (redirectTo) {
-    // Extract event ID from redirect URL
-    const eventRegisterMatch = redirectTo.match(/\/events\/register\/(\w+)/);
-    const eventViewMatch = redirectTo.match(/\/events\/(\w+)/);
-    const eventId = eventRegisterMatch?.[1] || eventViewMatch?.[1];
-
-    if (eventId) {
-      try {
-        const response = await $fetch<{
-          event: any;
-          registrationCount: number;
-        }>(`/api/events/${eventId}`);
-        if (response.event) {
-          eventDetails.value = {
-            ...response.event,
-            registrationCount: response.registrationCount,
-          };
-        }
-      } catch (err) {
-        console.error("Failed to fetch event details:", err);
-      }
-    }
-  }
+const registerLink = computed(() => {
+  const redirect =
+    typeof route.query.redirect === "string" ? route.query.redirect : "";
+  return redirect
+    ? `/register?redirect=${encodeURIComponent(redirect)}`
+    : "/register";
 });
-
-// Also watch for user changes (in case auth state changes while on login page)
-watch(user, (newUser) => {
-  if (newUser) {
-    const redirectTo = route.query.redirect as string;
-    navigateTo(redirectTo || "/");
-  }
-});
-
-const submitLogin = async () => {
-  linkSent.value = false;
-  error.value = "";
-  isLoading.value = true;
-
-  console.log("🔑 Login attempt started for:", email.value);
-
-  // First, check if a player account exists with this email
-  try {
-    const playerCheck = await $fetch("/api/players/check", {
-      method: "POST",
-      body: {
-        email: email.value,
-      },
-    });
-
-    if (!playerCheck.exists) {
-      console.log("⚠️ Player account not found for email:", email.value);
-      error.value = `No account found for ${email.value}. Please register first before logging in.`;
-      isLoading.value = false;
-      await logError(
-        "login_attempt_without_registration",
-        "User tried to login without an account",
-        {
-          email: email.value,
-        },
-      );
-
-      // Suggest registering instead
-      setTimeout(() => {
-        const returnPath = route.query.redirect as string;
-        const redirectQuery = returnPath
-          ? `?redirect=${encodeURIComponent(
-              returnPath,
-            )}&email=${encodeURIComponent(email.value)}`
-          : `?email=${encodeURIComponent(email.value)}`;
-        navigateTo(`/register${redirectQuery}`);
-      }, 3000);
-      return;
-    }
-
-    console.log("✅ Player account exists, proceeding with magic link");
-    await logError(
-      "info_login_player_found",
-      "Player account found, sending magic link",
-      {
-        email: email.value,
-        playerId: playerCheck.player?.playerId,
-      },
-    );
-  } catch (checkError) {
-    console.error("❌ Error checking player existence:", checkError);
-    error.value =
-      "We couldn't verify your account. Redirecting you to registration...";
-    isLoading.value = false;
-    await logError(
-      "login_player_check_failed",
-      checkError instanceof Error ? checkError.message : "Unknown error",
-      {
-        email: email.value,
-        checkError,
-      },
-    );
-
-    // Redirect to register page with noAccount flag
-    setTimeout(() => {
-      const returnPath = route.query.redirect as string;
-      const redirectQuery = returnPath
-        ? `?redirect=${encodeURIComponent(
-            returnPath,
-          )}&noAccount=true&email=${encodeURIComponent(email.value)}`
-        : `?noAccount=true&email=${encodeURIComponent(email.value)}`;
-      navigateTo(`/register${redirectQuery}`);
-    }, 2000);
-    return;
-  }
-
-  const returnPath = route.query.redirect as string;
-  let redirectTo = getMagicLinkRedirect();
-
-  // Append the return path if present
-  if (redirectTo && returnPath) {
-    redirectTo = `${redirectTo}?return=${encodeURIComponent(returnPath)}`;
-  }
-
-  console.log("📧 Sending login magic link to:", email.value);
-  const startTime = Date.now();
-
-  const { error: signInError } = await useSupabaseClient().auth.signInWithOtp({
-    email: email.value,
-    options: redirectTo
-      ? {
-          emailRedirectTo: redirectTo,
-        }
-      : undefined,
-  });
-
-  const elapsed = Date.now() - startTime;
-  console.log(`⏱️ Supabase API call completed in ${elapsed}ms`);
-
-  isLoading.value = false;
-
-  if (signInError) {
-    console.error("❌ Magic link error:", signInError.message);
-    error.value = signInError.message;
-    await logError("login_magic_link_failed", signInError.message, {
-      email: email.value,
-      errorStatus: signInError.status,
-      errorName: signInError.name,
-      elapsed,
-      redirectTo,
-    });
-  } else {
-    console.log("✅ Magic link sent successfully");
-    await logError(
-      "info_login_magic_link_sent",
-      "Login magic link sent successfully",
-      {
-        email: email.value,
-        elapsed,
-        redirectTo,
-        hasReturnPath: !!returnPath,
-      },
-    );
-    linkSent.value = true;
-  }
-};
 </script>

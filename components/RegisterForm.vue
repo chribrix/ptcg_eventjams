@@ -12,6 +12,33 @@
     </div>
 
     <form @submit.prevent="submitForm" class="space-y-6">
+      <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
+        <button
+          type="button"
+          class="py-2 text-sm font-semibold rounded-md transition"
+          :class="
+            registerMethod === 'password'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+          "
+          @click="registerMethod = 'password'"
+        >
+          {{ t("registerForm.methodPasswordDefault") }}
+        </button>
+        <button
+          type="button"
+          class="py-2 text-sm font-semibold rounded-md transition"
+          :class="
+            registerMethod === 'magiclink'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+          "
+          @click="registerMethod = 'magiclink'"
+        >
+          {{ t("registerForm.methodMagicLink") }}
+        </button>
+      </div>
+
       <div class="relative">
         <div
           class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
@@ -21,7 +48,7 @@
         <input
           v-model="email"
           type="email"
-          placeholder="Email address"
+          :placeholder="t('auth.email')"
           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
           required
         />
@@ -36,7 +63,7 @@
         <input
           v-model="name"
           type="text"
-          placeholder="Full name"
+          :placeholder="t('auth.name')"
           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
           required
         />
@@ -53,12 +80,50 @@
           type="text"
           inputmode="numeric"
           pattern="\d*"
-          placeholder="Player ID"
+          :placeholder="t('registration.playerId')"
           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
           required
           @input="validatePlayerId"
         />
       </div>
+
+      <template v-if="registerMethod === 'password'">
+        <div class="relative">
+          <input
+            v-model="password"
+            :type="showPassword ? 'text' : 'password'"
+            :placeholder="t('registerForm.passwordPlaceholder')"
+            class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            required
+            minlength="8"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-3 text-gray-500 hover:text-gray-700"
+            @click="showPassword = !showPassword"
+          >
+            {{ showPassword ? "🙈" : "👁️" }}
+          </button>
+        </div>
+
+        <div class="relative">
+          <input
+            v-model="passwordConfirm"
+            :type="showPasswordConfirm ? 'text' : 'password'"
+            :placeholder="t('registerForm.passwordConfirmPlaceholder')"
+            class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            required
+            minlength="8"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-3 text-gray-500 hover:text-gray-700"
+            @click="showPasswordConfirm = !showPasswordConfirm"
+          >
+            {{ showPasswordConfirm ? "🙈" : "👁️" }}
+          </button>
+        </div>
+      </template>
 
       <button
         type="submit"
@@ -88,14 +153,20 @@
             ></path>
           </svg>
           <PaperAirplaneIcon v-else class="w-5 h-5" />
-          <span>{{ isLoading ? "Sending..." : "Send Magic Link" }}</span>
+          <span>{{
+            isLoading
+              ? t("common.loading")
+              : registerMethod === "password"
+                ? t("registerForm.submitCreateAccount")
+                : t("registerForm.submitSendMagicLink")
+          }}</span>
         </div>
       </button>
     </form>
 
     <div class="mt-6 text-center">
       <p class="text-sm text-gray-600">
-        Already have an account?
+        {{ t("registerForm.alreadyHaveAccount") }}
         <NuxtLink
           :to="
             route.query.redirect
@@ -104,7 +175,7 @@
           "
           class="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
         >
-          Sign in
+          {{ t("auth.signIn") }}
         </NuxtLink>
       </p>
     </div>
@@ -115,9 +186,9 @@
     >
       <div class="flex items-center space-x-2">
         <CheckCircleIcon class="w-5 h-5 text-emerald-600" />
-        <span class="font-medium">Magic link sent!</span>
+        <span class="font-medium">{{ successTitle }}</span>
       </div>
-      <p class="text-sm mt-1 ml-7">Check your email for the login link.</p>
+      <p class="text-sm mt-1 ml-7">{{ successText }}</p>
     </div>
 
     <div
@@ -143,11 +214,29 @@ import {
 const email = ref("");
 const name = ref("");
 const playerId = ref("");
+const registerMethod = ref<"password" | "magiclink">("password");
+const password = ref("");
+const passwordConfirm = ref("");
+const showPassword = ref(false);
+const showPasswordConfirm = ref(false);
 const linkSent = ref(false);
 const isLoading = ref(false);
 const error = ref("");
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
+const { t } = useI18n();
+
+const successTitle = computed(() =>
+  registerMethod.value === "password"
+    ? t("registerForm.successTitlePassword")
+    : t("registerForm.successTitleMagicLink"),
+);
+
+const successText = computed(() =>
+  registerMethod.value === "password"
+    ? t("registerForm.successTextPassword")
+    : t("registerForm.successTextMagicLink"),
+);
 
 // Pre-fill email if passed from failed login
 onMounted(() => {
@@ -184,9 +273,7 @@ const logError = async (
         metadata: additionalData || null,
       },
     });
-  } catch (logError) {
-    console.error("Failed to log error:", logError);
-  }
+  } catch {}
 };
 
 const getMagicLinkRedirect = () => {
@@ -213,11 +300,18 @@ const submitForm = async () => {
   linkSent.value = false;
   error.value = "";
 
-  console.log("📝 Registration form submitted", {
-    email: email.value,
-    hasName: !!name.value,
-    hasPlayerId: !!playerId.value,
-  });
+  if (registerMethod.value === "password") {
+    if (password.value.length < 8) {
+      error.value = t("registerForm.errorPasswordMin");
+      isLoading.value = false;
+      return;
+    }
+    if (password.value !== passwordConfirm.value) {
+      error.value = t("registerForm.errorPasswordMismatch");
+      isLoading.value = false;
+      return;
+    }
+  }
 
   // First, check if a player account already exists with this email
   try {
@@ -229,14 +323,16 @@ const submitForm = async () => {
     });
 
     if (playerCheck.exists) {
-      console.log("⚠️ Account already exists for email:", email.value);
-
       if (playerCheck.authOnly) {
         // User exists in Supabase auth but not in players table
-        error.value = `An account exists with ${email.value}, but registration was not completed. Please click the login link we sent to complete your registration.`;
+        error.value = t("registerForm.errorAccountExistsIncomplete", {
+          email: email.value,
+        });
       } else {
         // Full player account exists
-        error.value = `An account already exists with ${email.value}. Please log in instead.`;
+        error.value = t("registerForm.errorAccountExists", {
+          email: email.value,
+        });
       }
 
       isLoading.value = false;
@@ -250,10 +346,7 @@ const submitForm = async () => {
       );
       return;
     }
-
-    console.log("✅ Email is available, proceeding with registration");
   } catch (checkError) {
-    console.error("❌ Error checking player existence:", checkError);
     await logError(
       "registration_check_failed",
       checkError instanceof Error ? checkError.message : "Unknown error",
@@ -264,40 +357,110 @@ const submitForm = async () => {
     );
     // If the check fails, we'll allow the registration to proceed
     // The backend will handle any duplicate errors
-    console.log("⚠️ Player check failed, proceeding anyway");
   }
 
-  console.log("📧 Sending magic link to:", email.value);
   const redirectTo = getMagicLinkRedirect();
-  const { error: signUpError } = await useSupabaseClient().auth.signInWithOtp({
-    email: email.value,
-    options: {
-      data: {
-        name: name.value,
-        playerId: playerId.value,
+  let signUpError: { message?: string } | null = null;
+
+  if (registerMethod.value === "password") {
+    try {
+      await $fetch("/api/auth/register-password", {
+        method: "POST",
+        body: {
+          email: email.value,
+          password: password.value,
+          name: name.value,
+          playerId: playerId.value,
+        },
+      });
+    } catch (err: any) {
+      signUpError = {
+        message:
+          err?.data?.statusMessage ||
+          err?.message ||
+          t("registerForm.errorRegistrationFailed"),
+      };
+    }
+  } else {
+    const response = await useSupabaseClient().auth.signInWithOtp({
+      email: email.value,
+      options: {
+        data: {
+          name: name.value,
+          playerId: playerId.value,
+        },
+        ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
       },
-      ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
-    },
-  });
+    });
+    signUpError = response.error;
+  }
+
+  if (!signUpError && registerMethod.value === "password") {
+    try {
+      const data = await $fetch<{
+        access_token: string;
+        refresh_token: string;
+      }>("/api/auth/login-password", {
+        method: "POST",
+        body: {
+          email: email.value,
+          password: password.value,
+        },
+      });
+
+      const { error: sessionError } = await useSupabaseClient().auth.setSession(
+        {
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        },
+      );
+
+      if (sessionError) {
+        throw sessionError;
+      }
+
+      await navigateTo("/");
+      return;
+    } catch (err: any) {
+      signUpError = {
+        message:
+          err?.data?.statusMessage ||
+          err?.statusMessage ||
+          err?.message ||
+          t("registerForm.errorRegistrationFailed"),
+      };
+    }
+  }
 
   isLoading.value = false;
 
   if (signUpError) {
-    console.error("❌ Error sending magic link:", signUpError.message);
-    error.value = signUpError.message;
-    await logError("registration_magic_link_failed", signUpError.message, {
+    const signUpMessage = signUpError.message || "Registration failed";
+    if (
+      signUpMessage.toLowerCase().includes("security purposes") ||
+      signUpMessage.toLowerCase().includes("after")
+    ) {
+      const seconds = signUpMessage.match(/(\d+)\s*se/)?.[1];
+      error.value = seconds
+        ? t("registerForm.errorWaitSeconds", { seconds })
+        : t("registerForm.errorWaitMoment");
+    } else {
+      error.value = signUpMessage;
+    }
+    await logError("registration_failed", signUpMessage, {
       email: email.value,
+      method: registerMethod.value,
       hasName: !!name.value,
       hasPlayerId: !!playerId.value,
       redirectTo,
     });
   } else {
-    console.log("✅ Magic link sent successfully");
     await logError(
-      "info_registration_magic_link_sent",
-      "Magic link sent successfully",
+      "info_registration_success",
+      "Registration initiated successfully",
       {
         email: email.value,
+        method: registerMethod.value,
         name: name.value,
         playerId: playerId.value,
         redirectTo,

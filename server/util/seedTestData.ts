@@ -5,8 +5,6 @@
 import type { PrismaClient } from "@prisma/client";
 
 export async function seedTestData(prisma: PrismaClient): Promise<void> {
-  console.log("Seeding minimal test data for CI...");
-
   // Create a test card set
   await prisma.cardSet.upsert({
     where: { id: "test-set-1" },
@@ -82,6 +80,4 @@ export async function seedTestData(prisma: PrismaClient): Promise<void> {
       value: "test_initialized",
     },
   });
-
-  console.log("✅ Test data seeding completed");
 }

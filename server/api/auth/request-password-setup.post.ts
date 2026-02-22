@@ -1,0 +1,258 @@
+import crypto from "crypto";
+import { createClient } from "@supabase/supabase-js";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+type AdminUser = {
+  id: string;
+  email?: string;
+  encrypted_password?: string | null;
+  email_confirmed_at?: string | null;
+  app_metadata?: Record<string, any>;
+};
+
+const deriveEncryptionKey = (secret: string) =>
+  crypto.createHash("sha256").update(secret).digest();
+
+const encryptValue = (value: string, secret: string) => {
+  const key = deriveEncryptionKey(secret);
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([
+    cipher.update(value, "utf8"),
+    cipher.final(),
+  ]);
+  const tag = cipher.getAuthTag();
+
+  return {
+    ciphertext: encrypted.toString("base64"),
+    iv: iv.toString("base64"),
+    tag: tag.toString("base64"),
+  };
+};
+
+const getAuthUserByEmail = async (
+  supabaseAdmin: any,
+  supabaseUrl: string,
+  serviceKey: string,
+  email: string,
+) => {
+  const adminApi = supabaseAdmin.auth.admin as {
+    getUserByEmail?: (email: string) => Promise<{
+      data: { user: AdminUser | null };
+      error: { message?: string } | null;
+    }>;
+  };
+
+  if (typeof adminApi.getUserByEmail === "function") {
+    const { data, error } = await adminApi.getUserByEmail(email);
+    if (error) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Failed to load auth user",
+      });
+    }
+    return data.user;
+  }
+
+  const adminRes = await fetch(
+    `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
+    {
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+      },
+    },
+  );
+
+  if (!adminRes.ok) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Failed to load auth user",
+    });
+  }
+
+  const adminData = await adminRes.json();
+  const users = (adminData?.users ?? []) as AdminUser[];
+  return users.find((user) => user.email?.toLowerCase() === email) || null;
+};
+
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig();
+  const { email, password, returnPath } = await readBody<{
+    email?: string;
+    password?: string;
+    returnPath?: string;
+  }>(event);
+
+  if (!email || !password) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Email and password are required",
+    });
+  }
+
+  if (password.length < 8) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Password must be at least 8 characters",
+    });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const supabaseUrl = config.public.supabaseUrl;
+  const supabaseAnonKey = config.public.supabaseAnonKey;
+  const serviceKey = config.supabaseServiceKey;
+  const appBaseUrl = config.public.appBaseUrl?.replace(/\/$/, "");
+
+  if (!supabaseUrl || !serviceKey || !supabaseAnonKey) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Supabase not configured",
+    });
+  }
+
+  const pepper = config.passwordPepper;
+  const encryptionSecret = config.passwordPepper || config.supabaseServiceKey;
+
+  if (!pepper) {
+    console.warn(
+      "⚠️ PASSWORD_PEPPER is not configured — pending password setup will be stored encrypted, but password itself is not peppered.",
+    );
+  }
+
+  if (!encryptionSecret) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Server encryption secret is not configured",
+    });
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const authUser = await getAuthUserByEmail(
+    supabaseAdmin,
+    supabaseUrl,
+    serviceKey,
+    normalizedEmail,
+  );
+
+  if (!authUser) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: "Account not found",
+    });
+  }
+
+  if (authUser.app_metadata?.has_password === true) {
+    throw createError({
+      statusCode: 409,
+      statusMessage: "password_already_set",
+    });
+  }
+
+  const pepperedPassword = pepper
+    ? crypto.createHmac("sha256", pepper).update(password).digest("hex")
+    : password;
+
+  const wasConfirmedBefore = Boolean(authUser.email_confirmed_at);
+
+  if (!wasConfirmedBefore) {
+    const directAppMetadata = { ...(authUser.app_metadata || {}) };
+    directAppMetadata.has_password = true;
+    directAppMetadata.pending_password_setup = null;
+
+    const { error: updateError } =
+      await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
+        password: pepperedPassword,
+        app_metadata: directAppMetadata,
+      });
+
+    if (updateError) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Failed to activate password",
+      });
+    }
+
+    const loginResponse = await fetch(
+      `${supabaseUrl}/auth/v1/token?grant_type=password`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: supabaseAnonKey,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          password: pepperedPassword,
+        }),
+      },
+    );
+
+    const loginData = await loginResponse.json();
+
+    if (!loginResponse.ok) {
+      const msg: string =
+        loginData?.error_description ||
+        loginData?.msg ||
+        loginData?.message ||
+        "Login failed";
+      throw createError({ statusCode: 401, statusMessage: msg });
+    }
+
+    await prisma.$executeRaw`
+      UPDATE public.players
+      SET preferred_login_method = 'password'
+      WHERE supabase_id = ${authUser.id}
+         OR LOWER(email) = LOWER(${normalizedEmail})
+    `;
+
+    return {
+      success: true,
+      mode: "direct",
+      access_token: loginData.access_token,
+      refresh_token: loginData.refresh_token,
+      expires_in: loginData.expires_in,
+      token_type: loginData.token_type,
+    };
+  }
+
+  const encrypted = encryptValue(pepperedPassword, encryptionSecret);
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+  const { error: metadataError } =
+    await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
+      app_metadata: {
+        ...(authUser.app_metadata || {}),
+        has_password: false,
+        pending_password_setup: {
+          ...encrypted,
+          expiresAt,
+        },
+      },
+    });
+
+  if (metadataError) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Failed to prepare password setup",
+    });
+  }
+
+  const origin = appBaseUrl || supabaseUrl;
+  const params = new URLSearchParams();
+  if (returnPath) params.set("return", returnPath);
+  params.set("flow", "set-password");
+  const redirectTo = `${origin}/confirm?${params.toString()}`;
+
+  return {
+    success: true,
+    mode: "confirm_email",
+    redirectTo,
+    email: normalizedEmail,
+  };
+});

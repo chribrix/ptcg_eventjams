@@ -11,8 +11,6 @@ export async function loadCards(prism: typeof prisma): Promise<void> {
   const earliestLegalSetReleaseDate = releaseDateScarletViolet;
   const setRes = await tcgdex.set.list();
 
-  console.log(`Found ${setRes.length} sets from TCGdex API.`);
-
   // Manual fix for abbrevations
   const fixAbbreviationsMap: Record<string, string> = {
     // TCGdex uses "SV" for Scarlet & Violet, but "SVI" is printed on cards and used for Decklists
@@ -64,14 +62,9 @@ export async function loadCards(prism: typeof prisma): Promise<void> {
   await Promise.all(
     sets.map(async (set) => {
       if (!set) {
-        console.warn("Set is undefined or null, skipping.");
         return;
       }
-
-      console.log(`Inserting set: ${set.name} (${set.id})`);
-
       const now = new Date().toISOString();
-      console.log(`Current time: ${now}`);
       // Insert all sets
       const result = await prism.cardSet.upsert({
         where: { id: set.id },
@@ -106,35 +99,24 @@ export async function loadCards(prism: typeof prisma): Promise<void> {
         }
         return false;
       });
-    })
+    }),
   );
 
   // Process each set and add cards to db
   for (const set of sets) {
     if (!set) {
-      console.warn("Set is undefined or null, skipping.");
       continue;
     }
     const currentSet = set.name;
 
-    console.dir(set, { depth: 5 });
-    console.log(`Processing set: ${set.name} (${set.id})`);
-
     const totalCards = set.totalCount;
-    console.log(`Total cards in set: ${totalCards}`);
 
     const abbrvId = set.abbreviation?.official || null;
 
     let cards: CardResumeModel[] = [];
     try {
       cards = await tcgdex.card.list(Query.create().equal("set.id", set.id));
-    } catch (error) {
-      console.error(`Error fetching cards for set ${set.name} (${set.id}):`);
-    }
-
-    console.log(
-      `Found ${cards.length} cards in set: ${currentSet} (${set.id})`
-    );
+    } catch {}
 
     let processedCards = 0;
     await Promise.all(
@@ -146,14 +128,12 @@ export async function loadCards(prism: typeof prisma): Promise<void> {
           const cardDataDe = await tcgDexDe.card.get(card.id);
 
           if (!cardDataDe) {
-            console.warn(`German card data not found for card ID: ${card.id}`);
             return;
           }
 
           processedCards++;
 
           if (!cardData) {
-            console.warn(`Card data is undefined for card ID: ${card.id}`);
             return;
           }
           // All of these are currently legal,
@@ -191,10 +171,8 @@ export async function loadCards(prism: typeof prisma): Promise<void> {
               updatedAt: new Date().toISOString(), // Use current time for updatedAt
             },
           });
-        } catch (error) {
-          console.error(error);
-        }
-      })
+        } catch {}
+      }),
     );
   }
 }

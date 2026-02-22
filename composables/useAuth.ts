@@ -9,7 +9,7 @@ export const useAuth = () => {
   const logError = async (
     errorType: string,
     errorMessage: string,
-    additionalData?: any
+    additionalData?: any,
   ) => {
     if (!process.client) return;
 
@@ -37,9 +37,7 @@ export const useAuth = () => {
           metadata: additionalData || null,
         },
       });
-    } catch (logError) {
-      console.error("Failed to log error:", logError);
-    }
+    } catch {}
   };
 
   // Check and refresh session if needed
@@ -54,7 +52,6 @@ export const useAuth = () => {
       } = await supabaseClient.auth.getSession();
 
       if (error) {
-        console.error("Session check error:", error);
         await logError("session_check_failed", error.message, { error });
         await clearInvalidSession();
         showErrorToast("Your session has expired. Please log in again.", 7000);
@@ -81,7 +78,6 @@ export const useAuth = () => {
 
             // If session started before this deployment, invalidate it
             if (sessionStartTime < deployTime) {
-              console.log("Session invalidated due to new deployment");
               await logError(
                 "session_deployment_invalidated",
                 "Session started before current deployment",
@@ -89,12 +85,12 @@ export const useAuth = () => {
                   sessionStartTime,
                   deployTime,
                   sessionAge: Date.now() - sessionStartTime,
-                }
+                },
               );
               await clearInvalidSession();
               showErrorToast(
                 "New version deployed. Please log in again.",
-                7000
+                7000,
               );
               return null;
             }
@@ -102,8 +98,7 @@ export const useAuth = () => {
             // First time seeing this session, record it
             localStorage.setItem(sessionStartKey, Date.now().toString());
           }
-        } catch (deployCheckError) {
-          console.error("Deployment timestamp check failed:", deployCheckError);
+        } catch {
           // Don't block on this - continue with normal session checks
         }
       }
@@ -122,7 +117,6 @@ export const useAuth = () => {
           } = await supabaseClient.auth.refreshSession();
 
           if (refreshError) {
-            console.error("Token refresh failed:", refreshError);
             await logError("token_refresh_failed", refreshError.message, {
               refreshError,
             });
@@ -133,7 +127,6 @@ export const useAuth = () => {
 
           return newSession?.user || null;
         } catch (refreshError) {
-          console.error("Refresh attempt failed:", refreshError);
           const errorMessage =
             refreshError instanceof Error
               ? refreshError.message
@@ -149,7 +142,6 @@ export const useAuth = () => {
 
       return session.user;
     } catch (error) {
-      console.error("Error ensuring valid session:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
@@ -167,9 +159,7 @@ export const useAuth = () => {
   const clearInvalidSession = async () => {
     try {
       await supabaseClient.auth.signOut();
-    } catch (signOutError) {
-      console.log("SignOut failed (likely already signed out):", signOutError);
-    }
+    } catch {}
 
     if (process.client) {
       try {
@@ -185,9 +175,7 @@ export const useAuth = () => {
           }
         }
         keysToRemove.forEach((key) => localStorage.removeItem(key));
-      } catch (storageError) {
-        console.error("Storage cleanup error:", storageError);
-      }
+      } catch {}
     }
   };
 
@@ -206,14 +194,15 @@ export const useAuth = () => {
   // Setup periodic session check on client side
   if (process.client) {
     // Check session every 5 minutes, but don't let it block anything
-    const checkInterval = setInterval(() => {
-      if (supabaseUser.value) {
-        // Run async but don't await - let it happen in background
-        ensureValidSession().catch((err) => {
-          console.error("Background session check failed:", err);
-        });
-      }
-    }, 5 * 60 * 1000);
+    const checkInterval = setInterval(
+      () => {
+        if (supabaseUser.value) {
+          // Run async but don't await - let it happen in background
+          ensureValidSession().catch(() => {});
+        }
+      },
+      5 * 60 * 1000,
+    );
 
     // Clean up on unmount
     onUnmounted(() => {

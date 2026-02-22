@@ -39,6 +39,8 @@ export default defineEventHandler(async (event) => {
         name: player.name,
         email: player.email,
         birthDate: player.birthDate,
+        preferredLoginMethod:
+          (player as any).preferredLoginMethod || "password",
       },
     };
   } catch (error) {
@@ -51,7 +53,7 @@ export default defineEventHandler(async (event) => {
         await logAuthError(
           event,
           error as Error,
-          "player_profile_get_unauthorized"
+          "player_profile_get_unauthorized",
         );
       } else if (statusCode >= 500) {
         await logDatabaseError(event, error as Error, "player_profile_get");

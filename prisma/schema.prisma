@@ -198,18 +198,19 @@ model CustomEvent {
 }
 
 model Player {
-  id               String              @id @default(cuid())
-  supabaseId       String?             @unique @map("supabase_id") // Supabase auth.users.id - links to authenticated user
-  playerId         String              @unique @map("player_id") // External player ID provided by player
-  name             String
-  birthDate        DateTime            @map("birth_date")
-  email            String?
-  phone            String?
-  emergencyContact String?             @map("emergency_contact")
-  emergencyPhone   String?             @map("emergency_phone")
-  createdAt        DateTime            @default(now()) @map("created_at")
-  updatedAt        DateTime            @updatedAt @map("updated_at")
-  registrations    EventRegistration[]
+  id                   String              @id @default(cuid())
+  supabaseId           String?             @unique @map("supabase_id") // Supabase auth.users.id - links to authenticated user
+  playerId             String              @unique @map("player_id") // External player ID provided by player
+  preferredLoginMethod String              @default("password") @map("preferred_login_method")
+  name                 String
+  birthDate            DateTime            @map("birth_date")
+  email                String?
+  phone                String?
+  emergencyContact     String?             @map("emergency_contact")
+  emergencyPhone       String?             @map("emergency_phone")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  registrations        EventRegistration[]
 
   @@map("players")
   @@schema("public")

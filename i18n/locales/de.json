@@ -178,6 +178,30 @@
     "registrationClosed": "Registrierung geschlossen",
     "eventFull": "Veranstaltung ausgebucht"
   },
+  "registerPage": {
+    "noAccountTitle": "Kein Konto gefunden",
+    "noAccountText": "Wir konnten kein Konto mit deiner E-Mail-Adresse finden. Bitte schließe die Registrierung unten ab, um dein Konto zu erstellen."
+  },
+  "registerForm": {
+    "methodPasswordDefault": "Passwort (Standard)",
+    "methodMagicLink": "Magic Link",
+    "passwordPlaceholder": "Passwort (mind. 8 Zeichen)",
+    "passwordConfirmPlaceholder": "Passwort wiederholen",
+    "submitCreateAccount": "Konto erstellen",
+    "submitSendMagicLink": "Magic Link senden",
+    "alreadyHaveAccount": "Schon ein Konto?",
+    "successTitlePassword": "Konto erstellt!",
+    "successTitleMagicLink": "Magic Link gesendet!",
+    "successTextPassword": "Dein Konto ist aktiv. Du kannst dich jetzt mit deiner E-Mail und deinem Passwort anmelden.",
+    "successTextMagicLink": "Bitte prüfe dein E-Mail-Postfach für den Login-Link.",
+    "errorPasswordMin": "Passwort muss mindestens 8 Zeichen lang sein.",
+    "errorPasswordMismatch": "Passwörter stimmen nicht überein.",
+    "errorAccountExistsIncomplete": "Ein Konto mit {email} existiert bereits, aber die Registrierung wurde nicht abgeschlossen. Bitte nutze den Login-Link aus der E-Mail.",
+    "errorAccountExists": "Ein Konto mit {email} existiert bereits. Bitte melde dich an.",
+    "errorRegistrationFailed": "Registrierung fehlgeschlagen",
+    "errorWaitSeconds": "Bitte warte {seconds} Sekunden, bevor du einen neuen Link anforderst.",
+    "errorWaitMoment": "Bitte warte einen Moment, bevor du einen neuen Link anforderst."
+  },
   "errors": {
     "generic": "Ein Fehler ist aufgetreten",
     "networkError": "Netzwerkfehler aufgetreten",

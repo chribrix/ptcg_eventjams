@@ -17,11 +17,9 @@ export default defineEventHandler(async (event) => {
     // Try Supabase authentication
     try {
       supabaseUser = await serverSupabaseUser(event);
-    } catch (supabaseError) {
-      console.log("Supabase auth failed:", supabaseError);
+    } catch {
       // Continue without Supabase auth
     }
-
 
     if (!supabaseUser) {
       throw createError({
@@ -112,7 +110,7 @@ export default defineEventHandler(async (event) => {
       participants: customEvent.registrations.map((registration) => {
         // Find corresponding participant result (if any)
         const participantResult = customEvent.customParticipants.find(
-          (p) => p.playerId === registration.playerId
+          (p) => p.playerId === registration.playerId,
         );
 
         return {
@@ -130,7 +128,6 @@ export default defineEventHandler(async (event) => {
       data: eventHistory,
     };
   } catch (error) {
-    console.error("Error fetching admin event history:", error);
     throw createError({
       statusCode: 500,
       statusMessage:

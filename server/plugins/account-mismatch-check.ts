@@ -14,8 +14,6 @@ import { createClient } from "@supabase/supabase-js";
 export default defineNitroPlugin(async (nitroApp) => {
   const config = useRuntimeConfig();
 
-  console.log("🔍 Checking for account mismatches...");
-
   const prisma = new PrismaClient();
 
   try {
@@ -24,9 +22,6 @@ export default defineNitroPlugin(async (nitroApp) => {
     const supabaseServiceKey = config.supabaseServiceKey;
 
     if (!supabaseServiceKey) {
-      console.log(
-        "   ⚠️  Supabase service key not configured, skipping mismatch check"
-      );
       return;
     }
 
@@ -42,15 +37,10 @@ export default defineNitroPlugin(async (nitroApp) => {
       await supabase.auth.admin.listUsers();
 
     if (authError) {
-      console.error(
-        "❌ Failed to fetch Supabase auth users:",
-        authError.message
-      );
       return;
     }
 
     const authUsers = authData?.users || [];
-    console.log(`   Found ${authUsers.length} Supabase auth users`);
 
     // Fetch all players
     const players = await prisma.player.findMany({
@@ -62,14 +52,13 @@ export default defineNitroPlugin(async (nitroApp) => {
         playerId: true,
       },
     });
-    console.log(`   Found ${players.length} player records`);
 
     // Check 1: Auth users without player records
     const playersWithSupabaseId = new Set(
-      players.filter((p) => p.supabaseId).map((p) => p.supabaseId)
+      players.filter((p) => p.supabaseId).map((p) => p.supabaseId),
     );
     const playerEmailsMap = new Map(
-      players.map((p) => [p.email.toLowerCase(), p])
+      players.map((p) => [p.email.toLowerCase(), p]),
     );
 
     let authWithoutPlayerCount = 0;
@@ -100,10 +89,6 @@ export default defineNitroPlugin(async (nitroApp) => {
             },
           },
         });
-
-        console.log(
-          `   ⚠️  Auth user without player: ${authUser.email} (${authUser.id})`
-        );
       }
     }
 
@@ -127,10 +112,6 @@ export default defineNitroPlugin(async (nitroApp) => {
           },
         },
       });
-
-      console.log(
-        `   ⚠️  Player without supabaseId: ${player.name} (${player.email})`
-      );
     }
 
     // Summary
@@ -138,25 +119,11 @@ export default defineNitroPlugin(async (nitroApp) => {
       authWithoutPlayerCount + playersWithoutSupabaseId.length;
 
     if (totalMismatches > 0) {
-      console.log("\n" + "=".repeat(60));
-      console.log("⚠️  Account Mismatch Summary:");
-      console.log("=".repeat(60));
-      console.log(
-        `   Auth users without player records: ${authWithoutPlayerCount}`
-      );
-      console.log(
-        `   Players without supabaseId: ${playersWithoutSupabaseId.length}`
-      );
-      console.log(`   Total mismatches: ${totalMismatches}`);
-      console.log(
-        `   View in admin panel: /admin/logs (filter: account_mismatch)`
-      );
-      console.log("=".repeat(60) + "\n");
+      // mismatches are already persisted in error logs
     } else {
-      console.log("✅ No account mismatches found\n");
+      // no-op
     }
-  } catch (error: any) {
-    console.error("❌ Error checking account mismatches:", error.message);
+  } catch {
   } finally {
     await prisma.$disconnect();
   }

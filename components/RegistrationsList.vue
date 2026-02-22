@@ -29,7 +29,7 @@
             <span
               v-for="tag in getDisplayTags(
                 registration.customEvent.tags || null,
-                registration.customEvent.tagType || 'pokemon'
+                registration.customEvent.tagType || 'pokemon',
               )"
               :key="tag.value"
               class="event-type-badge"
@@ -131,17 +131,10 @@ const fetchUserRegistrations = async () => {
   try {
     isLoading.value = true;
     const { data } = await $fetch<{ data: EventRegistration[] }>(
-      "/api/dashboard/registrations"
+      "/api/dashboard/registrations",
     );
     registrations.value = data || [];
-    // Debug: log first registration to see what we're getting
-    if (registrations.value.length > 0) {
-      console.log("First registration:", registrations.value[0]);
-      console.log("Tags:", registrations.value[0].customEvent.tags);
-      console.log("TagType:", registrations.value[0].customEvent.tagType);
-    }
   } catch (error) {
-    console.error("Failed to fetch user registrations:", error);
     registrations.value = [];
   } finally {
     isLoading.value = false;

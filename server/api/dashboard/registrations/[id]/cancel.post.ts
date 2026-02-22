@@ -34,8 +34,7 @@ export default defineEventHandler(async (event) => {
       // Try Supabase authentication
       try {
         supabaseUser = await serverSupabaseUser(event);
-      } catch (supabaseError) {
-        console.log("Supabase auth failed:", supabaseError);
+      } catch {
         // Continue without Supabase auth
       }
     }
@@ -101,7 +100,7 @@ export default defineEventHandler(async (event) => {
 
     // Check if all tickets are already cancelled
     const activeTickets = registration.tickets.filter(
-      (t) => t.status !== "cancelled"
+      (t) => t.status !== "cancelled",
     );
 
     if (activeTickets.length === 0) {
@@ -132,7 +131,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const cancellationDeadline = new Date(
-      eventDate.getTime() - CANCELLATION_DEADLINE_HOURS * 60 * 60 * 1000
+      eventDate.getTime() - CANCELLATION_DEADLINE_HOURS * 60 * 60 * 1000,
     );
 
     if (now > cancellationDeadline) {
@@ -191,15 +190,13 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error: unknown) {
-    console.error("Registration cancellation error:", error);
-
     if (error && typeof error === "object" && "statusCode" in error) {
       const statusCode = (error as any).statusCode;
       if (statusCode === 401 || statusCode === 404) {
         await logAuthError(
           event,
           error as Error,
-          "registration_cancel_unauthorized"
+          "registration_cancel_unauthorized",
         );
       } else if (statusCode >= 500) {
         await logDatabaseError(event, error as Error, "registration_cancel", {

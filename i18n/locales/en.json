@@ -178,6 +178,30 @@
     "registrationClosed": "Registration Closed",
     "eventFull": "Event Full"
   },
+  "registerPage": {
+    "noAccountTitle": "No Account Found",
+    "noAccountText": "We couldn't find an account with your email address. Please complete registration below to create your account."
+  },
+  "registerForm": {
+    "methodPasswordDefault": "Password (Default)",
+    "methodMagicLink": "Magic Link",
+    "passwordPlaceholder": "Password (min. 8 characters)",
+    "passwordConfirmPlaceholder": "Repeat password",
+    "submitCreateAccount": "Create Account",
+    "submitSendMagicLink": "Send Magic Link",
+    "alreadyHaveAccount": "Already have an account?",
+    "successTitlePassword": "Account created!",
+    "successTitleMagicLink": "Magic link sent!",
+    "successTextPassword": "Your account is active. You can now sign in with your email and password.",
+    "successTextMagicLink": "Check your email for the login link.",
+    "errorPasswordMin": "Password must be at least 8 characters long.",
+    "errorPasswordMismatch": "Passwords do not match.",
+    "errorAccountExistsIncomplete": "An account with {email} already exists, but registration was not completed. Please use the login link from the email.",
+    "errorAccountExists": "An account with {email} already exists. Please sign in.",
+    "errorRegistrationFailed": "Registration failed",
+    "errorWaitSeconds": "Please wait {seconds} seconds before requesting another link.",
+    "errorWaitMoment": "Please wait a moment before requesting another link."
+  },
   "errors": {
     "generic": "An error occurred",
     "networkError": "Network error occurred",

@@ -184,14 +184,10 @@ export default defineEventHandler(async (event) => {
             const supabaseAdmin = useSupabaseServiceRole();
             const { error: deleteError } =
               await supabaseAdmin.auth.admin.deleteUser(
-                playerToDelete.supabaseId
+                playerToDelete.supabaseId,
               );
 
             if (deleteError) {
-              console.error(
-                "Failed to delete Supabase auth user:",
-                deleteError
-              );
               // Log error but don't fail the request since player is already deleted
               await prisma.errorLog.create({
                 data: {
@@ -206,13 +202,8 @@ export default defineEventHandler(async (event) => {
                   },
                 },
               });
-            } else {
-              console.log(
-                `✅ Deleted Supabase auth user: ${playerToDelete.supabaseId}`
-              );
             }
-          } catch (supabaseError) {
-            console.error("Error deleting Supabase auth user:", supabaseError);
+          } catch {
             // Log but don't fail the request
           }
         }
@@ -226,8 +217,6 @@ export default defineEventHandler(async (event) => {
         });
     }
   } catch (error: unknown) {
-    console.error("Players API error:", error);
-
     // Handle Prisma errors
     if (error && typeof error === "object" && "code" in error) {
       if (error.code === "P2002") {

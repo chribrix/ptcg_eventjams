@@ -27,7 +27,7 @@ export default defineNuxtConfig({
       },
     ],
     langDir: "locales",
-    defaultLocale: "en",
+    defaultLocale: "de",
     strategy: "prefix_except_default",
     detectBrowserLanguage: {
       useCookie: true,
@@ -119,6 +119,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     supabaseWebhookSecret: process.env.SUPABASE_WEBHOOK_SECRET || "",
     supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+    // Server-side pepper for password hashing. Set PASSWORD_PEPPER in .env
+    // Never expose this — it is private (server-only) runtime config.
+    passwordPepper: process.env.PASSWORD_PEPPER || "",
     public: {
       supabaseUrl: process.env.SUPABASE_URL,
       supabaseAnonKey: process.env.SUPABASE_KEY,

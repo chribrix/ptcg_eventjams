@@ -35,9 +35,7 @@ export default defineEventHandler(async (event) => {
     // Try Supabase authentication
     try {
       supabaseUser = await serverSupabaseUser(event);
-    } catch (supabaseError) {
-      console.log("Supabase auth failed:", supabaseError);
-    }
+    } catch {}
 
     if (!supabaseUser) {
       throw createError({
@@ -72,8 +70,6 @@ export default defineEventHandler(async (event) => {
       email: player.email,
     };
   } catch (error) {
-    console.error("Error fetching player profile:", error);
-
     if (error && typeof error === "object" && "statusCode" in error) {
       const statusCode = (error as any).statusCode;
       if (statusCode === 401) {

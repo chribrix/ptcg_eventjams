@@ -31,8 +31,7 @@ export default defineEventHandler(async (event) => {
       // Try Supabase authentication
       try {
         supabaseUser = await serverSupabaseUser(event);
-      } catch (supabaseError) {
-        console.log("Supabase auth failed:", supabaseError);
+      } catch {
         // Continue without Supabase auth
       }
     }
@@ -166,7 +165,7 @@ export default defineEventHandler(async (event) => {
 
     // Verify that the ticket belongs to this registration
     const ticketToUpdate = existingRegistration.tickets.find(
-      (t) => t.id === ticketId
+      (t) => t.id === ticketId,
     );
     if (!ticketToUpdate) {
       throw createError({
@@ -200,8 +199,6 @@ export default defineEventHandler(async (event) => {
       error: null,
     };
   } catch (error) {
-    console.error("Decklist submission error:", error);
-
     // Re-throw createError instances
     if (error && typeof error === "object" && "statusCode" in error) {
       const statusCode = (error as any).statusCode;
@@ -209,7 +206,7 @@ export default defineEventHandler(async (event) => {
         await logAuthError(
           event,
           error as Error,
-          "decklist_update_unauthorized"
+          "decklist_update_unauthorized",
         );
       } else if (statusCode >= 500) {
         await logDatabaseError(event, error as Error, "decklist_update");

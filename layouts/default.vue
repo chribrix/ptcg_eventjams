@@ -69,27 +69,18 @@ const logout = async () => {
             },
           },
         });
-      } catch (logError) {
-        console.error("Failed to log logout:", logError);
-      }
+      } catch {}
     }
 
     // Try to validate session, but don't block logout if it fails
     try {
       await ensureValidSession();
-    } catch (sessionError) {
-      console.log("Session validation skipped during logout:", sessionError);
-    }
+    } catch {}
 
     // Always attempt sign out, even if session is expired
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Supabase signOut error:", error);
-      }
-    } catch (signOutError) {
-      console.log("SignOut failed (likely already logged out):", signOutError);
-    }
+      await supabase.auth.signOut();
+    } catch {}
 
     // Clear all storage - critical for mobile browsers
     if (process.client) {
@@ -115,9 +106,7 @@ const logout = async () => {
             "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=" +
             window.location.hostname;
         }
-      } catch (storageError) {
-        console.error("Storage clear error:", storageError);
-      }
+      } catch {}
     }
 
     // Small delay to ensure all operations complete
@@ -128,8 +117,6 @@ const logout = async () => {
       window.location.href = "/";
     }
   } catch (error) {
-    console.error("Error during logout:", error);
-
     // Log the error
     if (process.client) {
       try {
@@ -146,9 +133,7 @@ const logout = async () => {
             metadata: { error },
           },
         });
-      } catch (logError) {
-        console.error("Failed to log logout error:", logError);
-      }
+      } catch {}
     }
 
     // Force complete cleanup and reload even if there's an error
@@ -156,9 +141,7 @@ const logout = async () => {
       try {
         localStorage.clear();
         sessionStorage.clear();
-      } catch (e) {
-        console.error("Emergency storage clear failed:", e);
-      }
+      } catch {}
       window.location.href = "/";
     }
   }
@@ -179,7 +162,6 @@ onMounted(async () => {
       const validUser = await ensureValidSession();
       // If session validation failed (expired/invalid), clean up
       if (!validUser && authUser.value) {
-        console.log("Detected expired session on mount, cleaning up...");
         // Force sign out and reload
         if (process.client) {
           await supabase.auth.signOut();
@@ -188,8 +170,7 @@ onMounted(async () => {
           window.location.reload();
         }
       }
-    } catch (sessionError) {
-      console.error("Session check on mount failed:", sessionError);
+    } catch {
       // Clean up on error
       if (process.client) {
         await supabase.auth.signOut();
@@ -208,7 +189,7 @@ watch(
     // Session validation happens automatically through useAuth
     // userName is now a computed property from useAuth
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // Set up internationalization
@@ -629,7 +610,8 @@ const { t } = useI18n();
   background-color: #2f3136;
   border: 1px solid #202225;
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.3),
     0 4px 6px -2px rgba(0, 0, 0, 0.2);
   overflow: hidden;
 }
