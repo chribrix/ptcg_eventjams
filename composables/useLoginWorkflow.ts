@@ -154,7 +154,10 @@ export const useLoginWorkflow = () => {
         | "unknown"
         | undefined;
 
-      hasPassword.value = passwordState === "missing" ? false : true;
+      // Only treat "has" as having a password.
+      // "missing", "unknown" (legacy accounts without app_metadata.has_password)
+      // and undefined all mean: no password is set → show the setup screen directly.
+      hasPassword.value = passwordState === "has";
       step.value = "method";
     } catch (err: any) {
       error.value =

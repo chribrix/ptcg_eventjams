@@ -218,7 +218,7 @@ const { t } = useI18n();
               >
                 <span class="text-white font-bold text-sm">P</span>
               </div>
-              <span>PTCG Events</span>
+              <span>ChrispyJams TCG Events</span>
             </NuxtLink>
           </div>
 

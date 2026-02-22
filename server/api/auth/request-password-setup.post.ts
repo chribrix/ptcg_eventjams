@@ -7,7 +7,6 @@ const prisma = new PrismaClient();
 type AdminUser = {
   id: string;
   email?: string;
-  encrypted_password?: string | null;
   email_confirmed_at?: string | null;
   app_metadata?: Record<string, any>;
 };
@@ -24,7 +23,6 @@ const encryptValue = (value: string, secret: string) => {
     cipher.final(),
   ]);
   const tag = cipher.getAuthTag();
-
   return {
     ciphertext: encrypted.toString("base64"),
     iv: iv.toString("base64"),
@@ -114,11 +112,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const pepper = config.passwordPepper;
+  // Used to encrypt the pending password for the confirm_email path
   const encryptionSecret = config.passwordPepper || config.supabaseServiceKey;
 
   if (!pepper) {
     console.warn(
-      "⚠️ PASSWORD_PEPPER is not configured — pending password setup will be stored encrypted, but password itself is not peppered.",
+      "⚠️ PASSWORD_PEPPER is not configured — passwords are not peppered!",
     );
   }
 
@@ -158,9 +157,22 @@ export default defineEventHandler(async (event) => {
     ? crypto.createHmac("sha256", pepper).update(password).digest("hex")
     : password;
 
-  const wasConfirmedBefore = Boolean(authUser.email_confirmed_at);
+  // Two-path logic:
+  //
+  // Path A – Niemals angemeldet (kein email_confirmed_at):
+  //   Passwort wird sofort gesetzt, email wird als bestätigt markiert,
+  //   Nutzer wird direkt eingeloggt. Keine Bestätigungsmail.
+  //
+  // Path B – Bereits mindestens einmal per Magic Link angemeldet (email_confirmed_at vorhanden):
+  //   Das Passwort wird verschlüsselt als pending_password_setup gespeichert.
+  //   Ein Magic Link mit flow=set-password wird gesendet.
+  //   Nach Klick → /magic-login → finalize-password-setup entschlüsselt und setzt das Passwort.
+  //   Sicherheitsgrund: Der Nutzer muss beweisen, dass er noch Zugang zur Email hat.
 
-  if (!wasConfirmedBefore) {
+  const hasLoggedInBefore = Boolean(authUser.email_confirmed_at);
+
+  if (!hasLoggedInBefore) {
+    // Path A: direktes Passwort-Setzen und sofortiger Login
     const directAppMetadata = { ...(authUser.app_metadata || {}) };
     directAppMetadata.has_password = true;
     directAppMetadata.pending_password_setup = null;
@@ -168,6 +180,7 @@ export default defineEventHandler(async (event) => {
     const { error: updateError } =
       await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
         password: pepperedPassword,
+        email_confirm: true,
         app_metadata: directAppMetadata,
       });
 
@@ -221,6 +234,9 @@ export default defineEventHandler(async (event) => {
     };
   }
 
+  // Path B: Nutzer hat sich bereits angemeldet → Bestätigung per Magic Link erforderlich.
+  // Passwort wird verschlüsselt als pending_password_setup gespeichert und erst nach
+  // Klick auf den Magic Link durch finalize-password-setup aktiviert.
   const encrypted = encryptValue(pepperedPassword, encryptionSecret);
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 

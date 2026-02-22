@@ -419,7 +419,7 @@ const submitForm = async () => {
         throw sessionError;
       }
 
-      await navigateTo("/");
+      await navigateTo((route.query.redirect as string) || "/");
       return;
     } catch (err: any) {
       signUpError = {
