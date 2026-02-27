@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
           where: { customEventId: eventId },
           include: {
             player: true,
+            tickets: true,
             customEvent: {
               select: { id: true, name: true, eventDate: true },
             },
@@ -42,12 +43,18 @@ export default defineEventHandler(async (event) => {
           orderBy: { registeredAt: "asc" },
         });
 
-        // Include decklist fields in the response
-        const registrationsWithDecklist = registrations.map((reg) => ({
-          ...reg,
-          decklist: reg.decklist,
-          bringingDecklistOnsite: reg.bringingDecklistOnsite,
-        }));
+        // Decklist lives on RegistrationTicket, not on EventRegistration.
+        // Merge the first ticket's decklist/onsite flag into the registration shape
+        // expected by the admin UI.
+        const registrationsWithDecklist = registrations.map((reg) => {
+          const primaryTicket = reg.tickets?.[0];
+          return {
+            ...reg,
+            decklist: primaryTicket?.decklist ?? null,
+            bringingDecklistOnsite:
+              primaryTicket?.bringingDecklistOnsite ?? false,
+          };
+        });
 
         return { registrations: registrationsWithDecklist };
 
@@ -59,11 +66,6 @@ export default defineEventHandler(async (event) => {
         // Check if event exists and has capacity
         const customEvent = await prisma.customEvent.findUnique({
           where: { id: validatedData.customEventId },
-          include: {
-            _count: {
-              select: { registrations: true },
-            },
-          },
         });
 
         if (!customEvent) {
@@ -73,7 +75,16 @@ export default defineEventHandler(async (event) => {
           });
         }
 
-        if (customEvent._count.registrations >= customEvent.maxParticipants) {
+        // Count tickets (actual participants), not registrations (one per booking user)
+        const currentTicketCount = await prisma.registrationTicket.count({
+          where: {
+            registration: {
+              customEventId: validatedData.customEventId,
+            },
+          },
+        });
+
+        if (currentTicketCount >= customEvent.maxParticipants) {
           throw createError({
             statusCode: 409,
             statusMessage: "Event is full",

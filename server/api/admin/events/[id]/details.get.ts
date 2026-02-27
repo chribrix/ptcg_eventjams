@@ -30,6 +30,7 @@ export default defineEventHandler(async (event) => {
                 birthDate: true,
               },
             },
+            tickets: true, // Decklist lives on RegistrationTicket, not EventRegistration
           },
           orderBy: {
             registeredAt: "asc",
@@ -45,21 +46,33 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Extract registrations
-    const registrations = customEvent.registrations.map((reg) => ({
-      id: reg.id,
-      playerId: reg.playerId,
-      registeredAt: reg.registeredAt.toISOString(),
-      decklist: reg.decklist,
-      bringingDecklistOnsite: reg.bringingDecklistOnsite,
-      player: {
-        id: reg.player.id,
-        playerId: reg.player.playerId,
-        name: reg.player.name,
-        email: reg.player.email,
-        birthDate: reg.player.birthDate.toISOString(),
-      },
-    }));
+    // Extract registrations.
+    // Decklist lives on RegistrationTicket, not on EventRegistration — read from the first ticket.
+    const registrations = customEvent.registrations.map((reg) => {
+      const primaryTicket = reg.tickets?.[0];
+      return {
+        id: reg.id,
+        playerId: reg.playerId,
+        registeredAt: reg.registeredAt.toISOString(),
+        decklist: primaryTicket?.decklist ?? null,
+        bringingDecklistOnsite: primaryTicket?.bringingDecklistOnsite ?? false,
+        tickets: reg.tickets.map((t) => ({
+          id: t.id,
+          participantName: t.participantName,
+          participantPlayerId: t.participantPlayerId ?? null,
+          status: t.status,
+          decklist: t.decklist ?? null,
+          bringingDecklistOnsite: t.bringingDecklistOnsite ?? false,
+        })),
+        player: {
+          id: reg.player.id,
+          playerId: reg.player.playerId,
+          name: reg.player.name,
+          email: reg.player.email,
+          birthDate: reg.player.birthDate.toISOString(),
+        },
+      };
+    });
 
     // Return event without the registrations nested array
     const { registrations: _, ...eventData } = customEvent;

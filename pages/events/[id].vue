@@ -96,7 +96,9 @@
             >
               <span class="font-medium text-white">Status:</span>
               <span :class="getStatusColor(event.status)">
-                {{ event.status }}
+                {{
+                  event.status.charAt(0).toUpperCase() + event.status.slice(1)
+                }}
               </span>
             </div>
           </div>
@@ -135,8 +137,8 @@
                         userRegistration.status === "registered"
                           ? "Confirmed"
                           : userRegistration.status === "reserved"
-                          ? "Reserved (Pending Decklist)"
-                          : userRegistration.status
+                            ? "Reserved (Pending Decklist)"
+                            : userRegistration.status
                       }}
                     </div>
                   </div>
@@ -147,92 +149,47 @@
                   v-if="event.requiresDecklist"
                   class="mt-4 pt-4 border-t border-[#202225]"
                 >
-                  <h4 class="font-medium text-white mb-2">Decklist Status</h4>
-
-                  <!-- Decklist Submitted -->
-                  <div
-                    v-if="
-                      userRegistration.decklist &&
-                      userRegistration.decklist !== 'has_decklist'
-                    "
-                    class="bg-[#36393f] rounded p-3 mb-3"
-                  >
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="text-sm font-medium text-gray-300"
-                        >Your Decklist:</span
-                      >
-                      <div class="flex gap-2">
-                        <button
-                          @click="showEditDecklistModal = true"
-                          class="text-xs text-gray-300 hover:text-white bg-[#40444b] hover:bg-[#4f545c] px-2 py-1 rounded"
-                        >
-                          ✎ Edit
-                        </button>
+                  <h4 class="font-medium text-white mb-3">Decklist Status</h4>
+                  <ol class="space-y-2">
+                    <li
+                      v-for="(ticket, index) in userRegistration.tickets"
+                      :key="ticket.id"
+                      class="flex items-center justify-between bg-[#40444b] rounded px-3 py-2 text-sm"
+                    >
+                      <span class="text-gray-300">
+                        {{ index + 1 }}.
+                        <span class="font-medium text-white">{{
+                          ticket.participantName
+                        }}</span>
                         <span
-                          class="text-xs text-white bg-gray-700 px-2 py-1 rounded"
-                          >✓ Submitted</span
+                          v-if="ticket.participantPlayerId"
+                          class="text-gray-400 ml-1"
+                          >#{{ ticket.participantPlayerId }}</span
                         >
-                      </div>
-                    </div>
-                    <pre
-                      class="text-xs text-gray-300 whitespace-pre-wrap font-mono bg-[#202225] p-2 rounded max-h-32 overflow-y-auto"
-                      >{{ userRegistration.decklist }}</pre
-                    >
-                  </div>
-
-                  <!-- Bringing Onsite -->
-                  <div
-                    v-else-if="userRegistration.bringingDecklistOnsite"
-                    class="bg-[#40444b] border border-[#202225] rounded p-3 mb-3"
-                  >
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2 text-gray-300">
-                        <svg
-                          class="w-5 h-5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clip-rule="evenodd"
-                          ></path>
-                        </svg>
-                        <span class="text-sm font-medium"
-                          >Bringing decklist on-site</span
-                        >
-                      </div>
-                      <button
-                        @click="showEditDecklistModal = true"
-                        class="text-xs text-gray-300 hover:text-white bg-[#40444b] hover:bg-[#4f545c] px-2 py-1 rounded"
+                      </span>
+                      <span
+                        v-if="ticket.decklist"
+                        class="text-xs font-medium text-emerald-400 flex items-center gap-1"
+                        >✓ Submitted</span
                       >
-                        ✎ Change
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Pending Decklist -->
-                  <div
-                    v-else
-                    class="bg-[#40444b] border border-[#202225] rounded p-3 mb-3"
+                      <span
+                        v-else-if="ticket.bringingDecklistOnsite"
+                        class="text-xs font-medium text-blue-400"
+                        >Bringing on Site</span
+                      >
+                      <span v-else class="text-xs font-medium text-amber-400"
+                        >⚠ Pending</span
+                      >
+                    </li>
+                  </ol>
+                  <!-- Edit button for single-ticket registrations -->
+                  <button
+                    v-if="userRegistration.tickets.length === 1"
+                    @click="showEditDecklistModal = true"
+                    class="mt-3 text-xs text-gray-300 hover:text-white bg-[#40444b] hover:bg-[#4f545c] px-2 py-1 rounded"
                   >
-                    <div class="text-gray-300 text-sm mb-3">
-                      ⚠️ Decklist required - Your registration is reserved until
-                      you submit a decklist
-                    </div>
-                    <button
-                      @click="showEditDecklistModal = true"
-                      class="text-xs text-gray-800 hover:text-gray-900 bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded"
-                    >
-                      Submit Decklist Now
-                    </button>
-                    <button
-                      @click="showEditDecklistModal = true"
-                      class="text-sm text-gray-800 hover:text-gray-900 bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded font-medium"
-                    >
-                      Submit Decklist Now
-                    </button>
-                  </div>
+                    ✎ Edit Decklist
+                  </button>
                 </div>
 
                 <!-- Action Buttons -->
@@ -284,12 +241,6 @@
             </NuxtLink>
           </div>
         </div>
-
-        <!-- Participants List -->
-        <EventParticipants
-          :event-id="event.id"
-          :show-decklist-status="event.requiresDecklist"
-        />
       </div>
     </div>
 
@@ -385,12 +336,23 @@ interface EventResponse {
   registrationCount: number;
 }
 
+interface RegistrationTicket {
+  id: string;
+  participantName: string;
+  participantPlayerId?: string | null;
+  decklist?: string | null;
+  bringingDecklistOnsite?: boolean;
+  status: string;
+}
+
 interface UserRegistration {
   id: string;
   status: string;
+  // Legacy single-ticket fields (kept for decklist edit compat)
   decklist?: string | null;
   bringingDecklistOnsite?: boolean;
-  ticketId?: string; // First ticket ID for single-ticket registrations
+  ticketId?: string;
+  tickets: RegistrationTicket[];
 }
 
 const { id } = useRoute().params;
@@ -422,17 +384,19 @@ function formatEventDate(dateString: string): string {
 }
 
 function getStatusColor(status: string): string {
+  const base =
+    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold";
   switch (status.toLowerCase()) {
     case "upcoming":
-      return "text-gray-800";
+      return `${base} bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/40`;
     case "ongoing":
-      return "text-gray-800";
+      return `${base} bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40`;
     case "completed":
-      return "text-gray-600";
+      return `${base} bg-gray-500/20 text-gray-300 ring-1 ring-gray-500/40`;
     case "cancelled":
-      return "text-gray-400";
+      return `${base} bg-red-500/20 text-red-300 ring-1 ring-red-500/40`;
     default:
-      return "text-gray-600";
+      return `${base} bg-gray-500/20 text-gray-300 ring-1 ring-gray-500/40`;
   }
 }
 
@@ -459,14 +423,14 @@ async function fetchUserRegistration(): Promise<void> {
 
   try {
     const { data } = await $fetch<{ data: any[] }>(
-      "/api/dashboard/registrations"
+      "/api/dashboard/registrations",
     );
     // Check both customEventId and externalEventId, and also check the nested customEvent.id
     const registration = data?.find(
       (r) =>
         r.customEventId === id ||
         r.externalEventId === id ||
-        r.customEvent?.id === id
+        r.customEvent?.id === id,
     );
     userRegistration.value = registration
       ? {
@@ -477,7 +441,15 @@ async function fetchUserRegistration(): Promise<void> {
           bringingDecklistOnsite:
             registration.tickets?.[0]?.bringingDecklistOnsite ||
             registration.bringingDecklistOnsite,
-          ticketId: registration.tickets?.[0]?.id, // Store first ticket ID
+          ticketId: registration.tickets?.[0]?.id,
+          tickets: (registration.tickets || []).map((t: any) => ({
+            id: t.id,
+            participantName: t.participantName,
+            participantPlayerId: t.participantPlayerId || null,
+            decklist: t.decklist || null,
+            bringingDecklistOnsite: t.bringingDecklistOnsite || false,
+            status: t.status,
+          })),
         }
       : null;
   } catch (err: unknown) {
@@ -542,7 +514,7 @@ async function cancelRegistration(): Promise<void> {
       `/api/dashboard/registrations/${userRegistration.value.id}/cancel`,
       {
         method: "POST",
-      }
+      },
     );
 
     // Refresh data

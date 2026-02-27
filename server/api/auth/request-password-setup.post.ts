@@ -177,7 +177,30 @@ export default defineEventHandler(async (event) => {
     // Zwei getrennte Raw-REST-Calls (gleicher Grund wie in finalize-password-setup):
     // GoTrue ignorierts app_metadata-Änderungen wenn password + app_metadata kombiniert werden.
 
-    // Step 1 – app_metadata + email bestätigen
+    // Step 1 – Passwort setzen
+    // (Metadata comes last to avoid GoTrue's read-modify-write race resetting has_password)
+    const pwResA = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({ password: pepperedPassword }),
+      },
+    );
+
+    if (!pwResA.ok) {
+      const pwErr = await pwResA.json().catch(() => ({}));
+      throw createError({
+        statusCode: 500,
+        statusMessage: pwErr?.message || "Failed to activate password",
+      });
+    }
+
+    // Step 2 – app_metadata + email bestätigen (muss zuletzt kommen)
     const metaResA = await fetch(
       `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
       {
@@ -203,28 +226,6 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 500,
         statusMessage: metaErr?.message || "Failed to update password metadata",
-      });
-    }
-
-    // Step 2 – Passwort setzen
-    const pwResA = await fetch(
-      `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
-        },
-        body: JSON.stringify({ password: pepperedPassword }),
-      },
-    );
-
-    if (!pwResA.ok) {
-      const pwErr = await pwResA.json().catch(() => ({}));
-      throw createError({
-        statusCode: 500,
-        statusMessage: pwErr?.message || "Failed to activate password",
       });
     }
 

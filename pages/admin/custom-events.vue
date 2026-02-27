@@ -332,7 +332,7 @@
                     <span
                       v-for="tag in getDisplayTags(
                         selectedEvent.tags,
-                        selectedEvent.tagType
+                        selectedEvent.tagType,
                       )"
                       :key="tag.label"
                       class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
@@ -669,7 +669,7 @@
         <div class="registrations-content">
           <div class="registrations-stats">
             <div class="stat-item">
-              <span class="stat-number">{{ registrations.length }}</span>
+              <span class="stat-number">{{ ticketRows.length }}</span>
               <span class="stat-label">Total Registered</span>
             </div>
             <div class="stat-item">
@@ -680,19 +680,22 @@
             </div>
             <div class="stat-item">
               <span class="stat-number">{{
-                (selectedEvent?.maxParticipants || 0) - registrations.length
+                Math.max(
+                  0,
+                  (selectedEvent?.maxParticipants || 0) - ticketRows.length,
+                )
               }}</span>
               <span class="stat-label">Available Spots</span>
             </div>
           </div>
 
-          <div v-if="registrations.length > 0" class="registrations-table">
+          <div v-if="ticketRows.length > 0" class="registrations-table">
             <table>
               <thead>
                 <tr>
-                  <th>Player ID</th>
+                  <th>Participant ID</th>
                   <th>Name</th>
-                  <th>Email</th>
+                  <th>Booker Email</th>
                   <th>Registered At</th>
                   <th>Status</th>
                   <th v-if="selectedEvent?.requiresDecklist">Decklist</th>
@@ -700,31 +703,28 @@
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  v-for="registration in registrations"
-                  :key="registration.id"
-                >
-                  <td>{{ registration.player.playerId }}</td>
-                  <td>{{ registration.player.name }}</td>
-                  <td>{{ registration.player.email || "N/A" }}</td>
-                  <td>{{ formatDate(registration.registeredAt) }}</td>
+                <tr v-for="row in ticketRows" :key="row.ticketId">
+                  <td>{{ row.participantPlayerId || "—" }}</td>
+                  <td>{{ row.participantName }}</td>
+                  <td>{{ row.bookerEmail || "N/A" }}</td>
+                  <td>{{ formatDate(row.registeredAt) }}</td>
                   <td>
                     <span
                       class="status-badge"
-                      :class="`status-${registration.status}`"
+                      :class="`status-${row.ticketStatus}`"
                     >
-                      {{ registration.status }}
+                      {{ row.ticketStatus }}
                     </span>
                   </td>
                   <td v-if="selectedEvent?.requiresDecklist">
                     <span
-                      v-if="registration.decklist"
+                      v-if="row.decklist"
                       class="decklist-status status-success"
                     >
                       ✓ Submitted
                     </span>
                     <span
-                      v-else-if="registration.bringingDecklistOnsite"
+                      v-else-if="row.bringingDecklistOnsite"
                       class="decklist-status status-warning"
                     >
                       📋 Bringing On-site
@@ -736,17 +736,14 @@
                   <td>
                     <div class="action-buttons">
                       <button
-                        v-if="
-                          selectedEvent?.requiresDecklist &&
-                          registration.decklist
-                        "
-                        @click="viewDecklist(registration)"
+                        v-if="selectedEvent?.requiresDecklist && row.decklist"
+                        @click="viewDecklist(row)"
                         class="btn btn-small btn-info"
                       >
                         View Decklist
                       </button>
                       <button
-                        @click="cancelRegistration(registration)"
+                        @click="cancelRegistration(row.registration)"
                         class="btn btn-small btn-danger"
                       >
                         Remove
@@ -774,7 +771,7 @@
     >
       <div class="modal-content modal-large" @click.stop>
         <div class="modal-header">
-          <h2>Decklist - {{ selectedDecklist.player.name }}</h2>
+          <h2>Decklist - {{ selectedDecklist.playerName }}</h2>
           <button @click="closeDecklistModal" class="close-btn">&times;</button>
         </div>
         <div class="modal-body">
@@ -1006,8 +1003,8 @@
                 saving
                   ? "Saving..."
                   : editingEvent
-                  ? "Update Event"
-                  : "Create Event"
+                    ? "Update Event"
+                    : "Create Event"
               }}
             </button>
           </div>
@@ -1051,6 +1048,15 @@ interface CustomEvent {
   };
 }
 
+interface Ticket {
+  id: string;
+  participantName: string;
+  participantPlayerId?: string | null;
+  status: string;
+  decklist?: string | null;
+  bringingDecklistOnsite?: boolean | null;
+}
+
 interface Registration {
   id: string;
   customEventId: string;
@@ -1060,6 +1066,7 @@ interface Registration {
   notes?: string;
   decklist?: string | null;
   bringingDecklistOnsite?: boolean;
+  tickets: Ticket[];
   player: {
     id: string;
     playerId: string;
@@ -1082,7 +1089,40 @@ const editingEvent = ref<CustomEvent | null>(null);
 const selectedEvent = ref<CustomEvent | null>(null);
 const searchTerm = ref("");
 const copiedEventId = ref<string | null>(null);
-const selectedDecklist = ref<Registration | null>(null);
+const selectedDecklist = ref<{ playerName: string; decklist: string } | null>(
+  null,
+);
+
+// Flatten registrations → one row per ticket for display
+interface TicketRow {
+  ticketId: string;
+  registrationId: string;
+  participantName: string;
+  participantPlayerId?: string | null;
+  bookerEmail?: string;
+  registeredAt: string;
+  ticketStatus: string;
+  decklist?: string | null;
+  bringingDecklistOnsite?: boolean | null;
+  registration: Registration;
+}
+
+const ticketRows = computed<TicketRow[]>(() =>
+  registrations.value.flatMap((reg) =>
+    (reg.tickets || []).map((t) => ({
+      ticketId: t.id,
+      registrationId: reg.id,
+      participantName: t.participantName,
+      participantPlayerId: t.participantPlayerId,
+      bookerEmail: reg.player.email,
+      registeredAt: reg.registeredAt,
+      ticketStatus: t.status,
+      decklist: t.decklist,
+      bringingDecklistOnsite: t.bringingDecklistOnsite,
+      registration: reg,
+    })),
+  ),
+);
 
 // Computed properties for upcoming and completed events
 const upcomingEvents = computed(() => {
@@ -1096,7 +1136,7 @@ const upcomingEvents = computed(() => {
     );
   });
   return filtered.sort(
-    (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
+    (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime(),
   );
 });
 
@@ -1110,7 +1150,7 @@ const completedEvents = computed(() => {
     );
   });
   return filtered.sort(
-    (a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
+    (a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime(),
   );
 });
 
@@ -1197,7 +1237,7 @@ const getNextFriday = (): Date => {
     now.getDate() + daysUntilFriday,
     18,
     0,
-    0
+    0,
   );
 
   return nextFriday;
@@ -1229,7 +1269,7 @@ const initializeEventForm = () => {
   // Format for datetime-local input in German timezone
   const formatForInput = (date: Date): string => {
     const berlinDate = new Date(
-      date.toLocaleString("en-US", { timeZone: "Europe/Berlin" })
+      date.toLocaleString("en-US", { timeZone: "Europe/Berlin" }),
     );
     const year = berlinDate.getFullYear();
     const month = String(berlinDate.getMonth() + 1).padStart(2, "0");
@@ -1272,7 +1312,7 @@ const filteredEvents = computed(() => {
     (event) =>
       event.name.toLowerCase().includes(search) ||
       event.venue.toLowerCase().includes(search) ||
-      event.status.toLowerCase().includes(search)
+      event.status.toLowerCase().includes(search),
   );
 });
 
@@ -1292,7 +1332,7 @@ const onEventDateChange = () => {
 
     // Format for datetime-local input in German timezone
     const berlinDate = new Date(
-      regDeadline.toLocaleString("en-US", { timeZone: "Europe/Berlin" })
+      regDeadline.toLocaleString("en-US", { timeZone: "Europe/Berlin" }),
     );
     const year = berlinDate.getFullYear();
     const month = String(berlinDate.getMonth() + 1).padStart(2, "0");
@@ -1308,7 +1348,7 @@ const loadEvents = async () => {
   try {
     loading.value = true;
     const response = await $fetch<{ events: CustomEvent[] }>(
-      "/api/admin/events/combined"
+      "/api/admin/events/combined",
     );
     events.value = response.events || [];
   } catch (error) {
@@ -1368,7 +1408,7 @@ const editEvent = (event: CustomEvent) => {
     const date = new Date(dateStr);
     // Get the date in German timezone
     const berlinDate = new Date(
-      date.toLocaleString("en-US", { timeZone: "Europe/Berlin" })
+      date.toLocaleString("en-US", { timeZone: "Europe/Berlin" }),
     );
     const year = berlinDate.getFullYear();
     const month = String(berlinDate.getMonth() + 1).padStart(2, "0");
@@ -1422,7 +1462,7 @@ const viewRegistrations = async (event: CustomEvent) => {
   try {
     selectedEvent.value = event;
     const response = await $fetch<{ registrations: Registration[] }>(
-      `/api/admin/registrations?eventId=${event.id}`
+      `/api/admin/registrations?eventId=${event.id}`,
     );
     registrations.value = response.registrations || [];
     showRegistrations.value = true;
@@ -1453,7 +1493,7 @@ const cancelRegistration = async (registration: Registration) => {
       method: "DELETE",
     });
     registrations.value = registrations.value.filter(
-      (r) => r.id !== registration.id
+      (r) => r.id !== registration.id,
     );
     await loadEvents(); // Refresh event counts
     // TODO: Show success message
@@ -1475,8 +1515,11 @@ const closeRegistrationsModal = () => {
   registrations.value = [];
 };
 
-const viewDecklist = (registration: Registration) => {
-  selectedDecklist.value = registration;
+const viewDecklist = (row: TicketRow) => {
+  selectedDecklist.value = {
+    playerName: row.participantName,
+    decklist: row.decklist ?? "",
+  };
 };
 
 const closeDecklistModal = () => {

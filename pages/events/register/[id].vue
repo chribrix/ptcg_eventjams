@@ -647,6 +647,12 @@ const submitRegistration = async (): Promise<void> => {
     submitting.value = true;
     formError.value = "";
 
+    // Ensure bookerName and bookerPlayerId are in sync with the first ticket's values,
+    // since the form binds the visible inputs to tickets[0] but the API requires these top-level fields.
+    if (form.tickets[0].name) form.bookerName = form.tickets[0].name;
+    if (form.tickets[0].playerId)
+      form.bookerPlayerId = form.tickets[0].playerId;
+
     const response = await $fetch(`/api/events/${eventId}/register`, {
       method: "POST",
       body: form,
@@ -687,7 +693,7 @@ onMounted(async () => {
 // SEO
 useHead({
   title: computed(() =>
-    event.value ? `Register - ${event.value.name}` : "Event Registration"
+    event.value ? `Register - ${event.value.name}` : "Event Registration",
   ),
   meta: [
     {
@@ -695,7 +701,7 @@ useHead({
       content: computed(() =>
         event.value
           ? `Register for ${event.value.name} at ${event.value.venue}`
-          : "Event Registration"
+          : "Event Registration",
       ),
     },
   ],

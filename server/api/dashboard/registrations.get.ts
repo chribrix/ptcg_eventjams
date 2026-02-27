@@ -44,16 +44,20 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Find the player by email
-    // Note: Player model doesn't store Supabase userId, only Pokemon TCG playerId
-    // So we must look up by email
+    // Find the player — try supabaseId first (most reliable), then fall back to email.
+    // Email-only lookup fails when the email in the session differs from the stored
+    // player email (e.g. after a re-auth migration), causing the dashboard to appear empty.
     let player = null;
 
-    if (supabaseUser.email) {
+    if (supabaseUser.id) {
       player = await prisma.player.findFirst({
-        where: {
-          email: supabaseUser.email.toLowerCase(),
-        },
+        where: { supabaseId: supabaseUser.id },
+      });
+    }
+
+    if (!player && supabaseUser.email) {
+      player = await prisma.player.findFirst({
+        where: { email: supabaseUser.email.toLowerCase() },
       });
     }
 
@@ -134,10 +138,10 @@ export default defineEventHandler(async (event) => {
       return new Date(eventDate) >= twoHoursAgo;
     });
 
-    // Filter out registrations with no active tickets
-    const activeRegistrations = futureRegistrations.filter(
-      (reg) => reg.tickets.length > 0,
-    );
+    // Keep all future registrations regardless of ticket count.
+    // Filtering out registrations with 0 tickets hides valid registrations when
+    // ticket creation failed or the booking was made through an older flow.
+    const activeRegistrations = futureRegistrations;
 
     // Transform registrations to have a consistent structure
     const transformedRegistrations = activeRegistrations.map((reg) => {

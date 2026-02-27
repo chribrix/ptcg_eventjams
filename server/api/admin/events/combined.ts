@@ -11,6 +11,10 @@ export default defineEventHandler(async () => {
         registrations: {
           include: {
             player: true,
+            // Include ticket count so we can compute the real participant total
+            _count: {
+              select: { tickets: true },
+            },
           },
         },
         creator: {
@@ -35,6 +39,9 @@ export default defineEventHandler(async () => {
           registrations: {
             include: {
               player: true,
+              _count: {
+                select: { tickets: true },
+              },
             },
           },
           creator: {
@@ -57,8 +64,8 @@ export default defineEventHandler(async () => {
         const tags = event.tags
           ? parseEventTags(event.tags, event.tagType || "pokemon")
           : overrides?.tags
-          ? parseEventTags(overrides.tags, "pokemon")
-          : { game: "Pokemon" };
+            ? parseEventTags(overrides.tags, "pokemon")
+            : { game: "Pokemon" };
         const eventType = tags.type || "custom";
 
         return {
@@ -85,8 +92,12 @@ export default defineEventHandler(async () => {
           originalEventName: event.eventName,
           originalEventDate: event.eventDate,
         };
-      }
+      },
     );
+
+    // Helper: sum tickets across all registrations for an event
+    const totalTickets = (regs: { _count: { tickets: number } }[]) =>
+      regs.reduce((sum, r) => sum + r._count.tickets, 0);
 
     // Combine both types of events
     const allEvents = [
@@ -96,11 +107,20 @@ export default defineEventHandler(async () => {
         eventType: e.tags
           ? parseEventTags(e.tags, e.tagType).type || "custom"
           : "custom",
+        // _count.registrations used by the admin UI — expose actual ticket total
+        _count: { registrations: totalTickets(e.registrations) },
       })),
-      ...transformedExternalEvents,
+      ...transformedExternalEvents.map((e) => ({
+        ...e,
+        _count: {
+          registrations: totalTickets(
+            e.registrations as { _count: { tickets: number } }[],
+          ),
+        },
+      })),
     ].sort(
       (a, b) =>
-        new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
+        new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime(),
     );
 
     return {

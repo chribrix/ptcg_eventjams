@@ -19,10 +19,11 @@ export default defineEventHandler(async (event) => {
         tags: true,
         createdAt: true,
         updatedAt: true,
-        // Also get registration count
         registrations: {
           select: {
-            id: true,
+            tickets: {
+              select: { id: true },
+            },
           },
         },
       },
@@ -31,7 +32,11 @@ export default defineEventHandler(async (event) => {
     // Transform the data to include registration count
     const eventsWithCount = customEvents.map((event) => ({
       ...event,
-      registrationCount: event.registrations.length,
+      // Sum tickets across all registrations — a single registration can book multiple tickets
+      registrationCount: event.registrations.reduce(
+        (sum, r) => sum + r.tickets.length,
+        0,
+      ),
       registrations: undefined, // Remove the registrations array from response
     }));
 

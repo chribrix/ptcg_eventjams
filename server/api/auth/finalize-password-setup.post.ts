@@ -170,12 +170,36 @@ export default defineEventHandler(async (event) => {
   //
   // When password + app_metadata are combined in a single updateUserById call,
   // GoTrue applies the password update but silently drops the app_metadata changes.
-  // This left has_password: false / pending_password_setup intact, causing the
-  // user to be forced through password-setup again on the next login.
   //
-  // Fix: app_metadata first (raw REST PUT), then password (raw REST PUT).
+  // Additionally, GoTrue's internal read-modify-write for the password update can
+  // race with a preceding metadata-only update: GoTrue reads a stale snapshot of
+  // the user record (before the metadata write was committed) and re-persists the
+  // old app_metadata alongside the new password, resetting has_password to false.
+  //
+  // Fix: password first (raw REST PUT), then app_metadata (raw REST PUT).
+  // The metadata write is the last operation, so it always lands with the correct
+  // has_password: true state regardless of GoTrue's internal caching behaviour.
 
-  // Step 1 – update app_metadata via raw admin REST API
+  // Step 1 – set password via raw admin REST API
+  const pwRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+    },
+    body: JSON.stringify({ password: pepperedPassword }),
+  });
+
+  if (!pwRes.ok) {
+    const pwErr = await pwRes.json().catch(() => ({}));
+    throw createError({
+      statusCode: 500,
+      statusMessage: pwErr?.message || "Failed to activate password",
+    });
+  }
+
+  // Step 2 – update app_metadata via raw admin REST API (must be last)
   const metaRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
     method: "PUT",
     headers: {
@@ -197,25 +221,6 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 500,
       statusMessage: metaErr?.message || "Failed to update password metadata",
-    });
-  }
-
-  // Step 2 – update password via raw admin REST API
-  const pwRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
-    },
-    body: JSON.stringify({ password: pepperedPassword }),
-  });
-
-  if (!pwRes.ok) {
-    const pwErr = await pwRes.json().catch(() => ({}));
-    throw createError({
-      statusCode: 500,
-      statusMessage: pwErr?.message || "Failed to activate password",
     });
   }
 
