@@ -241,6 +241,12 @@
             </NuxtLink>
           </div>
         </div>
+
+        <!-- Participants List -->
+        <EventParticipants
+          :event-id="event.id"
+          :show-decklist-status="event.requiresDecklist"
+        />
       </div>
     </div>
 
@@ -370,6 +376,9 @@ const editDecklistForm = ref({
   bringingOnsite: false,
 });
 const isSavingDecklist = ref(false);
+const isCancelling = ref(false);
+const cancelSuccess = ref(false);
+const showCancelModal = ref(false);
 
 function formatEventDate(dateString: string): string {
   const date = new Date(dateString);

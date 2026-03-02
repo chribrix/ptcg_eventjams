@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
   logError,
@@ -43,8 +44,32 @@ export default defineEventHandler(async (event) => {
 
       if (!supabaseUrl || !serviceKey) return null;
 
-      const res = await fetch(
-        `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(targetEmail)}`,
+      const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+
+      const adminApi = supabaseAdmin.auth.admin as {
+        getUserByEmail?: (email: string) => Promise<{
+          data: {
+            user: {
+              id: string;
+              email?: string;
+              user_metadata?: unknown;
+            } | null;
+          };
+          error: { message?: string } | null;
+        }>;
+      };
+
+      if (typeof adminApi.getUserByEmail === "function") {
+        const { data, error } = await adminApi.getUserByEmail(targetEmail);
+        if (error || !data.user) return null;
+        return data.user;
+      }
+
+      // Fallback: use filter param (works for smaller user bases)
+      const fallbackRes = await fetch(
+        `${supabaseUrl}/auth/v1/admin/users?filter=${encodeURIComponent(targetEmail)}`,
         {
           headers: {
             apikey: serviceKey,
@@ -53,10 +78,10 @@ export default defineEventHandler(async (event) => {
         },
       );
 
-      if (!res.ok) return null;
+      if (!fallbackRes.ok) return null;
 
-      const data = await res.json();
-      const users = data?.users ?? [];
+      const fallbackData = await fallbackRes.json();
+      const users = fallbackData?.users ?? [];
       return (
         users.find((user: any) => user.email?.toLowerCase() === targetEmail) ||
         null

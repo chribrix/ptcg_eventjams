@@ -13,7 +13,7 @@ export default defineEventHandler(async () => {
             player: true,
             // Include ticket count so we can compute the real participant total
             _count: {
-              select: { tickets: true },
+              select: { tickets: { where: { status: { not: "cancelled" } } } },
             },
           },
         },
@@ -40,7 +40,9 @@ export default defineEventHandler(async () => {
             include: {
               player: true,
               _count: {
-                select: { tickets: true },
+                select: {
+                  tickets: { where: { status: { not: "cancelled" } } },
+                },
               },
             },
           },

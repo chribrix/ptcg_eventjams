@@ -3,13 +3,13 @@
     :class="
       compact
         ? ''
-        : 'bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200 shadow-sm overflow-hidden'
+        : 'bg-[#2f3136] rounded-xl border border-[#202225] shadow-sm overflow-hidden'
     "
   >
     <!-- Header (only in non-compact mode) -->
     <div
       v-if="!compact"
-      class="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4"
+      class="bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4"
     >
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
@@ -20,7 +20,7 @@
           </div>
           <div>
             <h3 class="text-lg font-semibold text-white">Participants</h3>
-            <p class="text-indigo-100 text-sm">
+            <p class="text-indigo-200 text-sm">
               {{ participants.length }}
               {{ participants.length === 1 ? "player" : "players" }} registered
             </p>
@@ -28,7 +28,7 @@
         </div>
         <button
           @click="refreshParticipants"
-          class="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
+          class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
           title="Refresh participants"
         >
           <ArrowPathIcon class="w-5 h-5" />
@@ -38,9 +38,9 @@
 
     <!-- Loading State -->
     <div v-if="isLoading" :class="compact ? 'p-2' : 'p-4'">
-      <div class="flex items-center gap-2 text-gray-600">
+      <div class="flex items-center gap-2 text-gray-400">
         <div
-          class="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"
+          class="w-4 h-4 border-2 border-gray-600 border-t-indigo-400 rounded-full animate-spin"
         ></div>
         <span>Loading participants...</span>
       </div>
@@ -48,7 +48,7 @@
 
     <!-- Error State -->
     <div v-else-if="error" :class="compact ? 'p-2' : 'p-4'">
-      <div class="text-red-600 text-sm">
+      <div class="text-red-400 text-sm">
         Failed to load participants: {{ error }}
       </div>
     </div>
@@ -70,14 +70,14 @@
     <!-- Participants List -->
     <div v-else :class="compact ? '' : 'p-6'">
       <!-- Active Participants -->
-      <div v-if="participants.length > 0" class="grid gap-4">
+      <div v-if="participants.length > 0" class="grid gap-3">
         <div
           v-for="participant in participants"
           :key="participant.id"
           :class="
             compact
-              ? 'group bg-gray-50 rounded-lg border border-gray-200 p-3 hover:bg-gray-100 transition-all duration-200'
-              : 'group bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200'
+              ? 'group bg-[#36393f] rounded-lg border border-[#202225] p-3 hover:bg-[#40444b] transition-all duration-200'
+              : 'group bg-[#36393f] rounded-xl border border-[#202225] p-4 hover:border-indigo-500/40 hover:bg-[#40444b] transition-all duration-200'
           "
         >
           <div
@@ -125,14 +125,12 @@
                   <UserIcon
                     v-if="!participant.isAnonymous"
                     :class="compact ? 'w-3 h-3' : 'w-4 h-4'"
-                    class="text-gray-400 flex-shrink-0"
+                    class="text-gray-500 flex-shrink-0"
                   />
                   <p
                     :class="[
                       compact ? 'font-medium' : 'font-semibold',
-                      participant.isAnonymous
-                        ? 'text-gray-500'
-                        : 'text-gray-900',
+                      participant.isAnonymous ? 'text-gray-500' : 'text-white',
                     ]"
                   >
                     {{ participant.playerName }}
@@ -142,8 +140,8 @@
                   v-if="!compact && !participant.isAnonymous"
                   class="flex items-center space-x-2 mt-1"
                 >
-                  <ClockIcon class="w-3 h-3 text-gray-400 flex-shrink-0" />
-                  <p class="text-xs text-gray-500">
+                  <ClockIcon class="w-3 h-3 text-gray-500 flex-shrink-0" />
+                  <p class="text-xs text-gray-400">
                     Registered
                     {{ formatRegistrationDate(participant.registeredAt) }}
                   </p>
@@ -175,22 +173,22 @@
       <!-- Cancelled Participants Section (Admin Only) -->
       <div v-if="cancelledParticipants.length > 0 && isAdmin" class="mt-6">
         <div class="flex items-center space-x-2 mb-3">
-          <div class="h-px flex-1 bg-gray-300"></div>
+          <div class="h-px flex-1 bg-[#202225]"></div>
           <h4
-            class="text-sm font-semibold text-gray-600 uppercase tracking-wide"
+            class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
           >
             Cancelled
           </h4>
-          <div class="h-px flex-1 bg-gray-300"></div>
+          <div class="h-px flex-1 bg-[#202225]"></div>
         </div>
-        <div class="grid gap-4">
+        <div class="grid gap-3">
           <div
             v-for="participant in cancelledParticipants"
             :key="participant.id"
             :class="
               compact
-                ? 'group bg-gray-50 rounded-lg border border-gray-200 p-3 opacity-60'
-                : 'group bg-white rounded-xl border border-gray-200 p-4 opacity-60'
+                ? 'group bg-[#2f3136] rounded-lg border border-[#202225] p-3 opacity-50'
+                : 'group bg-[#2f3136] rounded-xl border border-[#202225] p-4 opacity-50'
             "
           >
             <div
@@ -223,15 +221,15 @@
                     <p
                       :class="
                         compact
-                          ? 'font-medium text-gray-600 truncate line-through'
-                          : 'font-semibold text-gray-600 truncate line-through'
+                          ? 'font-medium text-gray-500 truncate line-through'
+                          : 'font-semibold text-gray-500 truncate line-through'
                       "
                     >
                       {{ participant.playerName }}
                     </p>
                   </div>
                   <div v-if="!compact" class="flex items-center space-x-2 mt-1">
-                    <ClockIcon class="w-3 h-3 text-gray-400 flex-shrink-0" />
+                    <ClockIcon class="w-3 h-3 text-gray-500 flex-shrink-0" />
                     <p class="text-xs text-gray-500">
                       Registered
                       {{ formatRegistrationDate(participant.registeredAt) }}
@@ -243,9 +241,9 @@
               <!-- Cancelled Badge -->
               <div class="flex items-center flex-shrink-0">
                 <span
-                  class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200 whitespace-nowrap"
+                  class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300 ring-1 ring-red-500/30 whitespace-nowrap"
                 >
-                  <div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                  <div class="w-2 h-2 rounded-full bg-red-400 mr-2"></div>
                   Cancelled
                 </span>
               </div>
@@ -325,7 +323,7 @@ function formatRegistrationDate(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffInDays = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffInDays === 0) {
@@ -351,7 +349,7 @@ async function fetchParticipants(): Promise<void> {
     error.value = null;
 
     const response = await $fetch<ParticipantsResponse>(
-      `/api/events/${props.eventId}/participants`
+      `/api/events/${props.eventId}/participants`,
     );
 
     participants.value = response.participants || [];
@@ -392,8 +390,8 @@ function getParticipantStatusBadgeClass(participant: Participant): string {
   // If event doesn't require decklist, just show registration status
   if (!props.showDecklistStatus) {
     return participant.status === "registered"
-      ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-      : "bg-amber-100 text-amber-800 border border-amber-200";
+      ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40"
+      : "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40";
   }
 
   // If event requires decklist, check decklist submission regardless of registration status
@@ -401,11 +399,11 @@ function getParticipantStatusBadgeClass(participant: Participant): string {
     participant.hasDecklistSubmitted ||
     participant.isBringingDecklistOnsite
   ) {
-    return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+    return "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40";
   }
 
   // If event requires decklist but user hasn't submitted it
-  return "bg-amber-100 text-amber-800 border border-amber-200";
+  return "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40";
 }
 
 function getParticipantStatusDotClass(participant: Participant): string {
@@ -430,8 +428,8 @@ function getParticipantStatusDotClass(participant: Participant): string {
 
 function getRegistrationBadgeClass(status: string): string {
   return status === "registered"
-    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-    : "bg-amber-100 text-amber-800 border border-amber-200";
+    ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40"
+    : "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40";
 }
 
 function getStatusDotClass(status: string): string {
