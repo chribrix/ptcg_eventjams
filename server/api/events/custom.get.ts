@@ -22,6 +22,11 @@ export default defineEventHandler(async (event) => {
         registrations: {
           select: {
             tickets: {
+              where: {
+                status: {
+                  not: "cancelled",
+                },
+              },
               select: { id: true },
             },
           },

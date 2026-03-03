@@ -138,10 +138,12 @@ export default defineEventHandler(async (event) => {
       return new Date(eventDate) >= twoHoursAgo;
     });
 
-    // Keep all future registrations regardless of ticket count.
-    // Filtering out registrations with 0 tickets hides valid registrations when
-    // ticket creation failed or the booking was made through an older flow.
-    const activeRegistrations = futureRegistrations;
+    // Filter out registrations where all tickets have been cancelled.
+    // A registration with 0 active tickets means the user fully cancelled their booking
+    // and the event should no longer appear on their dashboard.
+    const activeRegistrations = futureRegistrations.filter(
+      (reg) => reg.tickets.length > 0,
+    );
 
     // Transform registrations to have a consistent structure
     const transformedRegistrations = activeRegistrations.map((reg) => {

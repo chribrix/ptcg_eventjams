@@ -76,10 +76,14 @@ export default defineEventHandler(async (event) => {
         }
 
         // Count tickets (actual participants), not registrations (one per booking user)
+        // Exclude cancelled tickets so freed slots are counted correctly
         const currentTicketCount = await prisma.registrationTicket.count({
           where: {
             registration: {
               customEventId: validatedData.customEventId,
+            },
+            status: {
+              not: "cancelled",
             },
           },
         });
