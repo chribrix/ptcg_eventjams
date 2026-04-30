@@ -54,6 +54,7 @@ const setupHandlerTest = async <TPrisma extends Record<string, any>>(
     .fn()
     .mockResolvedValue(options.supabaseUser ?? null);
   const logError = vi.fn().mockResolvedValue(undefined);
+  const logValidationError = vi.fn().mockResolvedValue(undefined);
   const logDatabaseError = vi.fn().mockResolvedValue(undefined);
   const logAuthError = vi.fn().mockResolvedValue(undefined);
 
@@ -65,6 +66,7 @@ const setupHandlerTest = async <TPrisma extends Record<string, any>>(
   }));
   vi.doMock("~/server/util/errorLogger", () => ({
     logError,
+    logValidationError,
     logDatabaseError,
     logAuthError,
   }));
@@ -75,6 +77,7 @@ const setupHandlerTest = async <TPrisma extends Record<string, any>>(
     handler: mod.default as (event: any) => Promise<any>,
     serverSupabaseUser,
     logError,
+    logValidationError,
     logDatabaseError,
     logAuthError,
   };
@@ -333,6 +336,166 @@ describe("authenticated player handler integration", () => {
       data: expect.objectContaining({
         userId: "supabase-user-1",
         userEmail: "player@example.com",
+      }),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("resolves /api/players/profile by supabaseId before loading the full player profile", async () => {
+    const mockPrisma = {
+      player: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce({
+            id: "player-db-id",
+            playerId: "PLAYER-123",
+            supabaseId: "supabase-user-1",
+            name: "Linked Player",
+            email: "old-email@example.com",
+          })
+          .mockResolvedValueOnce({
+            id: "player-db-id",
+            playerId: "PLAYER-123",
+            supabaseId: "supabase-user-1",
+            name: "Linked Player",
+            email: "old-email@example.com",
+            birthDate: new Date("2000-01-01T00:00:00.000Z"),
+            preferredLoginMethod: "password",
+          }),
+      },
+      $disconnect: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const { handler } = await setupHandlerTest(
+      "../../server/api/players/profile.get",
+      mockPrisma,
+      {
+        supabaseUser: {
+          id: "supabase-user-1",
+          email: "new-email@example.com",
+        },
+      },
+    );
+
+    const result = await handler(createEvent("GET"));
+
+    expect(mockPrisma.player.findUnique).toHaveBeenNthCalledWith(1, {
+      where: { supabaseId: "supabase-user-1" },
+      select: expect.any(Object),
+    });
+    expect(mockPrisma.player.findUnique).toHaveBeenNthCalledWith(2, {
+      where: { id: "player-db-id" },
+    });
+    expect(result.player.playerId).toBe("PLAYER-123");
+  });
+
+  it("updates preferred login method through the resolved player id instead of auth email", async () => {
+    const mockPrisma = {
+      player: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "player-db-id",
+          playerId: "PLAYER-123",
+          supabaseId: "supabase-user-1",
+          name: "Linked Player",
+          email: "player@example.com",
+        }),
+        update: vi.fn().mockResolvedValue({
+          id: "player-db-id",
+          preferredLoginMethod: "magiclink",
+        }),
+      },
+    };
+
+    const { handler } = await setupHandlerTest(
+      "../../server/api/players/preferred-login-method.post",
+      mockPrisma,
+      {
+        supabaseUser: {
+          id: "supabase-user-1",
+          email: "changed@example.com",
+        },
+        readBodyResult: {
+          method: "magiclink",
+        },
+      },
+    );
+
+    await expect(handler(createEvent("POST"))).resolves.toEqual({
+      success: true,
+      method: "magiclink",
+    });
+
+    expect(mockPrisma.player.update).toHaveBeenCalledWith({
+      where: { id: "player-db-id" },
+      data: { preferredLoginMethod: "magiclink" },
+    });
+  });
+
+  it("updates /api/players/profile using the resolved player instead of the auth email", async () => {
+    const mockPrisma = {
+      player: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "player-db-id",
+          playerId: "12345",
+          supabaseId: "supabase-user-1",
+          name: "Linked Player",
+          email: "old-email@example.com",
+        }),
+        findFirst: vi.fn().mockResolvedValue(null),
+        update: vi.fn().mockResolvedValue({
+          id: "player-db-id",
+          playerId: "12345",
+          supabaseId: "supabase-user-1",
+          name: "Updated Player",
+          email: "updated@example.com",
+          birthDate: new Date("2000-01-01T00:00:00.000Z"),
+          phone: null,
+          emergencyContact: null,
+          emergencyPhone: null,
+        }),
+      },
+      errorLog: {
+        create: vi.fn().mockResolvedValue(undefined),
+      },
+      $disconnect: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const { handler } = await setupHandlerTest(
+      "../../server/api/players/profile.put",
+      mockPrisma,
+      {
+        supabaseUser: {
+          id: "supabase-user-1",
+          email: "new-session-email@example.com",
+        },
+        readBodyResult: {
+          playerId: "12345",
+          name: "Updated Player",
+          email: "updated@example.com",
+          birthDate: "2000-01-01T00:00:00.000Z",
+        },
+      },
+    );
+
+    const result = await handler(createEvent("PUT"));
+
+    expect(mockPrisma.player.findUnique).toHaveBeenCalledWith({
+      where: { supabaseId: "supabase-user-1" },
+      select: expect.any(Object),
+    });
+    expect(mockPrisma.player.update).toHaveBeenCalledWith({
+      where: { id: "player-db-id" },
+      data: {
+        playerId: "12345",
+        name: "Updated Player",
+        email: "updated@example.com",
+        birthDate: new Date("2000-01-01T00:00:00.000Z"),
+      },
+    });
+    expect(mockPrisma.errorLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: "supabase-user-1",
+        userEmail: "updated@example.com",
       }),
     });
     expect(result.success).toBe(true);

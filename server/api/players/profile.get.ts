@@ -1,28 +1,27 @@
 import { PrismaClient } from "@prisma/client";
-import { serverSupabaseUser } from "#supabase/server";
 import {
   logError,
   logDatabaseError,
   logAuthError,
 } from "~/server/util/errorLogger";
+import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
 
 const prisma = new PrismaClient();
+const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get the current user from server-side Supabase
-    const user = await serverSupabaseUser(event);
+    const authenticatedPlayer = await resolveAuthenticatedPlayer(event);
 
-    if (!user) {
+    if (!authenticatedPlayer) {
       throw createError({
-        statusCode: 401,
-        statusMessage: "Unauthorized - please log in",
+        statusCode: 404,
+        statusMessage: "Player profile not found",
       });
     }
 
-    // Find player by email
-    const player = await prisma.player.findFirst({
-      where: { email: user.email?.toLowerCase() },
+    const player = await prisma.player.findUnique({
+      where: { id: authenticatedPlayer.id },
     });
 
     if (!player) {
@@ -52,11 +51,15 @@ export default defineEventHandler(async (event) => {
       if (statusCode === 401 || statusCode === 404) {
         await logAuthError(
           event,
-          error as Error,
+          error as unknown as Error,
           "player_profile_get_unauthorized",
         );
       } else if (statusCode >= 500) {
-        await logDatabaseError(event, error as Error, "player_profile_get");
+        await logDatabaseError(
+          event,
+          error as unknown as Error,
+          "player_profile_get",
+        );
       }
       throw error;
     }

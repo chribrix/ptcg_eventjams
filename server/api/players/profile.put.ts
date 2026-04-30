@@ -1,14 +1,15 @@
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
-import { serverSupabaseUser } from "#supabase/server";
 import {
   logError,
   logValidationError,
   logDatabaseError,
   logAuthError,
 } from "~/server/util/errorLogger";
+import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
 
 const prisma = new PrismaClient();
+const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
 
 const updateProfileSchema = z.object({
   playerId: z
@@ -22,20 +23,7 @@ const updateProfileSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   try {
-    // Get the current user from server-side Supabase
-    const user = await serverSupabaseUser(event);
-
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: "Unauthorized - please log in",
-      });
-    }
-
-    // Get the current player record by email
-    const currentPlayer = await prisma.player.findFirst({
-      where: { email: user.email?.toLowerCase() },
-    });
+    const currentPlayer = await resolveAuthenticatedPlayer(event);
 
     if (!currentPlayer) {
       throw createError({
@@ -126,8 +114,8 @@ export default defineEventHandler(async (event) => {
       data: {
         errorType: "info_profile_updated",
         errorMessage: `User updated their profile`,
-        userEmail: user.email || null,
-        userId: user.id,
+        userEmail: updatedPlayer.email || currentPlayer.email || null,
+        userId: currentPlayer.supabaseId || null,
         url: "/api/players/profile",
         metadata: {
           playerId: updatedPlayer.playerId,
@@ -160,11 +148,15 @@ export default defineEventHandler(async (event) => {
       if (statusCode === 401 || statusCode === 404 || statusCode === 403) {
         await logAuthError(
           event,
-          error as Error,
+          error as unknown as Error,
           "player_profile_update_unauthorized"
         );
       } else if (statusCode >= 500) {
-        await logDatabaseError(event, error as Error, "player_profile_update");
+        await logDatabaseError(
+          event,
+          error as unknown as Error,
+          "player_profile_update",
+        );
       }
       throw error;
     }

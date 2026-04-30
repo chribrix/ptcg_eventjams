@@ -1,13 +1,14 @@
 import { PrismaClient } from "@prisma/client";
-import { serverSupabaseUser } from "#supabase/server";
+import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
 
 const prisma = new PrismaClient();
+const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
 
 export default defineEventHandler(async (event) => {
-  const user = await serverSupabaseUser(event);
+  const player = await resolveAuthenticatedPlayer(event);
 
-  if (!user) {
-    throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
+  if (!player) {
+    throw createError({ statusCode: 404, statusMessage: "Player not found" });
   }
 
   const body = await readBody<{ method?: "password" | "magiclink" }>(event);
@@ -20,12 +21,10 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await prisma.$executeRaw`
-    UPDATE public.players
-    SET preferred_login_method = ${method}
-    WHERE supabase_id = ${user.id}
-       OR LOWER(email) = LOWER(${user.email || ""})
-  `;
+  await prisma.player.update({
+    where: { id: player.id },
+    data: { preferredLoginMethod: method },
+  });
 
   return { success: true, method };
 });

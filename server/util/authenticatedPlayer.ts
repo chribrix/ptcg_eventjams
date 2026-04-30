@@ -2,13 +2,11 @@ import type { Player } from "@prisma/client";
 import { serverSupabaseUser } from "#supabase/server";
 import { createError } from "h3";
 import type { H3Event } from "h3";
+import { logError } from "~/server/util/errorLogger";
 
 type PlayerLookupClient = {
   player: {
-    findUnique: (args: {
-      where: { playerId?: string; supabaseId?: string };
-      select: typeof playerIdentitySelect;
-    }) => Promise<AuthenticatedPlayer | null>;
+    findUnique: (args: any) => Promise<AuthenticatedPlayer | null>;
   };
 };
 
@@ -95,9 +93,32 @@ export const findPlayerForAuthenticatedIdentity = async (
   });
 };
 
+export const logMissingAuthenticatedPlayerLink = async (
+  event: H3Event,
+  identity: AuthenticatedIdentity,
+): Promise<void> => {
+  await logError(
+    event,
+    new Error("Authenticated identity has no linked player"),
+    "auth_identity_missing_player_link",
+    {
+      identitySource: identity.source,
+      impersonatedPlayerId:
+        identity.source === "impersonation" ? identity.playerId : undefined,
+      supabaseUserId:
+        identity.source === "supabase" ? identity.supabaseUserId : undefined,
+      authEmail: identity.source === "supabase" ? identity.email : undefined,
+    },
+  );
+};
+
 export const resolveAuthenticatedPlayerFactory = (
   prisma: PlayerLookupClient,
   getAuthenticatedIdentity = resolveAuthenticatedIdentityFactory(),
+  onMissingPlayer: (
+    event: H3Event,
+    identity: AuthenticatedIdentity,
+  ) => Promise<void> = logMissingAuthenticatedPlayerLink,
 ) => {
   return async (
     event: H3Event,
@@ -105,6 +126,10 @@ export const resolveAuthenticatedPlayerFactory = (
   ): Promise<AuthenticatedPlayer | null> => {
     const identity = await getAuthenticatedIdentity(event);
     const player = await findPlayerForAuthenticatedIdentity(prisma, identity);
+
+    if (!player) {
+      await onMissingPlayer(event, identity);
+    }
 
     if (!player && !options.allowMissing) {
       throw createError({

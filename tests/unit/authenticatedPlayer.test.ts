@@ -14,11 +14,20 @@ const createMockEvent = (overrides: Record<string, unknown> = {}) =>
 
 const loadAuthenticatedPlayerModule = async () => {
   vi.resetModules();
+  const logError = vi.fn().mockResolvedValue(undefined);
   vi.doMock("#supabase/server", () => ({
     serverSupabaseUser: vi.fn(),
   }));
+  vi.doMock("~/server/util/errorLogger", () => ({
+    logError,
+  }));
 
-  return import("../../server/util/authenticatedPlayer");
+  const mod = await import("../../server/util/authenticatedPlayer");
+
+  return {
+    ...mod,
+    logError,
+  };
 };
 
 describe("authenticatedPlayer utility", () => {
@@ -137,7 +146,7 @@ describe("authenticatedPlayer utility", () => {
   });
 
   it("allows endpoints to opt into a missing-player result", async () => {
-    const { resolveAuthenticatedPlayerFactory } =
+    const { resolveAuthenticatedPlayerFactory, logError } =
       await loadAuthenticatedPlayerModule();
     const prisma = {
       player: {
@@ -157,10 +166,21 @@ describe("authenticatedPlayer utility", () => {
     await expect(
       resolveAuthenticatedPlayer(createMockEvent(), { allowMissing: true }),
     ).resolves.toBeNull();
+
+    expect(logError).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.any(Error),
+      "auth_identity_missing_player_link",
+      expect.objectContaining({
+        identitySource: "supabase",
+        supabaseUserId: "supabase-user-1",
+        authEmail: "missing@example.com",
+      }),
+    );
   });
 
   it("throws a player-not-found error when a strict lookup has no linked player", async () => {
-    const { resolveAuthenticatedPlayerFactory } =
+    const { resolveAuthenticatedPlayerFactory, logError } =
       await loadAuthenticatedPlayerModule();
     const prisma = {
       player: {
@@ -183,5 +203,39 @@ describe("authenticatedPlayer utility", () => {
       statusCode: 404,
       statusMessage: "Player not found",
     });
+
+    expect(logError).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs missing impersonated players with the impersonated playerId", async () => {
+    const { resolveAuthenticatedPlayerFactory, logError } =
+      await loadAuthenticatedPlayerModule();
+    const prisma = {
+      player: {
+        findUnique: vi.fn().mockResolvedValue(null),
+      },
+    };
+
+    const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(
+      prisma as any,
+      vi.fn().mockResolvedValue({
+        source: "impersonation",
+        playerId: "PLAYER-404",
+      }),
+    );
+
+    await expect(
+      resolveAuthenticatedPlayer(createMockEvent(), { allowMissing: true }),
+    ).resolves.toBeNull();
+
+    expect(logError).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.any(Error),
+      "auth_identity_missing_player_link",
+      expect.objectContaining({
+        identitySource: "impersonation",
+        impersonatedPlayerId: "PLAYER-404",
+      }),
+    );
   });
 });
