@@ -1,13 +1,14 @@
 import { PrismaClient } from "@prisma/client";
-import { serverSupabaseUser } from "#supabase/server";
 import {
   logError,
   logDatabaseError,
   logAuthError,
 } from "~/server/util/errorLogger";
+import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
 
 const CANCELLATION_DEADLINE_HOURS = 2;
 const prisma = new PrismaClient();
+const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
 
 export default defineEventHandler(async (event) => {
   const registrationId = getRouterParam(event, "id");
@@ -20,40 +21,13 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    let supabaseUser = null;
-
-    // Check for impersonation first
-    const impersonatedUserId = event.context.impersonatedUserId;
-
-    if (impersonatedUserId) {
-      supabaseUser = {
-        id: impersonatedUserId,
-        email: "",
-      } as any;
-    } else {
-      // Try Supabase authentication
-      try {
-        supabaseUser = await serverSupabaseUser(event);
-      } catch {
-        // Continue without Supabase auth
-      }
-    }
-
-    if (!supabaseUser) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: "Unauthorized",
-      });
-    }
+    const player = await resolveAuthenticatedPlayer(event);
 
     // Find the registration by ID and verify ownership in one secure step
-    // Only fetch registrations that belong to the authenticated user's email
     const registration = await prisma.eventRegistration.findFirst({
       where: {
         id: registrationId,
-        player: {
-          email: supabaseUser.email?.toLowerCase(),
-        },
+        playerId: player.id,
       },
       include: {
         player: {
@@ -161,7 +135,7 @@ export default defineEventHandler(async (event) => {
         errorType: "info_registration_cancelled",
         errorMessage: `User cancelled registration for event`,
         userEmail: registration.player.email,
-        userId: supabaseUser.id,
+        userId: player.supabaseId,
         url: `/dashboard/registrations/${registrationId}/cancel`,
         metadata: {
           registrationId,

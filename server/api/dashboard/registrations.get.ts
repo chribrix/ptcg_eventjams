@@ -1,13 +1,14 @@
 import { PrismaClient } from "@prisma/client";
-import { serverSupabaseUser } from "#supabase/server";
 import { parseEventTags, type TagType } from "~/types/eventTags";
 import {
   logError,
   logDatabaseError,
   logAuthError,
 } from "~/server/util/errorLogger";
+import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
 
 const prisma = new PrismaClient();
+const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
 
 export default defineEventHandler(async (event) => {
   if (event.node.req.method !== "GET") {
@@ -18,48 +19,9 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    let supabaseUser = null;
-
-    // Check for impersonation first
-    const impersonatedUserId = event.context.impersonatedUserId;
-
-    if (impersonatedUserId) {
-      supabaseUser = {
-        id: impersonatedUserId,
-        email: "",
-      } as any;
-    } else {
-      // Try Supabase authentication
-      try {
-        supabaseUser = await serverSupabaseUser(event);
-      } catch {
-        // Continue without Supabase auth
-      }
-    }
-
-    if (!supabaseUser) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: "Unauthorized",
-      });
-    }
-
-    // Find the player — try supabaseId first (most reliable), then fall back to email.
-    // Email-only lookup fails when the email in the session differs from the stored
-    // player email (e.g. after a re-auth migration), causing the dashboard to appear empty.
-    let player = null;
-
-    if (supabaseUser.id) {
-      player = await prisma.player.findFirst({
-        where: { supabaseId: supabaseUser.id },
-      });
-    }
-
-    if (!player && supabaseUser.email) {
-      player = await prisma.player.findFirst({
-        where: { email: supabaseUser.email.toLowerCase() },
-      });
-    }
+    const player = await resolveAuthenticatedPlayer(event, {
+      allowMissing: true,
+    });
 
     if (!player) {
       // Return empty array if player doesn't exist yet

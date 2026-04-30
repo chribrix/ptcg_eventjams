@@ -1,12 +1,13 @@
 import { PrismaClient } from "@prisma/client";
-import { serverSupabaseUser } from "#supabase/server";
 import {
   logError,
   logDatabaseError,
   logAuthError,
 } from "~/server/util/errorLogger";
+import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
 
 const prisma = new PrismaClient();
+const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
 
 export default defineEventHandler(async (event) => {
   if (event.node.req.method !== "PUT") {
@@ -17,31 +18,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    let supabaseUser = null;
-
-    // Check for impersonation first
-    const impersonatedUserId = event.context.impersonatedUserId;
-
-    if (impersonatedUserId) {
-      supabaseUser = {
-        id: impersonatedUserId,
-        email: "",
-      } as any;
-    } else {
-      // Try Supabase authentication
-      try {
-        supabaseUser = await serverSupabaseUser(event);
-      } catch {
-        // Continue without Supabase auth
-      }
-    }
-
-    if (!supabaseUser) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: "Unauthorized",
-      });
-    }
+    const player = await resolveAuthenticatedPlayer(event);
 
     const body = await readBody(event);
     const { registrationId, ticketId, decklist, bringingDecklistOnsite } = body;
@@ -66,25 +43,6 @@ export default defineEventHandler(async (event) => {
         statusCode: 400,
         statusMessage:
           "Either decklist or bringingDecklistOnsite must be provided",
-      });
-    }
-
-    // Find the player by email
-    // Note: Player model doesn't store Supabase userId, only Pokemon TCG playerId
-    let player = null;
-
-    if (supabaseUser.email) {
-      player = await prisma.player.findFirst({
-        where: {
-          email: supabaseUser.email.toLowerCase(),
-        },
-      });
-    }
-
-    if (!player) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: "Player not found",
       });
     }
 
