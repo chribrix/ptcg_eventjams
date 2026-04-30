@@ -18,8 +18,14 @@ export type ProvisionPlayerInput = {
   email: string;
   name: string;
   playerId: string;
-  preferredLoginMethod?: "password" | "magiclink";
+  preferredLoginMethod?: "password" | "otp" | "magiclink";
   birthDate?: Date;
+};
+
+export const normalizePreferredLoginMethod = (
+  method?: "password" | "otp" | "magiclink" | null,
+): "password" | "otp" => {
+  return method === "otp" || method === "magiclink" ? "otp" : "password";
 };
 
 export type AuthUserProvisioningSource = {
@@ -34,7 +40,7 @@ const DEFAULT_BIRTH_DATE = new Date("2000-01-01T00:00:00.000Z");
 export const getProvisionPlayerInputFromAuthUser = (
   authUser: AuthUserProvisioningSource,
   options: {
-    preferredLoginMethod?: "password" | "magiclink";
+    preferredLoginMethod?: "password" | "otp" | "magiclink";
     fallbackEmail?: string | null;
     birthDate?: Date;
   } = {},
@@ -61,7 +67,9 @@ export const ensurePlayerForAuthUser = async (
   input: ProvisionPlayerInput,
 ) => {
   const normalizedEmail = input.email.trim().toLowerCase();
-  const preferredLoginMethod = input.preferredLoginMethod || "password";
+  const preferredLoginMethod = normalizePreferredLoginMethod(
+    input.preferredLoginMethod,
+  );
 
   const existingBySupabaseId = await prisma.player.findUnique({
     where: { supabaseId: input.supabaseId },

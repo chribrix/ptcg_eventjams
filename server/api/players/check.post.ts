@@ -121,14 +121,15 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    let preferredLoginMethod: "password" | "magiclink" = "password";
+    let preferredLoginMethod: "password" | "otp" = "password";
     if (player) {
       const result = await prisma.$queryRaw<
         Array<{ preferred_login_method: string | null }>
       >`SELECT preferred_login_method FROM public.players WHERE id = ${player.id} LIMIT 1`;
       preferredLoginMethod =
-        result[0]?.preferred_login_method === "magiclink"
-          ? "magiclink"
+        result[0]?.preferred_login_method === "magiclink" ||
+        result[0]?.preferred_login_method === "otp"
+          ? "otp"
           : "password";
     }
 

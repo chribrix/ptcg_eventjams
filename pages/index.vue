@@ -16,8 +16,8 @@
               <strong>NEU</strong>: Login mit Passwort nun möglich!
             </h3>
             <p class="mt-1 text-sm font-medium">
-              Da der Login via Magic Link einigen Nutzern Probleme bereitet hat,
-              ist nun auch das Registrieren/Login über Passwort möglich.
+              Der bisherige Magic-Link-Login wurde durch E-Mail-Codes ersetzt.
+              Zusätzlich ist das Registrieren und Einloggen per Passwort möglich.
             </p>
           </div>
         </div>

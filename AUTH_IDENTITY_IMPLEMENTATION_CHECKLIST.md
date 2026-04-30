@@ -119,17 +119,28 @@ Acceptance criteria:
 
 ### Item 4 - Rework Passwordless Login to Use Login Code
 
+Status: Completed on 2026-04-30
+
 Goal:
 
 - replace redirect-link-centered magic login with a login code architecture
 
 Tasks:
 
-1. Design short-lived email code issuance.
-2. Design code verification endpoint.
-3. Define anti-abuse and rate limiting rules.
-4. Define cross-device UX.
-5. Keep temporary compatibility with magic links only if needed during rollout.
+1. [x] Design short-lived email code issuance.
+2. [x] Design code verification endpoint.
+3. [x] Define anti-abuse and rate limiting rules.
+4. [x] Define cross-device UX.
+5. [x] Remove magic-link-centered runtime flow in favor of OTP.
+
+Completed in this item:
+
+- replaced passwordless login in `pages/login.vue` and `composables/useLoginWorkflow.ts` with in-page OTP request/verify steps
+- replaced passwordless registration in `components/RegisterForm.vue` with in-page OTP verification
+- changed password-setup confirmation from `confirm_email` to `confirm_code`
+- retired `pages/confirm.vue` and `pages/magic-login.vue` into compatibility notices instead of active auth callback handlers
+- normalized newly written preferred login method values to `otp` while keeping legacy `magiclink` data readable
+- updated focused integration coverage for the login workflow semantics
 
 Acceptance criteria:
 

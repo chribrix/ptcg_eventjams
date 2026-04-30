@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
+import { normalizePreferredLoginMethod } from "~/server/util/playerProvisioning";
 
 const prisma = new PrismaClient();
 const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
@@ -11,15 +12,17 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Player not found" });
   }
 
-  const body = await readBody<{ method?: "password" | "magiclink" }>(event);
-  const method = body?.method;
+  const body = await readBody<{ method?: "password" | "otp" | "magiclink" }>(event);
+  const rawMethod = body?.method;
 
-  if (method !== "password" && method !== "magiclink") {
+  if (rawMethod !== "password" && rawMethod !== "otp" && rawMethod !== "magiclink") {
     throw createError({
       statusCode: 400,
-      statusMessage: "method must be 'password' or 'magiclink'",
+      statusMessage: "method must be 'password' or 'otp'",
     });
   }
+
+  const method = normalizePreferredLoginMethod(rawMethod);
 
   await prisma.player.update({
     where: { id: player.id },

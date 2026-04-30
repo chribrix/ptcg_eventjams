@@ -21,7 +21,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     publicPages.includes(to.path) || to.path.startsWith("/events/");
 
   // Public pages should remain accessible without password-enforcement redirects.
-  // This is required for login/confirm/magic-link/password-setup flows.
+  // This covers login, password setup, and legacy compatibility screens.
   if (isPublicPath) {
     return;
   }

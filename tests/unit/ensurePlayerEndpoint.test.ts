@@ -39,7 +39,7 @@ describe("ensure-player endpoint", () => {
 
     vi.stubGlobal(
       "readBody",
-      vi.fn().mockResolvedValue({ preferredLoginMethod: "magiclink" }),
+      vi.fn().mockResolvedValue({ preferredLoginMethod: "otp" }),
     );
 
     const provisionPlayer = vi.fn().mockResolvedValue({
@@ -82,7 +82,7 @@ describe("ensure-player endpoint", () => {
         supabaseId: "auth-1",
         email: "new@example.com",
         playerId: "1001",
-        preferredLoginMethod: "magiclink",
+        preferredLoginMethod: "otp",
       }),
     );
   });

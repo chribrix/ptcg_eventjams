@@ -8,6 +8,7 @@ Endpunkte und bekannte Bugs inkl. deren Behebung.
 ## Fall 1 – Neuer Nutzer (Registrierung mit Passwort)
 
 **Ablauf:**
+
 1. Nutzer ruft `/register` auf und gibt Email, Name, Spieler-ID und Passwort (zweimalig) ein.
 2. `POST /api/auth/register-password`
    - Erstellt den Supabase-Auth-User via Admin-API mit `email_confirm: true` (kein Bestätigungsmail)
@@ -26,6 +27,7 @@ Endpunkte und bekannte Bugs inkl. deren Behebung.
 ## Fall 2 – Bestehender Nutzer mit Passwort (Password-Login)
 
 **Ablauf:**
+
 1. Nutzer ruft `/login` auf, gibt Email ein.
 2. `POST /api/players/check` prüft, ob Account existiert.
 3. `POST /api/auth/check-password` prüft `app_metadata.has_password`.
@@ -37,11 +39,12 @@ Endpunkte und bekannte Bugs inkl. deren Behebung.
 
 ---
 
-## Fall 3a – Magic-Link-Nutzer, der sich **noch nie** angemeldet hat, setzt erstmals Passwort
+## Fall 3a – Passwortloser Nutzer, der sich **noch nie** angemeldet hat, setzt erstmals Passwort
 
-**Voraussetzung:** `email_confirmed_at` ist nicht gesetzt (Nutzer wurde z. B. durch Admin importiert oder hat den ersten Magic Link nie geklickt).
+**Voraussetzung:** `email_confirmed_at` ist nicht gesetzt (Nutzer wurde z. B. durch Admin importiert oder hat sich noch nie per E-Mail-Code bestätigt).
 
 **Ablauf:**
+
 1. Nutzer ruft `/login` auf, gibt Email ein.
 2. `POST /api/players/check` → Account gefunden.
 3. `POST /api/auth/check-password` → `passwordState !== "has"` → `hasPassword = false`.
@@ -57,22 +60,22 @@ Endpunkte und bekannte Bugs inkl. deren Behebung.
 
 ---
 
-## Fall 3b – Magic-Link-Nutzer, der sich **bereits angemeldet hat**, setzt erstmals Passwort
+## Fall 3b – Passwortloser Nutzer, der sich **bereits angemeldet hat**, setzt erstmals Passwort
 
-**Voraussetzung:** `email_confirmed_at` ist gesetzt (Nutzer hat sich mind. einmal per Magic Link authentifiziert).
+**Voraussetzung:** `email_confirmed_at` ist gesetzt (Nutzer hat sich mind. einmal per E-Mail-Code authentifiziert).
 
 **Sicherheitsreason:** Der Nutzer muss beweisen, dass er noch Zugang zur Email hat, bevor ein Passwort auf den Account gesetzt wird, das künftig ohne Email-Zugang zur Anmeldung ausreicht.
 
 **Ablauf:**
-1–5. Identisch mit Fall 3a.
-6. `POST /api/auth/request-password-setup`
-   - `email_confirmed_at` ist gesetzt → **Path B (mit Bestätigung)**
-   - Verschlüsselt das gepfefferte Passwort und speichert es als `app_metadata.pending_password_setup` (TTL: 15 min)
-   - Gibt `{ mode: "confirm_email", email, redirectTo }` zurück
-7. Client ruft `supabase.auth.signInWithOtp({ email, emailRedirectTo })` auf (nötig für PKCE-Code-Verifier).
-   - Nutzer erhält eine E-Mail mit Magic Link, der auf `/confirm?flow=set-password` zeigt.
-8. Nutzer klickt Link → `/confirm` → `/magic-login?flow=set-password`
-9. `magic-login.vue` erkennt `flow=set-password` → `POST /api/auth/finalize-password-setup`
+1–5. Identisch mit Fall 3a. 6. `POST /api/auth/request-password-setup`
+
+- `email_confirmed_at` ist gesetzt → **Path B (mit Bestätigung)**
+- Verschlüsselt das gepfefferte Passwort und speichert es als `app_metadata.pending_password_setup` (TTL: 15 min)
+- Gibt `{ mode: "confirm_code", email }` zurück
+
+7. Client ruft `supabase.auth.verifyOtp({ email, token, type: "email" })` nach Eingabe des E-Mail-Codes auf.
+8. Der Client ruft mit der dadurch etablierten Session `POST /api/auth/finalize-password-setup` auf.
+9. `finalize-password-setup` entschlüsselt `pending_password_setup`
    - Entschlüsselt `pending_password_setup`
    - Prüft TTL (15 min Ablaufzeit)
    - Setzt Passwort via `updateUserById`, löscht `pending_password_setup`, setzt `has_password = true`
@@ -84,49 +87,51 @@ Das gepfefferte Passwort wird serverseitig mit AES-256-GCM (Key aus `PASSWORD_PE
 
 ---
 
-## Fall 4 – Bestehender Nutzer wählt Magic Link statt Passwort
+## Fall 4 – Bestehender Nutzer wählt E-Mail-Code statt Passwort
 
 **Ablauf:**
+
 1. Nutzer ruft `/login` auf, gibt Email ein.
 2. `POST /api/players/check` → Account gefunden.
 3. `POST /api/auth/check-password` → beliebiger `passwordState`.
-4. UI zeigt Method-Auswahl: „Passwort" oder „Magic Link".
-5. Nutzer wählt Magic Link → `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo } })`
-   - `emailRedirectTo` zeigt auf `/confirm?return=<ursprüngliche Seite>`
-6. Nutzer klickt Link in Email → `/confirm` → Weiterleitung zu `/magic-login` mit Token-Parameter.
-7. `/magic-login` verarbeitet `detectSessionInUrl` → Session wird gesetzt → eingeloggt.
+4. UI zeigt Method-Auswahl: „Passwort" oder „E-Mail-Code".
+5. Nutzer wählt E-Mail-Code → `supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } })`
+6. Nutzer gibt den empfangenen Code direkt auf `/login` ein.
+7. Client ruft `supabase.auth.verifyOtp({ email, token, type: "email" })` auf → Session wird gesetzt → eingeloggt.
 
 ---
 
-## Fall 5 – Neuer Nutzer registriert sich mit Magic Link
+## Fall 5 – Neuer Nutzer registriert sich mit E-Mail-Code
 
 **Ablauf:**
-1. Nutzer wählt in `RegisterForm` die Methode „Magic Link".
-2. `supabase.auth.signInWithOtp({ email, options: { data: { name, playerId }, emailRedirectTo } })`
+
+1. Nutzer wählt in `RegisterForm` die Methode „E-Mail-Code".
+2. `supabase.auth.signInWithOtp({ email, options: { data: { name, playerId } } })`
    - Supabase erstellt den Account, falls er noch nicht existiert.
-3. Nutzer klickt Link → `/confirm` → `/magic-login` → Session set → eingeloggt.
+3. Nutzer gibt den Code direkt im Formular ein → `verifyOtp(...)` → Session gesetzt → eingeloggt.
 4. `app_metadata.has_password` ist nicht gesetzt; der Nutzer fällt bei künftigem Login unter **Fall 3**.
 
 ---
 
-## Fall 6 – Magic-Link-Nutzer setzt Passwort nachträglich über das Profil
+## Fall 6 – Passwortloser Nutzer setzt Passwort nachträglich über das Profil
 
 > Noch nicht implementiert (geplant). Folgt technisch Fall 3 (`request-password-setup`).
 
 ---
 
-## Fall 7 – Magic-Link-Token abgelaufen
+## Fall 7 – E-Mail-Code abgelaufen
 
 **Ablauf:**
-1. Nutzer klickt einen abgelaufenen Link → `/confirm` erkennt `error_code=otp_expired`.
-2. Fehlermeldung „Link Expired" wird angezeigt.
-3. Nutzer kann per E-Mail-Eingabe einen neuen Magic Link anfordern.
+
+1. Nutzer gibt einen abgelaufenen Code ein.
+2. `verifyOtp` liefert z. B. `otp_expired`.
+3. UI zeigt einen Fehler und Nutzer fordert einen neuen E-Mail-Code an.
 
 ---
 
 ## Fall 8 – Nutzer mit ausstehender Passwort-Einrichtung (`pending_password_setup`)
 
-> Legacy-Mechanismus aus der alten `confirm_email`-Implementierung.  
+> Legacy-Mechanismus aus der alten `confirm_code`-Vorstufe.  
 > Wird technisch noch unterstützt durch `POST /api/auth/finalize-password-setup`,
 > aber neuer Code erzeugt diesen Zustand nicht mehr.
 
@@ -169,9 +174,10 @@ hasPassword.value = passwordState === "missing" ? false : true;
 // → "unknown" wurde als true behandelt
 ```
 
-Für Legacy-Magic-Link-Nutzer ohne `app_metadata.has_password`-Eintrag gibt
+Für Legacy-passwortlose Nutzer ohne `app_metadata.has_password`-Eintrag gibt
 `/api/auth/check-password` `passwordState = "unknown"` zurück. Durch die fehlerhafte
 Behandlung wurde `hasPassword = true` gesetzt:
+
 1. Nutzer sieht die Passwort-Eingabe (obwohl kein Passwort gesetzt ist)
 2. Gibt irgendein Passwort ein → `no_password_set`-Fehler vom Server
 3. Wird dann erst zur Passwort-Einrichtung weitergeleitet
@@ -181,6 +187,7 @@ Das ist der eigentliche Grund, warum Nutzer aus Fall 3b die Bestätigungsmail al
 Fehlermeldung dort.
 
 **Fix:**
+
 ```typescript
 // Neu (korrekt):
 hasPassword.value = passwordState === "has";
@@ -198,9 +205,9 @@ Nach erfolgreicher Passwort-Registrierung und Login wurde immer zu `/` navigiert
 ursprünglich angeforderten Seite (z. B. Event-Registrierung).
 
 **Fix:**
+
 ```typescript
 // Alt: await navigateTo("/");
 // Neu:
 await navigateTo((route.query.redirect as string) || "/");
 ```
-

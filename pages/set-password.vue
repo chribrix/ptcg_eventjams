@@ -278,7 +278,7 @@ const submit = async () => {
   } = await supabase.auth.getSession();
   if (!session) {
     error.value =
-      "Du bist nicht eingeloggt. Bitte logge dich zuerst per Magic Link ein.";
+      "Du bist nicht eingeloggt. Bitte bestätige dich zuerst per E-Mail-Code oder Passwort.";
     loading.value = false;
     return;
   }

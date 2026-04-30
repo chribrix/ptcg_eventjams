@@ -1,8 +1,7 @@
-// Plugin to handle Supabase auth hash fragments explicitly
-// This is especially important for iOS Safari which can have issues with automatic detection
+// Legacy magic-link callback handler.
+// Passwordless auth now uses in-page OTP verification, so callback hash handling
+// is intentionally disabled and kept only as a diagnostic breadcrumb.
 export default defineNuxtPlugin(async (nuxtApp) => {
-  const supabaseClient = useSupabaseClient();
-
   if (!import.meta.client) return;
 
   // Helper to log to database
@@ -44,131 +43,12 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     userAgent: navigator.userAgent,
   };
 
-  // Check if we're on a page that should handle auth callbacks
-  const currentPath = window.location.pathname;
-  const isAuthCallback =
-    currentPath === "/magic-login" || currentPath.includes("/confirm");
-
-  await logToDatabase("plugin_initialized", "Auth handler plugin started", {
-    currentPath,
-    isAuthCallback,
-    ...deviceInfo,
-  });
-
-  if (!isAuthCallback) {
-    await logToDatabase("plugin_skipped", "Not an auth callback page", {
-      currentPath,
-    });
-    return;
-  }
-
-  // Check for hash fragments that indicate a Supabase auth response
-  const hash = window.location.hash;
-  if (!hash || hash.length <= 1) {
-    await logToDatabase("no_hash_fragment", "No hash fragment found in URL", {
-      urlLength: window.location.href.length,
-    });
-    return;
-  }
-
-  console.log("🔐 Detected auth hash fragment, processing...");
   await logToDatabase(
-    "hash_fragment_detected",
-    "Auth hash fragment found in URL",
+    "plugin_disabled",
+    "Legacy auth hash handling skipped because passwordless auth now uses email OTP",
     {
-      hashLength: hash.length,
+      currentPath: window.location.pathname,
       ...deviceInfo,
     }
   );
-
-  try {
-    // Parse the hash to check if it contains auth tokens
-    const hashParams = new URLSearchParams(hash.substring(1));
-    const hasAccessToken = hashParams.has("access_token");
-    const hasRefreshToken = hashParams.has("refresh_token");
-    const tokenType = hashParams.get("token_type");
-    const expiresIn = hashParams.get("expires_in");
-
-    await logToDatabase("hash_parsed", "Hash parameters parsed", {
-      hasAccessToken,
-      hasRefreshToken,
-      tokenType,
-      expiresIn,
-      paramKeys: Array.from(hashParams.keys()),
-    });
-
-    if (hasAccessToken || hasRefreshToken) {
-      console.log(
-        "✅ Auth tokens found in URL, waiting for Supabase to process..."
-      );
-      await logToDatabase(
-        "tokens_found",
-        "Auth tokens found, waiting for Supabase processing",
-        {
-          waitTimeMs: 500,
-          ...deviceInfo,
-        }
-      );
-
-      // Give Supabase's built-in handler time to process the tokens
-      // This is crucial for mobile browsers, especially iOS Safari
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Verify the session was established
-      const {
-        data: { session },
-      } = await supabaseClient.auth.getSession();
-
-      if (session) {
-        console.log("✅ Session established from hash fragment");
-        await logToDatabase(
-          "session_established",
-          "Session successfully established from hash",
-          {
-            userId: session.user?.id,
-            userEmail: session.user?.email,
-            expiresAt: session.expires_at,
-            ...deviceInfo,
-          }
-        );
-
-        // Clean up the URL hash to prevent re-processing
-        // Use replaceState to avoid triggering navigation
-        if (window.history && window.history.replaceState) {
-          const cleanUrl =
-            window.location.origin +
-            window.location.pathname +
-            window.location.search;
-          window.history.replaceState({}, document.title, cleanUrl);
-
-          await logToDatabase("url_cleaned", "Hash fragment removed from URL", {
-            cleanUrl,
-          });
-        }
-      } else {
-        console.warn("⚠️ Hash tokens found but session not established");
-        await logToDatabase(
-          "session_failed",
-          "Hash tokens found but session not established",
-          {
-            waitTimeMs: 500,
-            ...deviceInfo,
-          }
-        );
-      }
-    }
-  } catch (error) {
-    console.error("❌ Error processing auth hash fragment:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    await logToDatabase(
-      "processing_error",
-      `Error processing hash: ${errorMessage}`,
-      {
-        error: errorMessage,
-        stack: error instanceof Error ? error.stack : undefined,
-        ...deviceInfo,
-      }
-    );
-  }
 });

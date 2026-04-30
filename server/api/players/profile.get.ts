@@ -5,6 +5,7 @@ import {
   logAuthError,
 } from "~/server/util/errorLogger";
 import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
+import { normalizePreferredLoginMethod } from "~/server/util/playerProvisioning";
 
 const prisma = new PrismaClient();
 const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
@@ -38,8 +39,9 @@ export default defineEventHandler(async (event) => {
         name: player.name,
         email: player.email,
         birthDate: player.birthDate,
-        preferredLoginMethod:
+        preferredLoginMethod: normalizePreferredLoginMethod(
           (player as any).preferredLoginMethod || "password",
+        ),
       },
     };
   } catch (error) {

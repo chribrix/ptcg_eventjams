@@ -1,7 +1,7 @@
 /**
  * Set Password Endpoint
  *
- * Allows an authenticated user (e.g. already logged in via magic link) to set
+ * Allows an authenticated user (e.g. already signed in via password or email OTP) to set
  * or update their password. The same pepper+bcrypt chain used in login is applied.
  *
  * Requires: Authorization header (Bearer <access_token>) or session cookie.

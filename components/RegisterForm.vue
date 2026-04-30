@@ -29,13 +29,13 @@
           type="button"
           class="py-2 text-sm font-semibold rounded-md transition"
           :class="
-            registerMethod === 'magiclink'
+            registerMethod === 'otp'
               ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-600 hover:text-gray-800'
           "
-          @click="registerMethod = 'magiclink'"
+          @click="registerMethod = 'otp'"
         >
-          {{ t("registerForm.methodMagicLink") }}
+          {{ t("registerForm.methodOtp") }}
         </button>
       </div>
 
@@ -125,6 +125,24 @@
         </div>
       </template>
 
+      <template v-else-if="linkSent">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >{{ t("registerForm.otpLabel") }}</label
+          >
+          <input
+            v-model="otpCode"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            :placeholder="t('registerForm.otpPlaceholder')"
+            required
+          />
+        </div>
+      </template>
+
       <button
         type="submit"
         :disabled="isLoading"
@@ -158,7 +176,9 @@
               ? t("common.loading")
               : registerMethod === "password"
                 ? t("registerForm.submitCreateAccount")
-                : t("registerForm.submitSendMagicLink")
+                  : linkSent
+                    ? t("registerForm.submitVerifyOtp")
+                    : t("registerForm.submitSendOtp")
           }}</span>
         </div>
       </button>
@@ -214,9 +234,10 @@ import {
 const email = ref("");
 const name = ref("");
 const playerId = ref("");
-const registerMethod = ref<"password" | "magiclink">("password");
+const registerMethod = ref<"password" | "otp">("password");
 const password = ref("");
 const passwordConfirm = ref("");
+const otpCode = ref("");
 const showPassword = ref(false);
 const showPasswordConfirm = ref(false);
 const linkSent = ref(false);
@@ -229,13 +250,13 @@ const { t } = useI18n();
 const successTitle = computed(() =>
   registerMethod.value === "password"
     ? t("registerForm.successTitlePassword")
-    : t("registerForm.successTitleMagicLink"),
+    : t("registerForm.successTitleOtp"),
 );
 
 const successText = computed(() =>
   registerMethod.value === "password"
     ? t("registerForm.successTextPassword")
-    : t("registerForm.successTextMagicLink"),
+    : t("registerForm.successTextOtp"),
 );
 
 // Pre-fill email if passed from failed login
@@ -276,23 +297,35 @@ const logError = async (
   } catch {}
 };
 
-const getMagicLinkRedirect = () => {
-  const returnPath = route.query.redirect as string;
-  const configuredBase = runtimeConfig.public.appBaseUrl?.replace(/\/$/, "");
-  let redirectTo = "";
+const verifyOtpRegistration = async () => {
+  const code = otpCode.value.trim();
 
-  if (configuredBase) {
-    redirectTo = `${configuredBase}/confirm`;
-  } else if (process.client) {
-    redirectTo = `${window.location.origin.replace(/\/$/, "")}/confirm`;
+  if (!code) {
+    error.value = t("registerForm.errorOtpRequired");
+    return;
   }
 
-  // Append the return path if present (confirm page passes it along to magic-login)
-  if (redirectTo && returnPath) {
-    redirectTo = `${redirectTo}?return=${encodeURIComponent(returnPath)}`;
+  const { data, error: verifyError } = await useSupabaseClient().auth.verifyOtp({
+    email: email.value,
+    token: code,
+    type: "email",
+  });
+
+  if (verifyError || !data.session) {
+    throw new Error(
+      verifyError?.message || t("registerForm.errorOtpVerificationFailed"),
+    );
   }
 
-  return redirectTo || undefined;
+  await $fetch("/api/auth/ensure-player", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${data.session.access_token}`,
+    },
+    body: { preferredLoginMethod: "otp" },
+  });
+
+  await navigateTo((route.query.redirect as string) || "/");
 };
 
 const submitForm = async () => {
@@ -358,9 +391,22 @@ const submitForm = async () => {
     // If the check fails, we'll allow the registration to proceed
     // The backend will handle any duplicate errors
   }
-
-  const redirectTo = getMagicLinkRedirect();
   let signUpError: { message?: string } | null = null;
+
+  if (registerMethod.value === "otp" && linkSent.value) {
+    try {
+      await verifyOtpRegistration();
+      return;
+    } catch (err: any) {
+      signUpError = {
+        message:
+          err?.data?.statusMessage ||
+          err?.statusMessage ||
+          err?.message ||
+          t("registerForm.errorOtpVerificationFailed"),
+      };
+    }
+  }
 
   if (registerMethod.value === "password") {
     try {
@@ -385,11 +431,11 @@ const submitForm = async () => {
     const response = await useSupabaseClient().auth.signInWithOtp({
       email: email.value,
       options: {
+        shouldCreateUser: true,
         data: {
           name: name.value,
           playerId: playerId.value,
         },
-        ...(redirectTo ? { emailRedirectTo: redirectTo } : {}),
       },
     });
     signUpError = response.error;
@@ -452,7 +498,6 @@ const submitForm = async () => {
       method: registerMethod.value,
       hasName: !!name.value,
       hasPlayerId: !!playerId.value,
-      redirectTo,
     });
   } else {
     await logError(
@@ -463,7 +508,6 @@ const submitForm = async () => {
         method: registerMethod.value,
         name: name.value,
         playerId: playerId.value,
-        redirectTo,
       },
     );
     linkSent.value = true;

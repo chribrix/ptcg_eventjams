@@ -4,6 +4,7 @@ import { serverSupabaseUser } from "#supabase/server";
 import {
   ensurePlayerForAuthUser,
   getProvisionPlayerInputFromAuthUser,
+  normalizePreferredLoginMethod,
 } from "~/server/util/playerProvisioning";
 
 // Ensures the logged-in auth user has a canonical local Player row.
@@ -73,9 +74,13 @@ export const createEnsurePlayerHandler = (
       throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
     }
 
-    const body = await readBody<{ preferredLoginMethod?: "password" | "magiclink" }>(event).catch(() => ({}));
+    const body = await readBody<{
+      preferredLoginMethod?: "password" | "otp" | "magiclink";
+    }>(event).catch(() => ({}));
     const provisioningInput = getProvisionPlayerInputFromAuthUser(user, {
-      preferredLoginMethod: body.preferredLoginMethod || "magiclink",
+      preferredLoginMethod: normalizePreferredLoginMethod(
+        body.preferredLoginMethod || "otp",
+      ),
     });
 
     if (!provisioningInput) {

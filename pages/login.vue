@@ -23,7 +23,7 @@
         </div>
         <h1 class="text-2xl font-bold text-gray-900">Login</h1>
         <p class="text-sm text-gray-600 mt-1">
-          Melde dich mit E-Mail + Passwort oder Magic Link an
+          Melde dich mit E-Mail + Passwort oder E-Mail-Code an
         </p>
       </div>
 
@@ -76,9 +76,9 @@
           type="button"
           :disabled="isLoading"
           class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition"
-          @click="selectMagicLink"
+          @click="selectOtp"
         >
-          Mit Magic Link anmelden
+          Mit E-Mail-Code anmelden
         </button>
 
         <button
@@ -251,7 +251,7 @@
         </button>
       </form>
 
-      <div v-else class="space-y-4">
+      <form v-else class="space-y-4" @submit.prevent="submitOtpVerification">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1"
             >E-Mail-Adresse</label
@@ -271,21 +271,45 @@
         </div>
 
         <p class="text-sm text-gray-600">
-          Wir senden dir einen Login-Link per E-Mail.
+          Wir senden dir einen sechsstelligen Login-Code per E-Mail.
         </p>
 
         <p v-if="passwordSetupRequested" class="text-sm text-amber-700">
-          Bitte bestätige die E-Mail. Nach Klick wird dein Passwort aktiviert
-          und du direkt eingeloggt.
+          Bitte gib den Bestätigungscode aus der E-Mail ein. Danach wird dein
+          Passwort aktiviert und du direkt weitergeleitet.
         </p>
+
+        <div v-if="linkSent">
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >E-Mail-Code</label
+          >
+          <input
+            v-model="otpCode"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="123456"
+          />
+        </div>
 
         <button
           type="button"
           :disabled="isLoading"
           class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition"
-          @click="submitMagicLink"
+          @click="submitOtpRequest"
         >
-          {{ isLoading ? "Sende Link..." : "Magic Link senden" }}
+          {{ isLoading ? "Sende Code..." : "E-Mail-Code senden" }}
+        </button>
+
+        <button
+          v-if="linkSent"
+          type="submit"
+          :disabled="isLoading"
+          class="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed font-semibold py-3 px-4 rounded-lg transition"
+        >
+          {{ isLoading ? "Prüfe Code..." : "Code bestätigen" }}
         </button>
 
         <button
@@ -301,9 +325,9 @@
           v-if="linkSent"
           class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm"
         >
-          Magic Link gesendet. Bitte prüfe dein E-Mail-Postfach.
+          E-Mail-Code gesendet. Bitte prüfe dein E-Mail-Postfach.
         </div>
-      </div>
+      </form>
 
       <div
         v-if="error"
@@ -336,6 +360,7 @@ const {
   step,
   email,
   password,
+  otpCode,
   newPassword,
   newPasswordConfirm,
   showPassword,
@@ -351,10 +376,11 @@ const {
   backToMethod,
   checkEmail,
   selectPassword,
-  selectMagicLink,
+  selectOtp,
   submitPasswordLogin,
   submitInitialPasswordAndLogin,
-  submitMagicLink,
+  submitOtpRequest,
+  submitOtpVerification,
 } = useLoginWorkflow();
 
 const registerLink = computed(() => {

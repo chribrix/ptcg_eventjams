@@ -40,7 +40,7 @@ export default defineNuxtConfig({
     redirect: false,
     redirectOptions: {
       login: "/login",
-      callback: "/confirm",
+      callback: "/login",
       exclude: ["/", "/events", "/events/*", "/eventlist"],
     },
     cookieOptions: {

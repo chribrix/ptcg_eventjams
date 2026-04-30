@@ -9,8 +9,8 @@ import {
 // Handles the first password setup flow for existing auth users.
 //
 // Path A activates the password immediately and now also provisions the canonical
-// Player synchronously. Path B prepares a confirm-email step and defers final
-// activation to finalize-password-setup.
+// Player synchronously. Path B prepares an email-code confirmation step and
+// defers final activation to finalize-password-setup.
 
 type AdminUser = {
   id: string;
@@ -144,7 +144,7 @@ export const createRequestPasswordSetupHandler = (
     }
 
     const pepper = config.passwordPepper;
-    // Used to encrypt the pending password for the confirm_email path
+    // Used to encrypt the pending password for the confirm_code path
     const encryptionSecret = config.passwordPepper || config.supabaseServiceKey;
 
     if (!pepper) {
@@ -193,10 +193,10 @@ export const createRequestPasswordSetupHandler = (
   //   Passwort wird sofort gesetzt, email wird als bestätigt markiert,
   //   Nutzer wird direkt eingeloggt. Keine Bestätigungsmail.
   //
-  // Path B – Bereits mindestens einmal per Magic Link angemeldet (email_confirmed_at vorhanden):
+  // Path B – Bereits mindestens einmal angemeldet (email_confirmed_at vorhanden):
   //   Das Passwort wird verschlüsselt als pending_password_setup gespeichert.
-  //   Ein Magic Link mit flow=set-password wird gesendet.
-  //   Nach Klick → /magic-login → finalize-password-setup entschlüsselt und setzt das Passwort.
+  //   Ein E-Mail-Code wird gesendet.
+  //   Nach Eingabe des Codes → finalize-password-setup entschlüsselt und setzt das Passwort.
   //   Sicherheitsgrund: Der Nutzer muss beweisen, dass er noch Zugang zur Email hat.
 
     const hasLoggedInBefore = Boolean(authUser.email_confirmed_at);
@@ -311,9 +311,9 @@ export const createRequestPasswordSetupHandler = (
       };
     }
 
-  // Path B: Nutzer hat sich bereits angemeldet → Bestätigung per Magic Link erforderlich.
+  // Path B: Nutzer hat sich bereits angemeldet → Bestätigung per E-Mail-Code erforderlich.
   // Passwort wird verschlüsselt als pending_password_setup gespeichert und erst nach
-  // Klick auf den Magic Link durch finalize-password-setup aktiviert.
+  // Eingabe des E-Mail-Codes durch finalize-password-setup aktiviert.
     const encrypted = encryptValue(pepperedPassword, encryptionSecret);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
@@ -336,16 +336,9 @@ export const createRequestPasswordSetupHandler = (
       });
     }
 
-    const origin = appBaseUrl || supabaseUrl;
-    const params = new URLSearchParams();
-    if (returnPath) params.set("return", returnPath);
-    params.set("flow", "set-password");
-    const redirectTo = `${origin}/confirm?${params.toString()}`;
-
     return {
       success: true,
-      mode: "confirm_email",
-      redirectTo,
+      mode: "confirm_code",
       email: normalizedEmail,
     };
   });

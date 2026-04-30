@@ -401,7 +401,7 @@ describe("authenticated player handler integration", () => {
         }),
         update: vi.fn().mockResolvedValue({
           id: "player-db-id",
-          preferredLoginMethod: "magiclink",
+          preferredLoginMethod: "otp",
         }),
       },
     };
@@ -415,19 +415,19 @@ describe("authenticated player handler integration", () => {
           email: "changed@example.com",
         },
         readBodyResult: {
-          method: "magiclink",
+          method: "otp",
         },
       },
     );
 
     await expect(handler(createEvent("POST"))).resolves.toEqual({
       success: true,
-      method: "magiclink",
+      method: "otp",
     });
 
     expect(mockPrisma.player.update).toHaveBeenCalledWith({
       where: { id: "player-db-id" },
-      data: { preferredLoginMethod: "magiclink" },
+      data: { preferredLoginMethod: "otp" },
     });
   });
 

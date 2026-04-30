@@ -3,7 +3,7 @@ type LoginStep =
   | "method"
   | "password"
   | "passwordSetup"
-  | "magiclink";
+  | "otp";
 
 export const useLoginWorkflow = () => {
   const route = useRoute();
@@ -14,6 +14,7 @@ export const useLoginWorkflow = () => {
   const step = ref<LoginStep>("email");
   const email = ref("");
   const password = ref("");
+  const otpCode = ref("");
   const newPassword = ref("");
   const newPasswordConfirm = ref("");
   const showPassword = ref(false);
@@ -25,33 +26,18 @@ export const useLoginWorkflow = () => {
   const error = ref("");
   const isLoading = ref(false);
   const eventDetails = ref<any>(null);
-
-  const getMagicLinkRedirect = (
-    returnOverride?: string,
-    flow?: "set-password",
-  ) => {
-    const configuredBase = runtimeConfig.public.appBaseUrl?.replace(/\/$/, "");
-    const base =
-      configuredBase ||
-      (process.client ? window.location.origin.replace(/\/$/, "") : "");
-    if (!base) return undefined;
-
-    const returnPath = returnOverride || (route.query.redirect as string);
-    const params = new URLSearchParams();
-    if (returnPath) params.set("return", returnPath);
-    if (flow) params.set("flow", flow);
-    const query = params.toString();
-    return `${base}/confirm${query ? `?${query}` : ""}`;
-  };
+  const isOtpPasswordSetupConfirmation = ref(false);
 
   const backToEmail = () => {
     step.value = "email";
     password.value = "";
     newPassword.value = "";
     newPasswordConfirm.value = "";
+    otpCode.value = "";
     error.value = "";
     linkSent.value = false;
     passwordSetupRequested.value = false;
+    isOtpPasswordSetupConfirmation.value = false;
   };
 
   const backToMethod = () => {
@@ -59,6 +45,7 @@ export const useLoginWorkflow = () => {
     password.value = "";
     newPassword.value = "";
     newPasswordConfirm.value = "";
+    otpCode.value = "";
     error.value = "";
   };
 
@@ -114,7 +101,7 @@ export const useLoginWorkflow = () => {
       const playerCheck = await $fetch<{
         exists: boolean;
         authExists?: boolean;
-        player: { preferredLoginMethod?: "password" | "magiclink" } | null;
+        player: { preferredLoginMethod?: "password" | "otp" } | null;
       }>("/api/players/check", {
         method: "POST",
         body: { email: email.value },
@@ -218,17 +205,18 @@ export const useLoginWorkflow = () => {
     }
   };
 
-  const submitMagicLink = async () => {
+  const submitOtpRequest = async () => {
     error.value = "";
     linkSent.value = false;
     passwordSetupRequested.value = false;
+    isOtpPasswordSetupConfirmation.value = false;
     isLoading.value = true;
-
-    const redirectTo = getMagicLinkRedirect();
 
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email: email.value,
-      options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
+      options: {
+        shouldCreateUser: false,
+      },
     });
 
     isLoading.value = false;
@@ -250,6 +238,7 @@ export const useLoginWorkflow = () => {
     }
 
     linkSent.value = true;
+    step.value = "otp";
   };
 
   const selectPassword = () => {
@@ -257,9 +246,110 @@ export const useLoginWorkflow = () => {
     step.value = hasPassword.value ? "password" : "passwordSetup";
   };
 
-  const selectMagicLink = () => {
+  const selectOtp = () => {
     error.value = "";
-    step.value = "magiclink";
+    otpCode.value = "";
+    step.value = "otp";
+  };
+
+  const completeOtpSignIn = async () => {
+    const playerCheck = await $fetch<{
+      exists: boolean;
+      player?: { playerId?: string } | null;
+    }>("/api/players/check", {
+      method: "POST",
+      body: {
+        email: email.value,
+      },
+    });
+
+    if (!playerCheck.exists) {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
+      if (authUser?.user_metadata?.name && authUser?.user_metadata?.playerId) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) {
+          throw new Error("Session could not be established.");
+        }
+
+        await $fetch("/api/auth/ensure-player", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: { preferredLoginMethod: "otp" },
+        });
+      } else {
+        await supabase.auth.signOut({ scope: "local" });
+        throw new Error(
+          `We couldn't find an account for ${email.value}. Please register first.`,
+        );
+      }
+    }
+
+    try {
+      await $fetch("/api/players/preferred-login-method", {
+        method: "POST",
+        body: { method: "otp" },
+      });
+    } catch {
+      // best-effort only
+    }
+
+    await navigateTo((route.query.redirect as string) || "/");
+  };
+
+  const submitOtpVerification = async () => {
+    error.value = "";
+
+    if (!otpCode.value.trim()) {
+      error.value = "Bitte gib den E-Mail-Code ein.";
+      return;
+    }
+
+    isLoading.value = true;
+
+    try {
+      const {
+        data: { session },
+        error: verifyError,
+      } = await supabase.auth.verifyOtp({
+        email: email.value,
+        token: otpCode.value.trim(),
+        type: "email",
+      });
+
+      if (verifyError || !session) {
+        throw verifyError || new Error("Code verification failed");
+      }
+
+      if (isOtpPasswordSetupConfirmation.value) {
+        await $fetch("/api/auth/finalize-password-setup", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+        await navigateTo("/password-set-success");
+        return;
+      }
+
+      await completeOtpSignIn();
+    } catch (err: any) {
+      const msg: string =
+        err?.data?.statusMessage || err?.statusMessage || err?.message || "";
+      error.value =
+        msg || "Der E-Mail-Code konnte nicht bestätigt werden. Bitte versuche es erneut.";
+    } finally {
+      isLoading.value = false;
+    }
   };
 
   const submitInitialPasswordAndLogin = async () => {
@@ -280,8 +370,7 @@ export const useLoginWorkflow = () => {
     try {
       const setup = await $fetch<{
         success: boolean;
-        mode: "direct" | "confirm_email";
-        redirectTo?: string;
+        mode: "direct" | "confirm_code";
         email?: string;
         access_token?: string;
         refresh_token?: string;
@@ -316,28 +405,28 @@ export const useLoginWorkflow = () => {
         return;
       }
 
-      if (!setup.email || !setup.redirectTo) {
-        throw new Error("Bestätigungs-E-Mail konnte nicht vorbereitet werden.");
+      if (!setup.email) {
+        throw new Error("Bestätigungs-Code konnte nicht vorbereitet werden.");
       }
 
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: setup.email,
         options: {
           shouldCreateUser: false,
-          emailRedirectTo: setup.redirectTo,
         },
       });
 
       if (otpError) {
         throw new Error(
           otpError.message ||
-            "Bestätigungs-E-Mail konnte nicht gesendet werden.",
+            "Bestätigungs-Code konnte nicht gesendet werden.",
         );
       }
 
+      isOtpPasswordSetupConfirmation.value = true;
       passwordSetupRequested.value = true;
       linkSent.value = true;
-      step.value = "magiclink";
+      step.value = "otp";
     } catch (err: any) {
       const msg: string =
         err?.data?.statusMessage || err?.statusMessage || err?.message || "";
@@ -359,6 +448,7 @@ export const useLoginWorkflow = () => {
     step,
     email,
     password,
+    otpCode,
     newPassword,
     newPasswordConfirm,
     showPassword,
@@ -374,9 +464,10 @@ export const useLoginWorkflow = () => {
     backToMethod,
     checkEmail,
     selectPassword,
-    selectMagicLink,
+    selectOtp,
     submitPasswordLogin,
     submitInitialPasswordAndLogin,
-    submitMagicLink,
+    submitOtpRequest,
+    submitOtpVerification,
   };
 };

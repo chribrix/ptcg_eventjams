@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
  * Supabase Database Webhook Handler (auth.users table)
  *
  * This endpoint receives webhooks from Supabase Database when a new user is created.
- * When a new user is inserted into auth.users (after clicking magic link), we automatically
+ * When a new user is inserted into auth.users after passwordless or password signup, we automatically
  * create a Player record if the user has registration metadata (name + playerId).
  *
  * Setup in Supabase Dashboard:

@@ -4,14 +4,14 @@
  * Abgedeckte Fälle (gemäß loginworkflow.md):
  *   Fall 1  – Neuer Nutzer registriert sich mit Passwort
  *   Fall 2  – Bestehender Nutzer mit Passwort meldet sich an
- *   Fall 3a – Magic-Link-Nutzer, der den Link NIE geklickt hat, setzt erstmals Passwort
+ *   Fall 3a – Passwortloser Nutzer ohne vorherige bestätigte Anmeldung setzt erstmals Passwort
  *             → direkt eingeloggt, keine Bestätigungsmail
  *             Variante A: has_password = false  (passwordState: "missing")
  *             Variante B: kein has_password  in app_metadata (passwordState: "unknown")
- *   Fall 4  – Bestehender Nutzer wählt Magic Link statt Passwort
+ *   Fall 4  – Bestehender Nutzer wählt E-Mail-Code statt Passwort
  *
- * NICHT abgedeckt (benötigen Bestätigungsmail):
- *   Fall 3b – Magic-Link-Nutzer mit vorheriger Anmeldung (email_confirmed_at gesetzt)
+ * NICHT abgedeckt (benötigen Bestätigungscode):
+ *   Fall 3b – Passwortloser Nutzer mit vorheriger Anmeldung (email_confirmed_at gesetzt)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -59,14 +59,13 @@ type PasswordSetupResult =
       token_type: string;
     }
   | {
-      mode: "confirm_email";
+      mode: "confirm_code";
       email: string;
-      redirectTo: string;
     };
 
 /**
  * Simuliert die Kern-Entscheidungslogik von /api/auth/request-password-setup.
- * Gibt an, welcher Pfad gewählt wird (direkt vs. confirm_email).
+ * Gibt an, welcher Pfad gewählt wird (direkt vs. confirm_code).
  */
 const resolveSetupMode = (
   authUser: {
@@ -109,14 +108,10 @@ const resolveSetupMode = (
     };
   }
 
-  // Path B: confirm_email (nicht Gegenstand dieser Tests)
-  const params = new URLSearchParams();
-  if (returnPath) params.set("return", returnPath);
-  params.set("flow", "set-password");
+  // Path B: confirm_code (nicht Gegenstand dieser Tests)
   return {
-    mode: "confirm_email",
+    mode: "confirm_code",
     email,
-    redirectTo: `${appBaseUrl}/confirm?${params.toString()}`,
   };
 };
 
@@ -239,7 +234,7 @@ describe("Login Workflow – Fälle ohne E-Mail-Bestätigung", () => {
       expect(result.mode).toBe("direct");
     });
 
-    it("sollte Path B (confirm_email) wählen, wenn email_confirmed_at gesetzt ist", () => {
+    it("sollte Path B (confirm_code) wählen, wenn email_confirmed_at gesetzt ist", () => {
       const user = mockAuthUsers.magicLinkPreviouslyConfirmed;
       const adminMock = makeSupabaseAdminMock();
       const loginMock = makeLoginFetchMock(user.id, user.email);
@@ -256,7 +251,7 @@ describe("Login Workflow – Fälle ohne E-Mail-Bestätigung", () => {
         "https://app.example.com",
       );
 
-      expect(result.mode).toBe("confirm_email");
+      expect(result.mode).toBe("confirm_code");
     });
 
     it("sollte Path A (direkt) wählen, wenn app_metadata leer ist (Legacy-Nutzer, nie angemeldet)", () => {
@@ -690,26 +685,25 @@ describe("Login Workflow – Fälle ohne E-Mail-Bestätigung", () => {
   });
 
   // -------------------------------------------------------------------------
-  // Fall 4 – Magic-Link-Login
+  // Fall 4 – E-Mail-Code-Login
   // -------------------------------------------------------------------------
 
-  describe("Fall 4 – Bestehender Nutzer wählt Magic Link", () => {
-    it("sollte signInWithOtp mit der E-Mail und emailRedirectTo aufrufen", () => {
+  describe("Fall 4 – Bestehender Nutzer wählt E-Mail-Code", () => {
+    it("sollte signInWithOtp mit der E-Mail und shouldCreateUser: false aufrufen", () => {
       const signInWithOtpMock = vi.fn().mockResolvedValue({ error: null });
       const email = "password-user@example.com";
-      const redirectTo = "https://app.example.com/confirm?return=%2Fdashboard";
 
       signInWithOtpMock({
         email,
         options: {
-          emailRedirectTo: redirectTo,
+          shouldCreateUser: false,
         },
       });
 
       expect(signInWithOtpMock).toHaveBeenCalledWith(
         expect.objectContaining({
           email,
-          options: expect.objectContaining({ emailRedirectTo: redirectTo }),
+          options: expect.objectContaining({ shouldCreateUser: false }),
         }),
       );
     });
@@ -724,7 +718,7 @@ describe("Login Workflow – Fälle ohne E-Mail-Bestätigung", () => {
 
       const result = await signInWithOtpMock({
         email: "user@example.com",
-        options: { emailRedirectTo: "https://app.example.com/confirm" },
+        options: { shouldCreateUser: false },
       });
 
       expect(result.error).toBeTruthy();
@@ -771,8 +765,8 @@ describe("Login Workflow – Fälle ohne E-Mail-Bestätigung", () => {
       // → Composable setzt error.value = "Passwörter stimmen nicht überein."
     });
 
-    it("sollte confirm_email-Pfad keinen updateUserById ohne email_confirm aufrufen", () => {
-      // Stellt sicher, dass Path B (confirm_email) updateUserById nicht für den direkten Login aufruft
+    it("sollte confirm_code-Pfad keinen updateUserById ohne email_confirm aufrufen", () => {
+      // Stellt sicher, dass Path B (confirm_code) updateUserById nicht für den direkten Login aufruft
       const user = mockAuthUsers.magicLinkPreviouslyConfirmed;
       const adminMock = makeSupabaseAdminMock();
       const loginMock = makeLoginFetchMock(user.id, user.email);
@@ -789,7 +783,7 @@ describe("Login Workflow – Fälle ohne E-Mail-Bestätigung", () => {
         "https://app.example.com",
       );
 
-      expect(result.mode).toBe("confirm_email");
+      expect(result.mode).toBe("confirm_code");
       // für Path B wird updateUserById im Test-Mock nicht aufgerufen
       // (echter Server ruft es für pending_password_setup auf, was aber nicht Teil dieser Tests ist)
       expect(adminMock.updateUserById).not.toHaveBeenCalledWith(

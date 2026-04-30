@@ -86,7 +86,7 @@ export const mockPlayers = {
     email: mockAuthUsers.magicLinkNeverConfirmed.email,
     name: "Magic Link User",
     playerId: "ML002",
-    preferredLoginMethod: "magiclink",
+    preferredLoginMethod: "otp",
   },
   legacyNoMetadata: {
     id: "player-lg-003",
