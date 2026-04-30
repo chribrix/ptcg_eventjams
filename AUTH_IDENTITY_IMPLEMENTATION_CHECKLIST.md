@@ -57,6 +57,8 @@ Acceptance criteria:
 
 ### Item 2 - Add a Shared Authenticated Player Resolver
 
+Status: Completed on 2026-04-30
+
 Goal:
 
 - add one server helper that resolves the current canonical player by `supabaseId`
@@ -64,11 +66,19 @@ Goal:
 
 Tasks:
 
-1. Create a shared helper for authenticated player lookup.
-2. Use `supabaseId` as the primary and only authenticated join key.
-3. Return a clear integrity error when an auth user has no linked player.
-4. Add structured logging for missing links.
-5. Ensure the helper never touches ticket-only participant records.
+1. [x] Create a shared helper for authenticated player lookup.
+2. [x] Use `supabaseId` as the primary and only authenticated join key.
+3. [x] Return a clear integrity error when an auth user has no linked player.
+4. [x] Add structured logging for missing links.
+5. [x] Ensure the helper never touches ticket-only participant records.
+
+Completed in this item:
+
+- added `server/util/authenticatedPlayer.ts`
+- migrated authenticated player and dashboard endpoints away from ad hoc email-based joins
+- migrated `players/profile.get`, `players/profile.put`, and `players/preferred-login-method.post`
+- fixed impersonation resolution to use local `Player.playerId`
+- added focused unit coverage for resolver behavior and migrated handlers
 
 Acceptance criteria:
 
@@ -78,16 +88,30 @@ Acceptance criteria:
 
 ### Item 3 - Centralize Player Provisioning
 
+Status: Completed on 2026-04-30
+
 Goal:
 
 - create one server-owned provisioning path for creating or binding the canonical `Player`
 
 Tasks:
 
-1. Add `ensurePlayerForAuthUser(...)` or equivalent.
-2. Route password signup through it.
-3. Route passwordless signup/login completion through it.
-4. Remove client-side account repair creation.
+1. [x] Add `ensurePlayerForAuthUser(...)` or equivalent.
+2. [x] Route password signup through it.
+3. [x] Route passwordless signup/login completion through it.
+4. [x] Remove client-side account repair creation.
+
+Completed so far:
+
+- added `server/util/playerProvisioning.ts`
+- updated `server/api/auth/register-password.post.ts` to provision the canonical player synchronously
+- added rollback so the Supabase auth user is deleted again if local player provisioning fails
+- updated `server/api/auth/request-password-setup.post.ts` direct completion path to provision the canonical player synchronously
+- updated `server/api/auth/finalize-password-setup.post.ts` to provision the canonical player after password activation
+- added `server/api/auth/ensure-player.post.ts` for passwordless completion flows
+- replaced the client-side manual `players/register` repair path in `pages/magic-login.vue` with the server-owned provisioning endpoint
+- added focused unit coverage for the provisioning helper and password registration endpoint
+- added focused unit coverage for password setup completion and ensure-player provisioning flows
 
 Acceptance criteria:
 
@@ -211,6 +235,6 @@ Acceptance criteria:
 
 ## Recommended Next Action
 
-Item 1 is approved.
+Item 3 is complete.
 
-The next implementation step should be Item 2: the shared authenticated player resolver.
+The next implementation step is Item 4: replace redirect-link-centered passwordless login with a login code architecture.

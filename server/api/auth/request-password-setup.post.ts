@@ -1,14 +1,23 @@
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { PrismaClient } from "@prisma/client";
+import {
+  ensurePlayerForAuthUser,
+  getProvisionPlayerInputFromAuthUser,
+} from "~/server/util/playerProvisioning";
 
-const prisma = new PrismaClient();
+// Handles the first password setup flow for existing auth users.
+//
+// Path A activates the password immediately and now also provisions the canonical
+// Player synchronously. Path B prepares a confirm-email step and defers final
+// activation to finalize-password-setup.
 
 type AdminUser = {
   id: string;
   email?: string;
   email_confirmed_at?: string | null;
   app_metadata?: Record<string, any>;
+  user_metadata?: Record<string, any>;
 };
 
 const deriveEncryptionKey = (secret: string) =>
@@ -76,86 +85,107 @@ const getAuthUserByEmail = async (
   return users.find((user) => user.email?.toLowerCase() === email) || null;
 };
 
-export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig();
-  const { email, password, returnPath } = await readBody<{
-    email?: string;
-    password?: string;
-    returnPath?: string;
-  }>(event);
+type RequestPasswordSetupDependencies = {
+  getRuntimeConfig?: typeof useRuntimeConfig;
+  createPrismaClient?: () => PrismaClient;
+  createSupabaseAdminClient?: (supabaseUrl: string, serviceKey: string) => any;
+  provisionPlayer?: typeof ensurePlayerForAuthUser;
+};
 
-  if (!email || !password) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Email and password are required",
-    });
-  }
+export const createRequestPasswordSetupHandler = (
+  dependencies: RequestPasswordSetupDependencies = {},
+) => {
+  const getRuntimeConfig = dependencies.getRuntimeConfig || useRuntimeConfig;
+  const createPrismaClient =
+    dependencies.createPrismaClient || (() => new PrismaClient());
+  const createSupabaseAdminClient =
+    dependencies.createSupabaseAdminClient ||
+    ((supabaseUrl: string, serviceKey: string) =>
+      createClient(supabaseUrl, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      }));
+  const provisionPlayer =
+    dependencies.provisionPlayer || ensurePlayerForAuthUser;
+  const prisma = createPrismaClient();
 
-  if (password.length < 8) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Password must be at least 8 characters",
-    });
-  }
+  return defineEventHandler(async (event) => {
+    const config = getRuntimeConfig();
+    const { email, password, returnPath } = await readBody<{
+      email?: string;
+      password?: string;
+      returnPath?: string;
+    }>(event);
 
-  const normalizedEmail = email.trim().toLowerCase();
-  const supabaseUrl = config.public.supabaseUrl;
-  const supabaseAnonKey = config.public.supabaseAnonKey;
-  const serviceKey = config.supabaseServiceKey;
-  const appBaseUrl = config.public.appBaseUrl?.replace(/\/$/, "");
+    if (!email || !password) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Email and password are required",
+      });
+    }
 
-  if (!supabaseUrl || !serviceKey || !supabaseAnonKey) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Supabase not configured",
-    });
-  }
+    if (password.length < 8) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Password must be at least 8 characters",
+      });
+    }
 
-  const pepper = config.passwordPepper;
-  // Used to encrypt the pending password for the confirm_email path
-  const encryptionSecret = config.passwordPepper || config.supabaseServiceKey;
+    const normalizedEmail = email.trim().toLowerCase();
+    const supabaseUrl = config.public.supabaseUrl;
+    const supabaseAnonKey = config.public.supabaseAnonKey;
+    const serviceKey = config.supabaseServiceKey;
+    const appBaseUrl = config.public.appBaseUrl?.replace(/\/$/, "");
 
-  if (!pepper) {
-    console.warn(
-      "⚠️ PASSWORD_PEPPER is not configured — passwords are not peppered!",
+    if (!supabaseUrl || !serviceKey || !supabaseAnonKey) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Supabase not configured",
+      });
+    }
+
+    const pepper = config.passwordPepper;
+    // Used to encrypt the pending password for the confirm_email path
+    const encryptionSecret = config.passwordPepper || config.supabaseServiceKey;
+
+    if (!pepper) {
+      console.warn(
+        "⚠️ PASSWORD_PEPPER is not configured — passwords are not peppered!",
+      );
+    }
+
+    if (!encryptionSecret) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Server encryption secret is not configured",
+      });
+    }
+
+    const supabaseAdmin = createSupabaseAdminClient(supabaseUrl, serviceKey);
+
+    const authUser = await getAuthUserByEmail(
+      supabaseAdmin,
+      supabaseUrl,
+      serviceKey,
+      normalizedEmail,
     );
-  }
 
-  if (!encryptionSecret) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Server encryption secret is not configured",
-    });
-  }
+    if (!authUser) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Account not found",
+      });
+    }
 
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+    if (authUser.app_metadata?.has_password === true) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: "password_already_set",
+      });
+    }
 
-  const authUser = await getAuthUserByEmail(
-    supabaseAdmin,
-    supabaseUrl,
-    serviceKey,
-    normalizedEmail,
-  );
-
-  if (!authUser) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: "Account not found",
-    });
-  }
-
-  if (authUser.app_metadata?.has_password === true) {
-    throw createError({
-      statusCode: 409,
-      statusMessage: "password_already_set",
-    });
-  }
-
-  const pepperedPassword = pepper
-    ? crypto.createHmac("sha256", pepper).update(password).digest("hex")
-    : password;
+    const pepperedPassword = pepper
+      ? crypto.createHmac("sha256", pepper).update(password).digest("hex")
+      : password;
 
   // Two-path logic:
   //
@@ -169,9 +199,9 @@ export default defineEventHandler(async (event) => {
   //   Nach Klick → /magic-login → finalize-password-setup entschlüsselt und setzt das Passwort.
   //   Sicherheitsgrund: Der Nutzer muss beweisen, dass er noch Zugang zur Email hat.
 
-  const hasLoggedInBefore = Boolean(authUser.email_confirmed_at);
+    const hasLoggedInBefore = Boolean(authUser.email_confirmed_at);
 
-  if (!hasLoggedInBefore) {
+    if (!hasLoggedInBefore) {
     // Path A: direktes Passwort-Setzen und sofortiger Login.
     //
     // Zwei getrennte Raw-REST-Calls (gleicher Grund wie in finalize-password-setup):
@@ -179,7 +209,7 @@ export default defineEventHandler(async (event) => {
 
     // Step 1 – Passwort setzen
     // (Metadata comes last to avoid GoTrue's read-modify-write race resetting has_password)
-    const pwResA = await fetch(
+      const pwResA = await fetch(
       `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
       {
         method: "PUT",
@@ -192,16 +222,16 @@ export default defineEventHandler(async (event) => {
       },
     );
 
-    if (!pwResA.ok) {
-      const pwErr = await pwResA.json().catch(() => ({}));
-      throw createError({
-        statusCode: 500,
-        statusMessage: pwErr?.message || "Failed to activate password",
-      });
-    }
+      if (!pwResA.ok) {
+        const pwErr = await pwResA.json().catch(() => ({}));
+        throw createError({
+          statusCode: 500,
+          statusMessage: pwErr?.message || "Failed to activate password",
+        });
+      }
 
     // Step 2 – app_metadata + email bestätigen (muss zuletzt kommen)
-    const metaResA = await fetch(
+      const metaResA = await fetch(
       `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
       {
         method: "PUT",
@@ -221,15 +251,15 @@ export default defineEventHandler(async (event) => {
       },
     );
 
-    if (!metaResA.ok) {
-      const metaErr = await metaResA.json().catch(() => ({}));
-      throw createError({
-        statusCode: 500,
-        statusMessage: metaErr?.message || "Failed to update password metadata",
-      });
-    }
+      if (!metaResA.ok) {
+        const metaErr = await metaResA.json().catch(() => ({}));
+        throw createError({
+          statusCode: 500,
+          statusMessage: metaErr?.message || "Failed to update password metadata",
+        });
+      }
 
-    const loginResponse = await fetch(
+      const loginResponse = await fetch(
       `${supabaseUrl}/auth/v1/token?grant_type=password`,
       {
         method: "POST",
@@ -244,69 +274,81 @@ export default defineEventHandler(async (event) => {
       },
     );
 
-    const loginData = await loginResponse.json();
+      const loginData = await loginResponse.json();
 
-    if (!loginResponse.ok) {
-      const msg: string =
-        loginData?.error_description ||
-        loginData?.msg ||
-        loginData?.message ||
-        "Login failed";
-      throw createError({ statusCode: 401, statusMessage: msg });
-    }
+      if (!loginResponse.ok) {
+        const msg: string =
+          loginData?.error_description ||
+          loginData?.msg ||
+          loginData?.message ||
+          "Login failed";
+        throw createError({ statusCode: 401, statusMessage: msg });
+      }
 
-    await prisma.$executeRaw`
+      const provisioningInput = getProvisionPlayerInputFromAuthUser(authUser, {
+        preferredLoginMethod: "password",
+        fallbackEmail: normalizedEmail,
+      });
+
+      if (provisioningInput) {
+        await provisionPlayer(prisma, provisioningInput);
+      }
+
+      await prisma.$executeRaw`
       UPDATE public.players
       SET preferred_login_method = 'password'
       WHERE supabase_id = ${authUser.id}
          OR LOWER(email) = LOWER(${normalizedEmail})
     `;
 
-    return {
-      success: true,
-      mode: "direct",
-      access_token: loginData.access_token,
-      refresh_token: loginData.refresh_token,
-      expires_in: loginData.expires_in,
-      token_type: loginData.token_type,
-    };
-  }
+      return {
+        success: true,
+        mode: "direct",
+        access_token: loginData.access_token,
+        refresh_token: loginData.refresh_token,
+        expires_in: loginData.expires_in,
+        token_type: loginData.token_type,
+      };
+    }
 
   // Path B: Nutzer hat sich bereits angemeldet → Bestätigung per Magic Link erforderlich.
   // Passwort wird verschlüsselt als pending_password_setup gespeichert und erst nach
   // Klick auf den Magic Link durch finalize-password-setup aktiviert.
-  const encrypted = encryptValue(pepperedPassword, encryptionSecret);
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    const encrypted = encryptValue(pepperedPassword, encryptionSecret);
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-  const { error: metadataError } =
-    await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
-      app_metadata: {
-        ...(authUser.app_metadata || {}),
-        has_password: false,
-        pending_password_setup: {
-          ...encrypted,
-          expiresAt,
+    const { error: metadataError } =
+      await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
+        app_metadata: {
+          ...(authUser.app_metadata || {}),
+          has_password: false,
+          pending_password_setup: {
+            ...encrypted,
+            expiresAt,
+          },
         },
-      },
-    });
+      });
 
-  if (metadataError) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Failed to prepare password setup",
-    });
-  }
+    if (metadataError) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Failed to prepare password setup",
+      });
+    }
 
-  const origin = appBaseUrl || supabaseUrl;
-  const params = new URLSearchParams();
-  if (returnPath) params.set("return", returnPath);
-  params.set("flow", "set-password");
-  const redirectTo = `${origin}/confirm?${params.toString()}`;
+    const origin = appBaseUrl || supabaseUrl;
+    const params = new URLSearchParams();
+    if (returnPath) params.set("return", returnPath);
+    params.set("flow", "set-password");
+    const redirectTo = `${origin}/confirm?${params.toString()}`;
 
-  return {
-    success: true,
-    mode: "confirm_email",
-    redirectTo,
-    email: normalizedEmail,
-  };
-});
+    return {
+      success: true,
+      mode: "confirm_email",
+      redirectTo,
+      email: normalizedEmail,
+    };
+  });
+};
+
+export default createRequestPasswordSetupHandler();

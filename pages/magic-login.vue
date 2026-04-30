@@ -483,83 +483,17 @@ onMounted(async () => {
         return;
       }
 
-      // Player doesn't exist yet
-      // This can happen if:
-      // 1. User is logging in without registering (old account)
-      // 2. Webhook hasn't fired yet (rare - webhook should be instant)
+      // Player doesn't exist yet.
+      // If the auth user carries registration metadata, complete the provisioning
+      // through the server-owned provisioning endpoint instead of creating players
+      // from the client.
       const hasRegistrationMetadata =
         user.user_metadata?.name && user.user_metadata?.playerId;
 
       if (hasRegistrationMetadata) {
-        // Registration flow - webhook should create player, but might have lag
         await logInfo(
-          "magic_login_webhook_lag",
-          "Player not found after registration - waiting for webhook",
-          {
-            userId: user.id,
-            email: user.email,
-            name: user.user_metadata.name,
-            playerId: user.user_metadata.playerId,
-          },
-        );
-
-        // Wait a moment and retry
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        const retryResponse = await $fetch("/api/players/check", {
-          method: "POST",
-          body: { email: user.email },
-        });
-
-        if (retryResponse.exists) {
-          await logInfo(
-            "player_found_retry",
-            "Player found after webhook retry",
-            {
-              userId: user.id,
-              email: user.email,
-            },
-          );
-          const returnPath = (route.query.return as string) || "/";
-
-          await logInfo("navigation_retry", "Navigation after retry", {
-            returnPath,
-            userId: user.id,
-          });
-
-          try {
-            await navigateTo(returnPath, {
-              external: true,
-              replace: true,
-            });
-            await logInfo(
-              "navigation_retry_success",
-              "Retry navigation succeeded",
-              {
-                returnPath,
-              },
-            );
-          } catch (navError) {
-            await logError(
-              "navigation_retry_failed",
-              "Retry navigation failed",
-              {
-                returnPath,
-                error:
-                  navError instanceof Error
-                    ? navError.message
-                    : "Unknown error",
-              },
-            );
-          }
-          return;
-        }
-
-        // Still not found - webhook may have failed
-        // Fallback: create player manually
-        await logError(
-          "magic_login_webhook_failed",
-          "Player not found after registration and retry - webhook may have failed",
+          "magic_login_server_provisioning",
+          "Player not found after registration - invoking server provisioning",
           {
             userId: user.id,
             email: user.email,
@@ -569,20 +503,17 @@ onMounted(async () => {
         );
 
         try {
-          await $fetch("/api/players/register", {
+          await $fetch("/api/auth/ensure-player", {
             method: "POST",
-            body: {
-              playerId: user.user_metadata.playerId,
-              name: user.user_metadata.name,
-              email: user.email,
-              supabaseId: user.id,
-              birthDate: new Date("2000-01-01T00:00:00.000Z").toISOString(),
+            headers: {
+              Authorization: `Bearer ${data.session.access_token}`,
             },
+            body: { preferredLoginMethod: "magiclink" },
           });
 
           await logInfo(
-            "magic_login_manual_creation_success",
-            "Player created manually after webhook failure",
+            "magic_login_server_provisioning_success",
+            "Player provisioned through server-owned flow",
             {
               userId: user.id,
               email: user.email,
@@ -592,8 +523,8 @@ onMounted(async () => {
           const returnPath = (route.query.return as string) || "/";
 
           await logInfo(
-            "navigation_manual_creation",
-            "Navigation after manual player creation",
+            "navigation_server_provisioning",
+            "Navigation after server-owned player provisioning",
             {
               returnPath,
               userId: user.id,
@@ -606,16 +537,16 @@ onMounted(async () => {
               replace: true,
             });
             await logInfo(
-              "navigation_manual_success",
-              "Manual creation navigation succeeded",
+              "navigation_server_provisioning_success",
+              "Server provisioning navigation succeeded",
               {
                 returnPath,
               },
             );
           } catch (navError) {
             await logError(
-              "navigation_manual_failed",
-              "Manual creation navigation failed",
+              "navigation_server_provisioning_failed",
+              "Server provisioning navigation failed",
               {
                 returnPath,
                 error:
@@ -643,7 +574,7 @@ onMounted(async () => {
               "Please try registering again. If this problem persists, contact support.";
           }
 
-          await logError("magic_login_manual_creation_failed", errorMessage, {
+          await logError("magic_login_server_provisioning_failed", errorMessage, {
             createError,
             userId: user.id,
             metadata: user.user_metadata,
