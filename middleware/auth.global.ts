@@ -19,8 +19,7 @@ export const createAuthRouteGuard = (
   dependencies: AuthMiddlewareDependencies = {},
 ) => {
   const getAuth = dependencies.getAuth || useAuth;
-  const getSupabaseClient =
-    dependencies.getSupabaseClient || useSupabaseClient;
+  const getSupabaseClient = dependencies.getSupabaseClient || useSupabaseClient;
   const navigate = dependencies.navigate || navigateTo;
   const delay =
     dependencies.delay ||

@@ -12,9 +12,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Player not found" });
   }
 
-  const body = await readBody<{ method?: "password" | "otp" }>(
-    event,
-  );
+  const body = await readBody<{ method?: "password" | "otp" }>(event);
   const rawMethod = body?.method;
 
   if (rawMethod !== "password" && rawMethod !== "otp") {
