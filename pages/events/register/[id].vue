@@ -261,6 +261,13 @@
               </div>
 
               <div v-else class="space-y-5">
+                <div
+                  v-if="playerIntegrityError"
+                  class="bg-red-900/20 border border-red-700/50 rounded-lg p-4"
+                >
+                  <p class="text-red-300 text-sm">{{ playerIntegrityError }}</p>
+                </div>
+
                 <div>
                   <label
                     for="playerId"
@@ -275,7 +282,7 @@
                     inputmode="numeric"
                     pattern="\d*"
                     required
-                    :disabled="submitting"
+                    :disabled="submitting || !!playerIntegrityError"
                     class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-[#40444b] text-gray-200"
                     :class="
                       form.tickets[0].playerId
@@ -305,7 +312,7 @@
                     v-model="form.tickets[0].name"
                     type="text"
                     required
-                    :disabled="submitting"
+                    :disabled="submitting || !!playerIntegrityError"
                     class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-[#40444b] text-gray-200"
                     :class="
                       form.tickets[0].name
@@ -334,7 +341,7 @@
                     v-model="form.bookerEmail"
                     type="email"
                     required
-                    :disabled="submitting"
+                    :disabled="submitting || !!playerIntegrityError"
                     class="w-full px-4 py-3 border-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-[#40444b] text-gray-200"
                     :class="
                       form.bookerEmail ? 'border-green-600' : 'border-gray-600'
@@ -382,7 +389,7 @@
                     <input
                       type="checkbox"
                       v-model="form.tickets[0].isAnonymous"
-                      :disabled="submitting"
+                      :disabled="submitting || !!playerIntegrityError"
                       class="mt-0.5 w-4 h-4 text-emerald-600 border-gray-500 rounded focus:ring-emerald-500 focus:ring-2 bg-[#40444b]"
                     />
                     <div class="flex-1">
@@ -438,7 +445,7 @@
 
               <button
                 type="submit"
-                :disabled="submitting || registrationFull"
+                :disabled="submitting || !canSubmitRegistration"
                 class="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-green-700 transition transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 <span v-if="submitting">Registering...</span>
@@ -491,6 +498,7 @@ const error = ref<string>("");
 const submitting = ref<boolean>(false);
 const registrationSuccess = ref<boolean>(false);
 const formError = ref<string>("");
+const playerIntegrityError = ref<string>("");
 
 const form = reactive<RegistrationForm>({
   bookerPlayerId: "",
@@ -523,11 +531,8 @@ const eventPassed = computed(() => {
   return eventDate < now;
 });
 
-const hasPrefilledData = computed(() => {
-  return (
-    !userLoading.value &&
-    (form.bookerPlayerId || form.bookerName || form.bookerEmail)
-  );
+const canSubmitRegistration = computed(() => {
+  return !registrationFull.value && !playerIntegrityError.value;
 });
 
 // Methods
@@ -549,11 +554,13 @@ const loadUserData = async (): Promise<void> => {
     const user = sessionData?.session?.user;
 
     if (user) {
-      console.log("User found:", user.email);
-
       // Fetch player data from database
       try {
-        const playerResponse = await $fetch("/api/players/me");
+        const playerResponse = await $fetch<{
+          playerId: string;
+          name: string;
+          email: string;
+        }>("/api/players/me");
 
         if (playerResponse) {
           if (playerResponse.playerId) {
@@ -567,31 +574,33 @@ const loadUserData = async (): Promise<void> => {
           if (playerResponse.email) {
             form.bookerEmail = playerResponse.email;
           }
-        }
-      } catch (playerErr) {
-        console.log("Player profile not found, using auth data");
-        // Fallback to user metadata if player profile doesn't exist
-        if (user.user_metadata) {
-          if (user.user_metadata.playerId) {
-            form.bookerPlayerId = user.user_metadata.playerId;
-            form.tickets[0].playerId = user.user_metadata.playerId;
-          }
-          if (user.user_metadata.name) {
-            form.bookerName = user.user_metadata.name;
-            form.tickets[0].name = user.user_metadata.name;
-          }
-        }
-      }
 
-      // Always use auth email as fallback
-      if (!form.bookerEmail && user.email) {
-        form.bookerEmail = user.email;
+          if (!form.bookerEmail && user.email) {
+            form.bookerEmail = user.email;
+          }
+        }
+      } catch (playerErr: unknown) {
+        const playerError = playerErr as {
+          statusCode?: number;
+          data?: { message?: string };
+          message?: string;
+        };
+
+        if (playerError.statusCode === 404) {
+          playerIntegrityError.value =
+            "Your login is active, but no linked player profile was found for this account. Please contact support before registering for events.";
+        } else {
+          playerIntegrityError.value =
+            playerError.data?.message ||
+            playerError.message ||
+            "Your player profile could not be loaded. Please try again or contact support if the problem continues.";
+        }
       }
-    } else {
-      console.log("No user session found");
     }
   } catch (err) {
     console.error("Failed to load user data:", err);
+    playerIntegrityError.value =
+      "Your account session could not be prepared for registration. Please log in again.";
   } finally {
     userLoading.value = false;
   }
@@ -646,6 +655,11 @@ const submitRegistration = async (): Promise<void> => {
   try {
     submitting.value = true;
     formError.value = "";
+
+    if (playerIntegrityError.value) {
+      formError.value = playerIntegrityError.value;
+      return;
+    }
 
     // Ensure bookerName and bookerPlayerId are in sync with the first ticket's values,
     // since the form binds the visible inputs to tickets[0] but the API requires these top-level fields.

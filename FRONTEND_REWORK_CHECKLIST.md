@@ -44,11 +44,22 @@ Acceptance criteria:
 
 ## Item 3 - Reservation Prefill Integrity
 
-Status: Pending
+Status: Completed on 2026-05-01
 
 Goal:
 
 - stop treating auth metadata as a substitute for a canonical linked player on the event registration screen
+
+Completed in this item:
+
+- removed the reservation-page fallback that copied `user_metadata` into the registration form when canonical player lookup failed
+- surfaced a dedicated linked-player integrity error on the registration screen
+- blocked registration submission while the authenticated user is missing the required canonical player profile
+
+Acceptance criteria:
+
+- registration form only auto-fills from canonical player data
+- missing player linkage is shown explicitly before users attempt to submit
 
 ## Item 4 - Logout Consolidation
 
