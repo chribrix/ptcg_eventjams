@@ -206,6 +206,8 @@ Acceptance criteria:
 
 ### Item 7 - Audit and Reconcile Existing Data
 
+Status: In progress on 2026-05-01
+
 Goal:
 
 - cleanly migrate existing users, players, admin assignments, and ticket-related records
@@ -217,6 +219,13 @@ Tasks:
 3. Audit ambiguous matches and duplicates.
 4. Audit locally-managed admin users.
 5. Produce reconciliation scripts and manual review queue.
+
+Progress so far:
+
+- added `scripts/audit-auth-identity.js` to classify auth/player/admin reconciliation buckets
+- added `AUTH_IDENTITY_DATA_AUDIT.md` to define the manual review buckets and operating procedure
+- updated `server/plugins/account-mismatch-check.ts` to use strict `supabaseId` linkage and log ambiguous email-only candidates separately
+- execution of the live audit is pending a reachable database / service-role-backed runtime environment
 
 Acceptance criteria:
 
