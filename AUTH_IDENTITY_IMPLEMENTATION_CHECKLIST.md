@@ -176,19 +176,33 @@ Acceptance criteria:
 
 ### Item 6 - Stop Event Registration From Creating Canonical Players
 
+Status: Completed on 2026-05-01
+
 Goal:
 
-- remove shadow account creation from event flows
+- keep event registration limited to the authenticated booker plus ticket-level participant data
+- prevent event flows from creating, inferring, or later upgrading guest participants into canonical account identities
 
 Tasks:
 
-1. Require authenticated linked user/player context for account-owned registrations.
-2. Represent extra ticket participants without creating canonical `Player` rows.
-3. Update UI/API contracts if guest participant handling changes.
+1. [x] Require authenticated linked user/player context for account-owned registrations.
+2. [x] Represent extra ticket participants without creating canonical `Player` rows.
+3. [x] Ensure guest participants remain ticket data only, with no implicit linkage to current or future authenticated users.
+4. [x] Update UI/API contracts if guest participant handling changes.
+
+Completed in this item:
+
+- updated `server/api/events/[id]/register.post.ts` so event registrations are always owned by the authenticated linked player resolved via `supabaseId`
+- removed the old fallback behavior that looked up or created the registration owner from submitted `bookerPlayerId` and email
+- preserved guest participant handling as ticket-only data via `RegistrationTicket.participantName` and optional `participantPlayerId`
+- ensured guest participant entries do not create, update, or infer canonical `Player` identities
+- added focused endpoint coverage for the new invariant in `tests/unit/eventRegistrationEndpoint.test.ts`
 
 Acceptance criteria:
 
 - event registration no longer provisions app accounts implicitly
+- guest participant data is never treated as a latent account identity
+- later signups do not retroactively link to guest participants unless an explicit future linking flow is built
 
 ### Item 7 - Audit and Reconcile Existing Data
 
@@ -257,6 +271,6 @@ Acceptance criteria:
 
 ## Recommended Next Action
 
-Item 5 is complete.
+Item 6 is complete.
 
-The next implementation step is Item 6: stop event registration from creating canonical players implicitly.
+The next implementation step is Item 7: audit and reconcile existing auth/player/admin data.

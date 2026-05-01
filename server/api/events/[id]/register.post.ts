@@ -5,6 +5,10 @@ import {
   logValidationError,
   logDatabaseError,
 } from "~/server/util/errorLogger";
+import {
+  resolveAuthenticatedPlayerFactory,
+  type AuthenticatedPlayer,
+} from "~/server/util/authenticatedPlayer";
 
 const ticketSchema = z.object({
   name: z.string().min(1, "Participant name is required").max(100),
@@ -27,7 +31,27 @@ const registrationSchema = z.object({
   allAnonymous: z.boolean().optional().default(false), // Apply to all tickets
 });
 
-export default defineEventHandler(async (event) => {
+const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
+
+type RegistrationPrismaClient = Pick<
+  typeof prisma,
+  | "customEvent"
+  | "externalEventOverride"
+  | "registrationTicket"
+  | "eventRegistration"
+  | "errorLog"
+>;
+
+type RegistrationHandlerDependencies = {
+  prismaClient?: RegistrationPrismaClient;
+  resolvePlayer?: (event: any) => Promise<AuthenticatedPlayer>;
+};
+
+export const createRegistrationHandler = ({
+  prismaClient = prisma,
+  resolvePlayer = resolveAuthenticatedPlayer,
+}: RegistrationHandlerDependencies = {}) =>
+  async (event: any) => {
   if (getMethod(event) !== "POST") {
     throw createError({
       statusCode: 405,
@@ -71,11 +95,21 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const { bookerPlayerId, bookerName, bookerEmail, tickets, allAnonymous } =
-      validationResult.data;
+    const {
+      bookerEmail: submittedBookerEmail,
+      tickets,
+      allAnonymous,
+    } = validationResult.data;
+
+    const authenticatedBooker = await resolvePlayer(event);
+    const bookerPlayerId = authenticatedBooker.playerId;
+    const bookerName = authenticatedBooker.name;
+    const bookerEmail =
+      authenticatedBooker.email?.toLowerCase() ||
+      submittedBookerEmail.toLowerCase();
 
     // Check if this is a custom event or an external event override
-    let customEvent = await prisma.customEvent.findUnique({
+    let customEvent = await prismaClient.customEvent.findUnique({
       where: { id: eventId },
     });
 
@@ -84,7 +118,7 @@ export default defineEventHandler(async (event) => {
 
     if (!customEvent) {
       // Try to find external event override with local registration
-      externalEventOverride = await prisma.externalEventOverride.findUnique({
+      externalEventOverride = await prismaClient.externalEventOverride.findUnique({
         where: { id: eventId },
       });
 
@@ -128,7 +162,7 @@ export default defineEventHandler(async (event) => {
     // Note: Decklist validation is now handled on the dashboard after registration
 
     // Check current ticket count (excluding cancelled tickets)
-    const currentTickets = await prisma.registrationTicket.count({
+    const currentTickets = await prismaClient.registrationTicket.count({
       where: {
         registration: isExternalEvent
           ? { externalEventId: eventId }
@@ -155,46 +189,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Find or create the booker (person making the registration)
-    let booker = await prisma.player.findUnique({
-      where: { playerId: bookerPlayerId },
-    });
-
-    if (!booker) {
-      // Try to find by email as backup
-      booker = await prisma.player.findFirst({
-        where: { email: bookerEmail.toLowerCase() },
-      });
-    }
-
-    if (!booker) {
-      // Create new player for the booker
-      booker = await prisma.player.create({
-        data: {
-          playerId: bookerPlayerId,
-          name: bookerName,
-          birthDate: new Date("2000-01-01"), // Temporary birthdate
-          email: bookerEmail.toLowerCase(),
-        },
-      });
-    } else {
-      // Update booker info
-      booker = await prisma.player.update({
-        where: { id: booker.id },
-        data: {
-          name: bookerName,
-          email: bookerEmail.toLowerCase(),
-        },
-      });
-    }
-
-    // Check if booker already has a registration for this event
+    // Registrations are always owned by the authenticated linked player.
     const existingRegistration = isExternalEvent
-      ? await prisma.eventRegistration.findUnique({
+      ? await prismaClient.eventRegistration.findUnique({
           where: {
             externalEventId_playerId: {
               externalEventId: eventId,
-              playerId: booker.id,
+              playerId: authenticatedBooker.id,
             },
           },
           include: {
@@ -207,11 +208,11 @@ export default defineEventHandler(async (event) => {
             },
           },
         })
-      : await prisma.eventRegistration.findUnique({
+      : await prismaClient.eventRegistration.findUnique({
           where: {
             customEventId_playerId: {
               customEventId: eventId,
-              playerId: booker.id,
+              playerId: authenticatedBooker.id,
             },
           },
           include: {
@@ -233,15 +234,15 @@ export default defineEventHandler(async (event) => {
       registration = existingRegistration;
     } else {
       // Create new registration
-      registration = await prisma.eventRegistration.create({
+      registration = await prismaClient.eventRegistration.create({
         data: isExternalEvent
           ? {
               externalEventId: eventId,
-              playerId: booker.id,
+              playerId: authenticatedBooker.id,
             }
           : {
               customEventId: eventId,
-              playerId: booker.id,
+              playerId: authenticatedBooker.id,
             },
       });
     }
@@ -249,7 +250,7 @@ export default defineEventHandler(async (event) => {
     // Create tickets for all participants
     const createdTickets = await Promise.all(
       tickets.map((ticket) =>
-        prisma.registrationTicket.create({
+        prismaClient.registrationTicket.create({
           data: {
             registrationId: registration.id,
             participantName: ticket.name,
@@ -263,12 +264,12 @@ export default defineEventHandler(async (event) => {
     );
 
     // Log successful registration
-    await prisma.errorLog.create({
+    await prismaClient.errorLog.create({
       data: {
         errorType: "info_event_registration_success",
         errorMessage: `User registered for event: ${eventName}`,
-        userEmail: bookerEmail.toLowerCase(),
-        userId: null,
+        userEmail: bookerEmail,
+        userId: authenticatedBooker.supabaseId || null,
         url: `/events/${eventId}/register`,
         metadata: {
           eventId,
@@ -285,9 +286,9 @@ export default defineEventHandler(async (event) => {
       message: "Registration successful",
       registration: {
         id: registration.id,
-        bookerName: bookerName,
-        bookerPlayerId: bookerPlayerId,
-        bookerEmail: bookerEmail.toLowerCase(),
+        bookerName,
+        bookerPlayerId,
+        bookerEmail,
         eventName: eventName,
         ticketCount: createdTickets.length,
         tickets: createdTickets.map((t) => ({
@@ -321,4 +322,6 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Registration failed",
     });
   }
-});
+};
+
+export default defineEventHandler(createRegistrationHandler());
