@@ -6,6 +6,9 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
+    "migrate:supabase-ids": "tsx scripts/migrate-supabase-ids.ts",
+    "migrate:supabase-ids:dry-run": "tsx scripts/migrate-supabase-ids.ts --dry-run",
+    "migrate:supabase-ids:once": "tsx scripts/migrate-supabase-ids.ts --once",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "test": "vitest run"

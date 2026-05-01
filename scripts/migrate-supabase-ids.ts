@@ -5,6 +5,8 @@
  * and populates the supabaseId field in the players table.
  *
  * Run with: npx tsx scripts/migrate-supabase-ids.ts
+ * Dry run: npx tsx scripts/migrate-supabase-ids.ts --dry-run
+ * Run once: npx tsx scripts/migrate-supabase-ids.ts --once
  *
  * Required environment variables:
  * - SUPABASE_URL
@@ -45,21 +47,63 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   },
 });
 
-async function migrateSupabaseIds() {
-  console.log("🔄 Starting Supabase ID migration...\n");
+const isDryRun = process.argv.includes("--dry-run");
+const runOnce = process.argv.includes("--once");
+const migrationMarkerId = "migration:migrate-supabase-ids:v1";
 
-  try {
-    // First, fetch all Supabase auth users
-    console.log("📥 Fetching all Supabase auth users...");
-    const { data: authData, error: listError } =
-      await supabase.auth.admin.listUsers();
+async function fetchAllAuthUsers() {
+  const allUsers: Array<{ id: string; email?: string | null }> = [];
+  const pageSize = 1000;
+  let page = 1;
 
-    if (listError) {
-      console.error("❌ Failed to fetch auth users:", listError.message);
-      throw listError;
+  while (true) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: pageSize,
+    });
+
+    if (error) {
+      throw error;
     }
 
-    const authUsers = authData?.users || [];
+    const users = data?.users || [];
+    allUsers.push(...users);
+
+    if (users.length < pageSize) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return allUsers;
+}
+
+async function migrateSupabaseIds() {
+  console.log("🔄 Starting Supabase ID migration...\n");
+  if (isDryRun) {
+    console.log("🧪 Dry run mode enabled. No database changes will be written.\n");
+  }
+
+  if (runOnce) {
+    console.log(`🔒 Once mode enabled with marker: ${migrationMarkerId}\n`);
+  }
+
+  try {
+    if (runOnce) {
+      const existingMarker = await prisma.metaState.findUnique({
+        where: { id: migrationMarkerId },
+      });
+
+      if (existingMarker) {
+        console.log("✅ Migration marker already present. Skipping run.");
+        return;
+      }
+    }
+
+    // First, fetch all Supabase auth users
+    console.log("📥 Fetching all Supabase auth users...");
+    const authUsers = await fetchAllAuthUsers();
     console.log(`   Found ${authUsers.length} auth users\n`);
 
     // Create a map of email -> supabaseId for quick lookup
@@ -96,12 +140,20 @@ async function migrateSupabaseIds() {
     let notFoundCount = 0;
     let errorCount = 0;
     let duplicateCount = 0;
+    let missingEmailCount = 0;
     const notFoundPlayers: typeof playersWithoutSupabaseId = [];
+    const missingEmailPlayers: typeof playersWithoutSupabaseId = [];
     const discardedPlayers: Array<{ player: any; reason: string }> = [];
 
     // Group players by email to detect duplicates
     const playersByEmail = new Map<string, typeof playersWithoutSupabaseId>();
     for (const player of playersWithoutSupabaseId) {
+      if (!player.email) {
+        missingEmailCount++;
+        missingEmailPlayers.push(player);
+        continue;
+      }
+
       const email = player.email.toLowerCase();
       if (!playersByEmail.has(email)) {
         playersByEmail.set(email, []);
@@ -114,6 +166,10 @@ async function migrateSupabaseIds() {
 
     for (const player of playersWithoutSupabaseId) {
       try {
+        if (!player.email) {
+          continue;
+        }
+
         const playerEmail = player.email.toLowerCase();
 
         // Skip if we already processed this email
@@ -189,12 +245,16 @@ async function migrateSupabaseIds() {
         }
 
         // Update the player to keep with supabaseId
-        await prisma.player.update({
-          where: { id: playerToKeep.id },
-          data: { supabaseId: supabaseUserId },
-        });
+        if (!isDryRun) {
+          await prisma.player.update({
+            where: { id: playerToKeep.id },
+            data: { supabaseId: supabaseUserId },
+          });
+        }
 
-        console.log(`   ✅ Linked to Supabase ID: ${supabaseUserId}`);
+        console.log(
+          `   ✅ ${isDryRun ? "Would link" : "Linked"} to Supabase ID: ${supabaseUserId}`
+        );
         successCount++;
         processedEmails.add(playerEmail);
       } catch (error: any) {
@@ -208,6 +268,7 @@ async function migrateSupabaseIds() {
     console.log("=".repeat(60));
     console.log(`✅ Successfully migrated: ${successCount}`);
     console.log(`⚠️  No auth user found: ${notFoundCount}`);
+    console.log(`⚠️  Missing player email: ${missingEmailCount}`);
     console.log(`🗑️  Duplicates discarded: ${duplicateCount}`);
     console.log(`❌ Errors: ${errorCount}`);
     console.log(`📊 Total processed: ${playersWithoutSupabaseId.length}`);
@@ -236,6 +297,53 @@ async function migrateSupabaseIds() {
       console.log(
         "\n💡 These players need to register in Supabase auth first or can be deleted."
       );
+    }
+
+    if (missingEmailPlayers.length > 0) {
+      console.log("\n⚠️  Players without email (cannot be auto-linked by this script):");
+      for (const player of missingEmailPlayers) {
+        console.log(`   - ${player.name} - Player ID: ${player.playerId}`);
+      }
+      console.log(
+        "\n💡 These need manual linking or a separate migration strategy based on playerId/metadata."
+      );
+    }
+
+    if (runOnce && !isDryRun) {
+      await prisma.metaState.upsert({
+        where: { id: migrationMarkerId },
+        update: {
+          value: {
+            executedAt: new Date().toISOString(),
+            migratedCount: successCount,
+            notFoundCount,
+            missingEmailCount,
+            duplicateCount,
+            errorCount,
+          },
+          info: {
+            script: "scripts/migrate-supabase-ids.ts",
+            mode: "once",
+          },
+        },
+        create: {
+          id: migrationMarkerId,
+          value: {
+            executedAt: new Date().toISOString(),
+            migratedCount: successCount,
+            notFoundCount,
+            missingEmailCount,
+            duplicateCount,
+            errorCount,
+          },
+          info: {
+            script: "scripts/migrate-supabase-ids.ts",
+            mode: "once",
+          },
+        },
+      });
+
+      console.log(`\n📝 Recorded completion marker: ${migrationMarkerId}`);
     }
   } catch (error: any) {
     console.error("\n❌ Migration failed:", error.message);
