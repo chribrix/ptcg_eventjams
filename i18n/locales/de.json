@@ -38,7 +38,9 @@
     "logout": "Abmelden",
     "register": "Registrieren",
     "manageEvents": "Veranstaltungen verwalten",
+    "manageUsers": "Benutzer verwalten",
     "managePlayers": "Spieler verwalten",
+    "bannerSettings": "Banner-Einstellungen",
     "customEvents": "Benutzerdefinierte Veranstaltungen",
     "eventHistory": "Veranstaltungshistorie",
     "hello": "Hallo"

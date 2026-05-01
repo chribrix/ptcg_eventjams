@@ -24,7 +24,11 @@
 
         <label class="form-group">
           <span>Role Filter</span>
-          <select v-model="roleFilter" class="form-input" @change="applyFilters">
+          <select
+            v-model="roleFilter"
+            class="form-input"
+            @change="applyFilters"
+          >
             <option value="">All users</option>
             <option value="admin">Admins</option>
             <option value="user">Non-admin users</option>
@@ -41,9 +45,7 @@
     <div class="admin-card">
       <div class="section-header">
         <h2>Auth Users</h2>
-        <p class="results-summary">
-          {{ pagination.total }} total users
-        </p>
+        <p class="results-summary">{{ pagination.total }} total users</p>
       </div>
 
       <div v-if="loading" class="loading">Loading users...</div>
@@ -66,17 +68,26 @@
             <tr v-for="item in items" :key="item.id">
               <td>
                 <div class="primary-cell">{{ item.email || "No email" }}</div>
-                <div class="secondary-cell">{{ item.provider || "unknown provider" }}</div>
+                <div class="secondary-cell">
+                  {{ item.provider || "unknown provider" }}
+                </div>
               </td>
               <td>
                 <div v-if="item.linkedPlayer">
                   <div class="primary-cell">{{ item.linkedPlayer.name }}</div>
-                  <div class="secondary-cell">{{ item.linkedPlayer.playerId }}</div>
+                  <div class="secondary-cell">
+                    {{ item.linkedPlayer.playerId }}
+                  </div>
                 </div>
                 <span v-else class="badge badge-muted">Unlinked</span>
               </td>
               <td>
-                <span :class="['badge', item.isAdmin ? 'badge-admin' : 'badge-user']">
+                <span
+                  :class="[
+                    'badge',
+                    item.isAdmin ? 'badge-admin' : 'badge-user',
+                  ]"
+                >
                   {{ item.isAdmin ? "Admin" : "User" }}
                 </span>
               </td>
@@ -125,7 +136,9 @@
         >
           Previous
         </button>
-        <span class="pagination-status">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+        <span class="pagination-status"
+          >Page {{ pagination.page }} of {{ pagination.pages }}</span
+        >
         <button
           class="pagination-btn"
           :disabled="pagination.page >= pagination.pages"
@@ -139,7 +152,10 @@
     <div v-if="selectedUser" class="admin-card">
       <div class="section-header">
         <h2>User Detail</h2>
-        <button class="btn btn-secondary btn-small" @click="selectedUser = null">
+        <button
+          class="btn btn-secondary btn-small"
+          @click="selectedUser = null"
+        >
           Close
         </button>
       </div>
@@ -178,26 +194,40 @@
         <div>
           <h3>Linked Player</h3>
           <div v-if="selectedUser.linkedPlayerDetails" class="detail-panel">
-            <p><strong>Name:</strong> {{ selectedUser.linkedPlayerDetails.name }}</p>
-            <p><strong>Player ID:</strong> {{ selectedUser.linkedPlayerDetails.playerId }}</p>
-            <p><strong>Email:</strong> {{ selectedUser.linkedPlayerDetails.email || "No email" }}</p>
+            <p>
+              <strong>Name:</strong> {{ selectedUser.linkedPlayerDetails.name }}
+            </p>
+            <p>
+              <strong>Player ID:</strong>
+              {{ selectedUser.linkedPlayerDetails.playerId }}
+            </p>
+            <p>
+              <strong>Email:</strong>
+              {{ selectedUser.linkedPlayerDetails.email || "No email" }}
+            </p>
             <p>
               <strong>Preferred login:</strong>
               {{ selectedUser.linkedPlayerDetails.preferredLoginMethod }}
             </p>
           </div>
-          <div v-else class="detail-panel empty">No player row linked to this auth user.</div>
+          <div v-else class="detail-panel empty">
+            No player row linked to this auth user.
+          </div>
         </div>
       </div>
 
       <div class="detail-grid metadata-grid">
         <div>
           <h3>App Metadata</h3>
-          <pre class="metadata-block">{{ formatMetadata(selectedUser.metadata.appMetadata) }}</pre>
+          <pre class="metadata-block">{{
+            formatMetadata(selectedUser.metadata.appMetadata)
+          }}</pre>
         </div>
         <div>
           <h3>User Metadata</h3>
-          <pre class="metadata-block">{{ formatMetadata(selectedUser.metadata.userMetadata) }}</pre>
+          <pre class="metadata-block">{{
+            formatMetadata(selectedUser.metadata.userMetadata)
+          }}</pre>
         </div>
       </div>
     </div>
@@ -227,17 +257,15 @@ type AdminUserDetail = AdminUserListItem & {
     userMetadata: Record<string, unknown>;
     bannedUntil: string | null;
   };
-  linkedPlayerDetails:
-    | {
-        id: string;
-        playerId: string;
-        name: string;
-        email: string | null;
-        preferredLoginMethod: string;
-        createdAt: string;
-        updatedAt: string;
-      }
-    | null;
+  linkedPlayerDetails: {
+    id: string;
+    playerId: string;
+    name: string;
+    email: string | null;
+    preferredLoginMethod: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
 };
 
 const items = ref<AdminUserListItem[]>([]);
@@ -292,7 +320,9 @@ const selectUser = async (userId: string) => {
   detailLoading.value = userId;
 
   try {
-    const response = await $fetch<{ user: AdminUserDetail }>(`/api/admin/users/${userId}`);
+    const response = await $fetch<{ user: AdminUserDetail }>(
+      `/api/admin/users/${userId}`,
+    );
     selectedUser.value = response.user;
   } catch (error: unknown) {
     const message =
@@ -313,8 +343,16 @@ const toggleRole = async (userId: string, isAdmin: boolean) => {
       method: "PATCH",
       body: { isAdmin },
     });
-    setFeedback(isAdmin ? "Admin role granted" : "Admin role removed", "success");
-    await Promise.all([loadUsers(), selectedUser.value?.id === userId ? selectUser(userId) : Promise.resolve()]);
+    setFeedback(
+      isAdmin ? "Admin role granted" : "Admin role removed",
+      "success",
+    );
+    await Promise.all([
+      loadUsers(),
+      selectedUser.value?.id === userId
+        ? selectUser(userId)
+        : Promise.resolve(),
+    ]);
   } catch (error: unknown) {
     const message =
       error && typeof error === "object" && "statusMessage" in error
@@ -521,7 +559,14 @@ await loadUsers();
   white-space: pre-wrap;
   word-break: break-word;
   font-size: 0.85rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    Liberation Mono, Courier New, monospace;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    Liberation Mono,
+    Courier New,
+    monospace;
 }
 </style>

@@ -20,7 +20,11 @@ Implementation snapshot as of 2026-05-01:
 - canonical admin event management now lives at `/admin/events`; the legacy `/admin/custom-events` page is reduced to a compatibility redirect
 - admin dashboard stats and recent activity now load from a real server-side dashboard read model instead of hardcoded placeholder data
 - focused controller-route coverage now passes for admin users, admin custom-event CRUD, combined event reads, event detail reads, banner settings, and dashboard reads
-- remaining work is concentrated in full admin-route migration and event projection-focused validation coverage
+- focused controller-route coverage now also passes for admin error-log reads and admin event-history reads
+- shared event projection helpers now drive admin combined-event reads plus public override and event-detail transforms
+- focused authorization coverage now passes for the shared `defineAdminRoute` wrapper fail-closed path in addition to the controller families above
+- shared admin navigation now exposes the maintained dashboard, events, users, players, banner/settings, history, and logs surfaces consistently in desktop and mobile menus
+- remaining work is concentrated in optional cleanup around older adjacent admin tools and any non-checklist polish
 
 This rework must centralize sources of truth and controller logic. The target pattern is strict MVC.
 
@@ -122,7 +126,7 @@ Security guardrails:
 
 ## Item 1 - Establish Admin MVC Boundaries
 
-Status: In Progress
+Status: Implemented
 
 Goal:
 
@@ -134,6 +138,7 @@ Deliverables:
 - identified duplicates and fragmented flows
 - shared service boundaries for events, users, and banner settings
 - stable API response shapes for each admin surface
+  - implemented via shared admin services plus controller factories for users, events, banner, dashboard, error logs, and event history
 
 Acceptance criteria:
 
@@ -144,7 +149,7 @@ Acceptance criteria:
 
 ## Item 2 - Normalize Admin Authorization
 
-Status: In Progress
+Status: Implemented
 
 Goal:
 
@@ -153,6 +158,7 @@ Goal:
 Tasks:
 
 - review every `/api/admin/**` route for explicit or inherited admin checks
+- migrate protected admin routes onto the shared `defineAdminRoute` wrapper
 - remove any inconsistent authorization behavior between admin pages and admin APIs
 - centralize role evaluation through the shared admin access utility
 - keep admin page route middleware clean and minimal: navigation guard only, no business authorization duplication
@@ -166,9 +172,14 @@ Acceptance criteria:
 - admin page middleware is a thin navigation guard and not a second business-logic authority layer
 - admin mutation routes still reject unauthorized requests even if called directly outside the admin UI
 
+Implementation note:
+
+- focused wrapper coverage now exercises the shared `defineAdminRoute` path for verified-admin pass-through, auth failure rethrow, Zod 400 mapping, and unexpected-error 500 wrapping
+- protected `/api/admin/**` routes no longer rely on the legacy middleware import path
+
 ## Item 2A - Prevent Privilege Escalation And Boundary Bleed
 
-Status: In Progress
+Status: Implemented
 
 Goal:
 
@@ -182,6 +193,7 @@ Tasks:
 - define explicit allowlists for editable fields on admin user, player, event, and banner updates
 - require target-resource authorization checks for role changes and account actions
 - add audit logging or equivalent traceability for role changes and high-risk account actions
+  - external overrides now derive actor identity server-side, player CRUD no longer mutates auth users, and role/banner/account actions flow through explicit admin controllers
 
 Acceptance criteria:
 
@@ -193,7 +205,7 @@ Acceptance criteria:
 
 ## Item 3 - Consolidate Event Management Around `CustomEvent`
 
-Status: In Progress
+Status: Implemented
 
 Goal:
 
@@ -205,6 +217,7 @@ Tasks:
   - `/admin/events` now owns the shared admin event manager view; `/admin/custom-events` redirects to it for compatibility
 - define one event-admin read model for list/detail/modals
 - define one event-calendar projection that merges external events and custom events without duplicating transform logic
+  - shared projection helpers now back the admin combined feed and the public external-event override/detail transforms
 - ensure event creation/editing updates the calendar through the same projection used by the public homepage
 
 Acceptance criteria:
@@ -260,7 +273,7 @@ Acceptance criteria:
 
 ## Item 6 - Add Admin Account Actions
 
-Status: In Progress
+Status: Implemented
 
 Goal:
 
@@ -270,11 +283,12 @@ Tasks:
 
 - define which actions are supported in V1:
   - send password reset email
-  - force password setup state
   - inspect account metadata
-  - optionally disable/delete user if approved
+  - force password setup state is deferred
+  - optionally disable/delete user if approved is deferred
 - add controller endpoints for the supported actions
 - document exactly which actions mutate Supabase auth state and which only affect local profile state
+  - V1 supports account inspection through the admin user detail surface and password reset through the dedicated admin account-action endpoint
 
 Acceptance criteria:
 
@@ -307,7 +321,7 @@ Acceptance criteria:
 
 ## Item 8 - Rework Admin Dashboard Navigation And Information Architecture
 
-Status: In Progress
+Status: Implemented
 
 Goal:
 
@@ -318,6 +332,7 @@ Tasks:
 - define top-level admin sections: events, users, players, banner/settings, logs
 - remove placeholder-only cards or mark them clearly as non-functional
 - align dashboard quick actions with real supported workflows
+  - shared desktop/mobile admin navigation now includes dashboard, events, users, players, banner settings, history, and logs
 
 Acceptance criteria:
 
@@ -327,7 +342,7 @@ Acceptance criteria:
 
 ## Item 9 - Add Focused Validation Coverage
 
-Status: In Progress
+Status: Implemented
 
 Goal:
 
@@ -336,12 +351,16 @@ Goal:
 Tasks:
 
 - add focused tests for admin authorization on every new controller family
+  - implemented via `tests/unit/adminRoute.test.ts`, `tests/unit/adminMiddleware.test.ts`, `tests/unit/adminApi.test.ts`, and `tests/unit/adminControllerRoutes.test.ts`
 - add focused tests for event creation and calendar projection
   - controller-level event CRUD/detail coverage is implemented via `tests/unit/adminControllerRoutes.test.ts`
+  - shared event projection coverage is implemented via `tests/unit/eventProjectionService.test.ts`
 - add focused tests for auth-user list and role updates
   - implemented via `tests/unit/adminControllerRoutes.test.ts` and `tests/unit/adminUserService.test.ts`
 - add focused tests for banner settings read/write behavior
   - implemented via `tests/unit/adminControllerRoutes.test.ts` and `tests/unit/adminBannerService.test.ts`
+- add focused tests for the remaining admin reader families
+- implemented via `tests/unit/adminControllerRoutes.test.ts` coverage for admin error-log reads and admin event-history reads
 
 Acceptance criteria:
 

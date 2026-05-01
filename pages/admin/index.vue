@@ -70,7 +70,10 @@
         <NuxtLink to="/admin/users" class="action-card">
           <div class="action-icon">🛡️</div>
           <h3>Manage Users</h3>
-          <p>Review auth users, linked players, admin roles, and password reset actions</p>
+          <p>
+            Review auth users, linked players, admin roles, and password reset
+            actions
+          </p>
         </NuxtLink>
 
         <NuxtLink to="/admin/players" class="action-card">

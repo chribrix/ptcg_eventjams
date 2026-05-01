@@ -17,7 +17,10 @@ const bannerUpdateSchema = z
     endsAt: z.string().datetime().nullable().optional(),
   })
   .superRefine((value, context) => {
-    if ((value.ctaLabel && !value.ctaHref) || (!value.ctaLabel && value.ctaHref)) {
+    if (
+      (value.ctaLabel && !value.ctaHref) ||
+      (!value.ctaLabel && value.ctaHref)
+    ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         message: "CTA label and CTA link must be provided together",
@@ -101,7 +104,8 @@ function serializeAdminBannerResponse(record?: {
   info: unknown;
 }) {
   const state = normalizeLandingBannerState(record?.value);
-  const info = record?.info && typeof record.info === "object" ? record.info : {};
+  const info =
+    record?.info && typeof record.info === "object" ? record.info : {};
   const updatedBy =
     info && typeof info === "object" && "updatedBy" in info
       ? ((info as Record<string, unknown>).updatedBy as string | null) || null
@@ -116,7 +120,10 @@ function serializeAdminBannerResponse(record?: {
   };
 }
 
-export function isLandingBannerActive(banner: LandingBannerState, now = new Date()) {
+export function isLandingBannerActive(
+  banner: LandingBannerState,
+  now = new Date(),
+) {
   if (!banner.enabled) {
     return false;
   }

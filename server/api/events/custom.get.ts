@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "~/lib/prisma";
+import { countRegistrationTickets } from "~/server/services/events/eventProjectionService";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -37,12 +36,8 @@ export default defineEventHandler(async (event) => {
     // Transform the data to include registration count
     const eventsWithCount = customEvents.map((event) => ({
       ...event,
-      // Sum tickets across all registrations — a single registration can book multiple tickets
-      registrationCount: event.registrations.reduce(
-        (sum, r) => sum + r.tickets.length,
-        0,
-      ),
-      registrations: undefined, // Remove the registrations array from response
+      registrationCount: countRegistrationTickets(event.registrations),
+      registrations: undefined,
     }));
 
     return {

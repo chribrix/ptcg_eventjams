@@ -79,7 +79,10 @@ describe("isLandingBannerActive", () => {
       isLandingBannerActive(banner, new Date("2026-05-01T09:00:00.000Z")),
     ).toBe(false);
     expect(
-      isLandingBannerActive({ ...banner, enabled: false }, new Date("2026-05-01T11:00:00.000Z")),
+      isLandingBannerActive(
+        { ...banner, enabled: false },
+        new Date("2026-05-01T11:00:00.000Z"),
+      ),
     ).toBe(false);
   });
 });

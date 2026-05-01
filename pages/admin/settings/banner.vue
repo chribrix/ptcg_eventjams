@@ -41,7 +41,12 @@
 
           <label class="form-group">
             <span>Title</span>
-            <input v-model="form.title" type="text" class="form-input" placeholder="Banner headline" />
+            <input
+              v-model="form.title"
+              type="text"
+              class="form-input"
+              placeholder="Banner headline"
+            />
           </label>
 
           <label class="form-group">
@@ -57,22 +62,40 @@
           <div class="form-row">
             <label class="form-group">
               <span>CTA Label</span>
-              <input v-model="form.ctaLabel" type="text" class="form-input" placeholder="Learn more" />
+              <input
+                v-model="form.ctaLabel"
+                type="text"
+                class="form-input"
+                placeholder="Learn more"
+              />
             </label>
             <label class="form-group">
               <span>CTA Link</span>
-              <input v-model="form.ctaHref" type="text" class="form-input" placeholder="/about" />
+              <input
+                v-model="form.ctaHref"
+                type="text"
+                class="form-input"
+                placeholder="/about"
+              />
             </label>
           </div>
 
           <div class="form-row">
             <label class="form-group">
               <span>Starts At</span>
-              <input v-model="form.startsAt" type="datetime-local" class="form-input" />
+              <input
+                v-model="form.startsAt"
+                type="datetime-local"
+                class="form-input"
+              />
             </label>
             <label class="form-group">
               <span>Ends At</span>
-              <input v-model="form.endsAt" type="datetime-local" class="form-input" />
+              <input
+                v-model="form.endsAt"
+                type="datetime-local"
+                class="form-input"
+              />
             </label>
           </div>
         </form>
@@ -91,7 +114,11 @@
           <div class="preview-banner__content">
             <h3>{{ form.title || "No title configured" }}</h3>
             <p>{{ form.body || "No body text configured" }}</p>
-            <a v-if="form.ctaLabel && form.ctaHref" :href="form.ctaHref" class="preview-banner__cta">
+            <a
+              v-if="form.ctaLabel && form.ctaHref"
+              :href="form.ctaHref"
+              class="preview-banner__cta"
+            >
               {{ form.ctaLabel }}
             </a>
           </div>
@@ -201,19 +228,22 @@ const saveBanner = async () => {
   saving.value = true;
 
   try {
-    const response = await $fetch<BannerResponse>("/api/admin/settings/banner", {
-      method: "PATCH",
-      body: {
-        enabled: form.enabled,
-        severity: form.severity,
-        title: form.title || null,
-        body: form.body || null,
-        ctaLabel: form.ctaLabel || null,
-        ctaHref: form.ctaHref || null,
-        startsAt: fromInputDateTime(form.startsAt),
-        endsAt: fromInputDateTime(form.endsAt),
+    const response = await $fetch<BannerResponse>(
+      "/api/admin/settings/banner",
+      {
+        method: "PATCH",
+        body: {
+          enabled: form.enabled,
+          severity: form.severity,
+          title: form.title || null,
+          body: form.body || null,
+          ctaLabel: form.ctaLabel || null,
+          ctaHref: form.ctaHref || null,
+          startsAt: fromInputDateTime(form.startsAt),
+          endsAt: fromInputDateTime(form.endsAt),
+        },
       },
-    });
+    );
 
     applyResponse(response);
     message.value = "Banner settings saved";

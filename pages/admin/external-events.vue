@@ -339,7 +339,7 @@ const currentPage = ref(1);
 const itemsPerPage = 10;
 
 const totalPages = computed(() =>
-  Math.ceil(events.value.length / itemsPerPage)
+  Math.ceil(events.value.length / itemsPerPage),
 );
 
 const paginatedEvents = computed(() => {
@@ -397,7 +397,7 @@ async function toggleHideFromCalendar(event: ParsedEvent) {
         `/api/admin/event-overrides/${override.id}/toggle-hide`,
         {
           method: "POST",
-        }
+        },
       );
     } else {
       // Create new override with just the hide flag
@@ -415,7 +415,7 @@ async function toggleHideFromCalendar(event: ParsedEvent) {
             },
             hideFromCalendar: true,
           },
-        }
+        },
       );
     }
 
@@ -640,7 +640,7 @@ async function loadEvents() {
 async function loadOverrides() {
   try {
     const response = await $fetch<{ overrides: EventOverride[] }>(
-      "/api/admin/event-overrides"
+      "/api/admin/event-overrides",
     );
     overrides.value = response.overrides || [];
   } catch (err) {

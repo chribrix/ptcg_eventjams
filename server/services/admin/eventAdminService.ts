@@ -1,6 +1,9 @@
 import prisma from "~/lib/prisma";
 import { z } from "zod";
-import { parseEventTags } from "~/types/eventTags";
+import {
+  projectAdminCustomEvent,
+  projectAdminExternalOverrideEvent,
+} from "~/server/services/events/eventProjectionService";
 
 const validateDatetimeLocal = (value: string) => {
   if (!value || value.trim() === "") {
@@ -61,9 +64,6 @@ export const updateCustomEventInputSchema = z.object({
 const parseLocalDateTime = (dateTimeStr: string): Date => {
   return new Date(`${dateTimeStr}:00.000+01:00`);
 };
-
-const totalTickets = (registrations: { _count: { tickets: number } }[]) =>
-  registrations.reduce((sum, registration) => sum + registration._count.tickets, 0);
 
 export async function getAdminCustomEvent(eventId: string) {
   const customEvent = await prisma.customEvent.findUnique({
@@ -131,8 +131,7 @@ export async function getAdminEventDetail(eventId: string) {
       playerId: registration.playerId,
       registeredAt: registration.registeredAt.toISOString(),
       decklist: primaryTicket?.decklist ?? null,
-      bringingDecklistOnsite:
-        primaryTicket?.bringingDecklistOnsite ?? false,
+      bringingDecklistOnsite: primaryTicket?.bringingDecklistOnsite ?? false,
       tickets: registration.tickets.map((ticket) => ({
         id: ticket.id,
         participantName: ticket.participantName,
@@ -158,7 +157,8 @@ export async function getAdminEventDetail(eventId: string) {
     event: {
       ...eventData,
       eventDate: eventData.eventDate.toISOString(),
-      registrationDeadline: eventData.registrationDeadline?.toISOString() || null,
+      registrationDeadline:
+        eventData.registrationDeadline?.toISOString() || null,
       createdAt: eventData.createdAt.toISOString(),
       updatedAt: eventData.updatedAt.toISOString(),
     },
@@ -166,7 +166,10 @@ export async function getAdminEventDetail(eventId: string) {
   };
 }
 
-export async function listAdminCustomEvents(input: { page: number; limit: number }) {
+export async function listAdminCustomEvents(input: {
+  page: number;
+  limit: number;
+}) {
   const skip = (input.page - 1) * input.limit;
 
   const [events, total] = await Promise.all([
@@ -231,7 +234,9 @@ export async function updateAdminCustomEvent(
     where: { id: eventId },
     data: {
       ...input,
-      eventDate: input.eventDate ? parseLocalDateTime(input.eventDate) : undefined,
+      eventDate: input.eventDate
+        ? parseLocalDateTime(input.eventDate)
+        : undefined,
       registrationDeadline:
         input.registrationDeadline && input.registrationDeadline.trim() !== ""
           ? parseLocalDateTime(input.registrationDeadline)
@@ -298,53 +303,12 @@ export async function listAdminCombinedEvents() {
     }),
   ]);
 
-  const transformedExternalEvents = externalEventsWithRegistration.map((event) => {
-    const overrides = event.overrides as Record<string, any>;
-    const parsedTags = event.tags
-      ? parseEventTags(event.tags, event.tagType || "pokemon")
-      : overrides?.tags
-        ? parseEventTags(overrides.tags, "pokemon")
-        : { game: "Pokemon" };
-
-    return {
-      id: event.id,
-      name: overrides.title || overrides.venue || event.eventName,
-      venue: overrides.venue || event.eventName,
-      maxParticipants: event.maxParticipants || 0,
-      participationFee: event.participationFee || 0,
-      description: event.description,
-      eventDate: event.eventDate,
-      registrationDeadline: event.registrationDeadline,
-      status: new Date(event.eventDate) > new Date() ? "upcoming" : "completed",
-      requiresDecklist: event.requiresDecklist,
-      createdBy: event.createdBy,
-      createdAt: event.createdAt,
-      updatedAt: event.updatedAt,
-      registrations: event.registrations,
-      creator: event.creator,
-      isExternalEvent: true,
-      tagType: event.tagType || "pokemon",
-      tags: event.tags || parsedTags,
-      eventType: parsedTags.type || "custom",
-      originalEventName: event.eventName,
-      originalEventDate: event.eventDate,
-      _count: {
-        registrations: totalTickets(
-          event.registrations as { _count: { tickets: number } }[],
-        ),
-      },
-    };
-  });
+  const transformedExternalEvents = externalEventsWithRegistration.map(
+    projectAdminExternalOverrideEvent,
+  );
 
   const allEvents = [
-    ...customEvents.map((event) => ({
-      ...event,
-      isExternalEvent: false,
-      eventType: event.tags
-        ? parseEventTags(event.tags, event.tagType).type || "custom"
-        : "custom",
-      _count: { registrations: totalTickets(event.registrations) },
-    })),
+    ...customEvents.map(projectAdminCustomEvent),
     ...transformedExternalEvents,
   ].sort(
     (left, right) =>

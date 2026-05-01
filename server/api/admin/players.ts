@@ -19,7 +19,8 @@ export default defineAdminRoute(async ({ event }) => {
 
       const page = Number.parseInt((query.page as string) || "1", 10);
       const limit = Number.parseInt((query.limit as string) || "10", 10);
-      const search = typeof query.search === "string" ? query.search : undefined;
+      const search =
+        typeof query.search === "string" ? query.search : undefined;
 
       return listAdminPlayers({ page, limit, search });
     }

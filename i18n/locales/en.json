@@ -38,7 +38,9 @@
     "logout": "Logout",
     "register": "Register",
     "manageEvents": "Manage Events",
+    "manageUsers": "Manage Users",
     "managePlayers": "Manage Players",
+    "bannerSettings": "Banner Settings",
     "customEvents": "Custom Events",
     "eventHistory": "Event History",
     "hello": "Hello"

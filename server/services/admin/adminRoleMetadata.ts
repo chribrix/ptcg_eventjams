@@ -2,7 +2,10 @@ export function applyAdminRoleMetadata(
   currentMetadata: Record<string, unknown> | null | undefined,
   isAdmin: boolean,
 ) {
-  const nextMetadata = { ...(currentMetadata || {}) } as Record<string, unknown>;
+  const nextMetadata = { ...(currentMetadata || {}) } as Record<
+    string,
+    unknown
+  >;
   const currentRoles = Array.isArray(nextMetadata.roles)
     ? nextMetadata.roles.filter((entry) => typeof entry === "string")
     : [];

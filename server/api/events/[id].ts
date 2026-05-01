@@ -1,6 +1,6 @@
 import { z } from "zod";
 import prisma from "~/lib/prisma";
-import { getEventTypeFromOverrides } from "~/utils/eventTypes";
+import { projectPublicEventDetailsFromOverride } from "~/server/services/events/eventProjectionService";
 
 // Get event details with registration count
 export default defineEventHandler(async (event) => {
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
         where: {
           id: eventId,
         },
-      }
+      },
     );
 
     if (
@@ -72,38 +72,10 @@ export default defineEventHandler(async (event) => {
       },
     });
 
-    // Extract event type from overrides JSONB field
-    const overrides = externalEventOverride.overrides as any;
-    // Use centralized event type utility
-    const eventType = getEventTypeFromOverrides(overrides);
-
-    // Create a custom event-like object from the external event override
-    const transformedEvent = {
-      id: externalEventOverride.id,
-      name:
-        overrides?.title || overrides?.venue || externalEventOverride.eventName,
-      venue:
-        overrides?.venue ||
-        externalEventOverride.eventLocation ||
-        externalEventOverride.eventName,
-      eventDate: externalEventOverride.eventDate,
-      maxParticipants: externalEventOverride.maxParticipants || 0,
-      participationFee: externalEventOverride.participationFee,
-      description: externalEventOverride.description,
-      registrationDeadline: externalEventOverride.registrationDeadline,
-      requiresDecklist: externalEventOverride.requiresDecklist,
-      status: "published", // External events are always "published"
-      createdBy: externalEventOverride.createdBy,
-      createdAt: externalEventOverride.createdAt,
-      updatedAt: externalEventOverride.updatedAt,
-      isExternalEvent: true,
-      eventType: eventType,
-    };
-
-    return {
-      event: transformedEvent,
+    return projectPublicEventDetailsFromOverride(
+      externalEventOverride,
       registrationCount,
-    };
+    );
   } catch (error: unknown) {
     console.error("Error fetching event details:", error);
 

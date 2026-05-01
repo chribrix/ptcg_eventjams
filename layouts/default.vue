@@ -185,12 +185,28 @@ const { t } = useI18n();
                     @mouseleave="hideAdminDropdown"
                   >
                     <NuxtLink
+                      to="/admin"
+                      class="admin-link"
+                      @click="hideAdminDropdown"
+                    >
+                      <ChartBarIcon class="w-4 h-4" />
+                      <span>{{ t("admin.dashboard") }}</span>
+                    </NuxtLink>
+                    <NuxtLink
                       to="/admin/events"
                       class="admin-link"
                       @click="hideAdminDropdown"
                     >
                       <CalendarIcon class="w-4 h-4" />
                       <span>{{ t("nav.manageEvents") }}</span>
+                    </NuxtLink>
+                    <NuxtLink
+                      to="/admin/users"
+                      class="admin-link"
+                      @click="hideAdminDropdown"
+                    >
+                      <UserCircleIcon class="w-4 h-4" />
+                      <span>{{ t("nav.manageUsers") }}</span>
                     </NuxtLink>
                     <NuxtLink
                       to="/admin/players"
@@ -215,6 +231,14 @@ const { t } = useI18n();
                     >
                       <TagIcon class="w-4 h-4" />
                       <span>Tag Management</span>
+                    </NuxtLink>
+                    <NuxtLink
+                      to="/admin/settings/banner"
+                      class="admin-link"
+                      @click="hideAdminDropdown"
+                    >
+                      <CogIcon class="w-4 h-4" />
+                      <span>{{ t("nav.bannerSettings") }}</span>
                     </NuxtLink>
                     <NuxtLink
                       to="/admin/events/history"
@@ -312,6 +336,15 @@ const { t } = useI18n();
               </NuxtLink>
 
               <NuxtLink
+                to="/admin/users"
+                @click="mobileMenuOpen = false"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
+              >
+                <UserCircleIcon class="w-4 h-4" />
+                <span>{{ t("nav.manageUsers") }}</span>
+              </NuxtLink>
+
+              <NuxtLink
                 to="/admin/players"
                 @click="mobileMenuOpen = false"
                 class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
@@ -336,6 +369,15 @@ const { t } = useI18n();
               >
                 <TagIcon class="w-4 h-4" />
                 <span>Tag Management</span>
+              </NuxtLink>
+
+              <NuxtLink
+                to="/admin/settings/banner"
+                @click="mobileMenuOpen = false"
+                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
+              >
+                <CogIcon class="w-4 h-4" />
+                <span>{{ t("nav.bannerSettings") }}</span>
               </NuxtLink>
 
               <NuxtLink

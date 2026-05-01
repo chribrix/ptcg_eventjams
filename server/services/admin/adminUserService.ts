@@ -85,14 +85,12 @@ function getUserHasPassword(user: SupabaseAdminUser): boolean {
 
 function serializeAdminUser(
   user: SupabaseAdminUser,
-  linkedPlayer:
-    | {
-        id: string;
-        playerId: string;
-        name: string;
-        email: string | null;
-      }
-    | null,
+  linkedPlayer: {
+    id: string;
+    playerId: string;
+    name: string;
+    email: string | null;
+  } | null,
 ) {
   return {
     id: user.id,
@@ -147,9 +145,11 @@ export async function listAdminUsers(rawQuery: unknown) {
     });
   }
 
-  const authUsers = ((data?.users || []) as SupabaseAdminUser[]).sort((left, right) => {
-    return (right.created_at || "").localeCompare(left.created_at || "");
-  });
+  const authUsers = ((data?.users || []) as SupabaseAdminUser[]).sort(
+    (left, right) => {
+      return (right.created_at || "").localeCompare(left.created_at || "");
+    },
+  );
 
   const players = await prisma.player.findMany({
     select: {
@@ -178,7 +178,9 @@ export async function listAdminUsers(rawQuery: unknown) {
   const normalizedSearch = query.search?.trim().toLowerCase();
 
   const filteredItems = authUsers
-    .map((user) => serializeAdminUser(user, playersBySupabaseId.get(user.id) || null))
+    .map((user) =>
+      serializeAdminUser(user, playersBySupabaseId.get(user.id) || null),
+    )
     .filter((user) => {
       if (query.role === "admin" && !user.isAdmin) {
         return false;
@@ -229,12 +231,17 @@ export async function getAdminUserDetail(userId: string) {
 
   return {
     user: {
-      ...serializeAdminUser(user, linkedPlayer ? {
-        id: linkedPlayer.id,
-        playerId: linkedPlayer.playerId,
-        name: linkedPlayer.name,
-        email: linkedPlayer.email || null,
-      } : null),
+      ...serializeAdminUser(
+        user,
+        linkedPlayer
+          ? {
+              id: linkedPlayer.id,
+              playerId: linkedPlayer.playerId,
+              name: linkedPlayer.name,
+              email: linkedPlayer.email || null,
+            }
+          : null,
+      ),
       metadata: {
         appMetadata: user.app_metadata || {},
         userMetadata: user.user_metadata || {},

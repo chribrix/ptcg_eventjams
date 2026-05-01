@@ -11,9 +11,8 @@ function formatAdminActionDescription(
   actionType: string,
   metadata: Record<string, unknown> | null | undefined,
 ) {
-  const targetUserId = typeof metadata?.targetUserId === "string"
-    ? metadata.targetUserId
-    : null;
+  const targetUserId =
+    typeof metadata?.targetUserId === "string" ? metadata.targetUserId : null;
 
   switch (actionType) {
     case "admin_role_granted":
@@ -30,59 +29,66 @@ function formatAdminActionDescription(
 export async function getAdminDashboardView() {
   const now = new Date();
 
-  const [customEvents, playerCount, upcomingEvents, completedEvents, recentEvents, recentPlayers, recentAdminActions] =
-    await Promise.all([
-      prisma.customEvent.count(),
-      prisma.player.count(),
-      prisma.customEvent.count({
-        where: {
-          eventDate: {
-            gte: now,
-          },
+  const [
+    customEvents,
+    playerCount,
+    upcomingEvents,
+    completedEvents,
+    recentEvents,
+    recentPlayers,
+    recentAdminActions,
+  ] = await Promise.all([
+    prisma.customEvent.count(),
+    prisma.player.count(),
+    prisma.customEvent.count({
+      where: {
+        eventDate: {
+          gte: now,
         },
-      }),
-      prisma.customEvent.count({
-        where: {
-          eventDate: {
-            lt: now,
-          },
+      },
+    }),
+    prisma.customEvent.count({
+      where: {
+        eventDate: {
+          lt: now,
         },
-      }),
-      prisma.customEvent.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 4,
-        select: {
-          id: true,
-          name: true,
-          createdAt: true,
+      },
+    }),
+    prisma.customEvent.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 4,
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+      },
+    }),
+    prisma.player.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 4,
+      select: {
+        id: true,
+        name: true,
+        playerId: true,
+        createdAt: true,
+      },
+    }),
+    prisma.errorLog.findMany({
+      where: {
+        errorType: {
+          startsWith: "admin_",
         },
-      }),
-      prisma.player.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 4,
-        select: {
-          id: true,
-          name: true,
-          playerId: true,
-          createdAt: true,
-        },
-      }),
-      prisma.errorLog.findMany({
-        where: {
-          errorType: {
-            startsWith: "admin_",
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 4,
-        select: {
-          id: true,
-          errorType: true,
-          createdAt: true,
-          metadata: true,
-        },
-      }),
-    ]);
+      },
+      orderBy: { createdAt: "desc" },
+      take: 4,
+      select: {
+        id: true,
+        errorType: true,
+        createdAt: true,
+        metadata: true,
+      },
+    }),
+  ]);
 
   const recentActivity: DashboardActivity[] = [
     ...recentEvents.map((event) => ({
@@ -109,7 +115,8 @@ export async function getAdminDashboardView() {
   ]
     .sort(
       (left, right) =>
-        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+        new Date(right.createdAt).getTime() -
+        new Date(left.createdAt).getTime(),
     )
     .slice(0, 8);
 

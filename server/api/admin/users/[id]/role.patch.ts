@@ -33,9 +33,8 @@ export function createAdminUserRolePatchHandler(
   const updateRole =
     dependencies.updateRole ||
     (async (input) => {
-      const { updateAdminUserRole } = await import(
-        "~/server/services/admin/adminUserService"
-      );
+      const { updateAdminUserRole } =
+        await import("~/server/services/admin/adminUserService");
       return updateAdminUserRole(input);
     });
 

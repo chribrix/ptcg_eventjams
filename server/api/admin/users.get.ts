@@ -1,6 +1,8 @@
 import { defineAdminRoute } from "~/server/services/admin/adminRoute";
 
-type ListAdminUsersFn = (query: ReturnType<typeof getQuery>) => Promise<unknown>;
+type ListAdminUsersFn = (
+  query: ReturnType<typeof getQuery>,
+) => Promise<unknown>;
 
 type ListAdminUsersHandlerDependencies = {
   listUsers?: ListAdminUsersFn;
@@ -13,9 +15,8 @@ export function createAdminUsersListHandler(
   const listUsers =
     dependencies.listUsers ||
     (async (query) => {
-      const { listAdminUsers } = await import(
-        "~/server/services/admin/adminUserService"
-      );
+      const { listAdminUsers } =
+        await import("~/server/services/admin/adminUserService");
       return listAdminUsers(query);
     });
   const readQuery =

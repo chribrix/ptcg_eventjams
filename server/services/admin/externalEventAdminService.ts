@@ -41,7 +41,7 @@ export function buildExternalEventOverrideData(
       ? input.maxParticipants || null
       : null,
     participationFee: input.handleRegistrationLocally
-      ? input.participationFee ?? null
+      ? (input.participationFee ?? null)
       : null,
     registrationDeadline:
       input.handleRegistrationLocally && input.registrationDeadline
@@ -102,12 +102,16 @@ export async function updateExternalEventOverride(
   overrideId: string,
   rawInput: unknown,
 ) {
-  const input = overrideWriteSchema.partial().parse(rawInput) as Partial<OverrideWriteInput>;
+  const input = overrideWriteSchema
+    .partial()
+    .parse(rawInput) as Partial<OverrideWriteInput>;
   const updateData: Record<string, unknown> = {};
 
   if (input.eventName !== undefined) updateData.eventName = input.eventName;
-  if (input.eventDate !== undefined) updateData.eventDate = new Date(input.eventDate);
-  if (input.eventLocation !== undefined) updateData.eventLocation = input.eventLocation || null;
+  if (input.eventDate !== undefined)
+    updateData.eventDate = new Date(input.eventDate);
+  if (input.eventLocation !== undefined)
+    updateData.eventLocation = input.eventLocation || null;
   if (input.overrides !== undefined) updateData.overrides = input.overrides;
   if (input.notes !== undefined) updateData.notes = input.notes || null;
   if (input.handleRegistrationLocally !== undefined) {
@@ -122,16 +126,21 @@ export async function updateExternalEventOverride(
     }
   }
 
-  if (input.maxParticipants !== undefined) updateData.maxParticipants = input.maxParticipants;
-  if (input.participationFee !== undefined) updateData.participationFee = input.participationFee;
+  if (input.maxParticipants !== undefined)
+    updateData.maxParticipants = input.maxParticipants;
+  if (input.participationFee !== undefined)
+    updateData.participationFee = input.participationFee;
   if (input.registrationDeadline !== undefined) {
     updateData.registrationDeadline = input.registrationDeadline
       ? new Date(input.registrationDeadline)
       : null;
   }
-  if (input.requiresDecklist !== undefined) updateData.requiresDecklist = input.requiresDecklist;
-  if (input.description !== undefined) updateData.description = input.description || null;
-  if (input.hideFromCalendar !== undefined) updateData.hideFromCalendar = input.hideFromCalendar;
+  if (input.requiresDecklist !== undefined)
+    updateData.requiresDecklist = input.requiresDecklist;
+  if (input.description !== undefined)
+    updateData.description = input.description || null;
+  if (input.hideFromCalendar !== undefined)
+    updateData.hideFromCalendar = input.hideFromCalendar;
   if (input.tagType !== undefined) updateData.tagType = input.tagType || null;
   if (input.tags !== undefined) updateData.tags = input.tags || null;
 

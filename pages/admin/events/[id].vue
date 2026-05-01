@@ -46,7 +46,10 @@
             </span>
           </div>
           <div
-            v-if="event.tags && parseEventTags(event.tags, event.tagType as TagType).type"
+            v-if="
+              event.tags &&
+              parseEventTags(event.tags, event.tagType as TagType).type
+            "
             class="info-item"
           >
             <span class="info-label">Event Type:</span>
@@ -57,7 +60,7 @@
               >
                 {{
                   getEventTypeLabel(
-                    parseEventTags(event.tags, event.tagType as TagType).type
+                    parseEventTags(event.tags, event.tagType as TagType).type,
                   )
                 }}
               </span>
@@ -327,7 +330,7 @@ const exportRegistrations = () => {
   link.setAttribute("href", url);
   link.setAttribute(
     "download",
-    `${event.value!.name.replace(/\s+/g, "_")}_registrations.csv`
+    `${event.value!.name.replace(/\s+/g, "_")}_registrations.csv`,
   );
   link.style.visibility = "hidden";
   document.body.appendChild(link);
