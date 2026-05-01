@@ -33,9 +33,8 @@ describe("ensure-player endpoint", () => {
     vi.doMock("#supabase/server", () => ({
       serverSupabaseUser: vi.fn(),
     }));
-    const { createEnsurePlayerHandler } = await import(
-      "../../server/api/auth/ensure-player.post"
-    );
+    const { createEnsurePlayerHandler } =
+      await import("../../server/api/auth/ensure-player.post");
 
     vi.stubGlobal(
       "readBody",
@@ -92,9 +91,8 @@ describe("ensure-player endpoint", () => {
     vi.doMock("#supabase/server", () => ({
       serverSupabaseUser: vi.fn(),
     }));
-    const { createEnsurePlayerHandler } = await import(
-      "../../server/api/auth/ensure-player.post"
-    );
+    const { createEnsurePlayerHandler } =
+      await import("../../server/api/auth/ensure-player.post");
 
     vi.stubGlobal("readBody", vi.fn().mockResolvedValue({}));
 
@@ -116,7 +114,8 @@ describe("ensure-player endpoint", () => {
 
     await expect(handler(createEvent())).rejects.toMatchObject({
       statusCode: 400,
-      statusMessage: "No registration metadata available for player provisioning",
+      statusMessage:
+        "No registration metadata available for player provisioning",
     });
   });
 });

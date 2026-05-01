@@ -437,6 +437,42 @@ describe("authenticated player handler integration", () => {
     });
   });
 
+  it("rejects legacy magiclink writes when updating preferred login method", async () => {
+    const mockPrisma = {
+      player: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "player-db-id",
+          playerId: "PLAYER-123",
+          supabaseId: "supabase-user-1",
+          name: "Linked Player",
+          email: "player@example.com",
+        }),
+        update: vi.fn(),
+      },
+    };
+
+    const { handler } = await setupHandlerTest(
+      "../../server/api/players/preferred-login-method.post",
+      mockPrisma,
+      {
+        supabaseUser: {
+          id: "supabase-user-1",
+          email: "changed@example.com",
+        },
+        readBodyResult: {
+          method: "magiclink",
+        },
+      },
+    );
+
+    await expect(handler(createEvent("POST"))).rejects.toMatchObject({
+      statusCode: 400,
+      statusMessage: "method must be 'password' or 'otp'",
+    });
+
+    expect(mockPrisma.player.update).not.toHaveBeenCalled();
+  });
+
   it("updates /api/players/profile using the resolved player instead of the auth email", async () => {
     const mockPrisma = {
       player: {

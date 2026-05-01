@@ -18,7 +18,7 @@ export type ProvisionPlayerInput = {
   email: string;
   name: string;
   playerId: string;
-  preferredLoginMethod?: "password" | "otp" | "magiclink";
+  preferredLoginMethod?: "password" | "otp";
   birthDate?: Date;
 };
 
@@ -40,7 +40,7 @@ const DEFAULT_BIRTH_DATE = new Date("2000-01-01T00:00:00.000Z");
 export const getProvisionPlayerInputFromAuthUser = (
   authUser: AuthUserProvisioningSource,
   options: {
-    preferredLoginMethod?: "password" | "otp" | "magiclink";
+    preferredLoginMethod?: "password" | "otp";
     fallbackEmail?: string | null;
     birthDate?: Date;
   } = {},

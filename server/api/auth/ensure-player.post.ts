@@ -75,7 +75,7 @@ export const createEnsurePlayerHandler = (
     }
 
     const body = await readBody<{
-      preferredLoginMethod?: "password" | "otp" | "magiclink";
+      preferredLoginMethod?: "password" | "otp";
     }>(event).catch(() => ({}));
     const provisioningInput = getProvisionPlayerInputFromAuthUser(user, {
       preferredLoginMethod: normalizePreferredLoginMethod(
@@ -86,7 +86,8 @@ export const createEnsurePlayerHandler = (
     if (!provisioningInput) {
       throw createError({
         statusCode: 400,
-        statusMessage: "No registration metadata available for player provisioning",
+        statusMessage:
+          "No registration metadata available for player provisioning",
       });
     }
 

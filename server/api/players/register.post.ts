@@ -16,10 +16,7 @@ const registerPlayerSchema = z.object({
     .regex(/^\d+$/, "Player ID must contain only numbers"),
   name: z.string().min(1, "Name is required"),
   birthDate: z.string().datetime().optional(),
-  preferredLoginMethod: z.enum(["password", "otp", "magiclink"]).optional(),
-  email: z.string().email().optional(),
-  supabaseId: z.string().optional(),
-  userId: z.string().optional(),
+  preferredLoginMethod: z.enum(["password", "otp"]).optional(),
 });
 
 export default defineEventHandler(async (event) => {

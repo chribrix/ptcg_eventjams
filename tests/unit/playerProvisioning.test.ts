@@ -50,16 +50,13 @@ describe("playerProvisioning", () => {
   it("links an existing unlinked player by playerId", async () => {
     const prisma = {
       player: {
-        findUnique: vi
-          .fn()
-          .mockResolvedValueOnce(null)
-          .mockResolvedValueOnce({
-            id: "player-1",
-            supabaseId: null,
-            playerId: "1001",
-            name: "Imported Player",
-            email: "imported@example.com",
-          }),
+        findUnique: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce({
+          id: "player-1",
+          supabaseId: null,
+          playerId: "1001",
+          name: "Imported Player",
+          email: "imported@example.com",
+        }),
         create: vi.fn(),
         update: vi.fn().mockResolvedValue({
           id: "player-1",
@@ -88,15 +85,12 @@ describe("playerProvisioning", () => {
   it("rejects provisioning when the playerId belongs to another auth user", async () => {
     const prisma = {
       player: {
-        findUnique: vi
-          .fn()
-          .mockResolvedValueOnce(null)
-          .mockResolvedValueOnce({
-            id: "player-2",
-            supabaseId: "other-auth",
-            playerId: "1001",
-            email: "other@example.com",
-          }),
+        findUnique: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce({
+          id: "player-2",
+          supabaseId: "other-auth",
+          playerId: "1001",
+          email: "other@example.com",
+        }),
         create: vi.fn(),
         update: vi.fn(),
       },

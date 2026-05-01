@@ -12,10 +12,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "Player not found" });
   }
 
-  const body = await readBody<{ method?: "password" | "otp" | "magiclink" }>(event);
+  const body = await readBody<{ method?: "password" | "otp" }>(
+    event,
+  );
   const rawMethod = body?.method;
 
-  if (rawMethod !== "password" && rawMethod !== "otp" && rawMethod !== "magiclink") {
+  if (rawMethod !== "password" && rawMethod !== "otp") {
     throw createError({
       statusCode: 400,
       statusMessage: "method must be 'password' or 'otp'",

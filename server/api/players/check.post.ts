@@ -8,12 +8,10 @@ import {
 
 const checkPlayerSchema = z
   .object({
-    supabaseId: z.string().optional(), // Supabase auth user ID
-    userId: z.string().optional(), // Deprecated: backward compatibility
-    email: z.string().email().optional(),
+    email: z.string().email(),
   })
-  .refine((data) => data.supabaseId || data.userId || data.email, {
-    message: "Either supabaseId, userId, or email must be provided",
+  .refine((data) => Boolean(data.email), {
+    message: "Email is required",
   });
 
 type CheckPlayerDependencies = {
@@ -49,7 +47,7 @@ export const createCheckPlayerHandler = (
         });
       }
 
-      const { supabaseId, userId, email } = validation.data;
+      const { email } = validation.data;
 
       let player = null;
       let legacyPlayerCandidate = null;
@@ -123,7 +121,7 @@ export const createCheckPlayerHandler = (
       }
 
       // Resolve the canonical player only by auth-linked supabaseId.
-      const authId = supabaseId || userId || authUser?.id;
+      const authId = authUser?.id;
       if (authId) {
         player = await prisma.player.findUnique({
           where: {
