@@ -1,4 +1,4 @@
-import type { CardRepository } from "~/server/plugins/CardRepositoryPlugin";
+import type { CardRepository } from "~/server/util/repository/CardRepository";
 
 declare module "nitropack" {
   interface NitroApp {

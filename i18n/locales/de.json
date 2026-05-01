@@ -202,6 +202,7 @@
     "errorOtpRequired": "Bitte gib den E-Mail-Code ein.",
     "errorOtpVerificationFailed": "Der E-Mail-Code konnte nicht bestätigt werden.",
     "errorAccountExistsIncomplete": "Ein Konto mit {email} existiert bereits, aber die Registrierung wurde nicht abgeschlossen. Bitte fordere einen neuen E-Mail-Code zum Anmelden an.",
+    "errorLegacyPlayerOnly": "Für {email} wurden alte Spielerdaten gefunden, aber kein verknüpfter Login-Account. Bitte melde dich beim Support, damit der Account vor der Registrierung sauber zugeordnet wird.",
     "errorAccountExists": "Ein Konto mit {email} existiert bereits. Bitte melde dich an.",
     "errorRegistrationFailed": "Registrierung fehlgeschlagen",
     "errorWaitSeconds": "Bitte warte {seconds} Sekunden, bevor du einen neuen Code anforderst.",

@@ -40,8 +40,9 @@ export const playerIdentitySelect = {
 } as const;
 
 export const resolveAuthenticatedIdentityFactory = (
-  getSupabaseUser: (event: H3Event) => Promise<SupabaseUserLike | null> =
-    serverSupabaseUser,
+  getSupabaseUser: (
+    event: H3Event,
+  ) => Promise<SupabaseUserLike | null> = serverSupabaseUser,
 ) => {
   return async (event: H3Event): Promise<AuthenticatedIdentity> => {
     const impersonatedPlayerId = event.context.impersonatedUserId;
@@ -127,7 +128,10 @@ export const resolveAuthenticatedPlayerFactory = (
     const identity = await getAuthenticatedIdentity(event);
     const player = await findPlayerForAuthenticatedIdentity(prisma, identity);
 
-    if (!player) {
+    if (
+      !player &&
+      (!options.allowMissing || identity.source === "impersonation")
+    ) {
       await onMissingPlayer(event, identity);
     }
 

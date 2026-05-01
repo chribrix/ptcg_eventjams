@@ -225,13 +225,16 @@ Progress so far:
 - added `scripts/audit-auth-identity.js` to classify auth/player/admin reconciliation buckets
 - added `AUTH_IDENTITY_DATA_AUDIT.md` to define the manual review buckets and operating procedure
 - updated `server/plugins/account-mismatch-check.ts` to use strict `supabaseId` linkage and log ambiguous email-only candidates separately
-- execution of the live audit is pending a reachable database / service-role-backed runtime environment
+- ran the live audit against the current environment and captured the resulting manual-review rows
+- current live result: 9 auth users without linked players, 1 email-match-only auth/player ambiguity, 1 player without `supabaseId`, and 1 legacy admin row missing Supabase admin metadata
 
 Acceptance criteria:
 
 - current production/state data can be classified into safe auto-fixes and manual review buckets
 
 ### Item 8 - Enforce New Invariants and Retire Legacy Paths
+
+Status: In progress on 2026-05-01
 
 Goal:
 
@@ -243,6 +246,17 @@ Tasks:
 2. Remove client repair logic.
 3. Remove webhook-critical assumptions.
 4. Retire obsolete auth/account models or document the survivors clearly.
+
+Progress so far:
+
+- tightened `server/api/players/register.post.ts` so it provisions only for the authenticated Supabase user through `ensurePlayerForAuthUser`
+- added focused unit coverage for the authenticated `players/register` contract
+- tightened `server/api/players/check.post.ts` so email is no longer used to auto-link canonical players
+- added `legacyPlayerOnly` response semantics so the client can stop sending orphaned legacy rows through the wrong login/registration path
+- updated login and registration UI flows to surface legacy manual-reconciliation cases explicitly instead of oscillating between "account not found" and "account exists"
+- added focused unit coverage for the `players/check` invariant
+- removed unused legacy Prisma auth/account models (`users.User`, `users.UserDeck`, and `public.Participants`) from the generated client surface
+- clarified `users.admin_users` in the Prisma schema as legacy compatibility data only
 
 Acceptance criteria:
 
@@ -280,6 +294,6 @@ Acceptance criteria:
 
 ## Recommended Next Action
 
-Item 6 is complete.
+Continue Item 8 by removing the next remaining legacy identity fallback path after `players/check` and `players/register`, then perform the manual reconciliation identified in the live audit.
 
-The next implementation step is Item 7: audit and reconcile existing auth/player/admin data.
+Detailed cut list and execution order for this step are recorded in `AUTH_IDENTITY_STEP8_PREP.md`.

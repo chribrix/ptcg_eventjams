@@ -1,5 +1,5 @@
 import prisma from "~/lib/prisma";
-import { hasAdminRole, isAdminUserId } from "../../util/adminAccess";
+import { hasAdminRole, isAdminUserId } from "../../../util/adminAccess";
 import { serverSupabaseUser } from "#supabase/server";
 
 // Get participants for an event
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
       {
         where: { id: eventId },
         select: { id: true, overrides: true },
-      }
+      },
     );
 
     if (!customEvent && !externalEventOverride) {
@@ -149,7 +149,7 @@ export default defineEventHandler(async (event) => {
           hasDecklistSubmitted: Boolean(p.decklist),
           isBringingDecklistOnsite: Boolean(p.bringingDecklistOnsite),
           isAnonymous: true,
-        }))
+        })),
       );
     }
     // If not admin, show anonymous participants as a single aggregate entry

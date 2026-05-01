@@ -124,4 +124,42 @@ The startup checker in `server/plugins/account-mismatch-check.ts` now uses the c
 
 Tooling is in place.
 
-The next operational step is to run the audit against the real environment and record the resulting counts plus any manual-review rows.
+Live audit run on 2026-05-01.
+
+Observed counts from the current environment:
+
+- auth users: 10
+- players: 1
+- legacy admin rows: 1
+
+Observed reconciliation buckets:
+
+- auth users without linked player: 9
+- auth users with only email-match player candidates: 1
+- players without `supabaseId`: 1
+- duplicate player emails: 0
+- legacy admin rows without Supabase admin role: 1
+
+Current manual-review rows:
+
+- `chrisbrinker@pm.me` auth user `304884d7-6b75-424a-8d56-74ab9fc18d15` has only an email-match candidate local player `Chris (198193)`
+- local player `Chris (198193)` has no `supabaseId`
+- legacy admin row for `chrisbrinker@pm.me` exists without corresponding Supabase admin metadata
+
+## Legacy Admin Migration
+
+Legacy helper scripts that wrote directly to `users.admin_users` have been retired.
+
+Current command surface:
+
+```bash
+node scripts/add-admin.js add <supabase-user-id>
+node scripts/add-admin.js remove <supabase-user-id>
+node scripts/add-admin.js list
+node scripts/add-admin.js list-legacy
+node scripts/add-admin.js migrate-legacy
+```
+
+If an old admin should remain an admin, yes, that user now needs migration to Supabase metadata authority.
+
+The `migrate-legacy` command copies legacy `users.admin_users` rows into Supabase `app_metadata` admin flags for matching auth users and reports rows that could not be migrated automatically.

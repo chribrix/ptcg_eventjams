@@ -127,9 +127,9 @@
 
       <template v-else-if="linkSent">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2"
-            >{{ t("registerForm.otpLabel") }}</label
-          >
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{
+            t("registerForm.otpLabel")
+          }}</label>
           <input
             v-model="otpCode"
             type="text"
@@ -176,9 +176,9 @@
               ? t("common.loading")
               : registerMethod === "password"
                 ? t("registerForm.submitCreateAccount")
-                  : linkSent
-                    ? t("registerForm.submitVerifyOtp")
-                    : t("registerForm.submitSendOtp")
+                : linkSent
+                  ? t("registerForm.submitVerifyOtp")
+                  : t("registerForm.submitSendOtp")
           }}</span>
         </div>
       </button>
@@ -305,11 +305,13 @@ const verifyOtpRegistration = async () => {
     return;
   }
 
-  const { data, error: verifyError } = await useSupabaseClient().auth.verifyOtp({
-    email: email.value,
-    token: code,
-    type: "email",
-  });
+  const { data, error: verifyError } = await useSupabaseClient().auth.verifyOtp(
+    {
+      email: email.value,
+      token: code,
+      type: "email",
+    },
+  );
 
   if (verifyError || !data.session) {
     throw new Error(
@@ -361,6 +363,10 @@ const submitForm = async () => {
         error.value = t("registerForm.errorAccountExistsIncomplete", {
           email: email.value,
         });
+      } else if (playerCheck.legacyPlayerOnly) {
+        error.value = t("registerForm.errorLegacyPlayerOnly", {
+          email: email.value,
+        });
       } else {
         // Full player account exists
         error.value = t("registerForm.errorAccountExists", {
@@ -375,8 +381,17 @@ const submitForm = async () => {
         {
           email: email.value,
           authOnly: playerCheck.authOnly,
+          legacyPlayerOnly: playerCheck.legacyPlayerOnly,
         },
       );
+      return;
+    }
+
+    if (playerCheck.legacyPlayerOnly) {
+      error.value = t("registerForm.errorLegacyPlayerOnly", {
+        email: email.value,
+      });
+      isLoading.value = false;
       return;
     }
   } catch (checkError) {

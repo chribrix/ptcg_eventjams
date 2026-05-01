@@ -2,12 +2,9 @@ import { PrismaClient } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
-  logError,
   logValidationError,
   logDatabaseError,
 } from "~/server/util/errorLogger";
-
-const prisma = new PrismaClient();
 
 const checkPlayerSchema = z
   .object({
@@ -19,142 +16,170 @@ const checkPlayerSchema = z
     message: "Either supabaseId, userId, or email must be provided",
   });
 
-export default defineEventHandler(async (event) => {
-  try {
-    const body = await readBody(event);
-    const validation = checkPlayerSchema.safeParse(body);
+type CheckPlayerDependencies = {
+  createPrismaClient?: () => PrismaClient;
+  getRuntimeConfig?: typeof useRuntimeConfig;
+  createSupabaseAdminClient?: (supabaseUrl: string, serviceKey: string) => any;
+  fetchImpl?: typeof fetch;
+};
 
-    if (!validation.success) {
-      await logValidationError(event, validation.error, "player_check");
-      throw createError({
-        statusCode: 400,
-        statusMessage: "Invalid request data",
-      });
-    }
-
-    const { supabaseId, userId, email } = validation.data;
-
-    let player = null;
-    const normalizedEmail = email?.toLowerCase();
-
-    const getSupabaseUserByEmail = async (targetEmail: string) => {
-      const config = useRuntimeConfig();
-      const supabaseUrl = config.public.supabaseUrl;
-      const serviceKey = config.supabaseServiceKey;
-
-      if (!supabaseUrl || !serviceKey) return null;
-
-      const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+export const createCheckPlayerHandler = (
+  dependencies: CheckPlayerDependencies = {},
+) => {
+  const prisma = dependencies.createPrismaClient?.() || new PrismaClient();
+  const getRuntimeConfig = dependencies.getRuntimeConfig || useRuntimeConfig;
+  const createSupabaseAdminClient =
+    dependencies.createSupabaseAdminClient ||
+    ((supabaseUrl: string, serviceKey: string) =>
+      createClient(supabaseUrl, serviceKey, {
         auth: { autoRefreshToken: false, persistSession: false },
-      });
+      }));
+  const fetchImpl = dependencies.fetchImpl || fetch;
 
-      const adminApi = supabaseAdmin.auth.admin as {
-        getUserByEmail?: (email: string) => Promise<{
-          data: {
-            user: {
-              id: string;
-              email?: string;
-              user_metadata?: unknown;
-            } | null;
-          };
-          error: { message?: string } | null;
-        }>;
-      };
+  return defineEventHandler(async (event) => {
+    try {
+      const body = await readBody(event);
+      const validation = checkPlayerSchema.safeParse(body);
 
-      if (typeof adminApi.getUserByEmail === "function") {
-        const { data, error } = await adminApi.getUserByEmail(targetEmail);
-        if (error || !data.user) return null;
-        return data.user;
+      if (!validation.success) {
+        await logValidationError(event, validation.error, "player_check");
+        throw createError({
+          statusCode: 400,
+          statusMessage: "Invalid request data",
+        });
       }
 
-      // Fallback: use filter param (works for smaller user bases)
-      const fallbackRes = await fetch(
-        `${supabaseUrl}/auth/v1/admin/users?filter=${encodeURIComponent(targetEmail)}`,
-        {
-          headers: {
-            apikey: serviceKey,
-            Authorization: `Bearer ${serviceKey}`,
-          },
-        },
-      );
+      const { supabaseId, userId, email } = validation.data;
 
-      if (!fallbackRes.ok) return null;
+      let player = null;
+      let legacyPlayerCandidate = null;
+      const normalizedEmail = email?.toLowerCase();
 
-      const fallbackData = await fallbackRes.json();
-      const users = fallbackData?.users ?? [];
-      return (
-        users.find((user: any) => user.email?.toLowerCase() === targetEmail) ||
-        null
-      );
-    };
+      const getSupabaseUserByEmail = async (targetEmail: string) => {
+        const config = getRuntimeConfig();
+        const supabaseUrl = config.public.supabaseUrl;
+        const serviceKey = config.supabaseServiceKey;
 
-    let authUser: { id: string; user_metadata?: unknown } | null = null;
-    let supabaseUserExists = false;
+        if (!supabaseUrl || !serviceKey) return null;
 
-    if (normalizedEmail) {
-      try {
-        authUser = await getSupabaseUserByEmail(normalizedEmail);
-        supabaseUserExists = !!authUser;
+        const supabaseAdmin = createSupabaseAdminClient(
+          supabaseUrl,
+          serviceKey,
+        );
 
-        if (supabaseUserExists && !process.dev) {
-          // no-op in production logs
+        const adminApi = supabaseAdmin.auth.admin as {
+          getUserByEmail?: (email: string) => Promise<{
+            data: {
+              user: {
+                id: string;
+                email?: string;
+                user_metadata?: unknown;
+              } | null;
+            };
+            error: { message?: string } | null;
+          }>;
+        };
+
+        if (typeof adminApi.getUserByEmail === "function") {
+          const { data, error } = await adminApi.getUserByEmail(targetEmail);
+          if (error || !data.user) return null;
+          return data.user;
         }
-      } catch {}
-    }
 
-    // Check by supabaseId first (most direct link)
-    const authId = supabaseId || userId || authUser?.id;
-    if (authId) {
-      player = await prisma.player.findUnique({
-        where: {
-          supabaseId: authId,
-        },
-      });
-    }
+        // Fallback: use filter param (works for smaller user bases)
+        const fallbackRes = await fetchImpl(
+          `${supabaseUrl}/auth/v1/admin/users?filter=${encodeURIComponent(targetEmail)}`,
+          {
+            headers: {
+              apikey: serviceKey,
+              Authorization: `Bearer ${serviceKey}`,
+            },
+          },
+        );
 
-    // If not found and we have an email, try email lookup
-    if (!player && normalizedEmail) {
-      player = await prisma.player.findFirst({
-        where: {
-          email: normalizedEmail,
-        },
-      });
-    }
+        if (!fallbackRes.ok) return null;
 
-    let preferredLoginMethod: "password" | "otp" = "password";
-    if (player) {
-      const result = await prisma.$queryRaw<
-        Array<{ preferred_login_method: string | null }>
-      >`SELECT preferred_login_method FROM public.players WHERE id = ${player.id} LIMIT 1`;
-      preferredLoginMethod =
-        result[0]?.preferred_login_method === "magiclink" ||
-        result[0]?.preferred_login_method === "otp"
-          ? "otp"
-          : "password";
-    }
+        const fallbackData = await fallbackRes.json();
+        const users = fallbackData?.users ?? [];
+        return (
+          users.find(
+            (user: any) => user.email?.toLowerCase() === targetEmail,
+          ) || null
+        );
+      };
 
-    return {
-      exists: !!player || supabaseUserExists,
-      authExists: supabaseUserExists,
-      player: player
-        ? {
-            id: player.id,
-            playerId: player.playerId,
-            name: player.name,
-            email: player.email,
-            preferredLoginMethod,
+      let authUser: { id: string; user_metadata?: unknown } | null = null;
+      let supabaseUserExists = false;
+
+      if (normalizedEmail) {
+        try {
+          authUser = await getSupabaseUserByEmail(normalizedEmail);
+          supabaseUserExists = !!authUser;
+
+          if (supabaseUserExists && !process.dev) {
+            // no-op in production logs
           }
-        : null,
-      // Indicate if user exists in auth but not in players table
-      authOnly: !player && supabaseUserExists,
-    };
-  } catch (error) {
-    await logDatabaseError(event, error, "player_check");
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Failed to check player existence",
-    });
-  } finally {
-    await prisma.$disconnect();
-  }
-});
+        } catch {}
+      }
+
+      // Resolve the canonical player only by auth-linked supabaseId.
+      const authId = supabaseId || userId || authUser?.id;
+      if (authId) {
+        player = await prisma.player.findUnique({
+          where: {
+            supabaseId: authId,
+          },
+        });
+      }
+
+      // Email-only player matches are legacy ambiguity and must not be auto-linked.
+      if (!player && normalizedEmail && !supabaseUserExists) {
+        legacyPlayerCandidate = await prisma.player.findUnique({
+          where: {
+            email: normalizedEmail,
+          },
+        });
+      }
+
+      let preferredLoginMethod: "password" | "otp" = "password";
+      if (player) {
+        const result = await prisma.$queryRaw<
+          Array<{ preferred_login_method: string | null }>
+        >`SELECT preferred_login_method FROM public.players WHERE id = ${player.id} LIMIT 1`;
+        preferredLoginMethod =
+          result[0]?.preferred_login_method === "magiclink" ||
+          result[0]?.preferred_login_method === "otp"
+            ? "otp"
+            : "password";
+      }
+
+      return {
+        exists: !!player || supabaseUserExists,
+        authExists: supabaseUserExists,
+        player: player
+          ? {
+              id: player.id,
+              playerId: player.playerId,
+              name: player.name,
+              email: player.email,
+              preferredLoginMethod,
+            }
+          : null,
+        // Indicate if user exists in auth but not in players table
+        authOnly: !player && supabaseUserExists,
+        legacyPlayerOnly:
+          !player && !supabaseUserExists && !!legacyPlayerCandidate,
+      };
+    } catch (error) {
+      await logDatabaseError(event, error, "player_check");
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Failed to check player existence",
+      });
+    } finally {
+      await prisma.$disconnect();
+    }
+  });
+};
+
+export default createCheckPlayerHandler();

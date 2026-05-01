@@ -31,9 +31,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error("Missing required environment variables:");
   console.error(`SUPABASE_URL: ${Boolean(supabaseUrl)}`);
-  console.error(
-    `SUPABASE_SERVICE_ROLE_KEY: ${Boolean(supabaseServiceKey)}`,
-  );
+  console.error(`SUPABASE_SERVICE_ROLE_KEY: ${Boolean(supabaseServiceKey)}`);
   process.exit(1);
 }
 
@@ -49,7 +47,11 @@ const hasSupabaseAdminRole = (appMetadata) => {
     return false;
   }
 
-  const roleValues = [appMetadata.role, appMetadata.user_role, appMetadata.roles];
+  const roleValues = [
+    appMetadata.role,
+    appMetadata.user_role,
+    appMetadata.roles,
+  ];
 
   return (
     appMetadata.is_admin === true ||
@@ -60,7 +62,8 @@ const hasSupabaseAdminRole = (appMetadata) => {
 
       if (Array.isArray(value)) {
         return value.some(
-          (entry) => typeof entry === "string" && entry.trim().toLowerCase() === "admin",
+          (entry) =>
+            typeof entry === "string" && entry.trim().toLowerCase() === "admin",
         );
       }
 
@@ -75,7 +78,10 @@ const listAllAuthUsers = async () => {
   const perPage = 200;
 
   while (true) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage,
+    });
 
     if (error) {
       throw error;
@@ -163,7 +169,9 @@ async function auditAuthIdentity() {
 
   const authUsersWithoutPlayer = [];
   const authUsersWithEmailOnlyCandidates = [];
-  const playersWithoutSupabaseId = players.filter((player) => !player.supabaseId);
+  const playersWithoutSupabaseId = players.filter(
+    (player) => !player.supabaseId,
+  );
   const duplicatePlayerEmails = [];
   const legacyAdminRowsMissingSupabaseRole = [];
 
@@ -220,7 +228,8 @@ async function auditAuthIdentity() {
   printSection(
     "Players without supabaseId",
     playersWithoutSupabaseId,
-    (player) => `${player.name} (${player.playerId}) <${player.email || "no email"}>`,
+    (player) =>
+      `${player.name} (${player.playerId}) <${player.email || "no email"}>`,
   );
 
   printSection(

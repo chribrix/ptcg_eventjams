@@ -1,9 +1,4 @@
-type LoginStep =
-  | "email"
-  | "method"
-  | "password"
-  | "passwordSetup"
-  | "otp";
+type LoginStep = "email" | "method" | "password" | "passwordSetup" | "otp";
 
 export const useLoginWorkflow = () => {
   const route = useRoute();
@@ -101,6 +96,7 @@ export const useLoginWorkflow = () => {
       const playerCheck = await $fetch<{
         exists: boolean;
         authExists?: boolean;
+        legacyPlayerOnly?: boolean;
         player: { preferredLoginMethod?: "password" | "otp" } | null;
       }>("/api/players/check", {
         method: "POST",
@@ -111,6 +107,12 @@ export const useLoginWorkflow = () => {
         typeof playerCheck.authExists === "boolean"
           ? playerCheck.authExists
           : playerCheck.exists;
+
+      if (playerCheck.legacyPlayerOnly) {
+        error.value =
+          "Für diese E-Mail gibt es alte Spielerdaten, aber keinen verknüpften Login. Bitte melde dich beim Support, damit der Account sauber verknüpft wird.";
+        return;
+      }
 
       if (!accountExists) {
         error.value = `Kein Account für ${email.value} gefunden. Bitte zuerst registrieren.`;
@@ -255,6 +257,7 @@ export const useLoginWorkflow = () => {
   const completeOtpSignIn = async () => {
     const playerCheck = await $fetch<{
       exists: boolean;
+      legacyPlayerOnly?: boolean;
       player?: { playerId?: string } | null;
     }>("/api/players/check", {
       method: "POST",
@@ -264,6 +267,12 @@ export const useLoginWorkflow = () => {
     });
 
     if (!playerCheck.exists) {
+      if (playerCheck.legacyPlayerOnly) {
+        throw new Error(
+          "We found legacy player data for this email but no linked login account. Please contact support before trying again.",
+        );
+      }
+
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser();
@@ -346,7 +355,8 @@ export const useLoginWorkflow = () => {
       const msg: string =
         err?.data?.statusMessage || err?.statusMessage || err?.message || "";
       error.value =
-        msg || "Der E-Mail-Code konnte nicht bestätigt werden. Bitte versuche es erneut.";
+        msg ||
+        "Der E-Mail-Code konnte nicht bestätigt werden. Bitte versuche es erneut.";
     } finally {
       isLoading.value = false;
     }
@@ -418,8 +428,7 @@ export const useLoginWorkflow = () => {
 
       if (otpError) {
         throw new Error(
-          otpError.message ||
-            "Bestätigungs-Code konnte nicht gesendet werden.",
+          otpError.message || "Bestätigungs-Code konnte nicht gesendet werden.",
         );
       }
 

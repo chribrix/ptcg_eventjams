@@ -202,6 +202,7 @@
     "errorOtpRequired": "Please enter the email code.",
     "errorOtpVerificationFailed": "The email code could not be verified.",
     "errorAccountExistsIncomplete": "An account with {email} already exists, but registration was not completed. Please request a new email code to sign in.",
+    "errorLegacyPlayerOnly": "We found legacy player data for {email}, but no linked login account. Please contact support so the account can be reconciled before registering.",
     "errorAccountExists": "An account with {email} already exists. Please sign in.",
     "errorRegistrationFailed": "Registration failed",
     "errorWaitSeconds": "Please wait {seconds} seconds before requesting another code.",

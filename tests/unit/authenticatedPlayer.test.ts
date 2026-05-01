@@ -81,8 +81,9 @@ describe("authenticatedPlayer utility", () => {
   it("throws unauthorized when there is no authenticated identity", async () => {
     const { resolveAuthenticatedIdentityFactory } =
       await loadAuthenticatedPlayerModule();
-    const resolveAuthenticatedIdentity =
-      resolveAuthenticatedIdentityFactory(vi.fn().mockResolvedValue(null));
+    const resolveAuthenticatedIdentity = resolveAuthenticatedIdentityFactory(
+      vi.fn().mockResolvedValue(null),
+    );
 
     await expect(
       resolveAuthenticatedIdentity(createMockEvent()),
@@ -167,16 +168,7 @@ describe("authenticatedPlayer utility", () => {
       resolveAuthenticatedPlayer(createMockEvent(), { allowMissing: true }),
     ).resolves.toBeNull();
 
-    expect(logError).toHaveBeenCalledWith(
-      expect.any(Object),
-      expect.any(Error),
-      "auth_identity_missing_player_link",
-      expect.objectContaining({
-        identitySource: "supabase",
-        supabaseUserId: "supabase-user-1",
-        authEmail: "missing@example.com",
-      }),
-    );
+    expect(logError).not.toHaveBeenCalled();
   });
 
   it("throws a player-not-found error when a strict lookup has no linked player", async () => {

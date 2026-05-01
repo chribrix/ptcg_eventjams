@@ -292,7 +292,13 @@ describe("authenticated player handler integration", () => {
             name: "Linked Player",
             email: "player@example.com",
           },
-          tickets: [{ id: "ticket-1", participantName: "Linked Player", status: "registered" }],
+          tickets: [
+            {
+              id: "ticket-1",
+              participantName: "Linked Player",
+              status: "registered",
+            },
+          ],
           customEvent: {
             id: "event-1",
             name: "League Cup",

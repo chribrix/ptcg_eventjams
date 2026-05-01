@@ -8,17 +8,19 @@ A web application for hosting and managing Pokémon Trading Card Game (PTCG) eve
 - [x] Register participants
 - [x] Submit decklists
 - [ ] Automatic decklist validation
-- [x] Find events in your proximity 
+- [x] Find events in your proximity
 
 ## Maybe Features
+
 - [ ] View event standings and results
 - [ ] TOM-compatible output for Pokémon Play Tools
 - [ ] Digital Pairings for matches
 
-
 ## Setup
 
 Authentication setup for the current email OTP flow is documented in `AUTH_SUPABASE_OTP_SETUP.md`.
+
+Admin role migration to Supabase metadata is documented in `AUTH_SUPABASE_ADMIN_MIGRATION.md`.
 
 Make sure to install dependencies:
 
@@ -31,13 +33,8 @@ yarn run build
 yarn run [dev|preview|production]
 ```
 
-On first run, the server will create a PostgreSQL database and populate it with card data, taken from 
-TCGDex Database. This may take a minute. 
-
-
-
-
-
+On first run, the server will create a PostgreSQL database and populate it with card data, taken from
+TCGDex Database. This may take a minute.
 
 ---
 

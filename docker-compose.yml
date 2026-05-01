@@ -4,10 +4,12 @@ services:
     container_name: ptcg_postgres
     env_file:
       - .env
-    ports:
-      - "5432:5432"
+    # Keep PostgreSQL private to the internal Docker network in the base config.
+    # Local host access for Nuxt/Prisma development is defined in docker-compose.dev.yml.
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -25,6 +27,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
+    networks:
+      - backend
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,6 +57,8 @@ services:
       - NUXT_SUPABASE_WEBHOOK_SECRET=${SUPABASE_WEBHOOK_SECRET}
     ports:
       - "8080:3000"
+    networks:
+      - backend
     depends_on:
       - postgres
     restart: unless-stopped
@@ -61,3 +67,7 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  backend:
+    driver: bridge

@@ -26,6 +26,8 @@ nano .env
 
 These values are injected into the Docker build, so make sure `.env` exists **before** running `docker compose --profile prod up -d --build`.
 
+Production note: PostgreSQL should remain reachable only on the internal Docker network. Do not publish `5432` on the host in production.
+
 ### 2. Build and Start Production Services
 
 ```bash
@@ -41,7 +43,8 @@ This will:
 - Start PostgreSQL database
 - Build the app container with Node.js 22
 - Start the app container
-- Expose the app on port 3000
+- Expose the app on host port 8080
+- Keep PostgreSQL private on the internal Docker network only
 
 ### 3. Database Migrations
 
@@ -55,7 +58,7 @@ docker exec ptcg_app npx prisma db seed
 
 ### 4. Access the Application
 
-- App: http://localhost:3000
+- App: http://localhost:8080
 
 ## Development Mode
 
@@ -63,14 +66,18 @@ For local development with pgAdmin:
 
 ```bash
 # Start with dev profile (includes pgAdmin)
-docker-compose --profile dev up -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev up -d
 ```
 
 Access:
 
 - App: Run locally with `npm run dev`
-- Database: localhost:5432
+- Database: published on `127.0.0.1:5432` for local Nuxt/Prisma access only
 - pgAdmin: http://localhost:5050
+
+If you need direct SQL access, use `docker exec -it ptcg_postgres psql -U <user> -d <db>` rather than publishing port 5432.
+
+The host port binding exists only in `docker-compose.dev.yml`. Production deploys must use only `docker-compose.yml`.
 
 ## Useful Commands
 
@@ -117,7 +124,7 @@ docker exec -it ptcg_app sh
 ### Access Database
 
 ```bash
-docker exec -it ptcg_postgres psql -U idp -d idp
+docker exec -it ptcg_postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 ```
 
 ## Environment Variables
@@ -145,6 +152,7 @@ docker-compose --profile prod ps
 1. Ensure `DATABASE_URL` uses `postgres` as host (not `localhost`)
 2. Wait for database to be ready before starting app
 3. Check network: `docker network inspect ptcg_eventjams_fe_default`
+4. Confirm PostgreSQL is not published on the host: `docker ps --format '{{.Names}}\t{{.Ports}}'`
 
 ### Port Already in Use
 
@@ -160,7 +168,9 @@ docker-compose --profile prod ps
 - [ ] Production SMTP credentials
 - [ ] Run migrations: `docker exec ptcg_app npx prisma migrate deploy`
 - [ ] Check logs: `docker-compose --profile prod logs -f`
-- [ ] Test the application at http://localhost:3000
+- [ ] Test the application at http://localhost:8080
 - [ ] Set up reverse proxy (nginx/caddy) for SSL
 - [ ] Configure firewall rules
+- [ ] Verify `ptcg_postgres` is not published on `0.0.0.0:5432`
+- [ ] Verify `ptcg_postgres` has no host port published in production
 - [ ] Set up monitoring and backups
