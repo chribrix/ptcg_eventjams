@@ -18,6 +18,8 @@ A web application for hosting and managing Pokémon Trading Card Game (PTCG) eve
 
 ## Setup
 
+Authentication setup for the current email OTP flow is documented in `AUTH_SUPABASE_OTP_SETUP.md`.
+
 Make sure to install dependencies:
 
 ```bash
