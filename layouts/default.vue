@@ -17,14 +17,17 @@ import {
   TagIcon,
 } from "@heroicons/vue/24/outline";
 
-const supabase = useSupabaseClient();
-
 // Mobile menu state
 const mobileMenuOpen = ref(false);
 
 // Use our enhanced auth composable with centralized state
-const { user: authUser, userName, ensureValidSession, clearInvalidSession } =
-  useAuth();
+const {
+  user: authUser,
+  userName,
+  ensureValidSession,
+  clearInvalidSession,
+  logout,
+} = useAuth();
 
 // Admin composable - now uses server-side verification
 const { isAdmin, user: adminUser, loading } = useAdmin();
@@ -45,107 +48,6 @@ const hideAdminDropdown = () => {
   dropdownTimeout.value = setTimeout(() => {
     adminDropdownOpen.value = false;
   }, 100); // Small delay to prevent flicker when moving mouse between elements
-};
-
-// Logout function
-const logout = async () => {
-  const userId = authUser.value?.id;
-  const userEmail = authUser.value?.email;
-
-  try {
-    // Log logout attempt
-    if (process.client) {
-      try {
-        await $fetch("/api/admin/error-logs/create", {
-          method: "POST",
-          body: {
-            userId: userId || null,
-            userEmail: userEmail || null,
-            errorType: "info_user_logout",
-            errorMessage: "User initiated logout",
-            userAgent: navigator.userAgent,
-            url: window.location.href,
-            metadata: {
-              userName: authUser.value?.user_metadata?.name,
-            },
-          },
-        });
-      } catch {}
-    }
-
-    // Try to validate session, but don't block logout if it fails
-    try {
-      await ensureValidSession();
-    } catch {}
-
-    // Always attempt sign out, even if session is expired
-    try {
-      await supabase.auth.signOut();
-    } catch {}
-
-    // Clear all storage - critical for mobile browsers
-    if (process.client) {
-      try {
-        // Clear localStorage
-        localStorage.clear();
-        // Clear sessionStorage
-        sessionStorage.clear();
-
-        // Also clear any Supabase-specific cookies explicitly
-        // This is important for iOS Safari which may not clear cookies immediately
-        const cookies = document.cookie.split(";");
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i];
-          const eqPos = cookie.indexOf("=");
-          const name =
-            eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-          // Clear with multiple path configurations to ensure removal
-          document.cookie =
-            name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-          document.cookie =
-            name +
-            "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=" +
-            window.location.hostname;
-        }
-      } catch {}
-    }
-
-    // Small delay to ensure all operations complete
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Force reload to clear all state and re-initialize
-    if (process.client) {
-      window.location.href = "/";
-    }
-  } catch (error) {
-    // Log the error
-    if (process.client) {
-      try {
-        await $fetch("/api/admin/error-logs/create", {
-          method: "POST",
-          body: {
-            userId: userId || null,
-            userEmail: userEmail || null,
-            errorType: "logout_error",
-            errorMessage:
-              error instanceof Error ? error.message : "Logout failed",
-            userAgent: navigator.userAgent,
-            url: window.location.href,
-            metadata: { error },
-          },
-        });
-      } catch {}
-    }
-
-    // Force complete cleanup and reload even if there's an error
-    if (process.client) {
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-      } catch {}
-      window.location.href = "/";
-    }
-  }
 };
 
 // Mobile logout handler - close menu first, then logout

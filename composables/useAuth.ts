@@ -40,6 +40,40 @@ export const useAuth = () => {
     } catch {}
   };
 
+  const clearClientAuthState = (clearAllStorage = false) => {
+    if (!process.client) return;
+
+    try {
+      if (clearAllStorage) {
+        localStorage.clear();
+        sessionStorage.clear();
+      } else {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (
+            key &&
+            (key.includes("supabase") || key.includes("session_start_"))
+          ) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
+      }
+    } catch {}
+
+    try {
+      const cookies = document.cookie.split(";");
+      for (const cookie of cookies) {
+        const name = cookie.split("=")[0]?.trim();
+        if (!name) continue;
+
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+      }
+    } catch {}
+  };
+
   // Check and refresh session if needed
   const ensureValidSession = async () => {
     if (isRefreshing.value) return supabaseUser.value;
@@ -161,21 +195,28 @@ export const useAuth = () => {
       await supabaseClient.auth.signOut();
     } catch {}
 
-    if (process.client) {
-      try {
-        // Clear only session-related items, not everything
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (
-            key &&
-            (key.includes("supabase") || key.includes("session_start_"))
-          ) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach((key) => localStorage.removeItem(key));
-      } catch {}
+    clearClientAuthState(false);
+  };
+
+  const logout = async (redirectTo = "/login") => {
+    try {
+      await logError("info_user_logout", "User initiated logout", {
+        userName: supabaseUser.value?.user_metadata?.name,
+      });
+
+      await supabaseClient.auth.signOut().catch(() => undefined);
+    } catch (error) {
+      await logError(
+        "logout_error",
+        error instanceof Error ? error.message : "Logout failed",
+        { error },
+      );
+    } finally {
+      clearClientAuthState(true);
+
+      if (process.client) {
+        window.location.assign(redirectTo);
+      }
     }
   };
 
@@ -215,5 +256,7 @@ export const useAuth = () => {
     userName,
     supabaseUser,
     ensureValidSession,
+    clearInvalidSession,
+    logout,
   };
 };

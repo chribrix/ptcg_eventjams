@@ -63,11 +63,22 @@ Acceptance criteria:
 
 ## Item 4 - Logout Consolidation
 
-Status: Pending
+Status: Completed on 2026-05-01
 
 Goal:
 
 - route all player-facing logout actions through one shared cleanup path
+
+Completed in this item:
+
+- added a shared logout action to `useAuth`
+- routed layout and user-menu logout triggers through the same cleanup path
+- standardized logout redirect behavior to a single login landing route after cleanup
+
+Acceptance criteria:
+
+- logout behavior is consistent across desktop, mobile, and dropdown entry points
+- storage and cookie cleanup logic is no longer duplicated across UI components
 
 ## Item 5 - Core Flow Coverage
 
