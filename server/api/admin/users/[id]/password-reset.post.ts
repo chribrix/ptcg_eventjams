@@ -4,6 +4,7 @@ import { sendAdminPasswordReset } from "~/server/services/admin/adminUserService
 
 const passwordResetSchema = z.object({
   redirectTo: z.string().url().optional(),
+  password: z.string().min(8).optional(),
 });
 
 export default defineAdminRoute(async ({ event, adminUser }) => {
@@ -20,5 +21,6 @@ export default defineAdminRoute(async ({ event, adminUser }) => {
     actorUserId: adminUser.id,
     targetUserId: userId,
     redirectTo: body.redirectTo,
+    password: body.password,
   });
 });

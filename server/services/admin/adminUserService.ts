@@ -1,9 +1,14 @@
+import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import prisma from "~/lib/prisma";
 import { z } from "zod";
 import { hasAdminRole } from "~/server/util/adminAccess";
 import { logAdminAction } from "~/server/services/admin/adminAuditService";
 import { applyAdminRoleMetadata } from "~/server/services/admin/adminRoleMetadata";
+import {
+  clearAdminPasswordResetState,
+  markAdminPasswordResetEnabled,
+} from "~/server/util/passwordSetupState";
 
 type SupabaseAdminUser = {
   id: string;
@@ -301,13 +306,108 @@ export async function sendAdminPasswordReset(input: {
   actorUserId: string;
   targetUserId: string;
   redirectTo?: string;
+  password?: string;
 }) {
+  const { supabaseUrl, supabaseServiceKey } = getSupabaseConfig();
+  const passwordPepper = useRuntimeConfig().passwordPepper;
+  const supabaseAdmin = createSupabaseAdminClient();
   const user = await getSupabaseAdminUser(input.targetUserId);
 
   if (!user.email) {
     throw createError({
       statusCode: 400,
       statusMessage: "Auth user has no email address",
+    });
+  }
+
+  if (input.password) {
+    const pepperedPassword = passwordPepper
+      ? crypto
+          .createHmac("sha256", passwordPepper)
+          .update(input.password)
+          .digest("hex")
+      : input.password;
+
+    const passwordResponse = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users/${input.targetUserId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: supabaseServiceKey,
+          Authorization: `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({ password: pepperedPassword }),
+      },
+    );
+
+    if (!passwordResponse.ok) {
+      throw createError({
+        statusCode: 502,
+        statusMessage: "Failed to set password",
+      });
+    }
+
+    const metadataResponse = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users/${input.targetUserId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: supabaseServiceKey,
+          Authorization: `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          email_confirm: true,
+          app_metadata: {
+            ...clearAdminPasswordResetState(user.app_metadata),
+            has_password: true,
+            pending_password_setup: null,
+          },
+        }),
+      },
+    );
+
+    if (!metadataResponse.ok) {
+      throw createError({
+        statusCode: 502,
+        statusMessage: "Failed to update password metadata",
+      });
+    }
+
+    await prisma.$executeRaw`
+      UPDATE public.players
+      SET preferred_login_method = 'password'
+      WHERE supabase_id = ${input.targetUserId}
+         OR LOWER(email) = LOWER(${user.email})
+    `;
+
+    await logAdminAction({
+      actorUserId: input.actorUserId,
+      targetUserId: input.targetUserId,
+      actionType: "admin_password_set_directly",
+      metadata: {
+        redirectTo: input.redirectTo || null,
+      },
+    });
+
+    return {
+      success: true,
+      message: "Password set directly",
+    };
+  }
+
+  const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(
+    input.targetUserId,
+    {
+      app_metadata: markAdminPasswordResetEnabled(user.app_metadata),
+    },
+  );
+
+  if (metadataError) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: "Failed to prepare password reset",
     });
   }
 
@@ -329,6 +429,7 @@ export async function sendAdminPasswordReset(input: {
     actionType: "admin_password_reset_requested",
     metadata: {
       redirectTo: input.redirectTo || null,
+      adminResetBypassEnabled: true,
     },
   });
 

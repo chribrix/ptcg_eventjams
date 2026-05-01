@@ -218,6 +218,49 @@
 
       <div class="detail-grid metadata-grid">
         <div>
+          <h3>Account Actions</h3>
+          <div class="detail-panel">
+            <p>
+              Send a reset email or set a temporary password that you can share
+              with the user directly.
+            </p>
+            <div class="action-buttons detail-actions">
+              <button
+                class="btn btn-small btn-info"
+                :disabled="actionLoadingId === selectedUser.id || !selectedUser.email"
+                @click="sendPasswordReset(selectedUser.id)"
+              >
+                Send Reset Email
+              </button>
+            </div>
+            <div class="manual-password-form">
+              <input
+                v-model="manualPassword"
+                type="password"
+                class="form-input"
+                placeholder="Temporary password (min. 8 characters)"
+              />
+              <input
+                v-model="manualPasswordConfirm"
+                type="password"
+                class="form-input"
+                placeholder="Repeat temporary password"
+              />
+              <button
+                class="btn btn-small btn-primary"
+                :disabled="
+                  actionLoadingId === selectedUser.id ||
+                  manualPassword.length < 8 ||
+                  manualPassword !== manualPasswordConfirm
+                "
+                @click="setManualPassword(selectedUser.id)"
+              >
+                Set Password Directly
+              </button>
+            </div>
+          </div>
+        </div>
+        <div>
           <h3>App Metadata</h3>
           <pre class="metadata-block">{{
             formatMetadata(selectedUser.metadata.appMetadata)
@@ -278,6 +321,8 @@ const roleFilter = ref("");
 const feedbackMessage = ref("");
 const feedbackType = ref<"success" | "error">("success");
 const pagination = ref({ page: 1, limit: 20, total: 0, pages: 1 });
+const manualPassword = ref("");
+const manualPasswordConfirm = ref("");
 
 definePageMeta({
   layout: "default",
@@ -324,6 +369,8 @@ const selectUser = async (userId: string) => {
       `/api/admin/users/${userId}`,
     );
     selectedUser.value = response.user;
+    manualPassword.value = "";
+    manualPasswordConfirm.value = "";
   } catch (error: unknown) {
     const message =
       error && typeof error === "object" && "statusMessage" in error
@@ -383,6 +430,44 @@ const sendPasswordReset = async (userId: string) => {
       error && typeof error === "object" && "statusMessage" in error
         ? String(error.statusMessage)
         : "Failed to send password reset email";
+    setFeedback(message, "error");
+  } finally {
+    actionLoadingId.value = null;
+  }
+};
+
+const setManualPassword = async (userId: string) => {
+  if (manualPassword.value.length < 8) {
+    setFeedback("Password must be at least 8 characters", "error");
+    return;
+  }
+
+  if (manualPassword.value !== manualPasswordConfirm.value) {
+    setFeedback("Passwords do not match", "error");
+    return;
+  }
+
+  actionLoadingId.value = userId;
+
+  try {
+    await $fetch(`/api/admin/users/${userId}/password-reset`, {
+      method: "POST",
+      body: { password: manualPassword.value },
+    });
+    manualPassword.value = "";
+    manualPasswordConfirm.value = "";
+    setFeedback("Password set directly for user", "success");
+    await Promise.all([
+      loadUsers(),
+      selectedUser.value?.id === userId
+        ? selectUser(userId)
+        : Promise.resolve(),
+    ]);
+  } catch (error: unknown) {
+    const message =
+      error && typeof error === "object" && "statusMessage" in error
+        ? String(error.statusMessage)
+        : "Failed to set password";
     setFeedback(message, "error");
   } finally {
     actionLoadingId.value = null;
@@ -518,6 +603,16 @@ await loadUsers();
 
 .detail-grid {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.detail-actions {
+  margin-top: 1rem;
+}
+
+.manual-password-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .detail-list {

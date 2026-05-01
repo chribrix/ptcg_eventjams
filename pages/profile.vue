@@ -110,6 +110,15 @@
           </div>
         </form>
 
+        <div class="mt-6 pt-6 border-t border-gray-100">
+          <NuxtLink
+            to="/set-password?return=/profile"
+            class="inline-flex items-center justify-center px-4 py-3 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 transition font-semibold"
+          >
+            Change Password
+          </NuxtLink>
+        </div>
+
         <!-- Success Message -->
         <div
           v-if="successMessage"

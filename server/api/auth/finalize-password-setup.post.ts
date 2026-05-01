@@ -6,6 +6,7 @@ import {
   ensurePlayerForAuthUser,
   getProvisionPlayerInputFromAuthUser,
 } from "~/server/util/playerProvisioning";
+import { clearAdminPasswordResetState } from "~/server/util/passwordSetupState";
 
 // Finalizes the confirm-email password setup path.
 //
@@ -243,7 +244,7 @@ export const createFinalizePasswordSetupHandler = (
         },
         body: JSON.stringify({
           app_metadata: {
-            ...(authUser?.app_metadata || {}),
+            ...clearAdminPasswordResetState(authUser?.app_metadata),
             has_password: true,
             pending_password_setup: null,
           },

@@ -9,6 +9,7 @@
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { PrismaClient } from "@prisma/client";
+import { clearAdminPasswordResetState } from "~/server/util/passwordSetupState";
 
 const prisma = new PrismaClient();
 
@@ -60,23 +61,54 @@ export default defineEventHandler(async (event) => {
     ? crypto.createHmac("sha256", pepper).update(password).digest("hex")
     : password;
 
-  // Update the user's password via admin API (bypasses the "old password required" check)
+  // Update the user's password via the admin REST API in two steps.
+  // This avoids GoTrue dropping metadata changes when password + app_metadata
+  // are sent together in one update.
   const { data: authUserData } = await supabaseAdmin.auth.admin.getUserById(
     user.id,
   );
-  const appMetadata = { ...(authUserData.user?.app_metadata || {}) };
-  appMetadata.has_password = true;
-  appMetadata.pending_password_setup = null;
+  const appMetadata = {
+    ...clearAdminPasswordResetState(authUserData.user?.app_metadata),
+    has_password: true,
+    pending_password_setup: null,
+  };
 
-  const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-    user.id,
+  const passwordResponse = await fetch(
+    `${supabaseUrl}/auth/v1/admin/users/${user.id}`,
     {
-      password: peppered,
-      app_metadata: appMetadata,
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ password: peppered }),
     },
   );
 
-  if (updateError) {
+  if (!passwordResponse.ok) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Failed to set password",
+    });
+  }
+
+  const metadataResponse = await fetch(
+    `${supabaseUrl}/auth/v1/admin/users/${user.id}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({
+        app_metadata: appMetadata,
+      }),
+    },
+  );
+
+  if (!metadataResponse.ok) {
     throw createError({
       statusCode: 500,
       statusMessage: "Failed to set password",

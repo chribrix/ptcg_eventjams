@@ -111,4 +111,109 @@ describe("request-password-setup direct path", () => {
       }),
     );
   });
+
+  it("skips OTP confirmation for confirmed users when admin reset enabled is set", async () => {
+    vi.resetModules();
+    vi.stubGlobal(
+      "readBody",
+      vi.fn().mockResolvedValue({
+        email: "member@example.com",
+        password: "password123",
+      }),
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({}),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({}),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({
+            access_token: "access",
+            refresh_token: "refresh",
+            expires_in: 3600,
+            token_type: "bearer",
+          }),
+        }),
+    );
+
+    const { createRequestPasswordSetupHandler } =
+      await import("../../server/api/auth/request-password-setup.post");
+
+    const ensurePlayerForAuthUser = vi
+      .fn()
+      .mockResolvedValue({ id: "player-1" });
+
+    const getUserByEmail = vi.fn().mockResolvedValue({
+      data: {
+        user: {
+          id: "auth-2",
+          email: "member@example.com",
+          email_confirmed_at: "2026-05-01T10:00:00.000Z",
+          app_metadata: {
+            has_password: false,
+            admin_password_reset_enabled: true,
+            admin_password_reset_requested_at: "2026-05-01T11:00:00.000Z",
+            pending_password_setup: null,
+          },
+          user_metadata: { name: "Member User", playerId: "1002" },
+        },
+      },
+      error: null,
+    });
+
+    const handler = createRequestPasswordSetupHandler({
+      getRuntimeConfig: () =>
+        ({
+          public: {
+            supabaseUrl: "https://example.supabase.co",
+            supabaseAnonKey: "anon-key",
+            appBaseUrl: "https://app.example.com",
+          },
+          supabaseServiceKey: "service-key",
+          passwordPepper: "pepper",
+        }) as any,
+      createPrismaClient: () =>
+        ({
+          $executeRaw: vi.fn().mockResolvedValue(undefined),
+          $disconnect: vi.fn().mockResolvedValue(undefined),
+        }) as any,
+      createSupabaseAdminClient: () => ({
+        auth: {
+          admin: {
+            getUserByEmail,
+            updateUserById: vi.fn(),
+          },
+        },
+      }),
+      provisionPlayer: ensurePlayerForAuthUser as any,
+    });
+
+    const result = await handler({} as any);
+
+    expect(result).toMatchObject({
+      success: true,
+      mode: "direct",
+    });
+    expect(global.fetch).toHaveBeenNthCalledWith(
+      2,
+      "https://example.supabase.co/auth/v1/admin/users/auth-2",
+      expect.objectContaining({
+        body: JSON.stringify({
+          email_confirm: true,
+          app_metadata: {
+            has_password: true,
+            pending_password_setup: null,
+          },
+        }),
+      }),
+    );
+  });
 });

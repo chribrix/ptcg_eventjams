@@ -5,6 +5,10 @@ import {
   ensurePlayerForAuthUser,
   getProvisionPlayerInputFromAuthUser,
 } from "~/server/util/playerProvisioning";
+import {
+  clearAdminPasswordResetState,
+  isAdminPasswordResetEnabled,
+} from "~/server/util/passwordSetupState";
 
 // Handles the first password setup flow for existing auth users.
 //
@@ -200,8 +204,11 @@ export const createRequestPasswordSetupHandler = (
     //   Sicherheitsgrund: Der Nutzer muss beweisen, dass er noch Zugang zur Email hat.
 
     const hasLoggedInBefore = Boolean(authUser.email_confirmed_at);
+    const adminPasswordResetEnabled = isAdminPasswordResetEnabled(
+      authUser.app_metadata,
+    );
 
-    if (!hasLoggedInBefore) {
+    if (!hasLoggedInBefore || adminPasswordResetEnabled) {
       // Path A: direktes Passwort-Setzen und sofortiger Login.
       //
       // Zwei getrennte Raw-REST-Calls (gleicher Grund wie in finalize-password-setup):
@@ -243,7 +250,7 @@ export const createRequestPasswordSetupHandler = (
           body: JSON.stringify({
             email_confirm: true,
             app_metadata: {
-              ...(authUser.app_metadata || {}),
+              ...clearAdminPasswordResetState(authUser.app_metadata),
               has_password: true,
               pending_password_setup: null,
             },
@@ -321,7 +328,7 @@ export const createRequestPasswordSetupHandler = (
     const { error: metadataError } =
       await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
         app_metadata: {
-          ...(authUser.app_metadata || {}),
+          ...clearAdminPasswordResetState(authUser.app_metadata),
           has_password: false,
           pending_password_setup: {
             ...encrypted,
