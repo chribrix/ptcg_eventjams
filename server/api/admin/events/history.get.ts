@@ -1,10 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 import { defineAdminRoute } from "~/server/services/admin/adminRoute";
+import { countRegistrationTickets } from "~/server/services/events/eventProjectionService";
 
 const prisma = new PrismaClient();
 
-type EventHistoryParticipantResult = {
-  playerId: string;
+type EventHistoryTicket = {
+  id: string;
+  participantName: string;
+  participantPlayerId: string | null;
+  status: string;
   placement: number | null;
   points: number | null;
 };
@@ -19,6 +23,7 @@ type EventHistoryRegistration = {
     name: string;
     playerId: string;
   };
+  tickets: EventHistoryTicket[];
 };
 
 type EventHistoryEvent = {
@@ -34,7 +39,6 @@ type EventHistoryEvent = {
     registrations: number;
   };
   registrations: EventHistoryRegistration[];
-  customParticipants: EventHistoryParticipantResult[];
 };
 
 type EventHistoryDependencies = {
@@ -71,26 +75,27 @@ export function createAdminEventHistoryHandler(
                   playerId: true,
                 },
               },
-            },
-            orderBy: [
-              {},
-              {
-                registeredAt: "asc",
-              },
-            ],
-          },
-          customParticipants: {
-            include: {
-              player: {
+              tickets: {
                 select: {
                   id: true,
-                  name: true,
-                  playerId: true,
+                  participantName: true,
+                  participantPlayerId: true,
+                  status: true,
+                  placement: true,
+                  points: true,
                 },
+                orderBy: [
+                  {
+                    placement: "asc",
+                  },
+                  {
+                    createdAt: "asc",
+                  },
+                ],
               },
             },
             orderBy: {
-              placement: "asc",
+              registeredAt: "asc",
             },
           },
         },
@@ -120,20 +125,34 @@ export function createAdminEventHistoryHandler(
         description: customEvent.description,
         status: customEvent.status,
         requiresDecklist: customEvent.requiresDecklist,
-        totalParticipants: customEvent._count.registrations,
-        participants: customEvent.registrations.map((registration) => {
-          const participantResult = customEvent.customParticipants.find(
-            (participant) => participant.playerId === registration.playerId,
-          );
+        totalParticipants: countRegistrationTickets(customEvent.registrations),
+        participants: customEvent.registrations.flatMap((registration) => {
+          const tickets = registration.tickets.length
+            ? registration.tickets
+            : [
+                {
+                  id: registration.id,
+                  participantName: registration.player.name,
+                  participantPlayerId: registration.player.playerId,
+                  status: registration.status,
+                  placement: null,
+                  points: null,
+                },
+              ];
 
-          return {
-            id: registration.id,
-            status: registration.status,
-            placement: participantResult?.placement,
-            points: participantResult?.points,
+          return tickets.map((ticket) => ({
+            id: ticket.id,
+            status: ticket.status,
+            placement: ticket.placement ?? undefined,
+            points: ticket.points ?? undefined,
             registeredAt: registration.registeredAt.toISOString(),
-            player: registration.player,
-          };
+            player: {
+              id: registration.player.id,
+              name: ticket.participantName || registration.player.name,
+              playerId:
+                ticket.participantPlayerId || registration.player.playerId,
+            },
+          }));
         }),
       }));
 

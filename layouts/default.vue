@@ -4,17 +4,9 @@ import {
   CalendarDaysIcon,
   DocumentIcon,
   Cog6ToothIcon as CogIcon,
-  UserCircleIcon,
   ArrowRightOnRectangleIcon,
   UserPlusIcon,
-  ChevronDownIcon,
-  ClockIcon,
   ChartBarIcon,
-  CalendarIcon,
-  PlusCircleIcon,
-  UsersIcon,
-  ExclamationTriangleIcon,
-  TagIcon,
 } from "@heroicons/vue/24/outline";
 
 // Mobile menu state
@@ -31,24 +23,6 @@ const {
 
 // Admin composable - now uses server-side verification
 const { isAdmin, user: adminUser, loading } = useAdmin();
-
-// Admin dropdown state
-const adminDropdownOpen = ref(false);
-const dropdownTimeout = ref<NodeJS.Timeout | null>(null);
-
-const showAdminDropdown = () => {
-  if (dropdownTimeout.value) {
-    clearTimeout(dropdownTimeout.value);
-    dropdownTimeout.value = null;
-  }
-  adminDropdownOpen.value = true;
-};
-
-const hideAdminDropdown = () => {
-  dropdownTimeout.value = setTimeout(() => {
-    adminDropdownOpen.value = false;
-  }, 100); // Small delay to prevent flicker when moving mouse between elements
-};
 
 // Mobile logout handler - close menu first, then logout
 const handleMobileLogout = async () => {
@@ -88,6 +62,10 @@ watch(
   },
   { immediate: true },
 );
+
+const route = useRoute();
+
+const isAdminRoute = computed(() => route.path.startsWith("/admin"));
 
 // Set up internationalization
 const { t } = useI18n();
@@ -162,111 +140,10 @@ const { t } = useI18n();
                 </NuxtLink>
               </div>
 
-              <!-- Admin Dropdown -->
-              <div
-                v-if="isAdmin"
-                class="relative"
-                @mouseleave="hideAdminDropdown"
-              >
-                <div class="admin-dropdown" @mouseenter="showAdminDropdown">
-                  <button class="admin-menu-button" @click="showAdminDropdown">
-                    <CogIcon class="w-4 h-4" />
-                    <span class="hidden sm:inline">{{ t("nav.admin") }}</span>
-                    <ChevronDownIcon
-                      class="w-3 h-3 ml-1 transform transition-transform duration-200"
-                      :class="{ 'rotate-180': adminDropdownOpen }"
-                    />
-                  </button>
-
-                  <!-- Admin Dropdown Menu -->
-                  <div
-                    v-show="adminDropdownOpen"
-                    class="admin-dropdown-content"
-                    @mouseleave="hideAdminDropdown"
-                  >
-                    <NuxtLink
-                      to="/admin"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <ChartBarIcon class="w-4 h-4" />
-                      <span>{{ t("admin.dashboard") }}</span>
-                    </NuxtLink>
-                    <NuxtLink
-                      to="/admin/events"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <CalendarIcon class="w-4 h-4" />
-                      <span>{{ t("nav.manageEvents") }}</span>
-                    </NuxtLink>
-                    <NuxtLink
-                      to="/admin/users"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <UserCircleIcon class="w-4 h-4" />
-                      <span>{{ t("nav.manageUsers") }}</span>
-                    </NuxtLink>
-                    <NuxtLink
-                      to="/admin/players"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <UsersIcon class="w-4 h-4" />
-                      <span>{{ t("nav.managePlayers") }}</span>
-                    </NuxtLink>
-                    <NuxtLink
-                      to="/admin/external-events"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <CogIcon class="w-4 h-4" />
-                      <span>External Events</span>
-                    </NuxtLink>
-                    <NuxtLink
-                      to="/admin/tags"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <TagIcon class="w-4 h-4" />
-                      <span>Tag Management</span>
-                    </NuxtLink>
-                    <NuxtLink
-                      to="/admin/settings/banner"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <CogIcon class="w-4 h-4" />
-                      <span>{{ t("nav.bannerSettings") }}</span>
-                    </NuxtLink>
-                    <NuxtLink
-                      to="/admin/events/history"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <ClockIcon class="w-4 h-4" />
-                      <span>{{ t("nav.eventHistory") }}</span>
-                    </NuxtLink>
-                    <NuxtLink
-                      to="/admin/logs"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <ExclamationTriangleIcon class="w-4 h-4" />
-                      <span>Error Logs</span>
-                    </NuxtLink>
-                    <NuxtLink
-                      to="/importer"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <DocumentIcon class="w-4 h-4" />
-                      <span>{{ t("nav.importer") }}</span>
-                    </NuxtLink>
-                  </div>
-                </div>
-              </div>
+              <NuxtLink v-if="isAdmin" to="/admin" class="admin-menu-button">
+                <CogIcon class="w-4 h-4" />
+                <span class="hidden sm:inline">{{ t("nav.admin") }}</span>
+              </NuxtLink>
 
               <!-- Language Switcher & Auth Actions -->
               <div
@@ -325,87 +202,6 @@ const { t } = useI18n();
                 <CogIcon class="w-5 h-5" />
                 <span>{{ t("nav.admin") }}</span>
               </NuxtLink>
-
-              <NuxtLink
-                to="/admin/events"
-                @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
-              >
-                <CalendarIcon class="w-4 h-4" />
-                <span>{{ t("nav.manageEvents") }}</span>
-              </NuxtLink>
-
-              <NuxtLink
-                to="/admin/users"
-                @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
-              >
-                <UserCircleIcon class="w-4 h-4" />
-                <span>{{ t("nav.manageUsers") }}</span>
-              </NuxtLink>
-
-              <NuxtLink
-                to="/admin/players"
-                @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
-              >
-                <UsersIcon class="w-4 h-4" />
-                <span>{{ t("nav.managePlayers") }}</span>
-              </NuxtLink>
-
-              <NuxtLink
-                to="/admin/external-events"
-                @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
-              >
-                <CogIcon class="w-4 h-4" />
-                <span>External Events</span>
-              </NuxtLink>
-
-              <NuxtLink
-                to="/admin/tags"
-                @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
-              >
-                <TagIcon class="w-4 h-4" />
-                <span>Tag Management</span>
-              </NuxtLink>
-
-              <NuxtLink
-                to="/admin/settings/banner"
-                @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
-              >
-                <CogIcon class="w-4 h-4" />
-                <span>{{ t("nav.bannerSettings") }}</span>
-              </NuxtLink>
-
-              <NuxtLink
-                to="/admin/events/history"
-                @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
-              >
-                <ClockIcon class="w-4 h-4" />
-                <span>{{ t("nav.eventHistory") }}</span>
-              </NuxtLink>
-
-              <NuxtLink
-                to="/admin/logs"
-                @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
-              >
-                <ExclamationTriangleIcon class="w-4 h-4" />
-                <span>Error Logs</span>
-              </NuxtLink>
-
-              <NuxtLink
-                to="/importer"
-                @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
-              >
-                <DocumentIcon class="w-4 h-4" />
-                <span>{{ t("nav.importer") }}</span>
-              </NuxtLink>
             </div>
 
             <!-- Language Switcher -->
@@ -442,7 +238,13 @@ const { t } = useI18n();
     </header>
 
     <main class="flex-1">
-      <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div
+        v-if="isAdminRoute"
+        class="admin-route-shell"
+      >
+        <slot />
+      </div>
+      <div v-else class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <slot />
       </div>
     </main>
@@ -450,6 +252,10 @@ const { t } = useI18n();
 </template>
 
 <style scoped>
+.admin-route-shell {
+  width: 100%;
+}
+
 /* Navigation link styles */
 .nav-link {
   display: flex;
@@ -497,11 +303,6 @@ const { t } = useI18n();
   background: linear-gradient(to right, #111827, #000000);
 }
 
-/* Admin dropdown styles */
-.admin-dropdown {
-  position: relative;
-}
-
 .admin-menu-button {
   display: flex;
   align-items: center;
@@ -515,44 +316,6 @@ const { t } = useI18n();
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
-}
-
-.admin-menu-button:hover {
-  background-color: #4f545c;
-  border-color: #40444b;
-}
-
-.admin-dropdown-content {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 50;
-  min-width: 12rem;
-  margin-top: 0.25rem;
-  background-color: #2f3136;
-  border: 1px solid #202225;
-  border-radius: 0.5rem;
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.3),
-    0 4px 6px -2px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-}
-
-.admin-link {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  color: #d1d5db;
-  text-decoration: none;
-  transition: all 0.2s ease-in-out;
-  border-bottom: 1px solid #202225;
-}
-
-.admin-link:last-child {
-  border-bottom: none;
 }
 
 .admin-link:hover {

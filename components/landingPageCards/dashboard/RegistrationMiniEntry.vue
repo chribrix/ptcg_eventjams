@@ -189,9 +189,6 @@ import {
   CheckCircleIcon,
   UsersIcon,
   DocumentTextIcon,
-  InformationCircleIcon,
-  ArrowPathIcon,
-  XMarkIcon,
 } from "@heroicons/vue/24/outline";
 
 interface EventRegistration {
@@ -230,9 +227,6 @@ defineProps<{
 defineEmits<{
   cancel: [registration: EventRegistration];
 }>();
-
-// TODO check if proper to keep
-const CANCELLATION_DEADLINE_HOURS = 24;
 
 // Helper functions
 function getStatusBadgeClass(status: string): string {
@@ -292,44 +286,6 @@ function getDecklistStatusText(registration: EventRegistration): string {
   } else {
     return "⚠ Decklist pending";
   }
-}
-
-function canCancelRegistration(registration: EventRegistration): boolean {
-  const eventDate = new Date(registration.customEvent.eventDate);
-  const now = new Date();
-
-  const cancellationDeadline = new Date(
-    eventDate.getTime() - CANCELLATION_DEADLINE_HOURS * 60 * 60 * 1000
-  );
-
-  return (
-    eventDate > now &&
-    now <= cancellationDeadline &&
-    registration.status !== "cancelled"
-  );
-}
-
-function getCancellationMessage(registration: EventRegistration): string {
-  const eventDate = new Date(registration.customEvent.eventDate);
-  const now = new Date();
-
-  const cancellationDeadline = new Date(
-    eventDate.getTime() - CANCELLATION_DEADLINE_HOURS * 60 * 60 * 1000
-  );
-
-  if (eventDate < now) {
-    return "Event has passed";
-  }
-
-  if (now > cancellationDeadline) {
-    return "Cancellation deadline passed (24h before event)";
-  }
-
-  if (registration.status === "cancelled") {
-    return "Registration cancelled";
-  }
-
-  return "";
 }
 
 function formatEventDate(dateString: string): string {

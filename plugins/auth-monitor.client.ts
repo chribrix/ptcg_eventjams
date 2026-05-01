@@ -1,3 +1,5 @@
+import { clearClientAuthState } from "~/utils/clientAuthState";
+
 export default defineNuxtPlugin((nuxtApp) => {
   const supabaseClient = useSupabaseClient();
 
@@ -9,25 +11,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         case "SIGNED_OUT":
           // User signed out - clear all local state
           console.log("User signed out, clearing local storage");
-          if (process.client) {
-            try {
-              localStorage.clear();
-              sessionStorage.clear();
-
-              // Clear cookies thoroughly for iOS Safari
-              const cookies = document.cookie.split(";");
-              for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i];
-                const eqPos = cookie.indexOf("=");
-                const name =
-                  eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-                document.cookie =
-                  name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-              }
-            } catch (error) {
-              console.error("Error clearing storage:", error);
-            }
-          }
+          clearClientAuthState({ clearAllStorage: true });
           break;
 
         case "TOKEN_REFRESHED":
@@ -53,10 +37,7 @@ export default defineNuxtPlugin((nuxtApp) => {
       // Check for session expiration
       if (!session && event !== "SIGNED_OUT" && event !== "SIGNED_IN") {
         console.log("Session expired or invalid, cleaning up");
-        if (process.client) {
-          localStorage.clear();
-          sessionStorage.clear();
-        }
+        clearClientAuthState({ clearAllStorage: true });
       }
     }
   );

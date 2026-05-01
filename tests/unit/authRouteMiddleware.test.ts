@@ -7,9 +7,7 @@ describe("auth route middleware", () => {
   });
 
   it("builds a login redirect from the full requested path", async () => {
-    const { buildLoginRedirectPath } = await import(
-      "../../middleware/auth.global"
-    );
+    const { buildLoginRedirectPath } = await import("../../utils/loginRedirect");
 
     expect(
       buildLoginRedirectPath({

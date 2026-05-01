@@ -271,7 +271,7 @@ interface Player {
 
 // Page metadata
 definePageMeta({
-  layout: "products",
+  layout: "default",
 });
 
 // Composables

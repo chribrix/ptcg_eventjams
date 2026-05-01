@@ -1,3 +1,5 @@
+import { clearClientAuthState as clearSharedClientAuthState } from "~/utils/clientAuthState";
+
 export const useAuth = () => {
   const supabaseUser = useSupabaseUser();
   const supabaseClient = useSupabaseClient();
@@ -41,37 +43,7 @@ export const useAuth = () => {
   };
 
   const clearClientAuthState = (clearAllStorage = false) => {
-    if (!process.client) return;
-
-    try {
-      if (clearAllStorage) {
-        localStorage.clear();
-        sessionStorage.clear();
-      } else {
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (
-            key &&
-            (key.includes("supabase") || key.includes("session_start_"))
-          ) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach((key) => localStorage.removeItem(key));
-      }
-    } catch {}
-
-    try {
-      const cookies = document.cookie.split(";");
-      for (const cookie of cookies) {
-        const name = cookie.split("=")[0]?.trim();
-        if (!name) continue;
-
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
-      }
-    } catch {}
+    clearSharedClientAuthState({ clearAllStorage });
   };
 
   // Check and refresh session if needed

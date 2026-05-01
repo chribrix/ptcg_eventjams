@@ -1,11 +1,9 @@
 <template>
-  <AdminPageLayout>
+  <AdminPageLayout
+    title="Tag Management"
+    subtitle="Manage event tags and categorization system"
+  >
     <div class="tags-admin">
-      <div class="page-header">
-        <h1 class="page-title">Tag Management</h1>
-        <p class="page-subtitle">Manage event tags and categorization system</p>
-      </div>
-
       <!-- Tag Type Overview -->
       <div class="admin-card">
         <h2 class="section-title">Tag Types</h2>

@@ -3,10 +3,6 @@
     title="Admin Dashboard"
     :subtitle="`Welcome, ${user?.user_metadata?.name || user?.email}`"
   >
-    <template #actions>
-      <!-- Add any header actions here if needed -->
-    </template>
-
     <!-- Quick Stats Cards -->
     <div class="admin-card">
       <div class="section-header">
@@ -52,59 +48,6 @@
             </p>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="admin-card">
-      <div class="section-header">
-        <h2>Quick Actions</h2>
-      </div>
-      <div class="admin-grid">
-        <NuxtLink to="/admin/events" class="action-card">
-          <div class="action-icon">🎯</div>
-          <h3>Manage Events</h3>
-          <p>Create, edit, and manage custom events</p>
-        </NuxtLink>
-
-        <NuxtLink to="/admin/users" class="action-card">
-          <div class="action-icon">🛡️</div>
-          <h3>Manage Users</h3>
-          <p>
-            Review auth users, linked players, admin roles, and password reset
-            actions
-          </p>
-        </NuxtLink>
-
-        <NuxtLink to="/admin/players" class="action-card">
-          <div class="action-icon">👤</div>
-          <h3>Manage Players</h3>
-          <p>View and manage registered players</p>
-        </NuxtLink>
-
-        <NuxtLink to="/admin/external-events" class="action-card">
-          <div class="action-icon">🔧</div>
-          <h3>External Event Overrides</h3>
-          <p>Customize pokedata.ovh event details</p>
-        </NuxtLink>
-
-        <NuxtLink to="/admin/tags" class="action-card">
-          <div class="action-icon">🏷️</div>
-          <h3>Tag Management</h3>
-          <p>Manage event tags and categories</p>
-        </NuxtLink>
-
-        <NuxtLink to="/admin/settings/banner" class="action-card">
-          <div class="action-icon">📣</div>
-          <h3>Banner Settings</h3>
-          <p>Edit the public landing-page information banner</p>
-        </NuxtLink>
-
-        <NuxtLink to="/admin/logs" class="action-card">
-          <div class="action-icon">🧾</div>
-          <h3>Logs</h3>
-          <p>Inspect runtime issues and admin action traces</p>
-        </NuxtLink>
       </div>
     </div>
 
@@ -229,34 +172,6 @@ onMounted(async () => {
 
 <style scoped>
 @import "~/assets/css/admin-shared.css";
-
-.action-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.2s ease;
-  display: block;
-  border: 1px solid #e2e8f0;
-}
-
-.action-card:hover:not(.disabled) {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.action-card.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.action-icon {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  display: block;
-}
 
 .action-card h3 {
   font-size: 1.125rem;

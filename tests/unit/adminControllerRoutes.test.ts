@@ -387,13 +387,16 @@ describe("Admin controller routes", () => {
               name: "Ash",
               playerId: "ash-123",
             },
-          },
-        ],
-        customParticipants: [
-          {
-            playerId: "player-1",
-            placement: 1,
-            points: 12,
+            tickets: [
+              {
+                id: "ticket-1",
+                participantName: "Ash",
+                participantPlayerId: "ash-123",
+                status: "attended",
+                placement: 1,
+                points: 12,
+              },
+            ],
           },
         ],
       },
@@ -422,8 +425,8 @@ describe("Admin controller routes", () => {
           totalParticipants: 1,
           participants: [
             {
-              id: "registration-1",
-              status: "confirmed",
+              id: "ticket-1",
+              status: "attended",
               placement: 1,
               points: 12,
               registeredAt: "2026-03-28T18:00:00.000Z",

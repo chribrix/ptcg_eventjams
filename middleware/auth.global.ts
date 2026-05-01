@@ -1,11 +1,6 @@
-// middleware/auth.global.ts
-export const buildLoginRedirectPath = (to: {
-  path: string;
-  fullPath?: string;
-}) => {
-  const destination = to.fullPath || to.path || "/";
-  return `/login?redirect=${encodeURIComponent(destination)}`;
-};
+import { clearClientAuthState } from "~/utils/clientAuthState";
+
+import { buildLoginRedirectPath } from "~/utils/loginRedirect";
 
 type AuthMiddlewareDependencies = {
   getAuth?: typeof useAuth;
@@ -66,8 +61,7 @@ export const createAuthRouteGuard = (
       const validUser = await ensureValidSession();
       if (!validUser) {
         // Session expired, clean up and redirect
-        localStorage.clear();
-        sessionStorage.clear();
+        clearClientAuthState({ clearAllStorage: true });
         await supabase.auth.signOut();
         return navigate(loginRedirect);
       }

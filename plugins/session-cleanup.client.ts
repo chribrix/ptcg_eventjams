@@ -1,3 +1,5 @@
+import { clearClientAuthState } from "~/utils/clientAuthState";
+
 export default defineNuxtPlugin(async () => {
   const supabaseClient = useSupabaseClient();
 
@@ -11,8 +13,7 @@ export default defineNuxtPlugin(async () => {
 
       if (error) {
         console.log("Session check error on init, cleaning up:", error);
-        localStorage.clear();
-        sessionStorage.clear();
+        clearClientAuthState({ clearAllStorage: true });
         return;
       }
 
@@ -23,16 +24,14 @@ export default defineNuxtPlugin(async () => {
 
         if (expiresAt && expiresAt < now) {
           console.log("Detected expired session on app init, cleaning up");
-          localStorage.clear();
-          sessionStorage.clear();
+          clearClientAuthState({ clearAllStorage: true });
           await supabaseClient.auth.signOut();
         }
       }
     } catch (error) {
       console.error("Error during session cleanup on init:", error);
       // If there's any error checking session, clear storage to be safe
-      localStorage.clear();
-      sessionStorage.clear();
+      clearClientAuthState({ clearAllStorage: true });
     }
   }
 });
