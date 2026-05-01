@@ -7,7 +7,7 @@ import {
   afterEach,
   type MockedFunction,
 } from "vitest";
-import { mockUsers, mockDatabaseResponses } from "../mocks/adminMocks";
+import { mockUsers } from "../mocks/adminMocks";
 
 // Type definitions for better type safety
 interface MockError extends Error {
@@ -46,13 +46,6 @@ const createMockError = (
   return error;
 };
 
-// Create mock Prisma instance
-const mockPrisma = {
-  adminUser: {
-    findUnique: vi.fn(),
-  },
-};
-
 // Mock verifyAdmin function that simulates the server middleware logic
 const createVerifyAdmin = (
   serverSupabaseUser: ServerSupabaseUserFunction
@@ -66,13 +59,15 @@ const createVerifyAdmin = (
         throw createMockError(401, "Authentication required");
       }
 
-      // Simply check if user ID exists in admin_users table
-      const adminUser = await mockPrisma.adminUser.findUnique({
-        where: { id: user.id },
-      });
+      const appMetadata = user.app_metadata || {};
+      const roles = Array.isArray(appMetadata.roles) ? appMetadata.roles : [];
+      const isAdmin =
+        appMetadata.is_admin === true ||
+        appMetadata.role === "admin" ||
+        appMetadata.user_role === "admin" ||
+        roles.includes("admin");
 
-      // If user doesn't exist in admin table, they're not admin
-      if (!adminUser) {
+      if (!isAdmin) {
         throw createMockError(403, "Access denied - Admin privileges required");
       }
 
@@ -129,42 +124,27 @@ describe("Admin Server Middleware Logic", () => {
       });
 
       expect(serverSupabaseUser).toHaveBeenCalledWith(mockEvent);
-      expect(mockPrisma.adminUser.findUnique).not.toHaveBeenCalled();
     });
 
-    it("should throw 403 when user is not in admin_users table", async () => {
+    it("should throw 403 when user lacks admin role metadata", async () => {
       serverSupabaseUser.mockResolvedValue(mockUsers.regularUser);
-      mockPrisma.adminUser.findUnique.mockResolvedValue(null);
 
       await expect(verifyAdmin(mockEvent)).rejects.toMatchObject({
         statusCode: 403,
         statusMessage: "Access denied - Admin privileges required",
       });
-
-      expect(mockPrisma.adminUser.findUnique).toHaveBeenCalledWith({
-        where: { id: mockUsers.regularUser.id },
-      });
     });
 
     it("should return user when user is admin", async () => {
       serverSupabaseUser.mockResolvedValue(mockUsers.adminUser);
-      mockPrisma.adminUser.findUnique.mockResolvedValue(
-        mockDatabaseResponses.adminUserFound
-      );
 
       const result = await verifyAdmin(mockEvent);
 
       expect(result).toBe(mockUsers.adminUser);
-      expect(mockPrisma.adminUser.findUnique).toHaveBeenCalledWith({
-        where: { id: mockUsers.adminUser.id },
-      });
     });
 
-    it("should throw 500 on database error", async () => {
-      serverSupabaseUser.mockResolvedValue(mockUsers.regularUser);
-      mockPrisma.adminUser.findUnique.mockRejectedValue(
-        new Error("Database error")
-      );
+    it("should throw 500 on unexpected auth resolver error", async () => {
+      serverSupabaseUser.mockRejectedValue(new Error("Resolver failed"));
 
       await expect(verifyAdmin(mockEvent)).rejects.toMatchObject({
         statusCode: 500,
@@ -205,9 +185,6 @@ describe("Admin Server Middleware Logic", () => {
         },
       };
       serverSupabaseUser.mockResolvedValue(mockUsers.adminUser);
-      mockPrisma.adminUser.findUnique.mockResolvedValue(
-        mockDatabaseResponses.adminUserFound
-      );
 
       const middlewareHandler = createMiddlewareHandler(verifyAdmin);
 
@@ -254,9 +231,6 @@ describe("Admin Server Middleware Logic", () => {
         },
       };
       serverSupabaseUser.mockResolvedValue(mockUsers.adminUser);
-      mockPrisma.adminUser.findUnique.mockResolvedValue(
-        mockDatabaseResponses.adminUserFound
-      );
 
       const middlewareHandler = createMiddlewareHandler(verifyAdmin);
 

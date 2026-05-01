@@ -1,4 +1,5 @@
 import prisma from "~/lib/prisma";
+import { hasAdminRole, isAdminUserId } from "../../util/adminAccess";
 import { serverSupabaseUser } from "#supabase/server";
 
 // Get participants for an event
@@ -20,20 +21,14 @@ export default defineEventHandler(async (event) => {
     let isAdmin = false;
 
     if (impersonatedUserId) {
-      // If impersonating, check if the IMPERSONATED user is an admin
-      const impersonatedAdminUser = await prisma.adminUser.findUnique({
-        where: { id: impersonatedUserId },
-      });
-      isAdmin = !!impersonatedAdminUser;
+      // Preserve impersonated-view semantics by checking the impersonated user's admin role.
+      isAdmin = await isAdminUserId(impersonatedUserId);
     } else {
       // Otherwise check the actual authenticated user
       try {
         const user = await serverSupabaseUser(event);
         if (user) {
-          const adminUser = await prisma.adminUser.findUnique({
-            where: { id: user.id },
-          });
-          isAdmin = !!adminUser;
+          isAdmin = hasAdminRole(user);
         }
       } catch (err) {
         // If user is not authenticated, just continue as non-admin

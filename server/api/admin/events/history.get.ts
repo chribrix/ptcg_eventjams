@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { serverSupabaseUser } from "#supabase/server";
+import { verifyAdmin } from "../../middleware/admin";
 
 const prisma = new PrismaClient();
 
@@ -12,33 +12,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    let supabaseUser = null;
-
-    // Try Supabase authentication
-    try {
-      supabaseUser = await serverSupabaseUser(event);
-    } catch {
-      // Continue without Supabase auth
-    }
-
-    if (!supabaseUser) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: "Unauthorized",
-      });
-    }
-
-    // Verify admin access
-    const admin = await prisma.adminUser.findUnique({
-      where: { id: supabaseUser.id },
-    });
-
-    if (!admin) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: "Admin access required",
-      });
-    }
+    await verifyAdmin(event);
 
     // Get all past events (regardless of status but prioritize completed/cancelled)
     const pastEvents = await prisma.customEvent.findMany({

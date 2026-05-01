@@ -149,15 +149,26 @@ Acceptance criteria:
 
 ### Item 5 - Move Admin Authorization to Supabase
 
+Status: Completed on 2026-05-01
+
 Goal:
 
 - move admin role ownership to Supabase-managed auth/authorization
 
 Tasks:
 
-1. Choose role storage mechanism in Supabase.
-2. Update server admin verification to use Supabase-derived role data.
-3. Plan retirement or downgrade of `admin_users`.
+1. [x] Choose role storage mechanism in Supabase.
+2. [x] Update server admin verification to use Supabase-derived role data.
+3. [x] Plan retirement or downgrade of `admin_users`.
+
+Completed in this item:
+
+- added `server/util/adminAccess.ts` as the shared Supabase-backed admin role resolver
+- chose Supabase `app_metadata` as the runtime admin authority, accepting `role`, `user_role`, `roles`, and `is_admin` shapes for migration tolerance
+- updated `server/middleware/admin.ts` and `server/api/admin/check.get.ts` to stop depending on `users.admin_users`
+- migrated remaining server-side admin authority checks in admin history, admin error logs, and event participant visibility away from local `admin_users` lookups
+- downgraded `admin_users` to legacy compatibility data only; it is no longer the runtime authorization source of truth
+- added focused unit coverage updates for admin middleware and admin check semantics
 
 Acceptance criteria:
 
@@ -246,6 +257,6 @@ Acceptance criteria:
 
 ## Recommended Next Action
 
-Item 3 is complete.
+Item 5 is complete.
 
-The next implementation step is Item 4: replace redirect-link-centered passwordless login with a login code architecture.
+The next implementation step is Item 6: stop event registration from creating canonical players implicitly.

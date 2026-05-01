@@ -7,7 +7,9 @@ export const mockUsers = {
     user_metadata: {
       name: "Regular User",
     },
-    app_metadata: {},
+    app_metadata: {
+      role: "user",
+    },
     created_at: "2024-01-01T00:00:00.000Z",
   },
 
@@ -18,7 +20,10 @@ export const mockUsers = {
     user_metadata: {
       name: "Admin User",
     },
-    app_metadata: {},
+    app_metadata: {
+      role: "admin",
+      roles: ["admin"],
+    },
     created_at: "2024-01-01T00:00:00.000Z",
   },
 
@@ -27,7 +32,9 @@ export const mockUsers = {
     id: "550e8400-e29b-41d4-a716-446655440001",
     email: "nometadata@example.com",
     user_metadata: null,
-    app_metadata: {},
+    app_metadata: {
+      role: "user",
+    },
     created_at: "2024-01-01T00:00:00.000Z",
   },
 };
@@ -51,29 +58,6 @@ export const mockSessions = {
   },
 
   expiredSession: null,
-};
-
-// Mock database responses
-export const mockDatabaseResponses = {
-  // Database responses
-  adminUsersInDb: [
-    {
-      id: "123e4567-e89b-12d3-a456-426614174000",
-      email: "admin@example.com",
-      name: "Admin User",
-      createdAt: new Date("2024-01-01T00:00:00.000Z"),
-      updatedAt: new Date("2024-01-01T00:00:00.000Z"),
-    },
-  ],
-  adminUserFound: {
-    id: "123e4567-e89b-12d3-a456-426614174000",
-    email: "admin@example.com",
-    name: "Admin User",
-    createdAt: new Date("2024-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2024-01-01T00:00:00.000Z"),
-  },
-  adminUserNotFound: null,
-  databaseError: new Error("Database connection failed"),
 };
 
 // Expected API responses
@@ -119,22 +103,3 @@ export const mockApiResponses = {
   },
 };
 
-// Mock Prisma client responses
-export const mockPrismaResponses = {
-  adminUser: {
-    findUnique: {
-      // Admin found
-      adminFound: mockDatabaseResponses.adminUserFound,
-      // Admin not found
-      adminNotFound: null,
-    },
-    create: {
-      // Successfully created admin
-      adminCreated: mockDatabaseResponses.adminUserFound,
-    },
-    delete: {
-      // Successfully deleted admin
-      adminDeleted: mockDatabaseResponses.adminUserFound,
-    },
-  },
-};
