@@ -1,218 +1,55 @@
-import { PrismaClient } from "@prisma/client";
-import { z } from "zod";
+import { defineAdminRoute } from "~/server/services/admin/adminRoute";
+import {
+  createAdminRegistration,
+  deleteAdminRegistration,
+  listAdminRegistrationsForEvent,
+  updateAdminRegistration,
+} from "~/server/services/admin/adminRegistrationService";
 
-const prisma = new PrismaClient();
-
-// Validation schemas
-const createRegistrationSchema = z.object({
-  customEventId: z.string().min(1),
-  playerId: z.string().min(1),
-  notes: z.string().optional(),
-});
-
-const updateRegistrationSchema = z.object({
-  status: z.enum(["registered", "attended", "no-show", "cancelled"]).optional(),
-  notes: z.string().optional(),
-});
-
-export default defineEventHandler(async (event) => {
+export default defineAdminRoute(async ({ event }) => {
   const method = getMethod(event);
   const query = getQuery(event);
 
-  try {
-    switch (method) {
-      case "GET":
-        // Get registrations for a specific event
-        const eventId = query.eventId as string;
-        if (!eventId) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: "Event ID is required",
-          });
-        }
-
-        const registrations = await prisma.eventRegistration.findMany({
-          where: { customEventId: eventId },
-          include: {
-            player: true,
-            tickets: true,
-            customEvent: {
-              select: { id: true, name: true, eventDate: true },
-            },
-          },
-          orderBy: { registeredAt: "asc" },
-        });
-
-        // Decklist lives on RegistrationTicket, not on EventRegistration.
-        // Merge the first ticket's decklist/onsite flag into the registration shape
-        // expected by the admin UI.
-        const registrationsWithDecklist = registrations.map((reg) => {
-          const primaryTicket = reg.tickets?.[0];
-          return {
-            ...reg,
-            decklist: primaryTicket?.decklist ?? null,
-            bringingDecklistOnsite:
-              primaryTicket?.bringingDecklistOnsite ?? false,
-          };
-        });
-
-        return { registrations: registrationsWithDecklist };
-
-      case "POST":
-        // Register player for event
-        const body = await readBody(event);
-        const validatedData = createRegistrationSchema.parse(body);
-
-        // Check if event exists and has capacity
-        const customEvent = await prisma.customEvent.findUnique({
-          where: { id: validatedData.customEventId },
-        });
-
-        if (!customEvent) {
-          throw createError({
-            statusCode: 404,
-            statusMessage: "Event not found",
-          });
-        }
-
-        // Count tickets (actual participants), not registrations (one per booking user)
-        // Exclude cancelled tickets so freed slots are counted correctly
-        const currentTicketCount = await prisma.registrationTicket.count({
-          where: {
-            registration: {
-              customEventId: validatedData.customEventId,
-            },
-            status: {
-              not: "cancelled",
-            },
-          },
-        });
-
-        if (currentTicketCount >= customEvent.maxParticipants) {
-          throw createError({
-            statusCode: 409,
-            statusMessage: "Event is full",
-          });
-        }
-
-        // Check if player exists
-        const player = await prisma.player.findUnique({
-          where: { id: validatedData.playerId },
-        });
-
-        if (!player) {
-          throw createError({
-            statusCode: 404,
-            statusMessage: "Player not found",
-          });
-        }
-
-        // Check if already registered
-        const existingRegistration = await prisma.eventRegistration.findUnique({
-          where: {
-            customEventId_playerId: {
-              customEventId: validatedData.customEventId,
-              playerId: validatedData.playerId,
-            },
-          },
-        });
-
-        if (existingRegistration) {
-          throw createError({
-            statusCode: 409,
-            statusMessage: "Player already registered for this event",
-          });
-        }
-
-        const newRegistration = await prisma.eventRegistration.create({
-          data: validatedData,
-          include: {
-            player: true,
-            customEvent: {
-              select: { id: true, name: true, eventDate: true },
-            },
-          },
-        });
-
-        return newRegistration;
-
-      case "PUT":
-        // Update registration status
-        const registrationId = query.id as string;
-        if (!registrationId) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: "Registration ID is required",
-          });
-        }
-
-        const updateBody = await readBody(event);
-        const validatedUpdateData = updateRegistrationSchema.parse(updateBody);
-
-        const updatedRegistration = await prisma.eventRegistration.update({
-          where: { id: registrationId },
-          data: validatedUpdateData,
-          include: {
-            player: true,
-            customEvent: {
-              select: { id: true, name: true, eventDate: true },
-            },
-          },
-        });
-
-        return updatedRegistration;
-
-      case "DELETE":
-        // Cancel registration
-        const deleteRegistrationId = query.id as string;
-        if (!deleteRegistrationId) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: "Registration ID is required",
-          });
-        }
-
-        await prisma.eventRegistration.delete({
-          where: { id: deleteRegistrationId },
-        });
-
-        return {
-          success: true,
-          message: "Registration cancelled successfully",
-        };
-
-      default:
+  switch (method) {
+    case "GET": {
+      const eventId = query.eventId as string;
+      if (!eventId) {
         throw createError({
-          statusCode: 405,
-          statusMessage: "Method not allowed",
-        });
-    }
-  } catch (error: unknown) {
-    console.error("Event registrations API error:", error);
-
-    // Handle Prisma errors
-    if (error && typeof error === "object" && "code" in error) {
-      if (error.code === "P2002") {
-        throw createError({
-          statusCode: 409,
-          statusMessage: "Player already registered for this event",
+          statusCode: 400,
+          statusMessage: "Event ID is required",
         });
       }
-
-      if (error.code === "P2025") {
+      return listAdminRegistrationsForEvent(eventId);
+    }
+    case "POST": {
+      const body = await readBody(event);
+      return createAdminRegistration(body);
+    }
+    case "PUT": {
+      const registrationId = query.id as string;
+      if (!registrationId) {
         throw createError({
-          statusCode: 404,
-          statusMessage: "Registration not found",
+          statusCode: 400,
+          statusMessage: "Registration ID is required",
         });
       }
+      const body = await readBody(event);
+      return updateAdminRegistration(registrationId, body);
     }
-
-    // Handle generic errors
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
-    throw createError({
-      statusCode: 500,
-      statusMessage: errorMessage,
-    });
+    case "DELETE": {
+      const registrationId = query.id as string;
+      if (!registrationId) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: "Registration ID is required",
+        });
+      }
+      return deleteAdminRegistration(registrationId);
+    }
+    default:
+      throw createError({
+        statusCode: 405,
+        statusMessage: "Method not allowed",
+      });
   }
 });

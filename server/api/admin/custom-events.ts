@@ -1,171 +1,68 @@
-import { PrismaClient } from "@prisma/client";
-import { z } from "zod";
-import { verifyAdmin } from "../../middleware/admin";
+import { defineAdminRoute } from "~/server/services/admin/adminRoute";
+import {
+  createAdminCustomEvent,
+  deleteAdminCustomEvent,
+  getAdminCustomEvent,
+  listAdminCustomEvents,
+  updateAdminCustomEvent,
+} from "~/server/services/admin/eventAdminService";
 
-const prisma = new PrismaClient();
-
-// Helper function to validate datetime-local format
-const validateDatetimeLocal = (value: string) => {
-  // Allow empty string for optional fields
-  if (!value || value.trim() === "") return true;
-
-  // Check format: YYYY-MM-DDTHH:MM
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
-    throw new Error("Invalid datetime format. Expected YYYY-MM-DDTHH:MM");
-  }
-  const date = new Date(value);
-  if (isNaN(date.getTime())) {
-    throw new Error("Invalid date");
-  }
-  return true;
+type CustomEventRouteDependencies = {
+  getRequestMethod?: typeof getMethod;
+  readQuery?: typeof getQuery;
+  readRequestBody?: typeof readBody;
+  listEvents?: typeof listAdminCustomEvents;
+  getEvent?: typeof getAdminCustomEvent;
+  createEvent?: typeof createAdminCustomEvent;
+  updateEvent?: typeof updateAdminCustomEvent;
+  deleteEvent?: typeof deleteAdminCustomEvent;
 };
 
-// Validation schemas
-const createCustomEventSchema = z.object({
-  name: z.string().min(1),
-  venue: z.string().min(1),
-  tagType: z.enum(["pokemon", "riftbound", "generic"]).default("pokemon"),
-  tags: z.record(z.any()).optional(),
-  maxParticipants: z.number().min(1),
-  participationFee: z.number().optional(),
-  description: z.string().optional(),
-  eventDate: z
-    .string()
-    .min(1)
-    .refine(validateDatetimeLocal, "Invalid datetime format"),
-  registrationDeadline: z
-    .string()
-    .refine(validateDatetimeLocal, "Invalid datetime format")
-    .optional(),
-  requiresDecklist: z.boolean().default(false),
-});
+export function createAdminCustomEventsHandler(
+  dependencies: CustomEventRouteDependencies = {},
+) {
+  const getRequestMethod =
+    dependencies.getRequestMethod ||
+    ((event) => {
+      return getMethod(event);
+    });
+  const readQuery =
+    dependencies.readQuery ||
+    ((event) => {
+      return getQuery(event);
+    });
+  const readRequestBody =
+    dependencies.readRequestBody ||
+    (async (event) => {
+      return readBody(event);
+    });
+  const listEvents = dependencies.listEvents || listAdminCustomEvents;
+  const getEvent = dependencies.getEvent || getAdminCustomEvent;
+  const createEvent = dependencies.createEvent || createAdminCustomEvent;
+  const updateEvent = dependencies.updateEvent || updateAdminCustomEvent;
+  const deleteEvent = dependencies.deleteEvent || deleteAdminCustomEvent;
 
-const updateCustomEventSchema = z.object({
-  name: z.string().min(1).optional(),
-  venue: z.string().min(1).optional(),
-  tagType: z.enum(["pokemon", "riftbound", "generic"]).optional(),
-  tags: z.record(z.any()).optional(),
-  maxParticipants: z.number().min(1).optional(),
-  participationFee: z.number().optional(),
-  description: z.string().optional(),
-  eventDate: z
-    .string()
-    .refine(validateDatetimeLocal, "Invalid datetime format")
-    .optional(),
-  registrationDeadline: z
-    .string()
-    .refine(validateDatetimeLocal, "Invalid datetime format")
-    .optional(),
-  requiresDecklist: z.boolean().optional(),
-  status: z.enum(["upcoming", "ongoing", "completed", "cancelled"]).optional(),
-});
+  return async ({ event, adminUser }: { event: unknown; adminUser: { id: string } }) => {
+    const method = getRequestMethod(event as Parameters<typeof getMethod>[0]);
+    const query = readQuery(event as Parameters<typeof getQuery>[0]);
 
-// Helper to convert datetime-local string to UTC Date while preserving the local time
-// Input: "2025-12-24T14:00" -> Output: Date object representing 14:00 in Europe/Berlin
-const parseLocalDateTime = (dateTimeStr: string): Date => {
-  // Append timezone offset to treat the input as Europe/Berlin time
-  // This ensures the specified time is preserved
-  return new Date(dateTimeStr + ":00.000+01:00");
-};
-
-export default defineEventHandler(async (event) => {
-  const method = getMethod(event);
-  const query = getQuery(event);
-
-  try {
     switch (method) {
-      case "GET":
-        // Get all custom events or specific event by ID
+      case "GET": {
         if (query.id) {
-          const customEvent = await prisma.customEvent.findUnique({
-            where: { id: query.id as string },
-            include: {
-              creator: {
-                select: { id: true, name: true, email: true },
-              },
-              registrations: {
-                include: {
-                  player: true,
-                },
-              },
-              _count: {
-                select: { registrations: true },
-              },
-            },
-          });
-
-          if (!customEvent) {
-            throw createError({
-              statusCode: 404,
-              statusMessage: "Event not found",
-            });
-          }
-
-          return customEvent;
-        } else {
-          // Get all events with pagination
-          const page = parseInt((query.page as string) || "1");
-          const limit = parseInt((query.limit as string) || "10");
-          const skip = (page - 1) * limit;
-
-          const [events, total] = await Promise.all([
-            prisma.customEvent.findMany({
-              skip,
-              take: limit,
-              include: {
-                creator: {
-                  select: { id: true, name: true, email: true },
-                },
-                _count: {
-                  select: { registrations: true },
-                },
-              },
-              orderBy: { eventDate: "asc" },
-            }),
-            prisma.customEvent.count(),
-          ]);
-
-          return {
-            events,
-            pagination: {
-              page,
-              limit,
-              total,
-              pages: Math.ceil(total / limit),
-            },
-          };
+          return getEvent(query.id as string);
         }
 
-      case "POST":
-        // Create new custom event
-        const body = await readBody(event);
-        const validatedData = createCustomEventSchema.parse(body);
+        const page = Number.parseInt((query.page as string) || "1", 10);
+        const limit = Number.parseInt((query.limit as string) || "10", 10);
+        return listEvents({ page, limit });
+      }
 
-        // Get authenticated admin user from middleware verification
-        const adminUser = await verifyAdmin(event);
+      case "POST": {
+        const body = await readRequestBody(event as Parameters<typeof readBody>[0]);
+        return createEvent(body, adminUser.id);
+      }
 
-        const newEvent = await prisma.customEvent.create({
-          data: {
-            ...validatedData,
-            eventDate: parseLocalDateTime(validatedData.eventDate),
-            registrationDeadline:
-              validatedData.registrationDeadline &&
-              validatedData.registrationDeadline.trim() !== ""
-                ? parseLocalDateTime(validatedData.registrationDeadline)
-                : null,
-            createdBy: adminUser.id,
-          },
-          include: {
-            creator: {
-              select: { id: true, name: true, email: true },
-            },
-          },
-        });
-
-        return newEvent;
-
-      case "PUT":
-        // Update existing event
+      case "PUT": {
         const eventId = query.id as string;
         if (!eventId) {
           throw createError({
@@ -174,49 +71,21 @@ export default defineEventHandler(async (event) => {
           });
         }
 
-        const updateBody = await readBody(event);
-        const validatedUpdateData = updateCustomEventSchema.parse(updateBody);
+        const body = await readRequestBody(event as Parameters<typeof readBody>[0]);
+        return updateEvent(eventId, body);
+      }
 
-        const updatedEvent = await prisma.customEvent.update({
-          where: { id: eventId },
-          data: {
-            ...validatedUpdateData,
-            eventDate: validatedUpdateData.eventDate
-              ? parseLocalDateTime(validatedUpdateData.eventDate)
-              : undefined,
-            registrationDeadline:
-              validatedUpdateData.registrationDeadline &&
-              validatedUpdateData.registrationDeadline.trim() !== ""
-                ? parseLocalDateTime(validatedUpdateData.registrationDeadline)
-                : null,
-          },
-          include: {
-            creator: {
-              select: { id: true, name: true, email: true },
-            },
-            _count: {
-              select: { registrations: true },
-            },
-          },
-        });
-
-        return updatedEvent;
-
-      case "DELETE":
-        // Delete event
-        const deleteEventId = query.id as string;
-        if (!deleteEventId) {
+      case "DELETE": {
+        const eventId = query.id as string;
+        if (!eventId) {
           throw createError({
             statusCode: 400,
             statusMessage: "Event ID is required",
           });
         }
 
-        await prisma.customEvent.delete({
-          where: { id: deleteEventId },
-        });
-
-        return { success: true, message: "Event deleted successfully" };
+        return deleteEvent(eventId);
+      }
 
       default:
         throw createError({
@@ -224,32 +93,7 @@ export default defineEventHandler(async (event) => {
           statusMessage: "Method not allowed",
         });
     }
-  } catch (error: unknown) {
-    console.error("Custom events API error:", error);
+  };
+}
 
-    // Handle Prisma errors
-    if (error && typeof error === "object" && "code" in error) {
-      if (error.code === "P2002") {
-        throw createError({
-          statusCode: 409,
-          statusMessage: "Event with this name already exists",
-        });
-      }
-
-      if (error.code === "P2025") {
-        throw createError({
-          statusCode: 404,
-          statusMessage: "Event not found",
-        });
-      }
-    }
-
-    // Handle generic errors
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
-    throw createError({
-      statusCode: 500,
-      statusMessage: errorMessage,
-    });
-  }
-});
+export default defineAdminRoute(createAdminCustomEventsHandler());

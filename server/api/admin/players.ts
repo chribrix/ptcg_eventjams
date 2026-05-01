@@ -1,245 +1,63 @@
-import { PrismaClient } from "@prisma/client";
-import { z } from "zod";
+import { defineAdminRoute } from "~/server/services/admin/adminRoute";
+import {
+  createAdminPlayer,
+  deleteAdminPlayer,
+  getAdminPlayer,
+  listAdminPlayers,
+  updateAdminPlayer,
+} from "~/server/services/admin/playerAdminService";
 
-const prisma = new PrismaClient();
-
-// Validation schemas
-const createPlayerSchema = z.object({
-  playerId: z
-    .string()
-    .min(1, "Player ID is required")
-    .regex(/^\d+$/, "Player ID must contain only numbers"),
-  name: z.string().min(1),
-  birthDate: z.string().datetime(),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
-  emergencyContact: z.string().optional(),
-  emergencyPhone: z.string().optional(),
-});
-
-const updatePlayerSchema = z.object({
-  name: z.string().min(1).optional(),
-  birthDate: z.string().datetime().optional(),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
-  emergencyContact: z.string().optional(),
-  emergencyPhone: z.string().optional(),
-});
-
-export default defineEventHandler(async (event) => {
+export default defineAdminRoute(async ({ event }) => {
   const method = getMethod(event);
   const query = getQuery(event);
 
-  try {
-    switch (method) {
-      case "GET":
-        // Get all players or specific player by ID
-        if (query.id) {
-          const player = await prisma.player.findUnique({
-            where: { id: query.id as string },
-            include: {
-              registrations: {
-                include: {
-                  customEvent: {
-                    select: { id: true, name: true, eventDate: true },
-                  },
-                },
-              },
-            },
-          });
+  switch (method) {
+    case "GET": {
+      if (query.id) {
+        return getAdminPlayer(query.id as string);
+      }
 
-          if (!player) {
-            throw createError({
-              statusCode: 404,
-              statusMessage: "Player not found",
-            });
-          }
+      const page = Number.parseInt((query.page as string) || "1", 10);
+      const limit = Number.parseInt((query.limit as string) || "10", 10);
+      const search = typeof query.search === "string" ? query.search : undefined;
 
-          return player;
-        } else {
-          // Get all players with pagination and search
-          const page = parseInt((query.page as string) || "1");
-          const limit = parseInt((query.limit as string) || "10");
-          const skip = (page - 1) * limit;
-          const search = query.search as string;
-
-          const whereClause = search
-            ? {
-                OR: [
-                  { name: { contains: search, mode: "insensitive" as const } },
-                  {
-                    playerId: {
-                      contains: search,
-                      mode: "insensitive" as const,
-                    },
-                  },
-                  { email: { contains: search, mode: "insensitive" as const } },
-                ],
-              }
-            : {};
-
-          const [players, total] = await Promise.all([
-            prisma.player.findMany({
-              where: whereClause,
-              skip,
-              take: limit,
-              orderBy: { name: "asc" },
-            }),
-            prisma.player.count({ where: whereClause }),
-          ]);
-
-          return {
-            players,
-            pagination: {
-              page,
-              limit,
-              total,
-              pages: Math.ceil(total / limit),
-            },
-          };
-        }
-
-      case "POST":
-        // Create new player
-        const body = await readBody(event);
-        const validatedData = createPlayerSchema.parse(body);
-
-        // Check if player ID already exists
-        const existingPlayer = await prisma.player.findUnique({
-          where: { playerId: validatedData.playerId },
-        });
-
-        if (existingPlayer) {
-          throw createError({
-            statusCode: 409,
-            statusMessage: "Player ID already exists",
-          });
-        }
-
-        const newPlayer = await prisma.player.create({
-          data: {
-            ...validatedData,
-            birthDate: new Date(validatedData.birthDate),
-          },
-        });
-
-        return newPlayer;
-
-      case "PUT":
-        // Update existing player
-        const playerId = query.id as string;
-        if (!playerId) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: "Player ID is required",
-          });
-        }
-
-        const updateBody = await readBody(event);
-        const validatedUpdateData = updatePlayerSchema.parse(updateBody);
-
-        const updatedPlayer = await prisma.player.update({
-          where: { id: playerId },
-          data: {
-            ...validatedUpdateData,
-            birthDate: validatedUpdateData.birthDate
-              ? new Date(validatedUpdateData.birthDate)
-              : undefined,
-          },
-        });
-
-        return updatedPlayer;
-
-      case "DELETE":
-        // Delete player
-        const deletePlayerId = query.id as string;
-        if (!deletePlayerId) {
-          throw createError({
-            statusCode: 400,
-            statusMessage: "Player ID is required",
-          });
-        }
-
-        // Get player to check if they have a linked Supabase account
-        const playerToDelete = await prisma.player.findUnique({
-          where: { id: deletePlayerId },
-          select: { supabaseId: true, email: true, name: true },
-        });
-
-        if (!playerToDelete) {
-          throw createError({
-            statusCode: 404,
-            statusMessage: "Player not found",
-          });
-        }
-
-        // Delete from database first
-        await prisma.player.delete({
-          where: { id: deletePlayerId },
-        });
-
-        // Then delete from Supabase auth if linked
-        if (playerToDelete.supabaseId) {
-          try {
-            const supabaseAdmin = useSupabaseServiceRole();
-            const { error: deleteError } =
-              await supabaseAdmin.auth.admin.deleteUser(
-                playerToDelete.supabaseId,
-              );
-
-            if (deleteError) {
-              // Log error but don't fail the request since player is already deleted
-              await prisma.errorLog.create({
-                data: {
-                  errorType: "supabase_user_delete_failed",
-                  errorMessage: `Failed to delete Supabase user after player deletion: ${deleteError.message}`,
-                  userEmail: playerToDelete.email || null,
-                  userId: playerToDelete.supabaseId,
-                  metadata: {
-                    playerId: deletePlayerId,
-                    playerName: playerToDelete.name,
-                    error: deleteError,
-                  },
-                },
-              });
-            }
-          } catch {
-            // Log but don't fail the request
-          }
-        }
-
-        return { success: true, message: "Player deleted successfully" };
-
-      default:
-        throw createError({
-          statusCode: 405,
-          statusMessage: "Method not allowed",
-        });
+      return listAdminPlayers({ page, limit, search });
     }
-  } catch (error: unknown) {
-    // Handle Prisma errors
-    if (error && typeof error === "object" && "code" in error) {
-      if (error.code === "P2002") {
+
+    case "POST": {
+      const body = await readBody(event);
+      return createAdminPlayer(body);
+    }
+
+    case "PUT": {
+      const playerId = query.id as string;
+      if (!playerId) {
         throw createError({
-          statusCode: 409,
-          statusMessage: "Player with this name already exists",
+          statusCode: 400,
+          statusMessage: "Player ID is required",
         });
       }
 
-      if (error.code === "P2025") {
-        throw createError({
-          statusCode: 404,
-          statusMessage: "Player not found",
-        });
-      }
+      const body = await readBody(event);
+      return updateAdminPlayer(playerId, body);
     }
 
-    // Handle generic errors
-    const errorMessage =
-      error instanceof Error ? error.message : "Internal server error";
-    throw createError({
-      statusCode: 500,
-      statusMessage: errorMessage,
-    });
+    case "DELETE": {
+      const playerId = query.id as string;
+      if (!playerId) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: "Player ID is required",
+        });
+      }
+
+      return deleteAdminPlayer(playerId);
+    }
+
+    default:
+      throw createError({
+        statusCode: 405,
+        statusMessage: "Method not allowed",
+      });
   }
 });

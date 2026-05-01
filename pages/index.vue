@@ -1,29 +1,6 @@
 <template>
   <div>
-    <div class="px-2 pt-2">
-      <div
-        class="w-full rounded-xl border-2 border-yellow-300 bg-yellow-100 text-yellow-900 px-4 py-3 shadow-lg"
-      >
-        <div class="flex items-start gap-3">
-          <div
-            class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500 text-white font-bold"
-            aria-hidden="true"
-          >
-            !
-          </div>
-          <div>
-            <h3 class="text-base font-semibold">
-              <strong>NEU</strong>: Login mit Passwort nun möglich!
-            </h3>
-            <p class="mt-1 text-sm font-medium">
-              Der bisherige Magic-Link-Login wurde durch E-Mail-Codes ersetzt.
-              Zusätzlich ist das Registrieren und Einloggen per Passwort
-              möglich.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <LandingBanner />
 
     <!-- Main Content -->
     <div class="w-full">

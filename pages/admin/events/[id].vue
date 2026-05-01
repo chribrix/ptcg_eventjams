@@ -1,7 +1,7 @@
 <template>
   <AdminPageLayout :title="`Event Details: ${event?.name || 'Loading...'}`">
     <template #actions>
-      <NuxtLink to="/admin/custom-events" class="btn btn-secondary">
+      <NuxtLink to="/admin/events" class="btn btn-secondary">
         ← Back to Events
       </NuxtLink>
     </template>

@@ -28,7 +28,7 @@
           <div class="stat-content">
             <h3>Registered Players</h3>
             <p class="stat-number">
-              {{ statsLoading ? "..." : stats.totalRegistrations }}
+              {{ statsLoading ? "..." : stats.totalPlayers }}
             </p>
           </div>
         </div>
@@ -61,10 +61,16 @@
         <h2>Quick Actions</h2>
       </div>
       <div class="admin-grid">
-        <NuxtLink to="/admin/custom-events" class="action-card">
+        <NuxtLink to="/admin/events" class="action-card">
           <div class="action-icon">🎯</div>
           <h3>Manage Events</h3>
           <p>Create, edit, and manage custom events</p>
+        </NuxtLink>
+
+        <NuxtLink to="/admin/users" class="action-card">
+          <div class="action-icon">🛡️</div>
+          <h3>Manage Users</h3>
+          <p>Review auth users, linked players, admin roles, and password reset actions</p>
         </NuxtLink>
 
         <NuxtLink to="/admin/players" class="action-card">
@@ -85,11 +91,17 @@
           <p>Manage event tags and categories</p>
         </NuxtLink>
 
-        <div class="action-card disabled">
-          <div class="action-icon">📊</div>
-          <h3>Reports</h3>
-          <p>Coming soon...</p>
-        </div>
+        <NuxtLink to="/admin/settings/banner" class="action-card">
+          <div class="action-icon">📣</div>
+          <h3>Banner Settings</h3>
+          <p>Edit the public landing-page information banner</p>
+        </NuxtLink>
+
+        <NuxtLink to="/admin/logs" class="action-card">
+          <div class="action-icon">🧾</div>
+          <h3>Logs</h3>
+          <p>Inspect runtime issues and admin action traces</p>
+        </NuxtLink>
       </div>
     </div>
 
@@ -147,7 +159,7 @@ const activityLoading = ref(true);
 
 const stats = ref({
   customEvents: 0,
-  totalRegistrations: 0,
+  totalPlayers: 0,
   upcomingEvents: 0,
   completedEvents: 0,
 });
@@ -164,16 +176,13 @@ const recentActivity = ref<
 // Methods
 const loadStats = async () => {
   try {
-    // This would be an actual API call to get dashboard stats
-    // For now, we'll simulate some data
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate loading
+    const response = await $fetch<{
+      stats: typeof stats.value;
+      recentActivity: typeof recentActivity.value;
+    }>("/api/admin/dashboard");
 
-    stats.value = {
-      customEvents: 12,
-      totalRegistrations: 48,
-      upcomingEvents: 8,
-      completedEvents: 4,
-    };
+    stats.value = response.stats;
+    recentActivity.value = response.recentActivity;
   } catch (error) {
     console.error("Failed to load stats:", error);
   } finally {
@@ -183,47 +192,16 @@ const loadStats = async () => {
 
 const loadRecentActivity = async () => {
   try {
-    // This would be an actual API call to get recent activity
-    // For now, we'll simulate some data
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    const response = await $fetch<{
+      stats: typeof stats.value;
+      recentActivity: typeof recentActivity.value;
+    }>("/api/admin/dashboard");
 
-    recentActivity.value = [
-      {
-        id: "1",
-        type: "eventCreated",
-        description: 'New event "Weekly Tournament" created',
-        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-      },
-      {
-        id: "2",
-        type: "playerRegistered",
-        description: 'Player "John Doe" registered for "Monthly Challenge"',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-      },
-      {
-        id: "3",
-        type: "eventUpdated",
-        description: 'Event "Spring Championship" updated',
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-      },
-    ];
+    recentActivity.value = response.recentActivity;
   } catch (error) {
     console.error("Failed to load recent activity:", error);
   } finally {
     activityLoading.value = false;
-  }
-};
-
-const getActivityIcon = (type: string): string => {
-  switch (type) {
-    case "eventCreated":
-      return "calendar-plus";
-    case "playerRegistered":
-      return "user-plus";
-    case "eventUpdated":
-      return "calendar-edit";
-    default:
-      return "activity";
   }
 };
 

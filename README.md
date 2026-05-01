@@ -22,6 +22,10 @@ Authentication setup for the current email OTP flow is documented in `AUTH_SUPAB
 
 Admin role migration to Supabase metadata is documented in `AUTH_SUPABASE_ADMIN_MIGRATION.md`.
 
+Admin panel rework planning and acceptance criteria are documented in `ADMIN_PANEL_REWORK_CHECKLIST.md`.
+
+Concrete admin panel MVC, file-structure, API, and data-model planning is documented in `ADMIN_PANEL_REWORK_SPEC.md`.
+
 Make sure to install dependencies:
 
 ```bash

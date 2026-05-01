@@ -306,8 +306,6 @@ interface EventOverride {
   updatedAt: string;
 }
 
-const { adminUser } = useAdmin();
-
 const events = ref<ParsedEvent[]>([]);
 const overrides = ref<EventOverride[]>([]);
 const loading = ref(true);
@@ -403,11 +401,6 @@ async function toggleHideFromCalendar(event: ParsedEvent) {
       );
     } else {
       // Create new override with just the hide flag
-      if (!adminUser.value?.id) {
-        alert("Admin user not found");
-        return;
-      }
-
       response = await $fetch<{ success: boolean; override: any }>(
         `/api/admin/event-overrides`,
         {
@@ -420,7 +413,6 @@ async function toggleHideFromCalendar(event: ParsedEvent) {
               type: event.type,
               icon: event.icon,
             },
-            createdBy: adminUser.value.id,
             hideFromCalendar: true,
           },
         }
@@ -517,7 +509,7 @@ function closeModal() {
 }
 
 async function saveOverride() {
-  if (!selectedEvent.value || !adminUser.value?.id) return;
+  if (!selectedEvent.value) return;
 
   saving.value = true;
   modalError.value = null;
@@ -549,7 +541,6 @@ async function saveOverride() {
       eventLocation: selectedEvent.value.location,
       overrides: overridesData,
       notes: overrideForm.value.notes || null,
-      createdBy: adminUser.value.id,
       // Registration handling fields
       handleRegistrationLocally: overrideForm.value.handleRegistrationLocally,
     };

@@ -185,14 +185,6 @@ const { t } = useI18n();
                     @mouseleave="hideAdminDropdown"
                   >
                     <NuxtLink
-                      to="/admin/custom-events"
-                      class="admin-link"
-                      @click="hideAdminDropdown"
-                    >
-                      <PlusCircleIcon class="w-4 h-4" />
-                      <span>{{ t("nav.customEvents") }}</span>
-                    </NuxtLink>
-                    <NuxtLink
                       to="/admin/events"
                       class="admin-link"
                       @click="hideAdminDropdown"
@@ -317,15 +309,6 @@ const { t } = useI18n();
               >
                 <CalendarIcon class="w-4 h-4" />
                 <span>{{ t("nav.manageEvents") }}</span>
-              </NuxtLink>
-
-              <NuxtLink
-                to="/admin/custom-events"
-                @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 ml-4 text-gray-400 hover:bg-[#40444b] rounded-lg"
-              >
-                <PlusCircleIcon class="w-4 h-4" />
-                <span>{{ t("nav.customEvents") }}</span>
               </NuxtLink>
 
               <NuxtLink
