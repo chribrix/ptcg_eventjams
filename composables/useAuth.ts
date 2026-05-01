@@ -189,6 +189,11 @@ export const useAuth = () => {
     }
   };
 
+  const assignLocation = (path: string) => {
+    if (!process.client) return;
+    window.location.assign(path);
+  };
+
   // Helper to safely clear invalid sessions without blocking UI
   const clearInvalidSession = async () => {
     try {
@@ -198,27 +203,16 @@ export const useAuth = () => {
     clearClientAuthState(false);
   };
 
-  const logout = async (redirectTo = "/login") => {
-    try {
-      await logError("info_user_logout", "User initiated logout", {
-        userName: supabaseUser.value?.user_metadata?.name,
-      });
-
-      await supabaseClient.auth.signOut().catch(() => undefined);
-    } catch (error) {
-      await logError(
-        "logout_error",
-        error instanceof Error ? error.message : "Logout failed",
-        { error },
-      );
-    } finally {
-      clearClientAuthState(true);
-
-      if (process.client) {
-        window.location.assign(redirectTo);
-      }
-    }
-  };
+  const logout = createLogoutAction({
+    logError,
+    signOut: () => supabaseClient.auth.signOut(),
+    clearClientAuthState,
+    assignLocation,
+    isClient: process.client,
+    getMetadata: () => ({
+      userName: supabaseUser.value?.user_metadata?.name,
+    }),
+  });
 
   // User is just the Supabase user
   const user = computed(() => {
@@ -258,5 +252,44 @@ export const useAuth = () => {
     ensureValidSession,
     clearInvalidSession,
     logout,
+  };
+};
+
+type LogoutActionDependencies = {
+  logError: (
+    errorType: string,
+    errorMessage: string,
+    additionalData?: any,
+  ) => Promise<void>;
+  signOut: () => Promise<unknown>;
+  clearClientAuthState: (clearAllStorage?: boolean) => void;
+  assignLocation: (path: string) => void;
+  isClient: boolean;
+  getMetadata?: () => Record<string, unknown>;
+};
+
+export const createLogoutAction = (
+  dependencies: LogoutActionDependencies,
+) => {
+  return async (redirectTo = "/login") => {
+    try {
+      await dependencies.logError("info_user_logout", "User initiated logout", {
+        ...(dependencies.getMetadata?.() || {}),
+      });
+
+      await dependencies.signOut().catch(() => undefined);
+    } catch (error) {
+      await dependencies.logError(
+        "logout_error",
+        error instanceof Error ? error.message : "Logout failed",
+        { error },
+      );
+    } finally {
+      dependencies.clearClientAuthState(true);
+
+      if (dependencies.isClient) {
+        dependencies.assignLocation(redirectTo);
+      }
+    }
   };
 };

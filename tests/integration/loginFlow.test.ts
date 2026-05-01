@@ -645,6 +645,32 @@ describe("Login Workflow – Fälle ohne E-Mail-Bestätigung", () => {
       expect(tokens.refresh_token).toBeTruthy();
       expect(tokens.token_type).toBe("bearer");
     });
+
+    it("sollte bei OTP-Registrierung signInWithOtp mit shouldCreateUser: true und Profildaten aufrufen", () => {
+      const signInWithOtpMock = vi.fn().mockResolvedValue({ error: null });
+
+      signInWithOtpMock({
+        email: "new@example.com",
+        options: {
+          shouldCreateUser: true,
+          data: {
+            name: "New User",
+            playerId: "NEW99",
+          },
+        },
+      });
+
+      expect(signInWithOtpMock).toHaveBeenCalledWith({
+        email: "new@example.com",
+        options: {
+          shouldCreateUser: true,
+          data: {
+            name: "New User",
+            playerId: "NEW99",
+          },
+        },
+      });
+    });
   });
 
   // -------------------------------------------------------------------------

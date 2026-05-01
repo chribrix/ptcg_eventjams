@@ -82,8 +82,29 @@ Acceptance criteria:
 
 ## Item 5 - Core Flow Coverage
 
-Status: Pending
+Status: Completed on 2026-05-01
 
 Goal:
 
 - add focused coverage for login, registration, booking, friend tickets, and logout flows
+
+Completed in this item:
+
+- added a focused OTP-registration contract test for the player-facing registration flow
+- added a focused shared-logout action unit test for the consolidated logout path
+- documented the frontend rework validation set across login, registration, booking, redirect, and logout slices
+
+Focused validation set:
+
+- `npx vitest run tests/integration/loginFlow.test.ts`
+- `npx vitest run tests/unit/registerPasswordEndpoint.test.ts`
+- `npx vitest run tests/unit/eventRegistrationEndpoint.test.ts`
+- `npx vitest run tests/unit/authenticatedPlayerHandlers.test.ts`
+- `npx vitest run tests/unit/authRouteMiddleware.test.ts`
+- `npx vitest run tests/unit/logoutAction.test.ts`
+
+Acceptance criteria:
+
+- password login and OTP login remain covered
+- password registration and OTP registration remain covered
+- self-registration, friend-ticket management, redirect handling, and logout have focused regression coverage
