@@ -8,7 +8,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const logToDatabase = async (
     errorType: string,
     errorMessage: string,
-    metadata?: any
+    metadata?: any,
   ) => {
     try {
       await $fetch("/api/admin/error-logs/create", {
@@ -49,6 +49,6 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     {
       currentPath: window.location.pathname,
       ...deviceInfo,
-    }
+    },
   );
 });

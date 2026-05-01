@@ -17,7 +17,8 @@
             </h3>
             <p class="mt-1 text-sm font-medium">
               Der bisherige Magic-Link-Login wurde durch E-Mail-Codes ersetzt.
-              Zusätzlich ist das Registrieren und Einloggen per Passwort möglich.
+              Zusätzlich ist das Registrieren und Einloggen per Passwort
+              möglich.
             </p>
           </div>
         </div>

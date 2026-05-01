@@ -50,9 +50,8 @@ describe("event registration endpoint", () => {
       logDatabaseError: vi.fn().mockResolvedValue(undefined),
     }));
 
-    const { createRegistrationHandler } = await import(
-      "../../server/api/events/[id]/register.post"
-    );
+    const { createRegistrationHandler } =
+      await import("../../server/api/events/[id]/register.post");
 
     vi.stubGlobal(
       "readBody",
@@ -131,8 +130,16 @@ describe("event registration endpoint", () => {
         eventName: "League Cup",
         ticketCount: 2,
         tickets: [
-          { id: "ticket-1", participantName: "Parent User", status: "registered" },
-          { id: "ticket-2", participantName: "Child User", status: "registered" },
+          {
+            id: "ticket-1",
+            participantName: "Parent User",
+            status: "registered",
+          },
+          {
+            id: "ticket-2",
+            participantName: "Child User",
+            status: "registered",
+          },
         ],
       },
     });
@@ -170,9 +177,8 @@ describe("event registration endpoint", () => {
       logDatabaseError: vi.fn().mockResolvedValue(undefined),
     }));
 
-    const { createRegistrationHandler } = await import(
-      "../../server/api/events/[id]/register.post"
-    );
+    const { createRegistrationHandler } =
+      await import("../../server/api/events/[id]/register.post");
 
     vi.stubGlobal(
       "readBody",
@@ -193,9 +199,11 @@ describe("event registration endpoint", () => {
         eventRegistration: { findUnique: vi.fn(), create: vi.fn() },
         errorLog: { create: vi.fn() },
       } as any,
-      resolvePlayer: vi.fn().mockRejectedValue(
-        createError({ statusCode: 404, statusMessage: "Player not found" }),
-      ),
+      resolvePlayer: vi
+        .fn()
+        .mockRejectedValue(
+          createError({ statusCode: 404, statusMessage: "Player not found" }),
+        ),
     });
 
     await expect(handler(createEvent())).rejects.toMatchObject({

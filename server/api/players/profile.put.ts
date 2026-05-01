@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
       await logValidationError(
         event,
         validation.error,
-        "player_profile_update"
+        "player_profile_update",
       );
       throw createError({
         statusCode: 400,
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
           "Player ID already exists",
           {
             attemptedPlayerId: playerId,
-          }
+          },
         );
         throw createError({
           statusCode: 409,
@@ -89,7 +89,7 @@ export default defineEventHandler(async (event) => {
           "Email already registered to another account",
           {
             attemptedEmail: email,
-          }
+          },
         );
         throw createError({
           statusCode: 409,
@@ -149,7 +149,7 @@ export default defineEventHandler(async (event) => {
         await logAuthError(
           event,
           error as unknown as Error,
-          "player_profile_update_unauthorized"
+          "player_profile_update_unauthorized",
         );
       } else if (statusCode >= 500) {
         await logDatabaseError(

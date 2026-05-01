@@ -45,15 +45,23 @@ describe("finalize-password-setup", () => {
     vi.stubGlobal("getHeader", vi.fn().mockReturnValue(undefined));
     vi.stubGlobal(
       "fetch",
-      vi.fn()
-        .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({}) })
-        .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({}) }),
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({}),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({}),
+        }),
     );
 
-    const { createFinalizePasswordSetupHandler } = await import(
-      "../../server/api/auth/finalize-password-setup.post"
-    );
-    const ensurePlayerForAuthUser = vi.fn().mockResolvedValue({ id: "player-1" });
+    const { createFinalizePasswordSetupHandler } =
+      await import("../../server/api/auth/finalize-password-setup.post");
+    const ensurePlayerForAuthUser = vi
+      .fn()
+      .mockResolvedValue({ id: "player-1" });
 
     const getUserById = vi.fn().mockResolvedValue({
       data: {
@@ -74,11 +82,12 @@ describe("finalize-password-setup", () => {
     });
 
     const handler = createFinalizePasswordSetupHandler({
-      getRuntimeConfig: () => ({
-        public: { supabaseUrl: "https://example.supabase.co" },
-        supabaseServiceKey: "service-key",
-        passwordPepper: "pepper",
-      }) as any,
+      getRuntimeConfig: () =>
+        ({
+          public: { supabaseUrl: "https://example.supabase.co" },
+          supabaseServiceKey: "service-key",
+          passwordPepper: "pepper",
+        }) as any,
       createPrismaClient: () =>
         ({
           $executeRaw: vi.fn().mockResolvedValue(undefined),

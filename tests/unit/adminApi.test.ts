@@ -40,14 +40,14 @@ interface AdminCheckResponse {
 }
 
 type ServerSupabaseUserFunction = (
-  event: MockEvent
+  event: MockEvent,
 ) => Promise<SupabaseUser | null>;
 type AdminCheckHandler = (event: MockEvent) => Promise<AdminCheckResponse>;
 
 // Create simple mock error function
 const createMockError = (
   statusCode: number,
-  statusMessage: string
+  statusMessage: string,
 ): MockError => {
   const error = new Error(statusMessage) as MockError;
   error.statusCode = statusCode;
@@ -57,7 +57,7 @@ const createMockError = (
 
 // Mock admin check API logic
 const createAdminCheckHandler = (
-  serverSupabaseUser: ServerSupabaseUserFunction
+  serverSupabaseUser: ServerSupabaseUserFunction,
 ): AdminCheckHandler => {
   return async (event: MockEvent): Promise<AdminCheckResponse> => {
     try {

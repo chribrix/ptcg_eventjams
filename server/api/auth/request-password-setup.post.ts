@@ -187,40 +187,40 @@ export const createRequestPasswordSetupHandler = (
       ? crypto.createHmac("sha256", pepper).update(password).digest("hex")
       : password;
 
-  // Two-path logic:
-  //
-  // Path A – Niemals angemeldet (kein email_confirmed_at):
-  //   Passwort wird sofort gesetzt, email wird als bestätigt markiert,
-  //   Nutzer wird direkt eingeloggt. Keine Bestätigungsmail.
-  //
-  // Path B – Bereits mindestens einmal angemeldet (email_confirmed_at vorhanden):
-  //   Das Passwort wird verschlüsselt als pending_password_setup gespeichert.
-  //   Ein E-Mail-Code wird gesendet.
-  //   Nach Eingabe des Codes → finalize-password-setup entschlüsselt und setzt das Passwort.
-  //   Sicherheitsgrund: Der Nutzer muss beweisen, dass er noch Zugang zur Email hat.
+    // Two-path logic:
+    //
+    // Path A – Niemals angemeldet (kein email_confirmed_at):
+    //   Passwort wird sofort gesetzt, email wird als bestätigt markiert,
+    //   Nutzer wird direkt eingeloggt. Keine Bestätigungsmail.
+    //
+    // Path B – Bereits mindestens einmal angemeldet (email_confirmed_at vorhanden):
+    //   Das Passwort wird verschlüsselt als pending_password_setup gespeichert.
+    //   Ein E-Mail-Code wird gesendet.
+    //   Nach Eingabe des Codes → finalize-password-setup entschlüsselt und setzt das Passwort.
+    //   Sicherheitsgrund: Der Nutzer muss beweisen, dass er noch Zugang zur Email hat.
 
     const hasLoggedInBefore = Boolean(authUser.email_confirmed_at);
 
     if (!hasLoggedInBefore) {
-    // Path A: direktes Passwort-Setzen und sofortiger Login.
-    //
-    // Zwei getrennte Raw-REST-Calls (gleicher Grund wie in finalize-password-setup):
-    // GoTrue ignorierts app_metadata-Änderungen wenn password + app_metadata kombiniert werden.
+      // Path A: direktes Passwort-Setzen und sofortiger Login.
+      //
+      // Zwei getrennte Raw-REST-Calls (gleicher Grund wie in finalize-password-setup):
+      // GoTrue ignorierts app_metadata-Änderungen wenn password + app_metadata kombiniert werden.
 
-    // Step 1 – Passwort setzen
-    // (Metadata comes last to avoid GoTrue's read-modify-write race resetting has_password)
+      // Step 1 – Passwort setzen
+      // (Metadata comes last to avoid GoTrue's read-modify-write race resetting has_password)
       const pwResA = await fetch(
-      `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
+        `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: serviceKey,
+            Authorization: `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ password: pepperedPassword }),
         },
-        body: JSON.stringify({ password: pepperedPassword }),
-      },
-    );
+      );
 
       if (!pwResA.ok) {
         const pwErr = await pwResA.json().catch(() => ({}));
@@ -230,49 +230,50 @@ export const createRequestPasswordSetupHandler = (
         });
       }
 
-    // Step 2 – app_metadata + email bestätigen (muss zuletzt kommen)
+      // Step 2 – app_metadata + email bestätigen (muss zuletzt kommen)
       const metaResA = await fetch(
-      `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
-        },
-        body: JSON.stringify({
-          email_confirm: true,
-          app_metadata: {
-            ...(authUser.app_metadata || {}),
-            has_password: true,
-            pending_password_setup: null,
+        `${supabaseUrl}/auth/v1/admin/users/${authUser.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: serviceKey,
+            Authorization: `Bearer ${serviceKey}`,
           },
-        }),
-      },
-    );
+          body: JSON.stringify({
+            email_confirm: true,
+            app_metadata: {
+              ...(authUser.app_metadata || {}),
+              has_password: true,
+              pending_password_setup: null,
+            },
+          }),
+        },
+      );
 
       if (!metaResA.ok) {
         const metaErr = await metaResA.json().catch(() => ({}));
         throw createError({
           statusCode: 500,
-          statusMessage: metaErr?.message || "Failed to update password metadata",
+          statusMessage:
+            metaErr?.message || "Failed to update password metadata",
         });
       }
 
       const loginResponse = await fetch(
-      `${supabaseUrl}/auth/v1/token?grant_type=password`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: supabaseAnonKey,
+        `${supabaseUrl}/auth/v1/token?grant_type=password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: supabaseAnonKey,
+          },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            password: pepperedPassword,
+          }),
         },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          password: pepperedPassword,
-        }),
-      },
-    );
+      );
 
       const loginData = await loginResponse.json();
 
@@ -311,9 +312,9 @@ export const createRequestPasswordSetupHandler = (
       };
     }
 
-  // Path B: Nutzer hat sich bereits angemeldet → Bestätigung per E-Mail-Code erforderlich.
-  // Passwort wird verschlüsselt als pending_password_setup gespeichert und erst nach
-  // Eingabe des E-Mail-Codes durch finalize-password-setup aktiviert.
+    // Path B: Nutzer hat sich bereits angemeldet → Bestätigung per E-Mail-Code erforderlich.
+    // Passwort wird verschlüsselt als pending_password_setup gespeichert und erst nach
+    // Eingabe des E-Mail-Codes durch finalize-password-setup aktiviert.
     const encrypted = encryptValue(pepperedPassword, encryptionSecret);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 

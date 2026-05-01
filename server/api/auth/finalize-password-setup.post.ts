@@ -198,30 +198,30 @@ export const createFinalizePasswordSetupHandler = (
       });
     }
 
-  // Two separate admin REST calls are required here.
-  //
-  // When password + app_metadata are combined in a single updateUserById call,
-  // GoTrue applies the password update but silently drops the app_metadata changes.
-  //
-  // Additionally, GoTrue's internal read-modify-write for the password update can
-  // race with a preceding metadata-only update: GoTrue reads a stale snapshot of
-  // the user record (before the metadata write was committed) and re-persists the
-  // old app_metadata alongside the new password, resetting has_password to false.
-  //
-  // Fix: password first (raw REST PUT), then app_metadata (raw REST PUT).
-  // The metadata write is the last operation, so it always lands with the correct
-  // has_password: true state regardless of GoTrue's internal caching behaviour.
+    // Two separate admin REST calls are required here.
+    //
+    // When password + app_metadata are combined in a single updateUserById call,
+    // GoTrue applies the password update but silently drops the app_metadata changes.
+    //
+    // Additionally, GoTrue's internal read-modify-write for the password update can
+    // race with a preceding metadata-only update: GoTrue reads a stale snapshot of
+    // the user record (before the metadata write was committed) and re-persists the
+    // old app_metadata alongside the new password, resetting has_password to false.
+    //
+    // Fix: password first (raw REST PUT), then app_metadata (raw REST PUT).
+    // The metadata write is the last operation, so it always lands with the correct
+    // has_password: true state regardless of GoTrue's internal caching behaviour.
 
-  // Step 1 – set password via raw admin REST API
+    // Step 1 – set password via raw admin REST API
     const pwRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
-    },
-    body: JSON.stringify({ password: pepperedPassword }),
-  });
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ password: pepperedPassword }),
+    });
 
     if (!pwRes.ok) {
       const pwErr = await pwRes.json().catch(() => ({}));
@@ -231,22 +231,25 @@ export const createFinalizePasswordSetupHandler = (
       });
     }
 
-  // Step 2 – update app_metadata via raw admin REST API (must be last)
-    const metaRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user.id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
-    },
-    body: JSON.stringify({
-      app_metadata: {
-        ...(authUser?.app_metadata || {}),
-        has_password: true,
-        pending_password_setup: null,
+    // Step 2 – update app_metadata via raw admin REST API (must be last)
+    const metaRes = await fetch(
+      `${supabaseUrl}/auth/v1/admin/users/${user.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({
+          app_metadata: {
+            ...(authUser?.app_metadata || {}),
+            has_password: true,
+            pending_password_setup: null,
+          },
+        }),
       },
-    }),
-  });
+    );
 
     if (!metaRes.ok) {
       const metaErr = await metaRes.json().catch(() => ({}));
@@ -256,10 +259,13 @@ export const createFinalizePasswordSetupHandler = (
       });
     }
 
-    const provisioningInput = getProvisionPlayerInputFromAuthUser(authUser || user, {
-      preferredLoginMethod: "password",
-      fallbackEmail: user.email || authUser?.email || null,
-    });
+    const provisioningInput = getProvisionPlayerInputFromAuthUser(
+      authUser || user,
+      {
+        preferredLoginMethod: "password",
+        fallbackEmail: user.email || authUser?.email || null,
+      },
+    );
 
     if (provisioningInput) {
       await provisionPlayer(prisma, provisioningInput);

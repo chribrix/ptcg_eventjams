@@ -30,9 +30,16 @@ describe("request-password-setup direct path", () => {
     );
     vi.stubGlobal(
       "fetch",
-      vi.fn()
-        .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({}) })
-        .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({}) })
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({}),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({}),
+        })
         .mockResolvedValueOnce({
           ok: true,
           json: vi.fn().mockResolvedValue({
@@ -44,11 +51,12 @@ describe("request-password-setup direct path", () => {
         }),
     );
 
-      const { createRequestPasswordSetupHandler } = await import(
-        "../../server/api/auth/request-password-setup.post"
-      );
+    const { createRequestPasswordSetupHandler } =
+      await import("../../server/api/auth/request-password-setup.post");
 
-      const ensurePlayerForAuthUser = vi.fn().mockResolvedValue({ id: "player-1" });
+    const ensurePlayerForAuthUser = vi
+      .fn()
+      .mockResolvedValue({ id: "player-1" });
 
     const updateUserById = vi.fn();
     const getUserByEmail = vi.fn().mockResolvedValue({
@@ -65,15 +73,16 @@ describe("request-password-setup direct path", () => {
     });
 
     const handler = createRequestPasswordSetupHandler({
-      getRuntimeConfig: () => ({
-        public: {
-          supabaseUrl: "https://example.supabase.co",
-          supabaseAnonKey: "anon-key",
-          appBaseUrl: "https://app.example.com",
-        },
-        supabaseServiceKey: "service-key",
-        passwordPepper: "pepper",
-      }) as any,
+      getRuntimeConfig: () =>
+        ({
+          public: {
+            supabaseUrl: "https://example.supabase.co",
+            supabaseAnonKey: "anon-key",
+            appBaseUrl: "https://app.example.com",
+          },
+          supabaseServiceKey: "service-key",
+          passwordPepper: "pepper",
+        }) as any,
       createPrismaClient: () =>
         ({
           $executeRaw: vi.fn().mockResolvedValue(undefined),

@@ -102,4 +102,3 @@ export const mockApiResponses = {
     statusMessage: "Internal server error",
   },
 };
-

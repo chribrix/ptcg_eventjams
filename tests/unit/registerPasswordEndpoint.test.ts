@@ -39,23 +39,25 @@ describe("register-password endpoint", () => {
       }),
     );
 
-    const ensurePlayerForAuthUser = vi.fn().mockResolvedValue({ id: "player-1" });
+    const ensurePlayerForAuthUser = vi
+      .fn()
+      .mockResolvedValue({ id: "player-1" });
     const deleteUser = vi.fn().mockResolvedValue({ error: null });
     const createUser = vi.fn().mockResolvedValue({
       data: { user: { id: "auth-1" } },
       error: null,
     });
 
-    const { createRegisterPasswordHandler } = await import(
-      "../../server/api/auth/register-password.post"
-    );
+    const { createRegisterPasswordHandler } =
+      await import("../../server/api/auth/register-password.post");
 
     const handler = createRegisterPasswordHandler({
-      getRuntimeConfig: () => ({
-        public: { supabaseUrl: "https://example.supabase.co" },
-        supabaseServiceKey: "service-key",
-        passwordPepper: "pepper",
-      }) as any,
+      getRuntimeConfig: () =>
+        ({
+          public: { supabaseUrl: "https://example.supabase.co" },
+          supabaseServiceKey: "service-key",
+          passwordPepper: "pepper",
+        }) as any,
       createPrismaClient: () =>
         ({
           $disconnect: vi.fn().mockResolvedValue(undefined),
@@ -111,23 +113,25 @@ describe("register-password endpoint", () => {
       statusCode: 409,
       statusMessage: "Player ID already exists",
     });
-    const ensurePlayerForAuthUser = vi.fn().mockRejectedValue(provisioningError);
+    const ensurePlayerForAuthUser = vi
+      .fn()
+      .mockRejectedValue(provisioningError);
     const deleteUser = vi.fn().mockResolvedValue({ error: null });
     const createUser = vi.fn().mockResolvedValue({
       data: { user: { id: "auth-1" } },
       error: null,
     });
 
-    const { createRegisterPasswordHandler } = await import(
-      "../../server/api/auth/register-password.post"
-    );
+    const { createRegisterPasswordHandler } =
+      await import("../../server/api/auth/register-password.post");
 
     const handler = createRegisterPasswordHandler({
-      getRuntimeConfig: () => ({
-        public: { supabaseUrl: "https://example.supabase.co" },
-        supabaseServiceKey: "service-key",
-        passwordPepper: "pepper",
-      }) as any,
+      getRuntimeConfig: () =>
+        ({
+          public: { supabaseUrl: "https://example.supabase.co" },
+          supabaseServiceKey: "service-key",
+          passwordPepper: "pepper",
+        }) as any,
       createPrismaClient: () =>
         ({
           $disconnect: vi.fn().mockResolvedValue(undefined),

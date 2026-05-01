@@ -31,14 +31,14 @@ interface SupabaseUser {
 }
 
 type ServerSupabaseUserFunction = (
-  event: MockEvent
+  event: MockEvent,
 ) => Promise<SupabaseUser | null>;
 type VerifyAdminFunction = (event: MockEvent) => Promise<SupabaseUser>;
 
 // Create mock functions that simulate the middleware behavior
 const createMockError = (
   statusCode: number,
-  statusMessage: string
+  statusMessage: string,
 ): MockError => {
   const error = new Error(statusMessage) as MockError;
   error.statusCode = statusCode;
@@ -48,7 +48,7 @@ const createMockError = (
 
 // Mock verifyAdmin function that simulates the server middleware logic
 const createVerifyAdmin = (
-  serverSupabaseUser: ServerSupabaseUserFunction
+  serverSupabaseUser: ServerSupabaseUserFunction,
 ): VerifyAdminFunction => {
   return async (event: MockEvent): Promise<SupabaseUser> => {
     try {
@@ -80,7 +80,7 @@ const createVerifyAdmin = (
 
       throw createMockError(
         500,
-        "Internal server error during admin verification"
+        "Internal server error during admin verification",
       );
     }
   };

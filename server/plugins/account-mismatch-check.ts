@@ -14,7 +14,9 @@
 import { PrismaClient } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
 
-const hasSupabaseAdminRole = (appMetadata: Record<string, unknown> | null | undefined) => {
+const hasSupabaseAdminRole = (
+  appMetadata: Record<string, unknown> | null | undefined,
+) => {
   if (!appMetadata) {
     return false;
   }
@@ -34,7 +36,8 @@ const hasSupabaseAdminRole = (appMetadata: Record<string, unknown> | null | unde
 
       if (Array.isArray(value)) {
         return value.some(
-          (entry) => typeof entry === "string" && entry.trim().toLowerCase() === "admin",
+          (entry) =>
+            typeof entry === "string" && entry.trim().toLowerCase() === "admin",
         );
       }
 
@@ -95,7 +98,9 @@ export default defineNitroPlugin(async (nitroApp) => {
     ]);
 
     const playersBySupabaseId = new Set(
-      players.flatMap((player) => (player.supabaseId ? [player.supabaseId] : [])),
+      players.flatMap((player) =>
+        player.supabaseId ? [player.supabaseId] : [],
+      ),
     );
     const playersByEmail = new Map<string, typeof players>();
 
@@ -110,7 +115,9 @@ export default defineNitroPlugin(async (nitroApp) => {
       playersByEmail.set(normalizedEmail, existing);
     }
 
-    const authUsersById = new Map(authUsers.map((authUser) => [authUser.id, authUser]));
+    const authUsersById = new Map(
+      authUsers.map((authUser) => [authUser.id, authUser]),
+    );
 
     let authWithoutPlayerCount = 0;
     let authWithEmailOnlyMatchCount = 0;
@@ -221,7 +228,9 @@ export default defineNitroPlugin(async (nitroApp) => {
     for (const adminRow of legacyAdminRows) {
       const authUser = authUsersById.get(adminRow.id);
       const hasSupabaseAdmin = authUser
-        ? hasSupabaseAdminRole((authUser.app_metadata || {}) as Record<string, unknown>)
+        ? hasSupabaseAdminRole(
+            (authUser.app_metadata || {}) as Record<string, unknown>,
+          )
         : false;
 
       if (hasSupabaseAdmin) {
@@ -232,10 +241,9 @@ export default defineNitroPlugin(async (nitroApp) => {
       await prisma.errorLog.create({
         data: {
           errorType: "account_mismatch",
-          errorMessage:
-            authUser
-              ? "Legacy admin row exists without matching Supabase admin metadata"
-              : "Legacy admin row exists without matching auth user",
+          errorMessage: authUser
+            ? "Legacy admin row exists without matching Supabase admin metadata"
+            : "Legacy admin row exists without matching auth user",
           userEmail: adminRow.email,
           userId: adminRow.id,
           metadata: {

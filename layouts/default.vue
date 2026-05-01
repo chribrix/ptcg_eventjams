@@ -23,7 +23,8 @@ const supabase = useSupabaseClient();
 const mobileMenuOpen = ref(false);
 
 // Use our enhanced auth composable with centralized state
-const { user: authUser, userName, ensureValidSession } = useAuth();
+const { user: authUser, userName, ensureValidSession, clearInvalidSession } =
+  useAuth();
 
 // Admin composable - now uses server-side verification
 const { isAdmin, user: adminUser, loading } = useAdmin();
@@ -162,21 +163,15 @@ onMounted(async () => {
       const validUser = await ensureValidSession();
       // If session validation failed (expired/invalid), clean up
       if (!validUser && authUser.value) {
-        // Force sign out and reload
+        await clearInvalidSession();
         if (process.client) {
-          await supabase.auth.signOut();
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.reload();
+          await navigateTo("/", { replace: true });
         }
       }
     } catch {
-      // Clean up on error
+      await clearInvalidSession();
       if (process.client) {
-        await supabase.auth.signOut();
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.reload();
+        await navigateTo("/", { replace: true });
       }
     }
   }

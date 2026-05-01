@@ -28,11 +28,9 @@ export function hasAdminRole(user: AuthUserLike | null | undefined): boolean {
     return false;
   }
 
-  const appMetadata =
-    (user.app_metadata || user.raw_app_meta_data || {}) as Record<
-      string,
-      unknown
-    >;
+  const appMetadata = (user.app_metadata ||
+    user.raw_app_meta_data ||
+    {}) as Record<string, unknown>;
 
   return (
     appMetadata.is_admin === true ||
