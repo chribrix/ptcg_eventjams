@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
-import { normalizePreferredLoginMethod } from "~/server/util/playerProvisioning";
+import { toStoredPreferredLoginMethod } from "~/server/util/playerProvisioning";
 
 const prisma = new PrismaClient();
 const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const method = normalizePreferredLoginMethod(rawMethod);
+  const method = toStoredPreferredLoginMethod(rawMethod);
 
   await prisma.player.update({
     where: { id: player.id },

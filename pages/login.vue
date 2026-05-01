@@ -78,7 +78,7 @@
           class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition"
           @click="selectOtp"
         >
-          Mit E-Mail-Code anmelden
+          {{ isLoading ? "Sende Code..." : "Mit E-Mail-Code anmelden" }}
         </button>
 
         <button
@@ -271,7 +271,7 @@
         </div>
 
         <p class="text-sm text-gray-600">
-          Wir senden dir einen sechsstelligen Login-Code per E-Mail.
+          Wir senden dir einen achtstelligen Login-Code per E-Mail.
         </p>
 
         <p v-if="passwordSetupRequested" class="text-sm text-amber-700">
@@ -288,28 +288,29 @@
             type="text"
             inputmode="numeric"
             autocomplete="one-time-code"
-            maxlength="6"
+            maxlength="8"
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="123456"
+            placeholder="12345678"
           />
         </div>
-
-        <button
-          type="button"
-          :disabled="isLoading"
-          class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition"
-          @click="submitOtpRequest"
-        >
-          {{ isLoading ? "Sende Code..." : "E-Mail-Code senden" }}
-        </button>
 
         <button
           v-if="linkSent"
           type="submit"
           :disabled="isLoading"
-          class="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed font-semibold py-3 px-4 rounded-lg transition"
+          class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition"
         >
           {{ isLoading ? "Prüfe Code..." : "Code bestätigen" }}
+        </button>
+
+        <button
+          v-if="linkSent"
+          type="button"
+          :disabled="isLoading"
+          class="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed font-semibold py-3 px-4 rounded-lg transition"
+          @click="submitOtpRequest"
+        >
+          {{ isLoading ? "Sende Code..." : "Code erneut senden" }}
         </button>
 
         <button

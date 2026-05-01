@@ -188,7 +188,7 @@
     "methodPasswordDefault": "Password (Default)",
     "methodOtp": "Email Code",
     "otpLabel": "Email code",
-    "otpPlaceholder": "123456",
+    "otpPlaceholder": "12345678",
     "passwordPlaceholder": "Password (min. 8 characters)",
     "passwordConfirmPlaceholder": "Repeat password",
     "submitCreateAccount": "Create Account",

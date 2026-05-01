@@ -28,6 +28,14 @@ export const normalizePreferredLoginMethod = (
   return method === "otp" || method === "magiclink" ? "otp" : "password";
 };
 
+export const toStoredPreferredLoginMethod = (
+  method?: "password" | "otp" | "magiclink" | null,
+): "password" | "magiclink" => {
+  return normalizePreferredLoginMethod(method) === "otp"
+    ? "magiclink"
+    : "password";
+};
+
 export type AuthUserProvisioningSource = {
   id: string;
   email?: string | null;
@@ -67,7 +75,7 @@ export const ensurePlayerForAuthUser = async (
   input: ProvisionPlayerInput,
 ) => {
   const normalizedEmail = input.email.trim().toLowerCase();
-  const preferredLoginMethod = normalizePreferredLoginMethod(
+  const preferredLoginMethod = toStoredPreferredLoginMethod(
     input.preferredLoginMethod,
   );
 

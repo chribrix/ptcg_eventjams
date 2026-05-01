@@ -248,10 +248,10 @@ export const useLoginWorkflow = () => {
     step.value = hasPassword.value ? "password" : "passwordSetup";
   };
 
-  const selectOtp = () => {
+  const selectOtp = async () => {
     error.value = "";
     otpCode.value = "";
-    step.value = "otp";
+    await submitOtpRequest();
   };
 
   const completeOtpSignIn = async () => {
