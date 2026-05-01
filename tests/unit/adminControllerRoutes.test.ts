@@ -24,12 +24,10 @@ describe("Admin controller routes", () => {
   });
 
   it("lists admin users from the query object", async () => {
-    const listUsers = vi
-      .fn()
-      .mockResolvedValue({
-        items: [],
-        pagination: { page: 1, limit: 20, total: 0, pages: 1 },
-      });
+    const listUsers = vi.fn().mockResolvedValue({
+      items: [],
+      pagination: { page: 1, limit: 20, total: 0, pages: 1 },
+    });
     const { createAdminUsersListHandler } =
       await import("~/server/api/admin/users.get");
     const handler = createAdminUsersListHandler({
@@ -137,12 +135,10 @@ describe("Admin controller routes", () => {
   });
 
   it("lists custom events from parsed pagination params", async () => {
-    const listEvents = vi
-      .fn()
-      .mockResolvedValue({
-        items: [],
-        pagination: { page: 3, limit: 25, total: 0, pages: 0 },
-      });
+    const listEvents = vi.fn().mockResolvedValue({
+      items: [],
+      pagination: { page: 3, limit: 25, total: 0, pages: 0 },
+    });
     const { createAdminCustomEventsHandler } =
       await import("~/server/api/admin/custom-events");
     const handler = createAdminCustomEventsHandler({

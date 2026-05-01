@@ -258,7 +258,7 @@ onMounted(() => {
 const saveConfig = () => {
   localStorage.setItem(
     "tagDisplayConfig",
-    JSON.stringify(tagDisplayConfig.value)
+    JSON.stringify(tagDisplayConfig.value),
   );
 };
 
@@ -319,7 +319,7 @@ const loadEvents = async () => {
   try {
     loading.value = true;
     const response = await $fetch<{ events: CustomEvent[] }>(
-      "/api/admin/events/combined"
+      "/api/admin/events/combined",
     );
     events.value = response.events || [];
   } catch (error) {

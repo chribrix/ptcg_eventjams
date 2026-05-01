@@ -7,8 +7,7 @@ describe("client auth state cleaner", () => {
     const localStorageMock = {
       length: 3,
       key: (index: number) =>
-        ["supabase.auth.token", "session_start_user-1", "theme"][index] ||
-        null,
+        ["supabase.auth.token", "session_start_user-1", "theme"][index] || null,
       clear: vi.fn(),
       removeItem: vi.fn((key: string) => {
         removedKeys.push(key);

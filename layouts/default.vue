@@ -238,10 +238,7 @@ const { t } = useI18n();
     </header>
 
     <main class="flex-1">
-      <div
-        v-if="isAdminRoute"
-        class="admin-route-shell"
-      >
+      <div v-if="isAdminRoute" class="admin-route-shell">
         <slot />
       </div>
       <div v-else class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">

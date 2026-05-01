@@ -240,9 +240,7 @@ type LogoutActionDependencies = {
   getMetadata?: () => Record<string, unknown>;
 };
 
-export const createLogoutAction = (
-  dependencies: LogoutActionDependencies,
-) => {
+export const createLogoutAction = (dependencies: LogoutActionDependencies) => {
   return async (redirectTo = "/login") => {
     try {
       await dependencies.logError("info_user_logout", "User initiated logout", {

@@ -4,15 +4,18 @@ describe("admin page guard", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.restoreAllMocks();
-    vi.stubGlobal("createError", (input: { statusCode: number; statusMessage: string }) => {
-      const error = new Error(input.statusMessage) as Error & {
-        statusCode: number;
-        statusMessage: string;
-      };
-      error.statusCode = input.statusCode;
-      error.statusMessage = input.statusMessage;
-      return error;
-    });
+    vi.stubGlobal(
+      "createError",
+      (input: { statusCode: number; statusMessage: string }) => {
+        const error = new Error(input.statusMessage) as Error & {
+          statusCode: number;
+          statusMessage: string;
+        };
+        error.statusCode = input.statusCode;
+        error.statusMessage = input.statusMessage;
+        return error;
+      },
+    );
   });
 
   it("redirects unauthenticated admin routes to login with the requested path", async () => {
@@ -32,9 +35,10 @@ describe("admin page guard", () => {
     const { createAdminPageGuard } = await import("../../utils/adminPageGuard");
     const middleware = createAdminPageGuard({ fetchAdminCheck });
 
-    const result = await middleware(
-      { path: "/admin/users", fullPath: "/admin/users?page=2" },
-    );
+    const result = await middleware({
+      path: "/admin/users",
+      fullPath: "/admin/users?page=2",
+    });
 
     expect(result).toBe("/login?redirect=%2Fadmin%2Fusers%3Fpage%3D2");
   });
@@ -45,7 +49,10 @@ describe("admin page guard", () => {
     const { createAdminPageGuard } = await import("../../utils/adminPageGuard");
     const middleware = createAdminPageGuard({ fetchAdminCheck });
 
-    const result = await middleware({ path: "/admin/logs", fullPath: "/admin/logs" });
+    const result = await middleware({
+      path: "/admin/logs",
+      fullPath: "/admin/logs",
+    });
 
     expect(result).toBe("/?error=service-unavailable");
   });

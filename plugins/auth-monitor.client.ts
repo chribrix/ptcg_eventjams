@@ -39,7 +39,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         console.log("Session expired or invalid, cleaning up");
         clearClientAuthState({ clearAllStorage: true });
       }
-    }
+    },
   );
 
   // Cleanup on app unmount

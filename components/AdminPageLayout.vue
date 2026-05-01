@@ -76,7 +76,10 @@
         </div>
 
         <div class="admin-container">
-          <div v-if="title || subtitle || $slots.actions" class="admin-page-header">
+          <div
+            v-if="title || subtitle || $slots.actions"
+            class="admin-page-header"
+          >
             <div class="header-content">
               <h1 v-if="title" class="page-title">{{ title }}</h1>
               <p v-if="subtitle" class="page-subtitle">{{ subtitle }}</p>
@@ -306,7 +309,11 @@ watch(
 }
 
 .sidebar-link-active {
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.2), rgba(59, 130, 246, 0.14));
+  background: linear-gradient(
+    90deg,
+    rgba(56, 189, 248, 0.2),
+    rgba(59, 130, 246, 0.14)
+  );
   color: #f8fafc;
   box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.2);
 }

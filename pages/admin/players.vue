@@ -116,8 +116,8 @@
                 saving
                   ? "Saving..."
                   : editingPlayer
-                  ? "Update Player"
-                  : "Add Player"
+                    ? "Update Player"
+                    : "Add Player"
               }}
             </button>
           </div>
@@ -311,7 +311,7 @@ const filteredPlayers = computed(() => {
     (player) =>
       player.name.toLowerCase().includes(search) ||
       player.playerId.toLowerCase().includes(search) ||
-      player.email?.toLowerCase().includes(search)
+      player.email?.toLowerCase().includes(search),
   );
 });
 
@@ -367,7 +367,7 @@ const loadPlayers = async () => {
     loading.value = true;
     // Request all players by setting a high limit
     const response = await $fetch<{ players: Player[] }>(
-      "/api/admin/players?limit=1000"
+      "/api/admin/players?limit=1000",
     );
     players.value = response.players || [];
   } catch (error) {
@@ -430,7 +430,7 @@ const editPlayer = (player: Player) => {
 const deletePlayer = async (player: Player) => {
   if (
     !confirm(
-      `Are you sure you want to delete player "${player.name}" (${player.playerId})?`
+      `Are you sure you want to delete player "${player.name}" (${player.playerId})?`,
     )
   )
     return;

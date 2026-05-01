@@ -7,7 +7,8 @@ describe("auth route middleware", () => {
   });
 
   it("builds a login redirect from the full requested path", async () => {
-    const { buildLoginRedirectPath } = await import("../../utils/loginRedirect");
+    const { buildLoginRedirectPath } =
+      await import("../../utils/loginRedirect");
 
     expect(
       buildLoginRedirectPath({
@@ -22,9 +23,8 @@ describe("auth route middleware", () => {
     const delay = vi.fn().mockResolvedValue(undefined);
     const user = { value: null };
 
-    const { createAuthRouteGuard } = await import(
-      "../../middleware/auth.global"
-    );
+    const { createAuthRouteGuard } =
+      await import("../../middleware/auth.global");
 
     const guard = createAuthRouteGuard({
       getAuth: () => ({
@@ -56,9 +56,8 @@ describe("auth route middleware", () => {
     vi.stubGlobal("localStorage", { clear: vi.fn() });
     vi.stubGlobal("sessionStorage", { clear: vi.fn() });
 
-    const { createAuthRouteGuard } = await import(
-      "../../middleware/auth.global"
-    );
+    const { createAuthRouteGuard } =
+      await import("../../middleware/auth.global");
 
     const guard = createAuthRouteGuard({
       getAuth: () => ({
@@ -83,9 +82,8 @@ describe("auth route middleware", () => {
   it("redirects unauthenticated server requests to login with the requested path", async () => {
     const navigate = vi.fn();
 
-    const { createAuthRouteGuard } = await import(
-      "../../middleware/auth.global"
-    );
+    const { createAuthRouteGuard } =
+      await import("../../middleware/auth.global");
 
     const guard = createAuthRouteGuard({
       getAuth: () => ({
@@ -102,8 +100,6 @@ describe("auth route middleware", () => {
       fullPath: "/booking/abc",
     });
 
-    expect(navigate).toHaveBeenCalledWith(
-      "/login?redirect=%2Fbooking%2Fabc",
-    );
+    expect(navigate).toHaveBeenCalledWith("/login?redirect=%2Fbooking%2Fabc");
   });
 });

@@ -3,11 +3,11 @@ import { createAdminPageGuard } from "~/utils/adminPageGuard";
 const adminPageGuard = createAdminPageGuard();
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
-	const redirectTarget = await adminPageGuard(to);
+  const redirectTarget = await adminPageGuard(to);
 
-	if (typeof redirectTarget === "string") {
-		return navigateTo(redirectTarget);
-	}
+  if (typeof redirectTarget === "string") {
+    return navigateTo(redirectTarget);
+  }
 
-	return redirectTarget;
+  return redirectTarget;
 });
