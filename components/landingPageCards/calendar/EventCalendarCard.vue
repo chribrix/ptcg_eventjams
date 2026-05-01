@@ -216,6 +216,10 @@ import { ref, computed, onMounted } from "vue";
 import EventDetailsPopover from "./EventDetailsPopover.vue";
 import { EVENT_COLORS } from "~/utils/eventColors";
 import { parseEventTags, type TagType } from "~/types/eventTags";
+import {
+  getDateKeyInTimeZone,
+  getUserTimeZone,
+} from "~/utils/eventDateTime";
 
 interface CalendarEvent {
   id: number | string;
@@ -255,6 +259,8 @@ interface CustomEvent {
   tags?: any;
   tagType?: string;
 }
+
+const userTimeZone = getUserTimeZone();
 
 const today = new Date();
 const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
@@ -359,7 +365,7 @@ const calendarAttributes = computed(() => {
     ...customEvents.value.map((event: CustomEvent) => ({
       id: event.id,
       title: event.name,
-      start: new Date(event.eventDate).toISOString().split("T")[0],
+      start: getDateKeyInTimeZone(event.eventDate, userTimeZone),
       type: getActualEventType(event),
       isCustom: true,
     })),
@@ -512,7 +518,7 @@ const onDayClick = (day: any) => {
 
   const customEventsForDate = customEvents.value
     .filter((event: CustomEvent) => {
-      const eventDate = new Date(event.eventDate).toISOString().split("T")[0];
+      const eventDate = getDateKeyInTimeZone(event.eventDate, userTimeZone);
       return eventDate === clickedDate;
     })
     .map(

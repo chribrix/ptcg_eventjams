@@ -795,7 +795,7 @@
       class="modal-overlay"
       @click="closeModal"
     >
-      <div class="modal-content" @click.stop>
+      <div class="modal-content event-form-modal" @click.stop>
         <div class="modal-header">
           <h2>{{ editingEvent ? "Edit Event" : "Create New Event" }}</h2>
           <button @click="closeModal" class="close-btn">&times;</button>
@@ -811,18 +811,6 @@
               required
               class="form-input"
               placeholder="Enter event name"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="venue">Venue *</label>
-            <input
-              id="venue"
-              v-model="eventForm.venue"
-              type="text"
-              required
-              class="form-input"
-              placeholder="Event venue"
             />
           </div>
 
@@ -855,6 +843,23 @@
           </div>
 
           <div class="form-group">
+            <label for="formatTag">Format</label>
+            <select
+              id="formatTag"
+              v-model="eventForm.tags.format"
+              class="form-input"
+            >
+              <option
+                v-for="formatOption in FORMAT_OPTIONS"
+                :key="formatOption.value"
+                :value="formatOption.value"
+              >
+                {{ formatOption.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label for="eventType">Event Type *</label>
             <select
               id="eventType"
@@ -875,25 +880,46 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="formatTag">Format</label>
-              <input
-                id="formatTag"
-                v-model="eventForm.tags.format"
-                type="text"
-                class="form-input"
-                placeholder="Standard, Expanded, etc."
-              />
-            </div>
-
-            <div class="form-group">
               <label for="hostTag">Host Organization</label>
               <input
                 id="hostTag"
                 v-model="eventForm.tags.host"
                 type="text"
                 class="form-input"
+                list="host-organization-options"
                 placeholder="League name, store name, etc."
+                @change="syncVenueFromOrganization"
+                @blur="syncVenueFromOrganization"
               />
+              <datalist id="host-organization-options">
+                <option
+                  v-for="organization in hostOrganizationOptions"
+                  :key="organization"
+                  :value="organization"
+                />
+              </datalist>
+            </div>
+
+            <div class="form-group">
+              <label for="venue">Venue *</label>
+              <input
+                id="venue"
+                v-model="eventForm.venue"
+                type="text"
+                required
+                class="form-input"
+                list="venue-options"
+                placeholder="Event venue"
+                @change="syncOrganizationFromVenue"
+                @blur="syncOrganizationFromVenue"
+              />
+              <datalist id="venue-options">
+                <option
+                  v-for="venueOption in venueOptions"
+                  :key="venueOption"
+                  :value="venueOption"
+                />
+              </datalist>
             </div>
           </div>
 
@@ -924,36 +950,44 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="eventDate">
-              Event Date *
-              <span v-if="eventForm.eventDate" class="field-help">
-                {{ formatDateWithWeekday(eventForm.eventDate) }}
-              </span>
-            </label>
-            <input
-              id="eventDate"
-              v-model="eventForm.eventDate"
-              type="datetime-local"
-              required
-              class="form-input"
-              @change="onEventDateChange"
-            />
-          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="eventDate">
+                Event Date *
+                <span v-if="eventForm.eventDate" class="field-help">
+                  {{ formatDateWithWeekday(eventForm.eventDate) }}
+                </span>
+                <span class="field-help">Shown in {{ userTimeZone }}</span>
+              </label>
+              <input
+                id="eventDate"
+                v-model="eventForm.eventDate"
+                type="datetime-local"
+                required
+                step="900"
+                class="form-input"
+                @change="onEventDateChange"
+                @blur="normalizeEventDateInput"
+              />
+            </div>
 
-          <div class="form-group">
-            <label for="registrationDeadline">
-              Registration Deadline
-              <span class="field-help">
-                Automatically set to 15 minutes before event start
-              </span>
-            </label>
-            <input
-              id="registrationDeadline"
-              v-model="eventForm.registrationDeadline"
-              type="datetime-local"
-              class="form-input"
-            />
+            <div class="form-group">
+              <label for="registrationDeadline">
+                Registration Deadline
+                <span class="field-help">
+                  Automatically set to 15 minutes before event start
+                </span>
+              </label>
+              <input
+                id="registrationDeadline"
+                v-model="eventForm.registrationDeadline"
+                type="datetime-local"
+                step="900"
+                class="form-input"
+                @change="normalizeRegistrationDeadlineInput"
+                @blur="normalizeRegistrationDeadlineInput"
+              />
+            </div>
           </div>
 
           <div class="form-group">
@@ -1019,10 +1053,22 @@ import {
   parseEventTags,
   getEventTypeLabel,
   getEventTypeBadgeClass,
+  FORMAT_OPTIONS,
   type TagType,
-  type PokemonEventTags,
 } from "~/types/eventTags";
 import { useTagDisplay } from "~/composables/useTagDisplay";
+import {
+  isCompletedAdminEvent,
+  isUpcomingAdminEvent,
+} from "~/utils/adminEventBuckets";
+import {
+  DEFAULT_EVENT_TIME_ZONE,
+  formatDateInTimeZone,
+  formatDateTimeLocalInput,
+  getDateKeyInTimeZone,
+  getUserTimeZone,
+  parseDateTimeLocalInput,
+} from "~/utils/eventDateTime";
 
 const { getDisplayTags } = useTagDisplay();
 
@@ -1076,6 +1122,35 @@ interface Registration {
   };
 }
 
+interface VenueDirectoryEntry {
+  id: string;
+  organizationName: string;
+  venueName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface EventFormTags {
+  type?: string;
+  game: string;
+  format?: string;
+  host?: string;
+}
+
+interface EventFormState {
+  name: string;
+  venue: string;
+  tagType: TagType;
+  tags: EventFormTags;
+  maxParticipants: number;
+  participationFee: number;
+  description: string;
+  eventDate: string;
+  registrationDeadline: string;
+  requiresDecklist: boolean;
+  status: string;
+}
+
 // Page metadata
 // Reactive data
 const events = ref<CustomEvent[]>([]);
@@ -1092,6 +1167,8 @@ const copiedEventId = ref<string | null>(null);
 const selectedDecklist = ref<{ playerName: string; decklist: string } | null>(
   null,
 );
+const userTimeZone = ref(DEFAULT_EVENT_TIME_ZONE);
+const venueDirectory = ref<VenueDirectoryEntry[]>([]);
 
 // Flatten registrations → one row per ticket for display
 interface TicketRow {
@@ -1127,14 +1204,9 @@ const ticketRows = computed<TicketRow[]>(() =>
 // Computed properties for upcoming and completed events
 const upcomingEvents = computed(() => {
   const now = new Date();
-  const filtered = filteredEvents.value.filter((event) => {
-    const eventDate = new Date(event.eventDate);
-    // Only show events that are explicitly "upcoming" or have future date AND not completed
-    return (
-      event.status !== "completed" &&
-      (event.status === "upcoming" || eventDate >= now)
-    );
-  });
+  const filtered = filteredEvents.value.filter((event) =>
+    isUpcomingAdminEvent(event, now),
+  );
   return filtered.sort(
     (a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime(),
   );
@@ -1142,13 +1214,9 @@ const upcomingEvents = computed(() => {
 
 const completedEvents = computed(() => {
   const now = new Date();
-  const filtered = filteredEvents.value.filter((event) => {
-    const eventDate = new Date(event.eventDate);
-    return (
-      event.status === "completed" ||
-      (event.status !== "upcoming" && eventDate < now)
-    );
-  });
+  const filtered = filteredEvents.value.filter((event) =>
+    isCompletedAdminEvent(event, now),
+  );
   return filtered.sort(
     (a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime(),
   );
@@ -1160,30 +1228,32 @@ const formatCompactDate = (dateString: string): string => {
   const now = new Date();
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
+  const timeZone = userTimeZone.value;
+  const dateKey = getDateKeyInTimeZone(date, timeZone);
 
   // Check if today
-  if (date.toDateString() === now.toDateString()) {
-    return `Today, ${date.toLocaleTimeString("en-US", {
+  if (dateKey === getDateKeyInTimeZone(now, timeZone)) {
+    return `Today, ${formatDateInTimeZone(date, {
       hour: "2-digit",
       minute: "2-digit",
-    })}`;
+    }, "en-US", timeZone)}`;
   }
 
   // Check if tomorrow
-  if (date.toDateString() === tomorrow.toDateString()) {
-    return `Tomorrow, ${date.toLocaleTimeString("en-US", {
+  if (dateKey === getDateKeyInTimeZone(tomorrow, timeZone)) {
+    return `Tomorrow, ${formatDateInTimeZone(date, {
       hour: "2-digit",
       minute: "2-digit",
-    })}`;
+    }, "en-US", timeZone)}`;
   }
 
   // Otherwise show full date
-  return date.toLocaleDateString("en-US", {
+  return formatDateInTimeZone(date, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  }, "en-US", timeZone);
 };
 
 // Status badge classes
@@ -1208,14 +1278,18 @@ const closeEventDetails = () => {
 };
 
 // Form data
-const eventForm = ref({
+const createEmptyEventTags = (): EventFormTags => ({
+  type: "custom",
+  game: "Pokemon",
+  format: "standard",
+  host: "",
+});
+
+const createEventFormState = (): EventFormState => ({
   name: "",
   venue: "",
-  tagType: "pokemon" as TagType,
-  tags: {
-    type: "custom" as PokemonEventTags["type"],
-    game: "Pokemon",
-  },
+  tagType: "pokemon",
+  tags: createEmptyEventTags(),
   maxParticipants: 20,
   participationFee: 0,
   description: "",
@@ -1224,6 +1298,8 @@ const eventForm = ref({
   requiresDecklist: false,
   status: "upcoming",
 });
+
+const eventForm = ref<EventFormState>(createEventFormState());
 
 // Helper function to get next Friday at 18:00
 const getNextFriday = (): Date => {
@@ -1246,60 +1322,133 @@ const getNextFriday = (): Date => {
 // Format date with weekday
 const formatDateWithWeekday = (dateString: string): string => {
   if (!dateString) return "";
-  const date = new Date(dateString);
-  const weekday = date.toLocaleDateString("de-DE", {
-    timeZone: "Europe/Berlin",
+  const timeZone = userTimeZone.value;
+  const weekday = formatDateInTimeZone(dateString, {
     weekday: "short",
-  });
-  const formatted = date.toLocaleDateString("de-DE", {
-    timeZone: "Europe/Berlin",
+  }, "de-DE", timeZone);
+  const formatted = formatDateInTimeZone(dateString, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  }, "de-DE", timeZone);
   return `${weekday}, ${formatted}`;
 };
+
+const formatDateTimeLocalString = (date: Date): string => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const normalizeToQuarterHour = (value: string): string => {
+  if (!value) return "";
+
+  const [datePart, timePart] = value.split("T");
+  if (!datePart || !timePart) return value;
+
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+  const roundedDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+  const roundedMinutes = Math.round(roundedDate.getUTCMinutes() / 15) * 15;
+  roundedDate.setUTCMinutes(roundedMinutes, 0, 0);
+
+  return formatDateTimeLocalString(roundedDate);
+};
+
+const normalizeEventDateInput = () => {
+  if (!eventForm.value.eventDate) return;
+
+  const normalizedValue = normalizeToQuarterHour(eventForm.value.eventDate);
+  if (normalizedValue !== eventForm.value.eventDate) {
+    eventForm.value.eventDate = normalizedValue;
+  }
+};
+
+const normalizeRegistrationDeadlineInput = () => {
+  if (!eventForm.value.registrationDeadline) return;
+
+  const normalizedValue = normalizeToQuarterHour(
+    eventForm.value.registrationDeadline,
+  );
+  if (normalizedValue !== eventForm.value.registrationDeadline) {
+    eventForm.value.registrationDeadline = normalizedValue;
+  }
+};
+
+const normalizedText = (value?: string | null) => value?.trim().toLowerCase() || "";
+
+const findVenueEntryByOrganization = (organizationName?: string) => {
+  const search = normalizedText(organizationName);
+  if (!search) return null;
+
+  return (
+    venueDirectory.value.find(
+      (entry) => normalizedText(entry.organizationName) === search,
+    ) || null
+  );
+};
+
+const findVenueEntryByVenueName = (venueName?: string) => {
+  const search = normalizedText(venueName);
+  if (!search) return null;
+
+  return (
+    venueDirectory.value.find(
+      (entry) => normalizedText(entry.venueName) === search,
+    ) || null
+  );
+};
+
+const syncVenueFromOrganization = () => {
+  const entry = findVenueEntryByOrganization(eventForm.value.tags.host);
+  if (entry) {
+    eventForm.value.venue = entry.venueName;
+  }
+};
+
+const syncOrganizationFromVenue = () => {
+  const entry = findVenueEntryByVenueName(eventForm.value.venue);
+  if (entry) {
+    eventForm.value.tags.host = entry.organizationName;
+  }
+};
+
+const hostOrganizationOptions = computed(() =>
+  [...new Set(venueDirectory.value.map((entry) => entry.organizationName))].sort(
+    (left, right) => left.localeCompare(right),
+  ),
+);
+
+const venueOptions = computed(() =>
+  [...new Set(venueDirectory.value.map((entry) => entry.venueName))].sort(
+    (left, right) => left.localeCompare(right),
+  ),
+);
 
 // Initialize form with default dates when creating new event
 const initializeEventForm = () => {
   const nextFriday = getNextFriday();
-
-  // Format for datetime-local input in German timezone
-  const formatForInput = (date: Date): string => {
-    const berlinDate = new Date(
-      date.toLocaleString("en-US", { timeZone: "Europe/Berlin" }),
-    );
-    const year = berlinDate.getFullYear();
-    const month = String(berlinDate.getMonth() + 1).padStart(2, "0");
-    const day = String(berlinDate.getDate()).padStart(2, "0");
-    const hours = String(berlinDate.getHours()).padStart(2, "0");
-    const minutes = String(berlinDate.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
-  const eventDateTime = formatForInput(nextFriday);
+  const eventDateTime = formatDateTimeLocalInput(
+    nextFriday,
+    userTimeZone.value,
+  );
 
   // Registration deadline: 15 minutes before event
   const regDeadline = new Date(nextFriday.getTime() - 15 * 60 * 1000);
-  const regDeadlineString = formatForInput(regDeadline);
+  const regDeadlineString = formatDateTimeLocalInput(
+    regDeadline,
+    userTimeZone.value,
+  );
 
   eventForm.value = {
-    name: "",
-    venue: "",
-    tagType: "pokemon" as TagType,
-    tags: {
-      type: "custom" as PokemonEventTags["type"],
-      game: "Pokemon",
-    },
-    maxParticipants: 20,
-    participationFee: 0,
-    description: "",
+    ...createEventFormState(),
     eventDate: eventDateTime,
     registrationDeadline: regDeadlineString,
-    requiresDecklist: false,
-    status: "upcoming",
   };
 };
 
@@ -1323,24 +1472,33 @@ const createNewEvent = () => {
 };
 
 const onEventDateChange = () => {
+  normalizeEventDateInput();
+
   // Auto-set registration deadline based on event date
   if (eventForm.value.eventDate) {
-    const eventDate = new Date(eventForm.value.eventDate);
+    const eventDate = parseDateTimeLocalInput(
+      eventForm.value.eventDate,
+      userTimeZone.value,
+    );
 
     // Registration deadline: 15 minutes before event (but still editable)
     const regDeadline = new Date(eventDate.getTime() - 15 * 60 * 1000);
-
-    // Format for datetime-local input in German timezone
-    const berlinDate = new Date(
-      regDeadline.toLocaleString("en-US", { timeZone: "Europe/Berlin" }),
+    eventForm.value.registrationDeadline = formatDateTimeLocalInput(
+      regDeadline,
+      userTimeZone.value,
     );
-    const year = berlinDate.getFullYear();
-    const month = String(berlinDate.getMonth() + 1).padStart(2, "0");
-    const day = String(berlinDate.getDate()).padStart(2, "0");
-    const hours = String(berlinDate.getHours()).padStart(2, "0");
-    const minutes = String(berlinDate.getMinutes()).padStart(2, "0");
+    normalizeRegistrationDeadlineInput();
+  }
+};
 
-    eventForm.value.registrationDeadline = `${year}-${month}-${day}T${hours}:${minutes}`;
+const loadVenueDirectory = async () => {
+  try {
+    const response = await $fetch<{ venues: VenueDirectoryEntry[] }>(
+      "/api/admin/venues",
+    );
+    venueDirectory.value = response.venues || [];
+  } catch (error) {
+    console.error("Error loading venue directory:", error);
   }
 };
 
@@ -1362,12 +1520,23 @@ const loadEvents = async () => {
 const saveEvent = async () => {
   try {
     saving.value = true;
+    normalizeEventDateInput();
+    normalizeRegistrationDeadlineInput();
+    syncVenueFromOrganization();
+    syncOrganizationFromVenue();
 
     const eventData = {
       ...eventForm.value,
+      venue: eventForm.value.venue.trim(),
+      tags: {
+        ...eventForm.value.tags,
+        host: eventForm.value.tags.host?.trim() || undefined,
+        format: eventForm.value.tags.format || "standard",
+      },
       participationFee: eventForm.value.participationFee
         ? Number(eventForm.value.participationFee)
         : undefined,
+      timeZone: userTimeZone.value,
     };
 
     if (editingEvent.value) {
@@ -1383,6 +1552,7 @@ const saveEvent = async () => {
     }
 
     await loadEvents();
+    await loadVenueDirectory();
     closeModal();
     // TODO: Show success message
   } catch (error) {
@@ -1402,35 +1572,28 @@ const editEvent = (event: CustomEvent) => {
 
   editingEvent.value = event;
 
-  // Convert dates from UTC to German timezone for datetime-local input
-  const formatForInput = (dateStr: string): string => {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    // Get the date in German timezone
-    const berlinDate = new Date(
-      date.toLocaleString("en-US", { timeZone: "Europe/Berlin" }),
-    );
-    const year = berlinDate.getFullYear();
-    const month = String(berlinDate.getMonth() + 1).padStart(2, "0");
-    const day = String(berlinDate.getDate()).padStart(2, "0");
-    const hours = String(berlinDate.getHours()).padStart(2, "0");
-    const minutes = String(berlinDate.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
   eventForm.value = {
     name: event.name,
     venue: event.venue,
     tagType: (event.tagType as TagType) || "pokemon",
-    tags: event.tags
-      ? parseEventTags(event.tags, (event.tagType as TagType) || "pokemon")
-      : { game: "Pokemon" },
+    tags: {
+      ...createEmptyEventTags(),
+      ...(event.tags
+        ? (parseEventTags(
+            event.tags,
+            (event.tagType as TagType) || "pokemon",
+          ) as Record<string, string | undefined>)
+        : {}),
+    },
     maxParticipants: event.maxParticipants,
     participationFee: event.participationFee || 0,
     description: event.description || "",
-    eventDate: formatForInput(event.eventDate),
+    eventDate: formatDateTimeLocalInput(event.eventDate, userTimeZone.value),
     registrationDeadline: event.registrationDeadline
-      ? formatForInput(event.registrationDeadline)
+      ? formatDateTimeLocalInput(
+          event.registrationDeadline,
+          userTimeZone.value,
+        )
       : "",
     requiresDecklist: event.requiresDecklist,
     status: event.status,
@@ -1527,14 +1690,13 @@ const closeDecklistModal = () => {
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString("de-DE", {
-    timeZone: "Europe/Berlin",
+  return formatDateInTimeZone(dateString, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  }, "de-DE", userTimeZone.value);
 };
 
 const getRegistrationUrl = (eventId: string) => {
@@ -1569,7 +1731,11 @@ const copyRegistrationLink = async (eventId: string) => {
 };
 
 // Load events on mount
-onMounted(loadEvents);
+onMounted(() => {
+  userTimeZone.value = getUserTimeZone();
+  loadVenueDirectory();
+  loadEvents();
+});
 </script>
 
 <style scoped>
@@ -1919,15 +2085,60 @@ onMounted(loadEvents);
   padding: 1.5rem;
 }
 
+.event-form-modal {
+  width: min(100%, 820px);
+  max-width: 820px;
+}
+
+.event-form {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.event-form :deep(.form-row) {
+  gap: 0.75rem;
+}
+
+.event-form :deep(.form-group) {
+  margin-bottom: 0;
+}
+
+.event-form :deep(.form-input),
+.event-form :deep(.form-select),
+.event-form :deep(.form-textarea) {
+  padding: 0.7rem 0.85rem;
+}
+
+@media (max-width: 639px) {
+  .event-form-modal {
+    width: 100%;
+    max-height: calc(100vh - 1.5rem);
+    border-radius: 14px;
+  }
+
+  .event-form {
+    padding: 1rem;
+  }
+}
+
 @media (min-width: 768px) {
   .events-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .event-form-modal {
+    max-width: 820px;
   }
 }
 
 @media (min-width: 1024px) {
   .events-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .event-form-modal {
+    max-width: 860px;
   }
 }
 </style>

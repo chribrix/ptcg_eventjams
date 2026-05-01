@@ -1,5 +1,6 @@
 import { parseEventTags } from "~/types/eventTags";
 import { getEventTypeFromOverrides } from "~/utils/eventTypes";
+import { getDateKeyInTimeZone } from "~/utils/eventDateTime";
 
 type TicketCountRegistration = {
   _count?: {
@@ -58,7 +59,7 @@ function normalizeOverrideData(overrides: unknown) {
 }
 
 function toDateKey(value: Date | string) {
-  return new Date(value).toISOString().split("T")[0];
+  return getDateKeyInTimeZone(value);
 }
 
 export function countRegistrationTickets(

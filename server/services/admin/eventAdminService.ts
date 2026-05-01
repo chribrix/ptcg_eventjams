@@ -4,6 +4,11 @@ import {
   projectAdminCustomEvent,
   projectAdminExternalOverrideEvent,
 } from "~/server/services/events/eventProjectionService";
+import { rememberVenueDirectoryEntry } from "~/server/services/admin/venueAdminService";
+import {
+  DEFAULT_EVENT_TIME_ZONE,
+  parseDateTimeLocalInput,
+} from "~/utils/eventDateTime";
 
 const validateDatetimeLocal = (value: string) => {
   if (!value || value.trim() === "") {
@@ -39,6 +44,7 @@ export const createCustomEventInputSchema = z.object({
     .refine(validateDatetimeLocal, "Invalid datetime format")
     .optional(),
   requiresDecklist: z.boolean().default(false),
+  timeZone: z.string().min(1).optional(),
 });
 
 export const updateCustomEventInputSchema = z.object({
@@ -59,11 +65,8 @@ export const updateCustomEventInputSchema = z.object({
     .optional(),
   requiresDecklist: z.boolean().optional(),
   status: z.enum(["upcoming", "ongoing", "completed", "cancelled"]).optional(),
+  timeZone: z.string().min(1).optional(),
 });
-
-const parseLocalDateTime = (dateTimeStr: string): Date => {
-  return new Date(`${dateTimeStr}:00.000+01:00`);
-};
 
 export async function getAdminCustomEvent(eventId: string) {
   const customEvent = await prisma.customEvent.findUnique({
@@ -205,14 +208,16 @@ export async function createAdminCustomEvent(
   createdBy: string,
 ) {
   const input = createCustomEventInputSchema.parse(rawInput);
+  const { timeZone = DEFAULT_EVENT_TIME_ZONE, ...eventInput } = input;
 
-  return prisma.customEvent.create({
+  const createdEvent = await prisma.customEvent.create({
     data: {
-      ...input,
-      eventDate: parseLocalDateTime(input.eventDate),
+      ...eventInput,
+      eventDate: parseDateTimeLocalInput(eventInput.eventDate, timeZone),
       registrationDeadline:
-        input.registrationDeadline && input.registrationDeadline.trim() !== ""
-          ? parseLocalDateTime(input.registrationDeadline)
+        eventInput.registrationDeadline &&
+        eventInput.registrationDeadline.trim() !== ""
+          ? parseDateTimeLocalInput(eventInput.registrationDeadline, timeZone)
           : null,
       createdBy,
     },
@@ -222,6 +227,13 @@ export async function createAdminCustomEvent(
       },
     },
   });
+
+  await rememberVenueDirectoryEntry(
+    typeof eventInput.tags?.host === "string" ? eventInput.tags.host : null,
+    eventInput.venue,
+  );
+
+  return createdEvent;
 }
 
 export async function updateAdminCustomEvent(
@@ -229,17 +241,19 @@ export async function updateAdminCustomEvent(
   rawInput: unknown,
 ) {
   const input = updateCustomEventInputSchema.parse(rawInput);
+  const { timeZone = DEFAULT_EVENT_TIME_ZONE, ...eventInput } = input;
 
-  return prisma.customEvent.update({
+  const updatedEvent = await prisma.customEvent.update({
     where: { id: eventId },
     data: {
-      ...input,
-      eventDate: input.eventDate
-        ? parseLocalDateTime(input.eventDate)
+      ...eventInput,
+      eventDate: eventInput.eventDate
+        ? parseDateTimeLocalInput(eventInput.eventDate, timeZone)
         : undefined,
       registrationDeadline:
-        input.registrationDeadline && input.registrationDeadline.trim() !== ""
-          ? parseLocalDateTime(input.registrationDeadline)
+        eventInput.registrationDeadline &&
+        eventInput.registrationDeadline.trim() !== ""
+          ? parseDateTimeLocalInput(eventInput.registrationDeadline, timeZone)
           : null,
     },
     include: {
@@ -251,6 +265,20 @@ export async function updateAdminCustomEvent(
       },
     },
   });
+
+  const organizationName =
+    typeof eventInput.tags?.host === "string"
+      ? eventInput.tags.host
+      : updatedEvent.tags &&
+          typeof updatedEvent.tags === "object" &&
+          !Array.isArray(updatedEvent.tags) &&
+          typeof (updatedEvent.tags as Record<string, unknown>).host === "string"
+        ? ((updatedEvent.tags as Record<string, unknown>).host as string)
+        : null;
+
+  await rememberVenueDirectoryEntry(organizationName, updatedEvent.venue);
+
+  return updatedEvent;
 }
 
 export async function deleteAdminCustomEvent(eventId: string) {

@@ -324,6 +324,11 @@
 </template>
 
 <script setup lang="ts">
+import {
+  formatDateInTimeZone,
+  getUserTimeZone,
+} from "~/utils/eventDateTime";
+
 interface CustomEvent {
   id: string;
   name: string;
@@ -379,17 +384,17 @@ const isSavingDecklist = ref(false);
 const isCancelling = ref(false);
 const cancelSuccess = ref(false);
 const showCancelModal = ref(false);
+const userTimeZone = getUserTimeZone();
 
 function formatEventDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return formatDateInTimeZone(dateString, {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  }, "en-US", userTimeZone);
 }
 
 function getStatusColor(status: string): string {

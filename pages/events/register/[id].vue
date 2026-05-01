@@ -460,6 +460,11 @@
 </template>
 
 <script setup lang="ts">
+import {
+  formatDateInTimeZone,
+  getUserTimeZone,
+} from "~/utils/eventDateTime";
+
 import { ref, computed, onMounted } from "vue";
 
 interface CustomEvent {
@@ -518,6 +523,7 @@ const form = reactive<RegistrationForm>({
 const supabase = useSupabaseClient();
 const user = useSupabaseUser();
 const userLoading = ref<boolean>(true);
+const userTimeZone = getUserTimeZone();
 
 // Computed properties
 const registrationFull = computed(() => {
@@ -537,15 +543,14 @@ const canSubmitRegistration = computed(() => {
 
 // Methods
 const formatEventDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return formatDateInTimeZone(dateString, {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  }, "en-US", userTimeZone);
 };
 
 const loadUserData = async (): Promise<void> => {
