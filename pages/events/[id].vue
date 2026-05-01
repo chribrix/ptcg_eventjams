@@ -9,7 +9,7 @@
         <div
           class="w-4 h-4 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin"
         ></div>
-        <span>Loading event details...</span>
+        <span>{{ t("eventDetailPage.loading") }}</span>
       </div>
 
       <!-- Error State -->
@@ -17,7 +17,7 @@
         v-else-if="error"
         class="bg-[#2f3136] border border-[#202225] rounded-lg p-4"
       >
-        <div class="text-gray-300">Failed to load event: {{ error }}</div>
+        <div class="text-gray-300">{{ t("eventDetailPage.errorLoading") }}: {{ error }}</div>
       </div>
 
       <!-- Event Details -->
@@ -56,27 +56,27 @@
                   d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"
                 ></path>
               </svg>
-              {{ registrationCount }} / {{ event.maxParticipants }} registered
+              {{ t("eventDetailPage.registeredCount", { count: registrationCount, max: event.maxParticipants }) }}
             </div>
           </div>
         </div>
 
         <!-- Event Info -->
         <div class="bg-[#2f3136] rounded-lg shadow-lg p-6 mb-6">
-          <h2 class="text-xl font-bold text-white mb-4">Details</h2>
+          <h2 class="text-xl font-bold text-white mb-4">{{ t("events.eventDetails") }}</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div
               v-if="event.participationFee"
               class="flex items-center gap-2 text-gray-300 text-sm sm:text-base"
             >
-              <span class="font-medium text-white">Entry Fee:</span>
+              <span class="font-medium text-white">{{ t("eventDetailPage.entryFee") }}:</span>
               <span>{{ event.participationFee }}</span>
             </div>
             <div
               v-if="event.registrationDeadline"
               class="flex items-center gap-2 text-gray-300 text-sm sm:text-base"
             >
-              <span class="font-medium text-white">Registration Deadline:</span>
+              <span class="font-medium text-white">{{ t("events.registrationDeadline") }}:</span>
               <span class="break-words">{{
                 formatEventDate(event.registrationDeadline)
               }}</span>
@@ -84,17 +84,17 @@
             <div
               class="flex items-center gap-2 text-gray-300 text-sm sm:text-base"
             >
-              <span class="font-medium text-white">Decklist Required:</span>
+              <span class="font-medium text-white">{{ t("events.decklistRequired") }}:</span>
               <span
                 :class="event.requiresDecklist ? 'text-white' : 'text-gray-400'"
               >
-                {{ event.requiresDecklist ? "Yes" : "No" }}
+                {{ event.requiresDecklist ? t("common.yes") : t("common.no") }}
               </span>
             </div>
             <div
               class="flex items-center gap-2 text-gray-300 text-sm sm:text-base"
             >
-              <span class="font-medium text-white">Status:</span>
+              <span class="font-medium text-white">{{ t("common.status") }}:</span>
               <span :class="getStatusColor(event.status)">
                 {{
                   event.status.charAt(0).toUpperCase() + event.status.slice(1)
@@ -106,7 +106,7 @@
 
         <!-- Event Information Card -->
         <div class="bg-[#2f3136] rounded-lg shadow-lg p-6 mb-6">
-          <h2 class="text-xl font-bold text-white mb-4">Event Information</h2>
+          <h2 class="text-xl font-bold text-white mb-4">{{ t("eventDetailPage.eventInformation") }}</h2>
           <div v-if="event.description" class="mb-4">
             <p
               class="text-gray-300 whitespace-pre-wrap text-sm sm:text-base break-words"
@@ -120,7 +120,7 @@
         <div class="bg-[#2f3136] rounded-lg shadow-lg p-4 sm:p-6">
           <div v-if="user" class="space-y-4">
             <h2 class="text-lg sm:text-xl font-semibold text-white">
-              Registration
+              {{ t("registration.title") }}
             </h2>
 
             <!-- User Registration Status -->
@@ -129,15 +129,15 @@
                 <div class="flex items-center justify-between mb-3">
                   <div>
                     <div class="font-medium text-white">
-                      You are registered for this event
+                      {{ t("eventDetailPage.registeredForEvent") }}
                     </div>
                     <div class="text-sm text-gray-300">
-                      Status:
+                      {{ t("common.status") }}:
                       {{
                         userRegistration.status === "registered"
-                          ? "Confirmed"
+                          ? t("eventDetailPage.confirmed")
                           : userRegistration.status === "reserved"
-                            ? "Reserved (Pending Decklist)"
+                            ? t("eventDetailPage.reservedPendingDecklist")
                             : userRegistration.status
                       }}
                     </div>
@@ -149,7 +149,7 @@
                   v-if="event.requiresDecklist"
                   class="mt-4 pt-4 border-t border-[#202225]"
                 >
-                  <h4 class="font-medium text-white mb-3">Decklist Status</h4>
+                  <h4 class="font-medium text-white mb-3">{{ t("eventDetailPage.decklistStatus") }}</h4>
                   <ol class="space-y-2">
                     <li
                       v-for="(ticket, index) in userRegistration.tickets"
@@ -170,16 +170,16 @@
                       <span
                         v-if="ticket.decklist"
                         class="text-xs font-medium text-emerald-400 flex items-center gap-1"
-                        >✓ Submitted</span
+                        >{{ t("eventDetailPage.decklistSubmitted") }}</span
                       >
                       <span
                         v-else-if="ticket.bringingDecklistOnsite"
                         class="text-xs font-medium text-blue-400"
-                        >Bringing on Site</span
+                        >{{ t("eventDetailPage.bringingOnSite") }}</span
                       >
-                      <span v-else class="text-xs font-medium text-amber-400"
-                        >⚠ Pending</span
-                      >
+                      <span v-else class="text-xs font-medium text-amber-400">
+                        {{ t("eventDetailPage.pending") }}
+                      </span>
                     </li>
                   </ol>
                   <!-- Edit button for single-ticket registrations -->
@@ -188,7 +188,7 @@
                     @click="showEditDecklistModal = true"
                     class="mt-3 text-xs text-gray-300 hover:text-white bg-[#40444b] hover:bg-[#4f545c] px-2 py-1 rounded"
                   >
-                    ✎ Edit Decklist
+                    {{ t("decklist.editDecklist") }}
                   </button>
                 </div>
 
@@ -202,8 +202,8 @@
                       event.requiresDecklist &&
                       !userRegistration.decklist &&
                       !userRegistration.bringingDecklistOnsite
-                        ? "Submit Decklist"
-                        : "Edit Registration"
+                        ? t("decklist.saveDecklist")
+                        : t("eventDetailPage.editRegistration")
                     }}
                   </NuxtLink>
                 </div>
@@ -221,9 +221,9 @@
                 }"
               >
                 <span v-if="registrationCount >= event.maxParticipants"
-                  >Event Full</span
+                  >{{ t("registration.eventFull") }}</span
                 >
-                <span v-else>Register for Event</span>
+                <span v-else>{{ t("events.registerForEvent") }}</span>
               </NuxtLink>
             </div>
           </div>
@@ -231,13 +231,13 @@
           <!-- Login Required -->
           <div v-else class="text-center">
             <p class="text-gray-600 mb-4">
-              Please log in to register for this event.
+              {{ t("eventDetailPage.loginRequired") }}
             </p>
             <NuxtLink
               to="/login"
               class="px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-lg hover:from-gray-900 hover:to-black transition-colors font-medium"
             >
-              Log In
+              {{ t("auth.signIn") }}
             </NuxtLink>
           </div>
         </div>
@@ -262,7 +262,7 @@
       >
         <div class="p-6">
           <h3 class="text-xl font-bold text-white mb-4">
-            Submit/Edit Decklist
+            {{ t("eventDetailPage.submitOrEditDecklist") }}
           </h3>
 
           <div class="space-y-4">
@@ -278,7 +278,7 @@
                 for="bringingOnsite"
                 class="text-sm font-medium text-gray-300"
               >
-                I will bring my decklist on-site
+                {{ t("decklist.bringOnsiteOption") }}
               </label>
             </div>
 
@@ -291,10 +291,10 @@
                 v-model="editDecklistForm.decklist"
                 rows="12"
                 class="w-full px-3 py-2 bg-[#40444b] text-gray-300 border border-[#202225] rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 font-mono text-sm"
-                placeholder="Paste your decklist here..."
+                :placeholder="t('decklist.enterDecklist')"
               ></textarea>
               <p class="text-xs text-gray-400 mt-1">
-                Paste your decklist in PTCGL or LimitlessTCG format
+                {{ t("eventDetailPage.decklistFormatsHint") }}
               </p>
             </div>
           </div>
@@ -304,7 +304,7 @@
               @click="showEditDecklistModal = false"
               class="flex-1 px-4 py-2 border border-[#202225] text-gray-300 rounded-lg hover:bg-[#40444b] font-medium"
             >
-              Cancel
+              {{ t("common.cancel") }}
             </button>
             <button
               @click="saveDecklist"
@@ -314,7 +314,7 @@
               "
               class="flex-1 px-4 py-2 bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-lg hover:from-gray-900 hover:to-black disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
-              {{ isSavingDecklist ? "Saving..." : "Save Decklist" }}
+              {{ isSavingDecklist ? t("decklist.saving") : t("decklist.saveDecklist") }}
             </button>
           </div>
         </div>
@@ -369,6 +369,7 @@ interface UserRegistration {
 const { id } = useRoute().params;
 const supabase = useSupabaseClient();
 const user = useSupabaseUser();
+const { t, locale } = useI18n();
 
 const event = ref<CustomEvent | null>(null);
 const registrationCount = ref(0);
@@ -394,7 +395,7 @@ function formatEventDate(dateString: string): string {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }, "en-US", userTimeZone);
+  }, locale.value, userTimeZone);
 }
 
 function getStatusColor(status: string): string {
@@ -426,7 +427,8 @@ async function fetchEventDetails(): Promise<void> {
     registrationCount.value = response.registrationCount;
   } catch (err: unknown) {
     console.error("Failed to fetch event details:", err);
-    error.value = err instanceof Error ? err.message : "Failed to load event";
+    error.value =
+      err instanceof Error ? err.message : t("eventDetailPage.errorLoading");
   } finally {
     isLoading.value = false;
   }
@@ -488,7 +490,7 @@ function openEditDecklistModal(): void {
 async function saveDecklist(): Promise<void> {
   if (!userRegistration.value || isSavingDecklist.value) return;
   if (!userRegistration.value.ticketId) {
-    alert("Ticket ID not found. Please refresh the page.");
+    alert(t("eventDetailPage.errorLoading"));
     return;
   }
 
@@ -512,7 +514,7 @@ async function saveDecklist(): Promise<void> {
     showEditDecklistModal.value = false;
   } catch (err: unknown) {
     console.error("Failed to save decklist:", err);
-    alert("Failed to save decklist. Please try again.");
+    alert(t("registerForm.errorRegistrationFailed"));
   } finally {
     isSavingDecklist.value = false;
   }
@@ -539,7 +541,7 @@ async function cancelRegistration(): Promise<void> {
   } catch (err: unknown) {
     console.error("Failed to cancel registration:", err);
     cancelSuccess.value = false;
-    alert("Failed to cancel registration. Please try again.");
+    alert(t("registration.registrationError"));
   } finally {
     isCancelling.value = false;
     showCancelModal.value = false;

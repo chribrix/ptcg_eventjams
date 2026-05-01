@@ -20,7 +20,7 @@
             class="px-6 py-4 border-b border-[#202225] flex justify-between items-center bg-[#36393f]"
           >
             <h3 class="text-xl font-semibold text-white m-0">
-              Events on {{ formattedDate }}
+              {{ t("eventPopover.eventsOn", { date: formattedDate }) }}
             </h3>
             <button
               @click="emit('close')"
@@ -176,7 +176,9 @@
                       >
                         <BookmarkIcon class="w-3.5 h-3.5 flex-shrink-0" />
                         <span>{{
-                          isBookmarked(event.id) ? "Vorgemerkt" : "Vormerken"
+                          isBookmarked(event.id)
+                            ? t("eventList.bookmarked")
+                            : t("eventList.bookmark")
                         }}</span>
                       </button>
                       <a
@@ -188,7 +190,7 @@
                         @click.stop
                       >
                         <MapIcon class="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>Routenplaner</span>
+                        <span>{{ t("eventPopover.routePlanner") }}</span>
                       </a>
                       <NuxtLink
                         v-if="
@@ -203,7 +205,7 @@
                         @click.stop
                       >
                         <UserPlusIcon class="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>Register</span>
+                        <span>{{ t("events.registerForEvent") }}</span>
                       </NuxtLink>
                       <a
                         v-else-if="event.link && event.link !== '//'"
@@ -214,7 +216,7 @@
                         @click.stop
                       >
                         <LinkIcon class="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>Details</span>
+                        <span>{{ t("events.eventDetails") }}</span>
                       </a>
                     </div>
                   </div>
@@ -230,7 +232,7 @@
               @click="emit('close')"
               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              <span>← Zurück</span>
+              <span>{{ t("common.back") }}</span>
             </button>
           </div>
         </div>
@@ -257,6 +259,8 @@ import {
   getEventDisplayBadgeStyles,
   getEventDisplayLabel,
 } from "~/utils/eventDisplay";
+import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
+const { t, locale } = useI18n();
 
 interface ParsedEvent {
   id: string;
@@ -349,7 +353,10 @@ const getCompactDate = (event: ParsedEvent): string => {
     ? event.dateTime.split(" ")[0]
     : event.dateTime;
   const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return date.toLocaleDateString(locale.value, {
+    month: "short",
+    day: "numeric",
+  });
 };
 
 // Load custom events if needed
@@ -444,6 +451,8 @@ async function toggleBookmark(event: ParsedEvent): Promise<void> {
       });
       bookmarkedEventIds.value = new Set(bookmarkedEventIds.value).add(event.id);
     }
+
+    notifyEventBookmarksUpdated();
   } catch (error) {
     console.error("Failed to toggle bookmark:", error);
   } finally {
@@ -491,7 +500,7 @@ const formatEventCost = (event: ParsedEvent): string => {
   if (cost === undefined || cost === null) return "?";
   if (isCustomEvent(event)) {
     const numericCost = typeof cost === "string" ? parseFloat(cost) : cost;
-    return numericCost > 0 ? `€${numericCost}` : "Free";
+    return numericCost > 0 ? `${numericCost}` : "Free";
   }
   return String(cost) || "?";
 };
@@ -529,7 +538,7 @@ const getEventTime = (event: ParsedEvent): string => {
     );
     if (customEvent) {
       const eventDate = new Date(customEvent.eventDate);
-      return eventDate.toLocaleTimeString("en-US", {
+      return eventDate.toLocaleTimeString(locale.value, {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
@@ -573,7 +582,7 @@ const getEventDate = (event: ParsedEvent): string => {
     );
     if (customEvent) {
       const eventDate = new Date(customEvent.eventDate);
-      return eventDate.toLocaleDateString("en-US", {
+      return eventDate.toLocaleDateString(locale.value, {
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -583,7 +592,7 @@ const getEventDate = (event: ParsedEvent): string => {
   // For external events, format the dateTime
   if (event.dateTime) {
     const eventDate = new Date(event.dateTime);
-    return eventDate.toLocaleDateString("en-US", {
+    return eventDate.toLocaleDateString(locale.value, {
       month: "short",
       day: "numeric",
       year: "numeric",

@@ -12,9 +12,11 @@
           <RocketLaunchIcon class="w-6 h-6 sm:w-8 sm:h-8 text-white" />
         </div>
         <div>
-          <h2 class="text-2xl sm:text-3xl font-bold text-white">Get Started</h2>
+          <h2 class="text-2xl sm:text-3xl font-bold text-white">
+            {{ t("getStartedCard.title") }}
+          </h2>
           <p class="text-violet-100 text-sm sm:text-base">
-            Join the community today - it's free!
+            {{ t("getStartedCard.subtitle") }}
           </p>
         </div>
       </div>
@@ -31,9 +33,11 @@
             <MagnifyingGlassIcon class="w-4 h-4 text-blue-400" />
           </div>
           <div>
-            <h3 class="font-semibold text-white">Discover Events</h3>
+            <h3 class="font-semibold text-white">
+              {{ t("getStartedCard.discoverTitle") }}
+            </h3>
             <p class="text-gray-300 text-sm">
-              Find tournaments in your area with advanced filtering
+              {{ t("getStartedCard.discoverText") }}
             </p>
           </div>
         </div>
@@ -45,9 +49,11 @@
             <CheckCircleIcon class="w-4 h-4 text-green-400" />
           </div>
           <div>
-            <h3 class="font-semibold text-white">Easy Registration</h3>
+            <h3 class="font-semibold text-white">
+              {{ t("getStartedCard.registrationTitle") }}
+            </h3>
             <p class="text-gray-300 text-sm">
-              Quick signup with flexible decklist options
+              {{ t("getStartedCard.registrationText") }}
             </p>
           </div>
         </div>
@@ -59,9 +65,11 @@
             <HeartIcon class="w-4 h-4 text-purple-400" />
           </div>
           <div>
-            <h3 class="font-semibold text-white">Join Community</h3>
+            <h3 class="font-semibold text-white">
+              {{ t("getStartedCard.communityTitle") }}
+            </h3>
             <p class="text-gray-300 text-sm">
-              Connect with players and track your tournament journey
+              {{ t("getStartedCard.communityText") }}
             </p>
           </div>
         </div>
@@ -74,7 +82,7 @@
           class="group w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
         >
           <UserPlusIcon class="w-5 h-5 mr-2" />
-          Create Free Account
+          {{ t("getStartedCard.cta") }}
           <ArrowRightIcon
             class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
           />
@@ -93,4 +101,6 @@ import {
   UserPlusIcon,
   ArrowRightIcon,
 } from "@heroicons/vue/24/outline";
+
+const { t } = useI18n();
 </script>

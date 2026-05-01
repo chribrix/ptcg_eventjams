@@ -43,9 +43,7 @@
         v-else-if="registrations.length === 0"
         class="bg-[#2f3136] rounded-lg shadow-sm border border-[#202225] p-8 text-center"
       >
-        <h3 class="text-2xl font-semibold text-white mb-2">
-          No Events Yet
-        </h3>
+        <h3 class="text-2xl font-semibold text-white mb-2">No Events Yet</h3>
         <p class="text-gray-300 mb-6">
           You have no registrations or bookmarked external events yet.
         </p>
@@ -67,11 +65,7 @@
             v-for="registration in registrations"
             :key="registration.id"
             class="rounded-lg shadow-sm border p-4 sm:p-6 hover:shadow-lg transition-all duration-200 cursor-pointer block"
-            :class="
-              getCardBackgroundClass(
-                registration.customEvent.tagType || 'pokemon'
-              )
-            "
+            :class="getDashboardEntryCardClass(registration)"
           >
             <!-- Game Type Header -->
             <div
@@ -86,7 +80,7 @@
               >
                 {{
                   getGameTypeLabel(
-                    registration.customEvent.tagType || "pokemon"
+                    registration.customEvent.tagType || "pokemon",
                   )
                 }}
               </h4>
@@ -106,7 +100,7 @@
                   <span
                     v-for="tag in getDisplayTags(
                       registration.customEvent.tags || null,
-                      registration.customEvent.tagType || 'pokemon'
+                      registration.customEvent.tagType || 'pokemon',
                     )"
                     :key="tag.value"
                     class="event-type-badge flex-shrink-0"
@@ -177,9 +171,9 @@
                 class="flex items-center gap-2 text-gray-300"
               >
                 <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
-                <span class="text-sm"
-                  >€{{ registration.customEvent.participationFee }}</span
-                >
+                <span class="text-sm">{{
+                  registration.customEvent.participationFee
+                }}</span>
               </div>
 
               <div class="flex items-center gap-2 text-gray-300">
@@ -238,7 +232,7 @@
                       d="M13.5 6H18m0 0v4.5M18 6l-7.5 7.5M7.5 9H6A1.5 1.5 0 004.5 10.5v7.5A1.5 1.5 0 006 19.5h7.5a1.5 1.5 0 001.5-1.5v-1.5"
                     />
                   </svg>
-                  <span>Open External Event</span>
+                  <span>Eventdetails</span>
                 </a>
                 <button
                   type="button"
@@ -258,7 +252,7 @@
                       d="M5 5l14 14M19 5L5 19"
                     />
                   </svg>
-                  <span>Remove Bookmark</span>
+                  <span>Entfernen</span>
                 </button>
               </div>
             </div>
@@ -332,6 +326,7 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount } from "vue";
 // Page is automatically protected by auth.global.ts middleware
 import {
   CalendarIcon,
@@ -343,6 +338,8 @@ import {
   CheckCircleIcon,
   ClipboardDocumentIcon,
 } from "@heroicons/vue/24/outline";
+import { onEventBookmarksUpdated } from "~/utils/eventBookmarks";
+import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
 // Use centralized composables
 const { getDisplayTags } = useTagDisplay();
 const {
@@ -398,6 +395,7 @@ const { user } = useAuth();
 const registrations = ref<EventRegistration[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+let removeBookmarksListener: (() => void) | null = null;
 
 const fetchRegistrations = async () => {
   try {
@@ -412,7 +410,7 @@ const fetchRegistrations = async () => {
       "/api/dashboard/registrations",
       {
         method: "GET",
-      }
+      },
     );
 
     if (fetchError) {
@@ -434,17 +432,23 @@ const removeBookmark = async (registration: EventRegistration) => {
     return;
   }
 
+  const shouldRemove = window.confirm(
+    `Vormerkung fuer "${registration.customEvent.name}" entfernen?`,
+  );
+
+  if (!shouldRemove) {
+    return;
+  }
+
   try {
-    await $fetch(
-      `/api/events/bookmarks/${registration.externalEventId}`,
-      {
-        method: "DELETE",
-      }
-    );
+    await $fetch(`/api/events/bookmarks/${registration.externalEventId}`, {
+      method: "DELETE",
+    });
 
     registrations.value = registrations.value.filter(
-      (entry) => entry.id !== registration.id
+      (entry) => entry.id !== registration.id,
     );
+    notifyEventBookmarksUpdated();
   } catch (err) {
     console.error("Failed to remove bookmark:", err);
     error.value =
@@ -452,20 +456,30 @@ const removeBookmark = async (registration: EventRegistration) => {
   }
 };
 
+const getDashboardEntryCardClass = (
+  registration: EventRegistration,
+): string => {
+  if (registration.entryType === "bookmark") {
+    return "bg-gradient-to-br from-sky-950 via-cyan-950 to-slate-900 border-sky-700/70";
+  }
+
+  return getCardBackgroundClass(registration.customEvent.tagType || "pokemon");
+};
+
 // Helper functions for ticket status
 const needsAttention = (registration: EventRegistration): boolean => {
   if (!registration.tickets || registration.tickets.length === 0) return false;
   return registration.tickets.some(
-    (ticket) => !ticket.decklist && !ticket.bringingDecklistOnsite
+    (ticket) => !ticket.decklist && !ticket.bringingDecklistOnsite,
   );
 };
 
 const getTicketsNeedingAttention = (
-  registration: EventRegistration
+  registration: EventRegistration,
 ): number => {
   if (!registration.tickets) return 0;
   return registration.tickets.filter(
-    (ticket) => !ticket.decklist && !ticket.bringingDecklistOnsite
+    (ticket) => !ticket.decklist && !ticket.bringingDecklistOnsite,
   ).length;
 };
 
@@ -496,6 +510,13 @@ const formatRegistrationDate = (dateString: string): string => {
 // Load data on mount
 onMounted(() => {
   fetchRegistrations();
+  removeBookmarksListener = onEventBookmarksUpdated(() => {
+    fetchRegistrations();
+  });
+});
+
+onBeforeUnmount(() => {
+  removeBookmarksListener?.();
 });
 </script>
 
@@ -530,6 +551,12 @@ onMounted(() => {
 .event-type-badge.type-custom {
   background-color: #fed7aa;
   color: #9a3412;
+}
+
+.event-type-badge.type-prerelease,
+.event-type-badge.type-pre_release {
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
 .event-type-badge.type-midseason_showdown,

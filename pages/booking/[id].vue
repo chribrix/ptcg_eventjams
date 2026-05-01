@@ -10,7 +10,7 @@
           <div
             class="w-12 h-12 border-4 border-gray-300 border-t-gray-800 rounded-full animate-spin mx-auto mb-4"
           ></div>
-          <p class="text-gray-300">Loading booking details...</p>
+          <p class="text-gray-300">{{ t("bookingPage.loading") }}</p>
         </div>
       </div>
 
@@ -19,13 +19,13 @@
         v-else-if="error"
         class="bg-[#2f3136] rounded-2xl shadow-xl p-8 text-center"
       >
-        <h2 class="text-2xl font-bold text-white mb-2">Error</h2>
+        <h2 class="text-2xl font-bold text-white mb-2">{{ t("common.error") }}</h2>
         <p class="text-gray-300 mb-6">{{ error }}</p>
         <NuxtLink
           to="/dashboard"
           class="inline-block px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 transition shadow-lg hover:shadow-xl"
         >
-          ← Back to Dashboard
+          {{ t("bookingPage.backToDashboard") }}
         </NuxtLink>
       </div>
 
@@ -53,7 +53,7 @@
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-              Back to Dashboard
+              {{ t("bookingPage.backToDashboard") }}
             </NuxtLink>
             <h1 class="text-3xl font-bold text-white">
               {{ booking.event.name }}
@@ -76,10 +76,10 @@
               (booking.event.tagType || 'pokemon') === 'generic',
           }"
         >
-          <h2 class="text-xl font-bold text-white mb-4">Event Information</h2>
+          <h2 class="text-xl font-bold text-white mb-4">{{ t("eventDetailPage.eventInformation") }}</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p class="text-sm text-gray-400">Game</p>
+              <p class="text-sm text-gray-400">{{ t("bookingPage.game") }}</p>
               <div class="flex items-center gap-2">
                 <p class="font-medium text-white">
                   {{ getGameTypeLabel(booking.event.tagType || "pokemon") }}
@@ -98,23 +98,23 @@
               </div>
             </div>
             <div>
-              <p class="text-sm text-gray-400">Venue</p>
+              <p class="text-sm text-gray-400">{{ t("common.venue") }}</p>
               <p class="font-medium text-white">{{ booking.event.venue }}</p>
             </div>
             <div>
-              <p class="text-sm text-gray-400">Date</p>
+              <p class="text-sm text-gray-400">{{ t("common.date") }}</p>
               <p class="font-medium text-white">
                 {{ formatEventDate(booking.event.eventDate) }}
               </p>
             </div>
             <div v-if="booking.event.participationFee">
-              <p class="text-sm text-gray-400">Participation Fee</p>
+              <p class="text-sm text-gray-400">{{ t("events.participationFee") }}</p>
               <p class="font-medium text-white">
                 {{ booking.event.participationFee }}€
               </p>
             </div>
             <div>
-              <p class="text-sm text-gray-400">Registered</p>
+              <p class="text-sm text-gray-400">{{ t("dashboard.registered") }}</p>
               <p class="font-medium text-white">
                 {{ formatDate(booking.registeredAt) }}
               </p>
@@ -128,11 +128,9 @@
             class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4"
           >
             <div>
-              <h2 class="text-xl font-bold text-white">Tickets</h2>
+              <h2 class="text-xl font-bold text-white">{{ t("bookingPage.tickets") }}</h2>
               <p class="text-gray-400">
-                {{ booking.statistics.activeTickets }} active ticket{{
-                  booking.statistics.activeTickets !== 1 ? "s" : ""
-                }}
+                {{ t("bookingPage.activeTickets", { count: booking.statistics.activeTickets }) }}
               </p>
             </div>
             <button
@@ -153,7 +151,7 @@
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              Add Ticket
+              {{ t("bookingPage.addTicket") }}
             </button>
           </div>
 
@@ -176,18 +174,18 @@
                       v-if="ticket.status === 'registered'"
                       class="px-2 py-1 bg-gray-800 text-white text-xs rounded"
                     >
-                      Registered
+                      {{ t("dashboard.registered") }}
                     </span>
                     <span
                       v-else-if="ticket.status === 'reserved'"
                       class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded"
                     >
-                      Reserved
+                      {{ t("dashboard.reserved") }}
                     </span>
                   </div>
                   <div class="text-sm text-gray-300 space-y-1">
                     <p v-if="ticket.participantPlayerId">
-                      Player ID: {{ ticket.participantPlayerId }}
+                      {{ t("registration.playerId") }}: {{ ticket.participantPlayerId }}
                     </p>
                     <p
                       v-if="ticket.isAnonymous"
@@ -206,7 +204,7 @@
                           d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
                         />
                       </svg>
-                      Anonymous
+                      {{ t("bookingPage.anonymous") }}
                     </p>
 
                     <!-- Decklist Status -->
@@ -229,7 +227,7 @@
                             clip-rule="evenodd"
                           ></path>
                         </svg>
-                        Decklist submitted
+                        {{ t("eventDetailPage.decklistSubmitted") }}
                       </div>
                       <div
                         v-else-if="ticket.bringingDecklistOnsite"
@@ -246,7 +244,7 @@
                             clip-rule="evenodd"
                           ></path>
                         </svg>
-                        Bringing decklist on-site
+                        {{ t("eventDetailPage.bringingOnSite") }}
                       </div>
                       <div v-else class="flex items-center gap-1 text-gray-400">
                         <svg
@@ -703,6 +701,7 @@ interface Booking {
 const booking = ref<Booking | null>(null);
 const loading = ref(true);
 const error = ref("");
+const { t } = useI18n();
 
 // Filter out cancelled tickets
 const activeTickets = computed(() => {
@@ -755,7 +754,7 @@ const fetchBookingDetails = async () => {
     }
   } catch (err: any) {
     console.error("Failed to fetch booking:", err);
-    error.value = err.data?.message || "Failed to load booking details";
+    error.value = err.data?.message || t("bookingPage.errorLoading");
   } finally {
     loading.value = false;
   }

@@ -1,9 +1,7 @@
 <template>
   <div
     class="border rounded-xl p-4 hover:shadow-lg transition-all duration-300 group"
-    :class="
-      getCardBackgroundClass(registration.customEvent.tagType || 'pokemon')
-    "
+    :class="getEntryCardClass(registration)"
   >
     <!-- Game Type Header -->
     <div
@@ -73,17 +71,21 @@
           class="flex items-center gap-1"
         >
           <CurrencyEuroIcon class="w-4 h-4" />
-          <span>€{{ registration.customEvent.participationFee }}</span>
+          <span>{{ registration.customEvent.participationFee }}</span>
         </div>
         <div v-else class="flex items-center gap-1 text-gray-300">
           <CheckCircleIcon class="w-4 h-4" />
-          <span>Free</span>
+          <span>{{ t("registrationMiniEntry.free") }}</span>
         </div>
 
         <!-- Max Participants -->
         <div class="flex items-center gap-1">
           <UsersIcon class="w-4 h-4" />
-          <span>{{ registration.customEvent.maxParticipants }} max</span>
+          <span>{{
+            t("registrationMiniEntry.maxParticipants", {
+              count: registration.customEvent.maxParticipants,
+            })
+          }}</span>
         </div>
 
         <!-- Decklist Required -->
@@ -92,7 +94,7 @@
           class="flex items-center gap-1 text-amber-400"
         >
           <DocumentTextIcon class="w-4 h-4" />
-          <span>Decklist required</span>
+          <span>{{ t("registrationMiniEntry.decklistRequired") }}</span>
         </div>
       </div>
 
@@ -100,7 +102,11 @@
       <div class="flex items-center gap-1 text-xs">
         <CalendarDaysIcon class="w-3 h-3" />
         <span
-          >{{ registration.entryType === "bookmark" ? "Vorgemerkt" : "Registered" }}
+          >{{
+            registration.entryType === "bookmark"
+              ? t("registrationMiniEntry.bookmarkedAt")
+              : t("registrationMiniEntry.registeredAt")
+          }}
           {{ formatRegistrationDate(registration.registeredAt) }}</span
         >
       </div>
@@ -125,7 +131,7 @@
         v-if="registration.status === 'reserved' && !registration.decklist"
         class="text-xs mt-1 opacity-75"
       >
-        Complete your registration by uploading a decklist
+        {{ t("registrationMiniEntry.completeDecklistHint") }}
       </div>
     </div>
 
@@ -143,18 +149,21 @@
         to="/dashboard"
         class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-semibold rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500 shadow-sm hover:shadow-md"
       >
-        Submit Decklist
+        {{ t("registrationMiniEntry.submitDecklist") }}
       </NuxtLink>
 
       <!-- Event Details Button -->
       <a
-        v-if="registration.entryType === 'bookmark' && registration.externalRegistrationUrl"
+        v-if="
+          registration.entryType === 'bookmark' &&
+          registration.externalRegistrationUrl
+        "
         :href="registration.externalRegistrationUrl"
         target="_blank"
         rel="noopener noreferrer"
         class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
       >
-        Open External Event
+        {{ t("registrationMiniEntry.eventDetails") }}
       </a>
 
       <NuxtLink
@@ -162,7 +171,7 @@
         :to="`/events/${registration.customEvent.id}`"
         class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
       >
-        View Event
+        {{ t("registrationMiniEntry.viewEvent") }}
       </NuxtLink>
 
       <!-- Re-register Button (for cancelled registrations) -->
@@ -171,7 +180,7 @@
         :to="`/events/${registration.customEvent.id}`"
         class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
       >
-        Re-register
+        {{ t("registrationMiniEntry.reregister") }}
       </NuxtLink>
 
       <!-- Edit Booking Button - Always show for non-cancelled registrations -->
@@ -183,21 +192,23 @@
         :to="`/booking/${registration.id}`"
         class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
       >
-        Edit Booking
+        {{ t("registrationMiniEntry.editBooking") }}
       </NuxtLink>
 
       <button
         v-else-if="registration.entryType === 'bookmark'"
         type="button"
         class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
+        @click="confirmRemoveBookmark(registration)"
       >
-        Vormerkung aktiv
+        Entfernen
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+const { t, locale } = useI18n();
 const { getDisplayTags } = useTagDisplay();
 const {
   getCardBackgroundClass,
@@ -251,12 +262,36 @@ defineProps<{
   cancelling: string | null;
 }>();
 
-// Emits
-defineEmits<{
+const emit = defineEmits<{
   cancel: [registration: EventRegistration];
+  remove: [registration: EventRegistration];
 }>();
 
 // Helper functions
+function getEntryCardClass(registration: EventRegistration): string {
+  if (registration.entryType === "bookmark") {
+    return "bg-gradient-to-br from-sky-950 via-cyan-950 to-slate-900 border-sky-700/70";
+  }
+
+  return getCardBackgroundClass(registration.customEvent.tagType || "pokemon");
+}
+
+function confirmRemoveBookmark(registration: EventRegistration) {
+  if (registration.entryType !== "bookmark") {
+    return;
+  }
+
+  const shouldRemove = window.confirm(
+    `Vormerkung fuer "${registration.customEvent.name}" entfernen?`,
+  );
+
+  if (!shouldRemove) {
+    return;
+  }
+
+  emit("remove", registration);
+}
+
 function getStatusBadgeClass(status: string): string {
   switch (status) {
     case "registered":
@@ -290,13 +325,13 @@ function getStatusDotClass(status: string): string {
 function getStatusLabel(status: string): string {
   switch (status) {
     case "registered":
-      return "Confirmed";
+      return t("registrationMiniEntry.statusConfirmed");
     case "reserved":
-      return "Reserved";
+      return t("registrationMiniEntry.statusReserved");
     case "cancelled":
-      return "Cancelled";
+      return t("registrationMiniEntry.statusCancelled");
     case "bookmarked":
-      return "VORGEMERKT";
+      return t("registrationMiniEntry.statusBookmarked");
     default:
       return status.charAt(0).toUpperCase() + status.slice(1);
   }
@@ -327,23 +362,26 @@ function getDecklistStatusClasses(registration: EventRegistration): string {
 
 function getDecklistStatusText(registration: EventRegistration): string {
   if (registration.decklist) {
-    return "✓ Decklist uploaded";
+    return t("registrationMiniEntry.decklistUploaded");
   } else if (registration.bringingDecklistOnsite) {
-    return "📋 Bringing decklist onsite";
+    return t("registrationMiniEntry.decklistOnsite");
   } else {
-    return "⚠ Decklist pending";
+    return t("registrationMiniEntry.decklistPending");
   }
 }
 
 function formatEventDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return date.toLocaleDateString(
+    locale.value.startsWith("de") ? "de-DE" : "en-US",
+    {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+  );
 }
 
 function formatRegistrationDate(dateString: string): string {
@@ -352,12 +390,12 @@ function formatRegistrationDate(dateString: string): string {
   const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
   if (diffInHours < 24) {
-    return "today";
+    return t("registrationMiniEntry.relativeToday");
   } else if (diffInHours < 48) {
-    return "yesterday";
+    return t("registrationMiniEntry.relativeYesterday");
   } else {
     const days = Math.floor(diffInHours / 24);
-    return `${days} days ago`;
+    return t("registrationMiniEntry.relativeDaysAgo", { days });
   }
 }
 </script>
@@ -393,6 +431,12 @@ function formatRegistrationDate(dateString: string): string {
 .event-type-badge.type-custom {
   background-color: #fed7aa;
   color: #9a3412;
+}
+
+.event-type-badge.type-prerelease,
+.event-type-badge.type-pre_release {
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
 .event-type-badge.type-midseason_showdown,

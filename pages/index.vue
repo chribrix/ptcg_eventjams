@@ -61,7 +61,11 @@
                       : 'text-xs font-medium',
                   ]"
                 >
-                  {{ activeTab === "calendar" ? "Event Calendar" : "Calendar" }}
+                  {{
+                    activeTab === "calendar"
+                      ? t("landingPage.calendarTitle")
+                      : t("landingPage.calendarShort")
+                  }}
                 </span>
               </button>
 
@@ -95,8 +99,8 @@
                 >
                   {{
                     activeTab === "registrations"
-                      ? "My Registrations"
-                      : "My Events"
+                      ? t("landingPage.myRegistrations")
+                      : t("landingPage.myEvents")
                   }}
                 </span>
                 <!-- When calendar is active and user has registrations: show count badge -->
@@ -187,7 +191,9 @@
                 "
               >
                 <CalendarDaysIcon class="w-5 h-5 flex-shrink-0" />
-                <span class="text-base font-bold">Event Calendar</span>
+                <span class="text-base font-bold">{{
+                  t("landingPage.calendarTitle")
+                }}</span>
               </div>
             </div>
           </div>
@@ -224,7 +230,9 @@
                 "
               >
                 <UserCircleIcon class="w-5 h-5 flex-shrink-0" />
-                <span class="text-base font-bold">My Registrations</span>
+                <span class="text-base font-bold">{{
+                  t("landingPage.myRegistrations")
+                }}</span>
               </div>
             </div>
           </div>
@@ -261,6 +269,7 @@ import EventMiniDashboardCard from "~/components/landingPageCards/dashboard/Even
 import GetStartedCard from "~/components/landingPageCards/GetStartedCard.vue";
 
 const { userName, user } = useAuth();
+const { t } = useI18n();
 const activeTab = ref<"calendar" | "registrations">("calendar");
 const previousTab = ref<"calendar" | "registrations">("calendar");
 const registrationsCount = ref<number>(0);

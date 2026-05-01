@@ -115,7 +115,7 @@
                   class="flex items-center gap-1"
                 >
                   <CurrencyDollarIcon class="w-4 h-4" />
-                  <span>€{{ event.participationFee }}</span>
+                  <span>{{ event.participationFee }}</span>
                 </div>
               </div>
             </div>

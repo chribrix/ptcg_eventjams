@@ -475,7 +475,7 @@
                         Participation Fee
                       </p>
                       <p class="text-sm text-gray-900">
-                        €{{ selectedEvent.participationFee }}
+                        {{ selectedEvent.participationFee }}
                       </p>
                     </div>
                   </div>

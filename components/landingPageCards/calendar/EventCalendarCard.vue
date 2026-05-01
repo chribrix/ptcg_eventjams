@@ -16,7 +16,7 @@
               class="w-8 h-8 border-4 border-gray-300 border-t-gray-800 rounded-full animate-spin"
             ></div>
             <span class="text-sm text-gray-300 font-medium"
-              >Loading events...</span
+              >{{ t("calendarCard.loadingEvents") }}</span
             >
           </div>
         </div>
@@ -37,7 +37,9 @@
             <div
               class="w-full h-64 flex items-center justify-center text-gray-400"
             >
-              <div class="animate-pulse">Loading calendar...</div>
+              <div class="animate-pulse">
+                {{ t("calendarCard.loadingCalendar") }}
+              </div>
             </div>
           </template>
         </ClientOnly>
@@ -102,7 +104,9 @@
                 </svg>
               </div>
               <div class="flex-1">
-                <p class="font-semibold">No Events Found</p>
+                <p class="font-semibold">
+                  {{ t("calendarCard.noEventsTitle") }}
+                </p>
                 <p class="text-sm text-gray-200 mt-1">{{ noEventsMessage }}</p>
               </div>
               <button
@@ -137,7 +141,6 @@ import {
 import {
   CALENDAR_CATEGORY_DEFINITIONS,
   eventMatchesCategory,
-  getCalendarCategoryTitle,
   isUpcomingCalendarEvent,
   normalizeCustomCalendarEvent,
   normalizeExternalCalendarEvent,
@@ -149,12 +152,18 @@ import {
   type UnifiedCalendarEvent,
 } from "~/utils/calendarEventUtils";
 
+const { t, locale } = useI18n();
 const userTimeZone = getUserTimeZone();
 
 const today = new Date();
 const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 const todayKey = getDateKeyInTimeZone(new Date().toISOString(), userTimeZone);
-const categoryPills = CALENDAR_CATEGORY_DEFINITIONS;
+const categoryPills = computed(() =>
+  CALENDAR_CATEGORY_DEFINITIONS.map((category) => ({
+    ...category,
+    label: t(`calendarCard.categories.${category.key}`),
+  })),
+);
 const calendarTypePriority: CalendarEventType[] = [
   "challenge",
   "cup",
@@ -233,7 +242,7 @@ const visibleCalendarEvents = computed(() =>
       return true;
     }
 
-    return categoryPills
+    return categoryPills.value
       .filter((category) => !disabledCategories.value.has(category.key))
       .some((category) => eventMatchesCategory(event, category.key));
   })
@@ -333,13 +342,19 @@ const closeEventDetails = () => {
 const formatSelectedDate = computed(() => {
   if (!selectedDate.value) return "";
   const date = new Date(selectedDate.value);
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return date.toLocaleDateString(
+    locale.value.startsWith("de") ? "de-DE" : "en-US",
+    {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    },
+  );
 });
+
+const getCategoryLabel = (category: CalendarCategory): string =>
+  t(`calendarCard.categories.${category}`);
 
 // Type filter functions
 const openTypeFilter = (type: CalendarCategory) => {
@@ -347,7 +362,9 @@ const openTypeFilter = (type: CalendarCategory) => {
 
   if (filteredEventsByType.value.length === 0) {
     showTypeFilterModal.value = false;
-    noEventsMessage.value = `No upcoming ${getCalendarCategoryTitle(type)} found.`;
+    noEventsMessage.value = t("calendarCard.noUpcomingType", {
+      type: getCategoryLabel(type),
+    });
     showNoEventsToast.value = true;
 
     setTimeout(() => {
@@ -368,7 +385,9 @@ const closeTypeFilter = () => {
 
 const typeFilterModalTitle = computed(() => {
   if (!selectedEventType.value) return "";
-  return `Upcoming ${getCalendarCategoryTitle(selectedEventType.value)}`;
+  return t("calendarCard.upcomingType", {
+    type: getCategoryLabel(selectedEventType.value),
+  });
 });
 
 const filteredEventsByType = computed(() => {

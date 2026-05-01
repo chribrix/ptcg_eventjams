@@ -92,7 +92,7 @@ function convertToCalendarEvents(parsedEvents: ParsedEvent[]): CalendarEvent[] {
 
 function createEventResponse(
   calendarEvents: CalendarEvent[],
-  totalFound: number
+  totalFound: number,
 ) {
   return {
     success: true,
@@ -249,7 +249,7 @@ export default defineEventHandler(async (event) => {
           cost: formattedCost, // Include formatted cost field
           streetAddress, // Include street address field
         };
-      }
+      },
     );
 
     // Group events by date for calendar display

@@ -6,7 +6,7 @@
         <div
           class="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"
         ></div>
-        <p class="text-gray-300">Loading event details...</p>
+        <p class="text-gray-300">{{ t("eventRegisterPage.loading") }}</p>
       </div>
     </div>
 
@@ -18,13 +18,15 @@
       <div
         class="bg-[#2f3136] rounded-2xl shadow-xl p-8 max-w-md w-full text-center border border-[#202225]"
       >
-        <h2 class="text-2xl font-bold text-gray-100 mb-2">Event Not Found</h2>
+        <h2 class="text-2xl font-bold text-gray-100 mb-2">
+          {{ t("eventRegisterPage.notFoundTitle") }}
+        </h2>
         <p class="text-gray-400 mb-6">{{ error }}</p>
         <NuxtLink
           to="/"
           class="inline-block px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 transition"
         >
-          ← Back to Events
+          {{ t("eventRegisterPage.backToEvents") }}
         </NuxtLink>
       </div>
     </div>
@@ -57,7 +59,7 @@
               </svg>
               <div>
                 <div class="text-xs text-gray-400 font-medium uppercase">
-                  Date & Time
+                  {{ t("eventList.dateTime") }}
                 </div>
                 <div class="text-sm text-gray-200 font-medium">
                   {{ formatEventDate(event.eventDate) }}
@@ -87,7 +89,7 @@
               </svg>
               <div>
                 <div class="text-xs text-gray-400 font-medium uppercase">
-                  Venue
+                  {{ t("common.venue") }}
                 </div>
                 <div class="text-sm text-gray-200 font-medium">
                   {{ event.venue }}
@@ -111,7 +113,7 @@
               </svg>
               <div>
                 <div class="text-xs text-gray-400 font-medium uppercase">
-                  Participants
+                  {{ t("common.participants") }}
                 </div>
                 <div class="text-sm text-gray-200 font-medium">
                   <span
@@ -144,7 +146,7 @@
               </svg>
               <div>
                 <div class="text-xs text-gray-400 font-medium uppercase">
-                  Entry Fee
+                  {{ t("eventDetailPage.entryFee") }}
                 </div>
                 <div
                   class="text-sm font-semibold"
@@ -156,8 +158,8 @@
                 >
                   {{
                     event.participationFee > 0
-                      ? `€${event.participationFee}`
-                      : "Free Entry"
+                      ? `${event.participationFee}`
+                      : t("eventRegisterPage.freeEntry")
                   }}
                 </div>
               </div>
@@ -182,7 +184,9 @@
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 ></path>
               </svg>
-              <span class="text-xs font-semibold">Decklist Required</span>
+              <span class="text-xs font-semibold">{{
+                t("events.decklistRequired")
+              }}</span>
             </div>
           </div>
 
@@ -190,7 +194,7 @@
             to="/"
             class="mt-6 block text-center text-sm text-gray-400 hover:text-emerald-500 transition"
           >
-            ← Back to Events
+            {{ t("eventRegisterPage.backToEvents") }}
           </NuxtLink>
         </aside>
 
@@ -201,12 +205,15 @@
             v-if="registrationFull"
             class="bg-red-900/20 border border-red-700/50 rounded-2xl p-6 mb-6"
           >
-            <h3 class="text-lg font-bold text-red-400 mb-2">Event Full</h3>
+            <h3 class="text-lg font-bold text-red-400 mb-2">
+              {{ t("registration.eventFull") }}
+            </h3>
             <p class="text-red-300">
-              This event has reached maximum capacity ({{
-                event.maxParticipants
+              {{
+                t("eventRegisterPage.eventFullText", {
+                  max: event.maxParticipants,
+                })
               }}
-              participants).
             </p>
           </div>
 
@@ -215,9 +222,9 @@
             class="bg-red-900/20 border border-red-700/50 rounded-2xl p-6 mb-6"
           >
             <h3 class="text-lg font-bold text-red-400 mb-2">
-              Registration Closed
+              {{ t("registration.registrationClosed") }}
             </h3>
-            <p class="text-red-300">This event has already taken place.</p>
+            <p class="text-red-300">{{ t("eventRegisterPage.eventPassed") }}</p>
           </div>
 
           <div
@@ -225,7 +232,7 @@
             class="bg-green-900/20 border border-green-700/50 rounded-2xl p-6 mb-6"
           >
             <h3 class="text-lg font-bold text-green-400 mb-2">
-              ✓ Registration Successful!
+              {{ t("registration.registrationSuccess") }}
             </h3>
             <p class="text-green-300 mb-2">
               <strong>{{ form.tickets[0].name }}</strong> (ID:
@@ -233,10 +240,10 @@
               {{ event.name }}.
             </p>
             <p v-if="event.requiresDecklist" class="text-green-300 text-sm">
-              Redirecting to your dashboard to submit your decklist...
+              {{ t("eventRegisterPage.redirectDecklist") }}
             </p>
             <p v-else class="text-green-300 text-sm">
-              Redirecting to your dashboard...
+              {{ t("eventRegisterPage.redirectDashboard") }}
             </p>
           </div>
 
@@ -246,7 +253,7 @@
             class="bg-[#2f3136] rounded-2xl shadow-lg p-6 lg:p-8 border border-[#202225]"
           >
             <h2 class="text-2xl font-bold text-gray-100 mb-6">
-              Complete Registration
+              {{ t("eventRegisterPage.completeRegistration") }}
             </h2>
 
             <form @submit.prevent="submitRegistration" class="space-y-5">
@@ -257,7 +264,9 @@
                 <div
                   class="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mr-3"
                 ></div>
-                <p class="text-gray-300">Loading your profile...</p>
+                <p class="text-gray-300">
+                  {{ t("eventRegisterPage.loadingProfile") }}
+                </p>
               </div>
 
               <div v-else class="space-y-5">
@@ -448,8 +457,12 @@
                 :disabled="submitting || !canSubmitRegistration"
                 class="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-green-700 transition transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                <span v-if="submitting">Registering...</span>
-                <span v-else>Complete Registration →</span>
+                <span v-if="submitting">{{
+                  t("registration.registering")
+                }}</span>
+                <span v-else
+                  >{{ t("eventRegisterPage.completeRegistration") }} →</span
+                >
               </button>
             </form>
           </div>
@@ -460,10 +473,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  formatDateInTimeZone,
-  getUserTimeZone,
-} from "~/utils/eventDateTime";
+import { formatDateInTimeZone, getUserTimeZone } from "~/utils/eventDateTime";
 
 import { ref, computed, onMounted } from "vue";
 
@@ -522,6 +532,7 @@ const form = reactive<RegistrationForm>({
 // Supabase user data
 const supabase = useSupabaseClient();
 const user = useSupabaseUser();
+const { t, locale } = useI18n();
 const userLoading = ref<boolean>(true);
 const userTimeZone = getUserTimeZone();
 
@@ -543,14 +554,19 @@ const canSubmitRegistration = computed(() => {
 
 // Methods
 const formatEventDate = (dateString: string): string => {
-  return formatDateInTimeZone(dateString, {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }, "en-US", userTimeZone);
+  return formatDateInTimeZone(
+    dateString,
+    {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+    locale.value,
+    userTimeZone,
+  );
 };
 
 const loadUserData = async (): Promise<void> => {
@@ -625,12 +641,12 @@ const fetchEventDetails = async (): Promise<void> => {
       event.value = response.event;
       registrationCount.value = response.registrationCount || 0;
     } else {
-      error.value = "Event not found";
+      error.value = t("eventRegisterPage.notFoundTitle");
     }
   } catch (err: unknown) {
     console.error("Failed to fetch event:", err);
     const errorMessage =
-      err instanceof Error ? err.message : "Failed to load event details";
+      err instanceof Error ? err.message : t("eventRegisterPage.loading");
     error.value = errorMessage;
   } finally {
     loading.value = false;
@@ -690,7 +706,7 @@ const submitRegistration = async (): Promise<void> => {
     formError.value =
       errorObj.data?.message ||
       errorObj.message ||
-      "Registration failed. Please try again.";
+      t("registerForm.errorRegistrationFailed");
   } finally {
     submitting.value = false;
   }
@@ -712,15 +728,15 @@ onMounted(async () => {
 // SEO
 useHead({
   title: computed(() =>
-    event.value ? `Register - ${event.value.name}` : "Event Registration",
+    event.value ? `Registrieren - ${event.value.name}` : "Event-Registrierung",
   ),
   meta: [
     {
       name: "description",
       content: computed(() =>
         event.value
-          ? `Register for ${event.value.name} at ${event.value.venue}`
-          : "Event Registration",
+          ? `Registriere dich fuer ${event.value.name} bei ${event.value.venue}`
+          : "Event-Registrierung",
       ),
     },
   ],

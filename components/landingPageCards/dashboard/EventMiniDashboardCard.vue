@@ -15,8 +15,12 @@
         ></div>
       </div>
       <div class="text-center">
-        <p class="text-gray-300 font-medium">Loading your registrations...</p>
-        <p class="text-gray-400 text-sm">Please wait a moment</p>
+        <p class="text-gray-300 font-medium">
+          {{ t("miniDashboardCard.loadingTitle") }}
+        </p>
+        <p class="text-gray-400 text-sm">
+          {{ t("miniDashboardCard.loadingText") }}
+        </p>
       </div>
     </div>
 
@@ -28,11 +32,10 @@
         <TicketIcon class="w-10 h-10 text-gray-400" />
       </div>
       <h3 class="text-xl font-semibold text-white mb-2">
-        No registrations yet
+        {{ t("miniDashboardCard.emptyTitle") }}
       </h3>
       <p class="text-gray-300 mb-8 max-w-md mx-auto">
-        You haven't registered for any events yet. Start exploring tournaments
-        in your area!
+        {{ t("miniDashboardCard.emptyText") }}
       </p>
       <NuxtLink
         to="/events"
@@ -41,7 +44,7 @@
         <MagnifyingGlassIcon
           class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"
         />
-        Browse Events
+        {{ t("miniDashboardCard.browseEvents") }}
         <ArrowRightIcon
           class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
         />
@@ -56,11 +59,17 @@
           class="flex items-center justify-between bg-[#40444b] border border-[#202225] rounded-lg px-3 py-2"
         >
           <div class="flex items-center text-sm text-gray-300 font-medium">
-            <span class="mr-2">{{ registrations.length }} registrations</span>
+            <span class="mr-2">{{
+              t("miniDashboardCard.registrationCount", {
+                count: registrations.length,
+              })
+            }}</span>
           </div>
           <div class="flex items-center space-x-1 text-gray-400">
             <ChevronUpIcon class="w-4 h-4" />
-            <span class="text-xs font-semibold">Scroll to view all</span>
+            <span class="text-xs font-semibold">{{
+              t("miniDashboardCard.scrollHint")
+            }}</span>
             <ChevronDownIcon class="w-4 h-4" />
           </div>
         </div>
@@ -84,6 +93,7 @@
             :registration="registration"
             :cancelling="cancelling"
             @cancel="confirmCancellation"
+            @remove="removeBookmark"
           />
         </TransitionGroup>
       </div>
@@ -97,7 +107,7 @@
           <ChartBarSquareIcon
             class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"
           />
-          View Full Dashboard
+          {{ t("miniDashboardCard.viewDashboard") }}
           <ArrowRightIcon
             class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
           />
@@ -116,9 +126,11 @@
         @click.stop
       >
         <div class="mb-4">
-          <h3 class="text-xl font-bold text-white mb-2">Cancel Registration</h3>
+          <h3 class="text-xl font-bold text-white mb-2">
+            {{ t("miniDashboardCard.cancelTitle") }}
+          </h3>
           <p class="text-gray-300">
-            Are you sure you want to cancel your registration for
+            {{ t("miniDashboardCard.cancelPrompt") }}
             <span class="font-semibold text-white">{{
               registrationToCancel?.customEvent.name
             }}</span
@@ -126,7 +138,7 @@
           </p>
           <div class="mt-3 p-3 bg-[#40444b] border border-amber-500 rounded-lg">
             <p class="text-sm text-amber-300">
-              <strong>Event Date:</strong>
+              <strong>{{ t("miniDashboardCard.eventDateLabel") }}</strong>
               {{
                 registrationToCancel
                   ? formatEventDate(registrationToCancel.customEvent.eventDate)
@@ -135,8 +147,7 @@
             </p>
           </div>
           <p class="text-sm text-red-400 mt-3">
-            ⚠️ This action cannot be undone. You can re-register later if spots
-            are still available.
+            {{ t("miniDashboardCard.cancelWarning") }}
           </p>
 
           <!-- Error Message -->
@@ -145,7 +156,7 @@
             class="mt-3 p-3 bg-[#40444b] border border-red-500 rounded-lg"
           >
             <p class="text-sm text-red-300">
-              <strong>Error:</strong> {{ cancelError }}
+              <strong>{{ t("common.error") }}:</strong> {{ cancelError }}
             </p>
           </div>
         </div>
@@ -156,18 +167,22 @@
             :disabled="cancelling !== null"
             class="flex-1 px-4 py-2 bg-[#40444b] text-gray-300 rounded-lg hover:bg-[#4f545c] transition-colors font-medium disabled:opacity-50"
           >
-            Keep Registration
+            {{ t("miniDashboardCard.keepRegistration") }}
           </button>
           <button
             @click="proceedWithCancellation"
             :disabled="cancelling !== null"
             class="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-colors font-medium disabled:opacity-50 flex items-center justify-center shadow-lg"
-          >
+            >
             <div
               v-if="cancelling"
               class="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"
             ></div>
-            {{ cancelling ? "Cancelling..." : "Yes, Cancel" }}
+            {{
+              cancelling
+                ? t("miniDashboardCard.cancelling")
+                : t("miniDashboardCard.confirmCancel")
+            }}
           </button>
         </div>
       </div>
@@ -196,7 +211,9 @@
             </svg>
           </div>
           <div class="flex-1">
-            <p class="font-semibold">Registration Cancelled</p>
+            <p class="font-semibold">
+              {{ t("miniDashboardCard.toastTitle") }}
+            </p>
             <p class="text-sm text-green-100 mt-1">{{ successMessage }}</p>
           </div>
           <button
@@ -218,7 +235,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch, computed } from "vue";
+import { ref, nextTick, watch, computed, onMounted, onBeforeUnmount } from "vue";
 import {
   TicketIcon,
   MagnifyingGlassIcon,
@@ -227,9 +244,15 @@ import {
   ChevronUpIcon,
   ChartBarSquareIcon,
 } from "@heroicons/vue/24/outline";
+import {
+  notifyEventBookmarksUpdated,
+  onEventBookmarksUpdated,
+} from "~/utils/eventBookmarks";
 
 // Explicit component import due to nested folder structure
 import RegistrationMiniEntry from "./RegistrationMiniEntry.vue";
+
+const { t, locale } = useI18n();
 
 interface EventRegistration {
   id: string;
@@ -270,6 +293,7 @@ const registrationToCancel = ref<EventRegistration | null>(null);
 const cancelError = ref<string | null>(null);
 const showSuccessToast = ref(false);
 const successMessage = ref<string>("");
+let removeBookmarksListener: (() => void) | null = null;
 
 // Scroll handling
 const handleScroll = () => {
@@ -295,11 +319,22 @@ const loadRegistrations = async () => {
   } catch (err: unknown) {
     console.error("Failed to load registrations:", err);
     error.value =
-      err instanceof Error ? err.message : "Failed to load registrations";
+      err instanceof Error ? err.message : t("miniDashboardCard.errorLoading");
   } finally {
     isLoading.value = false;
   }
 };
+
+onMounted(() => {
+  void loadRegistrations();
+  removeBookmarksListener = onEventBookmarksUpdated(() => {
+    void loadRegistrations();
+  });
+});
+
+onBeforeUnmount(() => {
+  removeBookmarksListener?.();
+});
 
 // Cancellation logic
 async function confirmCancellation(
@@ -342,7 +377,7 @@ async function proceedWithCancellation(): Promise<void> {
     registrationToCancel.value = null;
 
     // Show success toast
-    successMessage.value = `Successfully cancelled your registration for "${eventName}". You can re-register if you change your mind.`;
+    successMessage.value = t("miniDashboardCard.toastMessage", { eventName });
     showSuccessToast.value = true;
 
     // Auto-hide toast after 5 seconds
@@ -353,7 +388,7 @@ async function proceedWithCancellation(): Promise<void> {
     console.error("Failed to cancel registration:", error);
 
     // Extract error message from API response
-    let errorMessage = "Failed to cancel registration. Please try again.";
+    let errorMessage = t("miniDashboardCard.errorCancelling");
 
     if (error && typeof error === "object") {
       if ("statusMessage" in error && typeof error.statusMessage === "string") {
@@ -376,17 +411,39 @@ async function proceedWithCancellation(): Promise<void> {
   }
 }
 
+async function removeBookmark(registration: EventRegistration): Promise<void> {
+  if (registration.entryType !== "bookmark" || !registration.externalEventId) {
+    return;
+  }
+
+  try {
+    await $fetch(`/api/events/bookmarks/${registration.externalEventId}` as string, {
+      method: "DELETE" as const,
+    });
+
+    registrations.value = registrations.value.filter(
+      (entry) => entry.id !== registration.id,
+    );
+    notifyEventBookmarksUpdated();
+  } catch (error: unknown) {
+    console.error("Failed to remove bookmark:", error);
+  }
+}
+
 // Format event date
 const formatEventDate = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(
+    locale.value.startsWith("de") ? "de-DE" : "en-US",
+    {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+    },
+  );
 };
 
 // Computed property to determine if scrollbar should always be visible

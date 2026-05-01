@@ -35,7 +35,7 @@
             <span class="info-label">Fee:</span>
             <span class="info-value">
               {{
-                event.participationFee ? `€${event.participationFee}` : "Free"
+                event.participationFee ? `${event.participationFee}` : "Free"
               }}
             </span>
           </div>

@@ -11,16 +11,15 @@
             <p
               class="text-xs font-semibold uppercase tracking-[0.32em] text-emerald-300"
             >
-              Event discovery
+              {{ t("eventList.eyebrow") }}
             </p>
             <h2
               class="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl"
             >
-              Find the next event fast
+              {{ t("eventList.title") }}
             </h2>
             <p class="mt-2 text-sm leading-6 text-gray-300 sm:text-base">
-              Browse official event feed entries and custom local tournaments in
-              one place, with filters that stay usable on a phone.
+              {{ t("eventList.subtitle") }}
             </p>
           </div>
 
@@ -29,7 +28,7 @@
               class="rounded-2xl border border-[#202225] bg-[#2f3136]/90 p-3 shadow-sm backdrop-blur"
             >
               <div class="text-xs uppercase tracking-[0.2em] text-gray-400">
-                Shown
+                {{ t("eventList.shown") }}
               </div>
               <div class="mt-1 text-2xl font-semibold text-white">
                 {{ filteredEvents.length }}
@@ -39,7 +38,7 @@
               class="rounded-2xl border border-[#202225] bg-[#2f3136]/90 p-3 shadow-sm backdrop-blur"
             >
               <div class="text-xs uppercase tracking-[0.2em] text-gray-400">
-                Next 30d
+                {{ t("eventList.next30Days") }}
               </div>
               <div class="mt-1 text-2xl font-semibold text-white">
                 {{ upcomingThirtyDayCount }}
@@ -54,7 +53,7 @@
           v-if="error"
           class="rounded-2xl border border-rose-800 bg-rose-950/40 px-4 py-3 text-sm text-rose-200"
         >
-          Error loading events: {{ error }}
+          {{ t("eventList.errorLoading") }}: {{ error }}
         </div>
 
         <div
@@ -63,14 +62,14 @@
         >
           <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
             <label class="relative flex-1">
-              <span class="sr-only">Search events</span>
+              <span class="sr-only">{{ t("eventList.searchLabel") }}</span>
               <MagnifyingGlassIcon
                 class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
               />
               <input
                 v-model="searchQuery"
                 type="text"
-                placeholder="Search by name, venue, city, or game"
+                :placeholder="t('eventList.searchPlaceholder')"
                 class="w-full rounded-2xl border border-[#202225] bg-[#40444b] py-3 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-gray-400 focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
               />
             </label>
@@ -80,10 +79,10 @@
                 v-model="selectedTimeWindow"
                 class="rounded-2xl border border-[#202225] bg-[#40444b] px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
               >
-                <option value="all">Any date</option>
-                <option value="14">Next 14 days</option>
-                <option value="30">Next 30 days</option>
-                <option value="90">Next 90 days</option>
+                <option value="all">{{ t("eventList.timeWindowAll") }}</option>
+                <option value="14">{{ t("eventList.timeWindow14") }}</option>
+                <option value="30">{{ t("eventList.timeWindow30") }}</option>
+                <option value="90">{{ t("eventList.timeWindow90") }}</option>
               </select>
 
               <button
@@ -96,7 +95,7 @@
                 "
                 @click="onlyRegisterable = !onlyRegisterable"
               >
-                Registerable
+                {{ t("eventList.registerableOnly") }}
               </button>
 
               <button
@@ -110,7 +109,7 @@
                 :disabled="!hasActiveFilters"
                 @click="resetFilters"
               >
-                Clear filters
+                {{ t("eventList.clearFilters") }}
               </button>
             </div>
           </div>
@@ -120,7 +119,7 @@
               <div
                 class="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-gray-400"
               >
-                Type
+                {{ t("eventList.type") }}
               </div>
               <div class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 <button
@@ -181,9 +180,11 @@
           >
             <div class="mb-4 flex items-center justify-between gap-3">
               <div>
-                <div class="text-sm font-semibold text-white">Filters</div>
+                <div class="text-sm font-semibold text-white">
+                  {{ t("eventList.filters") }}
+                </div>
                 <div class="text-xs text-gray-400">
-                  Search and narrow upcoming events
+                  {{ t("eventList.filtersSubtitle") }}
                 </div>
               </div>
               <button
@@ -191,20 +192,20 @@
                 class="rounded-xl border border-[#202225] bg-[#40444b] px-3 py-2 text-xs font-medium text-gray-200"
                 @click="showMobileFilters = false"
               >
-                Close
+                {{ t("common.cancel") }}
               </button>
             </div>
 
             <div class="grid gap-3">
               <label class="relative">
-                <span class="sr-only">Search events</span>
+                <span class="sr-only">{{ t("eventList.searchLabel") }}</span>
                 <MagnifyingGlassIcon
                   class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
                 />
                 <input
                   v-model="searchQuery"
                   type="text"
-                  placeholder="Search by name, venue, city, or game"
+                  :placeholder="t('eventList.searchPlaceholder')"
                   class="w-full rounded-2xl border border-[#202225] bg-[#40444b] py-3 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-gray-400 focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
                 />
               </label>
@@ -214,10 +215,10 @@
                   v-model="selectedTimeWindow"
                   class="rounded-2xl border border-[#202225] bg-[#40444b] px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
                 >
-                  <option value="all">Any date</option>
-                  <option value="14">Next 14 days</option>
-                  <option value="30">Next 30 days</option>
-                  <option value="90">Next 90 days</option>
+                  <option value="all">{{ t("eventList.timeWindowAll") }}</option>
+                  <option value="14">{{ t("eventList.timeWindow14") }}</option>
+                  <option value="30">{{ t("eventList.timeWindow30") }}</option>
+                  <option value="90">{{ t("eventList.timeWindow90") }}</option>
                 </select>
 
                 <button
@@ -230,7 +231,7 @@
                   "
                   @click="onlyRegisterable = !onlyRegisterable"
                 >
-                  Registerable
+                  {{ t("eventList.registerableOnly") }}
                 </button>
               </div>
 
@@ -238,7 +239,7 @@
                 <div
                   class="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-gray-400"
                 >
-                  Type
+                  {{ t("eventList.type") }}
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                   <button
@@ -279,7 +280,7 @@
                 :disabled="!hasActiveFilters"
                 @click="resetFilters"
               >
-                Clear filters
+                {{ t("eventList.clearFilters") }}
               </button>
             </div>
           </div>
@@ -295,7 +296,7 @@
             <div
               class="h-10 w-10 animate-spin rounded-full border-4 border-[#202225] border-t-emerald-500"
             ></div>
-            <span class="text-sm font-medium">Loading event feed...</span>
+            <span class="text-sm font-medium">{{ t("eventList.loading") }}</span>
           </div>
         </div>
 
@@ -305,10 +306,10 @@
         >
           <CalendarIcon class="h-12 w-12 text-gray-500" />
           <h3 class="mt-4 text-lg font-semibold text-white">
-            No matching events
+            {{ t("eventList.noMatchesTitle") }}
           </h3>
           <p class="mt-2 max-w-md text-sm leading-6 text-gray-300">
-            Try widening the date range or clearing one of the filters.
+            {{ t("eventList.noMatchesText") }}
           </p>
         </div>
 
@@ -324,7 +325,7 @@
                   {{ group.label }}
                 </h3>
                 <p class="text-xs text-gray-400 sm:text-sm">
-                  {{ group.events.length }} events
+                  {{ t("eventList.eventCount", { count: group.events.length }) }}
                 </p>
               </div>
             </div>
@@ -425,7 +426,7 @@
                       v-if="event.requiresDecklist"
                       class="rounded-xl border border-amber-800 bg-amber-950/40 px-2.5 py-1.5 text-xs font-semibold text-amber-200 sm:rounded-2xl sm:px-3 sm:py-2 sm:text-sm"
                     >
-                      Decklist required
+                      {{ t("events.decklistRequired") }}
                     </div>
                   </div>
                 </div>
@@ -441,7 +442,7 @@
                   class="mt-4 flex items-center justify-between gap-3 border-t border-[#202225] pt-3 sm:mt-5 sm:pt-4"
                 >
                   <span class="text-xs font-medium text-gray-400">
-                    Tap for details
+                    {{ t("eventList.tapForDetails") }}
                   </span>
                   <button
                     v-if="canBookmarkEvent(event)"
@@ -456,7 +457,11 @@
                     @click.stop="toggleBookmark(event)"
                   >
                     <BookmarkIcon class="h-4 w-4" />
-                    {{ isBookmarked(event.id) ? "Vorgemerkt" : "Vormerken" }}
+                    {{
+                      isBookmarked(event.id)
+                        ? t("eventList.bookmarked")
+                        : t("eventList.bookmark")
+                    }}
                   </button>
                 </div>
               </article>
@@ -529,7 +534,7 @@
                       <div
                         class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
                       >
-                        Date & time
+                        {{ t("eventList.dateTime") }}
                       </div>
                       <div class="mt-1 text-sm font-medium text-white">
                         {{ formatEventDate(selectedEvent.date) }}
@@ -545,7 +550,7 @@
                       <div
                         class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
                       >
-                        Venue
+                        {{ t("common.venue") }}
                       </div>
                       <div class="mt-1 text-sm font-medium text-white">
                         {{ selectedEvent.venue }}
@@ -561,7 +566,7 @@
                       <div
                         class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
                       >
-                        Location
+                        {{ t("eventList.location") }}
                       </div>
                       <div class="mt-1 text-sm font-medium text-white">
                         {{ selectedEvent.locationLabel }}
@@ -577,7 +582,7 @@
                       <div
                         class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
                       >
-                        Address
+                        {{ t("eventList.address") }}
                       </div>
                       <div class="mt-1 text-sm font-medium text-white">
                         {{ selectedEvent.streetAddress }}
@@ -594,7 +599,7 @@
                 <div
                   class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
                 >
-                  About this event
+                  {{ t("eventList.aboutEvent") }}
                 </div>
                 <p class="mt-3 text-sm leading-6 text-gray-300">
                   {{ selectedEvent.description }}
@@ -609,14 +614,14 @@
                 <div
                   class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
                 >
-                  Registration
+                  {{ t("registration.title") }}
                 </div>
                 <div class="mt-4 space-y-3">
                   <div
                     v-if="selectedEvent.priceLabel"
                     class="flex items-center justify-between gap-3 rounded-2xl bg-[#40444b] px-4 py-3 text-sm text-gray-300"
                   >
-                    <span>Entry fee</span>
+                    <span>{{ t("eventList.entryFee") }}</span>
                     <span class="font-semibold text-white">{{
                       selectedEvent.priceLabel
                     }}</span>
@@ -625,7 +630,7 @@
                     v-if="selectedEvent.capacityLabel"
                     class="flex items-center justify-between gap-3 rounded-2xl bg-[#40444b] px-4 py-3 text-sm text-gray-300"
                   >
-                    <span>Capacity</span>
+                    <span>{{ t("eventList.capacity") }}</span>
                     <span class="font-semibold text-white">{{
                       selectedEvent.capacityLabel
                     }}</span>
@@ -634,7 +639,7 @@
                     v-if="selectedEvent.registrationDeadlineLabel"
                     class="flex items-center justify-between gap-3 rounded-2xl bg-[#40444b] px-4 py-3 text-sm text-gray-300"
                   >
-                    <span>Deadline</span>
+                    <span>{{ t("eventList.deadline") }}</span>
                     <span class="text-right font-semibold text-white">{{
                       selectedEvent.registrationDeadlineLabel
                     }}</span>
@@ -643,7 +648,7 @@
                     v-if="selectedEvent.requiresDecklist"
                     class="rounded-2xl border border-amber-800 bg-amber-950/40 px-4 py-3 text-sm font-medium text-amber-200"
                   >
-                    Decklist submission is required for this event.
+                    {{ t("eventList.decklistRequiredDetail") }}
                   </div>
                 </div>
 
@@ -663,8 +668,8 @@
                     <BookmarkIcon class="h-5 w-5" />
                     {{
                       isBookmarked(selectedEvent.id)
-                        ? "Vormerkung entfernen"
-                        : "Event vormerken"
+                        ? t("eventList.removeBookmark")
+                        : t("eventList.bookmarkEvent")
                     }}
                   </button>
                   <NuxtLink
@@ -691,11 +696,9 @@
               <div
                 class="rounded-[1.5rem] border border-[#202225] bg-[#36393f] p-4 text-sm text-gray-300"
               >
-                <div class="font-semibold">Quick filter tip</div>
+                <div class="font-semibold">{{ t("eventList.quickTipTitle") }}</div>
                 <p class="mt-2 leading-6">
-                  Use the type chips together with the date range to narrow the
-                  calendar quickly, or toggle “Registerable” to hide
-                  placeholders.
+                  {{ t("eventList.quickFilterTip") }}
                 </p>
               </div>
             </div>
@@ -731,6 +734,7 @@ import {
   getEventDisplayKey,
   getEventDisplayLabel,
 } from "~/utils/eventDisplay";
+import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
 
 interface ExternalEvent {
   id: string;
@@ -810,6 +814,7 @@ const error = ref<string | null>(null);
 const bookmarkedEventIds = ref<Set<string>>(new Set());
 const bookmarkPendingId = ref<string | null>(null);
 const user = useSupabaseUser();
+const { t, locale } = useI18n();
 
 onMounted(async () => {
   await fetchEvents();
@@ -834,7 +839,7 @@ const fetchEvents = async () => {
       : [];
   } catch (err) {
     console.error("Failed to load events:", err);
-    error.value = err instanceof Error ? err.message : "Failed to load events";
+    error.value = err instanceof Error ? err.message : t("eventList.errorLoading");
   } finally {
     isLoading.value = false;
   }
@@ -898,7 +903,7 @@ const typeOptions = computed(() => {
   return [
     {
       value: "all",
-      label: "All types",
+      label: t("eventList.allTypes"),
       count: timeWindowFilteredEvents.value.filter((event) => {
         if (onlyRegisterable.value && !event.isRegisterable) {
           return false;
@@ -955,7 +960,7 @@ const groupedEvents = computed(() => {
 
     groups.set(key, {
       key,
-      label: groupDate.toLocaleDateString("en-US", {
+      label: groupDate.toLocaleDateString(locale.value, {
         month: "long",
         year: "numeric",
       }),
@@ -1064,6 +1069,8 @@ async function toggleBookmark(event: UnifiedEvent): Promise<void> {
       });
       bookmarkedEventIds.value = new Set(bookmarkedEventIds.value).add(event.id);
     }
+
+    notifyEventBookmarksUpdated();
   } catch (err) {
     console.error("Failed to toggle bookmark:", err);
   } finally {
@@ -1097,12 +1104,12 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
   return {
     key: `external-${event.id}`,
     id: event.id,
-    title: stripHtmlTags(event.title) || "External Event",
+    title: stripHtmlTags(event.title) || t("eventList.externalEventFallback"),
     date: normalizeDateValue(event.dateTime),
     source: "external",
     sourceLabel: hasLocalRegistration
-      ? "Official feed + local signup"
-      : "Official feed",
+      ? t("eventList.sourceLocalSignup")
+      : t("eventList.sourceOfficialFeed"),
     sourceBadgeClass: hasLocalRegistration
       ? "bg-[#5865f2]/20 text-[#c9cdfb]"
       : "bg-[#40444b] text-gray-300",
@@ -1117,7 +1124,7 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
     country: stripHtmlTags(event.country),
     streetAddress: stripHtmlTags(event.streetAddress || "") || undefined,
     description: undefined,
-    gameLabel: "Pokemon TCG",
+    gameLabel: t("eventList.pokemonGame"),
     priceLabel: formatExternalPrice(event.cost),
     capacityLabel: undefined,
     requiresDecklist: false,
@@ -1125,10 +1132,10 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
     internalLink,
     externalLink,
     ctaLabel: hasLocalRegistration
-      ? "Open registration"
+      ? t("eventList.openRegistration")
       : externalLink
-        ? "Visit registration"
-        : "Details only",
+        ? t("eventList.visitRegistration")
+        : t("eventList.detailsOnly"),
     isRegisterable: Boolean(internalLink || externalLink),
     isLocalRegistration: hasLocalRegistration,
     searchableText: [
@@ -1137,7 +1144,7 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
       venue,
       event.location,
       event.country,
-      "pokemon tcg",
+      t("eventList.pokemonGame"),
     ]
       .filter(Boolean)
       .join(" ")
@@ -1162,16 +1169,19 @@ function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
   const gameLabel = parsedTags?.game || formatGameLabel(event.tagType);
   const capacityLabel =
     typeof event.maxParticipants === "number"
-      ? `${event.registrationCount || 0}/${event.maxParticipants} registered`
+      ? t("eventList.capacityRegistered", {
+          count: event.registrationCount || 0,
+          max: event.maxParticipants,
+        })
       : undefined;
 
   return {
     key: `custom-${event.id}`,
     id: event.id,
-    title: stripHtmlTags(event.name) || "Custom Event",
+    title: stripHtmlTags(event.name) || t("eventList.customEventFallback"),
     date: normalizeDateValue(event.eventDate),
     source: "custom",
-    sourceLabel: "Custom event",
+    sourceLabel: t("eventList.sourceCustomEvent"),
     sourceBadgeClass: "bg-emerald-500/20 text-emerald-200",
     typeKey,
     typeLabel: getEventDisplayLabel({
@@ -1199,7 +1209,7 @@ function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
       : undefined,
     internalLink: `/events/${event.id}`,
     externalLink: undefined,
-    ctaLabel: "View event",
+    ctaLabel: t("eventList.viewEvent"),
     isRegisterable: true,
     isLocalRegistration: true,
     searchableText: [
@@ -1239,15 +1249,15 @@ function stripHtmlTags(value: string): string {
 }
 
 function formatDay(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", { day: "2-digit" });
+  return new Date(dateString).toLocaleDateString(locale.value, { day: "2-digit" });
 }
 
 function formatMonth(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", { month: "short" });
+  return new Date(dateString).toLocaleDateString(locale.value, { month: "short" });
 }
 
 function formatEventDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
+  return new Date(dateString).toLocaleDateString(locale.value, {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -1258,7 +1268,7 @@ function formatEventDate(dateString: string): string {
 }
 
 function formatCompactDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
+  return new Date(dateString).toLocaleDateString(locale.value, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -1266,10 +1276,10 @@ function formatCompactDate(dateString: string): string {
 }
 
 function formatGameLabel(tagType?: string): string | undefined {
-  if (!tagType) return "Custom";
-  if (tagType === "pokemon") return "Pokemon TCG";
+  if (!tagType) return t("eventList.customEventFallback");
+  if (tagType === "pokemon") return t("eventList.pokemonGame");
   if (tagType === "riftbound") return "Riftbound";
-  return "Custom";
+  return t("eventList.customEventFallback");
 }
 
 function formatExternalPrice(value?: string): string | undefined {
@@ -1286,7 +1296,7 @@ function formatCustomPrice(value?: number | null): string | undefined {
   }
 
   if (value === 0) {
-    return "Free";
+    return t("eventList.free");
   }
 
   return `EUR ${value}`;
