@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { serverSupabaseUser } from "#supabase/server";
 import { z } from "zod";
 import {
   logError,
@@ -7,8 +6,10 @@ import {
   logDatabaseError,
   logAuthError,
 } from "~/server/util/errorLogger";
+import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
 
 const prisma = new PrismaClient();
+const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
 
 const newTicketSchema = z.object({
   participantName: z.string().min(1).max(100),
@@ -34,12 +35,14 @@ export default defineEventHandler(async (h3Event) => {
   }
 
   try {
-    const supabaseUser = await serverSupabaseUser(h3Event);
+    const authenticatedPlayer = await resolveAuthenticatedPlayer(h3Event, {
+      allowMissing: true,
+    });
 
-    if (!supabaseUser) {
+    if (!authenticatedPlayer) {
       throw createError({
-        statusCode: 401,
-        statusMessage: "Unauthorized",
+        statusCode: 404,
+        statusMessage: "Booking not found or access denied",
       });
     }
 
@@ -64,9 +67,7 @@ export default defineEventHandler(async (h3Event) => {
     const booking = await prisma.eventRegistration.findFirst({
       where: {
         id: bookingId,
-        player: {
-          email: supabaseUser.email?.toLowerCase(),
-        },
+        playerId: authenticatedPlayer.id,
       },
       include: {
         tickets: {
