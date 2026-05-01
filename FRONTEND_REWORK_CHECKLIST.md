@@ -25,11 +25,22 @@ Acceptance criteria:
 
 ## Item 2 - Protected Route Redirect Hygiene
 
-Status: Pending
+Status: Completed on 2026-05-01
 
 Goal:
 
 - preserve destination context for unauthenticated users on dashboard, profile, booking, and reservation routes
+
+Completed in this item:
+
+- updated auth route protection to redirect guests to `/login?redirect=...`
+- preserved deep-link query strings via `to.fullPath`
+- covered client-side missing-session and server-side unauthenticated redirect behavior with focused tests
+
+Acceptance criteria:
+
+- protected pages redirect to login instead of `/`
+- login can return users to the originally requested dashboard/profile/booking route
 
 ## Item 3 - Reservation Prefill Integrity
 

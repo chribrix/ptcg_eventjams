@@ -1,33 +1,67 @@
 // middleware/auth.global.ts
-export default defineNuxtRouteMiddleware(async (to) => {
-  const { user, ensureValidSession } = useAuth();
-  const supabase = useSupabaseClient();
-  const isClient = import.meta.client;
+export const buildLoginRedirectPath = (to: {
+  path: string;
+  fullPath?: string;
+}) => {
+  const destination = to.fullPath || to.path || "/";
+  return `/login?redirect=${encodeURIComponent(destination)}`;
+};
 
-  const publicPages = [
-    "/",
-    "/login",
-    "/register",
-    "/events",
-    "/eventlist",
-    "/magic-login",
-    "/confirm",
-    "/set-password",
-    "/password-set-success",
-  ];
+type AuthMiddlewareDependencies = {
+  getAuth?: typeof useAuth;
+  getSupabaseClient?: typeof useSupabaseClient;
+  navigate?: typeof navigateTo;
+  delay?: (ms: number) => Promise<void>;
+  isClient?: boolean;
+};
 
-  // Check if path starts with public patterns
-  const isPublicPath =
-    publicPages.includes(to.path) || to.path.startsWith("/events/");
+export const createAuthRouteGuard = (
+  dependencies: AuthMiddlewareDependencies = {},
+) => {
+  const getAuth = dependencies.getAuth || useAuth;
+  const getSupabaseClient =
+    dependencies.getSupabaseClient || useSupabaseClient;
+  const navigate = dependencies.navigate || navigateTo;
+  const delay =
+    dependencies.delay ||
+    ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
+  const isClient = dependencies.isClient ?? import.meta.client;
 
-  // Public pages should remain accessible without password-enforcement redirects.
-  // This covers login, password setup, and legacy compatibility screens.
-  if (isPublicPath) {
-    return;
-  }
+  return async (to: { path: string; fullPath?: string }) => {
+    const { user, ensureValidSession } = getAuth();
+    const supabase = getSupabaseClient();
+    const loginRedirect = buildLoginRedirectPath(to);
 
-  // On client side, check for authentication
-  if (isClient) {
+    const publicPages = [
+      "/",
+      "/login",
+      "/register",
+      "/events",
+      "/eventlist",
+      "/magic-login",
+      "/confirm",
+      "/set-password",
+      "/password-set-success",
+    ];
+
+    // Check if path starts with public patterns
+    const isPublicPath =
+      publicPages.includes(to.path) || to.path.startsWith("/events/");
+
+    // Public pages should remain accessible without password-enforcement redirects.
+    // This covers login, password setup, and legacy compatibility screens.
+    if (isPublicPath) {
+      return;
+    }
+
+    if (!isClient) {
+      if (!user.value) {
+        return navigate(loginRedirect);
+      }
+
+      return;
+    }
+
     // If we think we have a user, validate the session first
     if (user.value) {
       const validUser = await ensureValidSession();
@@ -36,19 +70,21 @@ export default defineNuxtRouteMiddleware(async (to) => {
         localStorage.clear();
         sessionStorage.clear();
         await supabase.auth.signOut();
-        return navigateTo("/");
+        return navigate(loginRedirect);
       }
 
-      // Session ist gültig, Nutzer darf weiter.
-    } else {
-      // Give Supabase a chance to load
-      // Wait a moment for Supabase auth to potentially load
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      // If still no user, redirect
-      if (!user.value) {
-        return navigateTo("/");
-      }
+      return;
     }
-  }
-});
+
+    // Give Supabase a chance to load
+    // Wait a moment for Supabase auth to potentially load
+    await delay(50);
+
+    // If still no user, redirect
+    if (!user.value) {
+      return navigate(loginRedirect);
+    }
+  };
+};
+
+export default defineNuxtRouteMiddleware(createAuthRouteGuard());
