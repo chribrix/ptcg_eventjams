@@ -1,7 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { parseEventTags, type TagType } from "~/types/eventTags";
+import { getExternalCalendarEventType } from "~/utils/calendarEventUtils";
+import { isUpcomingAdminEvent } from "~/utils/adminEventBuckets";
 import {
-  logError,
   logDatabaseError,
   logAuthError,
 } from "~/server/util/errorLogger";
@@ -9,6 +10,10 @@ import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPl
 
 const prisma = new PrismaClient();
 const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
+const normalizeOverrideData = (value: unknown): Record<string, unknown> =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 
 export default defineEventHandler(async (event) => {
   if (event.node.req.method !== "GET") {
@@ -30,10 +35,6 @@ export default defineEventHandler(async (event) => {
         error: null,
       };
     }
-
-    // Get all upcoming/current event registrations for this player
-    // Include events from up to 2 hours ago to account for ongoing events
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
     const registrations = await prisma.eventRegistration.findMany({
       where: {
@@ -92,12 +93,21 @@ export default defineEventHandler(async (event) => {
       },
     });
 
-    // Filter registrations to only include future/current events
+    const bookmarks = await prisma.eventBookmark.findMany({
+      where: {
+        playerId: player.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // Keep events visible for their full calendar day and remove them the day after.
     const futureRegistrations = registrations.filter((reg) => {
       const eventDate =
         reg.customEvent?.eventDate || reg.externalEvent?.eventDate;
       if (!eventDate) return false;
-      return new Date(eventDate) >= twoHoursAgo;
+      return isUpcomingAdminEvent({ eventDate });
     });
 
     // Filter out registrations where all tickets have been cancelled.
@@ -124,17 +134,17 @@ export default defineEventHandler(async (event) => {
         firstTicket?.bringingDecklistOnsite || false;
 
       if (isExternalEvent && reg.externalEvent) {
-        const overrides = reg.externalEvent.overrides;
+        const overrides = normalizeOverrideData(reg.externalEvent.overrides);
 
         // Parse tags from overrides or use default
-        const tags =
-          overrides && typeof overrides === "object" && "tags" in overrides
-            ? parseEventTags(overrides.tags, "pokemon")
-            : { game: "Pokemon" };
+        const tags = "tags" in overrides
+          ? parseEventTags(overrides.tags, "pokemon")
+          : { game: "Pokemon" };
         const eventType = tags.type || "custom";
 
         return {
           id: reg.id,
+          entryType: "registration",
           customEventId: reg.customEventId,
           externalEventId: reg.externalEventId,
           playerId: reg.playerId,
@@ -145,6 +155,7 @@ export default defineEventHandler(async (event) => {
           bringingDecklistOnsite: bringingDecklistOnsite,
           ticketCount: reg.tickets.length,
           tickets: reg.tickets,
+          externalRegistrationUrl: null,
           customEvent: {
             id: reg.externalEvent.id,
             name:
@@ -163,14 +174,9 @@ export default defineEventHandler(async (event) => {
             registrationDeadline: reg.externalEvent.registrationDeadline,
             status: "published",
             requiresDecklist: reg.externalEvent.requiresDecklist,
-            tags:
-              overrides && typeof overrides === "object" && "tags" in overrides
-                ? overrides.tags
-                : null,
+            tags: "tags" in overrides ? overrides.tags : null,
             tagType:
-              overrides &&
-              typeof overrides === "object" &&
-              "tagType" in overrides
+              typeof overrides.tagType === "string"
                 ? overrides.tagType
                 : "pokemon",
           },
@@ -190,6 +196,7 @@ export default defineEventHandler(async (event) => {
 
       return {
         id: reg.id,
+        entryType: "registration",
         customEventId: reg.customEventId,
         externalEventId: reg.externalEventId,
         playerId: reg.playerId,
@@ -200,21 +207,63 @@ export default defineEventHandler(async (event) => {
         bringingDecklistOnsite: bringingDecklistOnsite,
         ticketCount: reg.tickets.length,
         tickets: reg.tickets,
+        externalRegistrationUrl: null,
         customEvent: reg.customEvent,
         isExternalEvent: false,
         eventType: customEventType,
       };
     });
 
+    const futureBookmarks = bookmarks
+      .filter((bookmark) =>
+        isUpcomingAdminEvent({ eventDate: bookmark.eventDate }),
+      )
+      .map((bookmark) => ({
+        id: bookmark.id,
+        entryType: "bookmark",
+        customEventId: null,
+        externalEventId: bookmark.externalEventId,
+        playerId: bookmark.playerId,
+        registeredAt: bookmark.createdAt,
+        status: "bookmarked",
+        notes: null,
+        decklist: null,
+        bringingDecklistOnsite: false,
+        ticketCount: 0,
+        tickets: [],
+        externalRegistrationUrl: bookmark.registrationUrl,
+        customEvent: {
+          id: bookmark.externalEventId,
+          name: bookmark.title,
+          venue: bookmark.venue,
+          eventDate: bookmark.eventDate,
+          maxParticipants: 0,
+          participationFee: bookmark.cost,
+          description: null,
+          registrationDeadline: null,
+          status: "published",
+          requiresDecklist: false,
+          tags: null,
+          tagType: "pokemon",
+        },
+        isExternalEvent: true,
+        eventType: getExternalCalendarEventType({
+          icon: bookmark.icon || undefined,
+          type: bookmark.eventType || undefined,
+        }),
+      }));
+
     // Sort by event date
-    transformedRegistrations.sort((a, b) => {
-      const dateA = new Date(a.customEvent.eventDate);
-      const dateB = new Date(b.customEvent.eventDate);
+    const dashboardEntries = [...transformedRegistrations, ...futureBookmarks];
+
+    dashboardEntries.sort((a, b) => {
+      const dateA = new Date(a.customEvent!.eventDate);
+      const dateB = new Date(b.customEvent!.eventDate);
       return dateA.getTime() - dateB.getTime();
     });
 
     return {
-      data: transformedRegistrations,
+      data: dashboardEntries,
       error: null,
     };
   } catch (error) {
@@ -223,14 +272,18 @@ export default defineEventHandler(async (event) => {
       if (statusCode === 401) {
         await logAuthError(
           event,
-          error as Error,
+          error as unknown as Error,
           "dashboard_registrations_unauthorized",
         );
       }
       throw error;
     }
 
-    await logDatabaseError(event, error as Error, "dashboard_registrations");
+    await logDatabaseError(
+      event,
+      error as unknown as Error,
+      "dashboard_registrations",
+    );
     throw createError({
       statusCode: 500,
       statusMessage:

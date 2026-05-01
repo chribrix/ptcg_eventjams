@@ -233,6 +233,7 @@ import RegistrationMiniEntry from "./RegistrationMiniEntry.vue";
 
 interface EventRegistration {
   id: string;
+  entryType?: "registration" | "bookmark";
   customEventId: string | null;
   externalEventId?: string | null;
   playerId: string;
@@ -243,13 +244,14 @@ interface EventRegistration {
   notes?: string | null;
   isExternalEvent?: boolean;
   eventType?: string;
+  externalRegistrationUrl?: string | null;
   customEvent: {
     id: string;
     name: string;
     venue: string;
     maxParticipants: number;
-    participationFee: number;
-    description: string;
+    participationFee: number | string | null;
+    description: string | null;
     eventDate: string;
     registrationDeadline?: string;
     status: string;

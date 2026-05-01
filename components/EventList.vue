@@ -1,39 +1,49 @@
 <template>
   <section class="w-full max-w-6xl mx-auto">
     <div
-      class="overflow-hidden rounded-[2rem] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-emerald-50 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.35)]"
+      class="overflow-hidden rounded-[2rem] border border-[#202225] bg-gradient-to-br from-[#36393f] via-[#313338] to-[#2b2d31] shadow-[0_24px_80px_-40px_rgba(0,0,0,0.65)]"
     >
-      <div class="border-b border-slate-200/80 px-4 py-5 sm:px-6 lg:px-8">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div class="border-b border-[#202225] px-4 py-5 sm:px-6 lg:px-8">
+        <div
+          class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+        >
           <div class="max-w-2xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.32em] text-emerald-700">
+            <p
+              class="text-xs font-semibold uppercase tracking-[0.32em] text-emerald-300"
+            >
               Event discovery
             </p>
-            <h2 class="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+            <h2
+              class="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl"
+            >
               Find the next event fast
             </h2>
-            <p class="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+            <p class="mt-2 text-sm leading-6 text-gray-300 sm:text-base">
               Browse official event feed entries and custom local tournaments in
               one place, with filters that stay usable on a phone.
             </p>
           </div>
 
-          <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[22rem]">
-            <div class="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm backdrop-blur">
-              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Shown</div>
-              <div class="mt-1 text-2xl font-semibold text-slate-950">{{ filteredEvents.length }}</div>
+          <div class="grid grid-cols-2 gap-3 lg:min-w-[16rem]">
+            <div
+              class="rounded-2xl border border-[#202225] bg-[#2f3136]/90 p-3 shadow-sm backdrop-blur"
+            >
+              <div class="text-xs uppercase tracking-[0.2em] text-gray-400">
+                Shown
+              </div>
+              <div class="mt-1 text-2xl font-semibold text-white">
+                {{ filteredEvents.length }}
+              </div>
             </div>
-            <div class="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm backdrop-blur">
-              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Custom</div>
-              <div class="mt-1 text-2xl font-semibold text-slate-950">{{ customEventsCount }}</div>
-            </div>
-            <div class="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm backdrop-blur">
-              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Local reg</div>
-              <div class="mt-1 text-2xl font-semibold text-slate-950">{{ localRegistrationCount }}</div>
-            </div>
-            <div class="rounded-2xl border border-white/80 bg-white/80 p-3 shadow-sm backdrop-blur">
-              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Next 30d</div>
-              <div class="mt-1 text-2xl font-semibold text-slate-950">{{ upcomingThirtyDayCount }}</div>
+            <div
+              class="rounded-2xl border border-[#202225] bg-[#2f3136]/90 p-3 shadow-sm backdrop-blur"
+            >
+              <div class="text-xs uppercase tracking-[0.2em] text-gray-400">
+                Next 30d
+              </div>
+              <div class="mt-1 text-2xl font-semibold text-white">
+                {{ upcomingThirtyDayCount }}
+              </div>
             </div>
           </div>
         </div>
@@ -42,31 +52,33 @@
       <div class="px-4 py-5 sm:px-6 lg:px-8">
         <div
           v-if="error"
-          class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+          class="rounded-2xl border border-rose-800 bg-rose-950/40 px-4 py-3 text-sm text-rose-200"
         >
           Error loading events: {{ error }}
         </div>
 
         <div
-          class="mt-0 grid gap-4 rounded-[1.75rem] border border-slate-200 bg-white/90 p-4 shadow-sm sm:p-5"
+          class="mt-0 hidden gap-4 rounded-[1.75rem] border border-[#202225] bg-[#2f3136]/95 p-4 shadow-sm sm:grid sm:p-5"
           :class="error ? 'mt-4' : ''"
         >
           <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
             <label class="relative flex-1">
               <span class="sr-only">Search events</span>
-              <MagnifyingGlassIcon class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <MagnifyingGlassIcon
+                class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
+              />
               <input
                 v-model="searchQuery"
                 type="text"
                 placeholder="Search by name, venue, city, or game"
-                class="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                class="w-full rounded-2xl border border-[#202225] bg-[#40444b] py-3 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-gray-400 focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
               />
             </label>
 
             <div class="grid grid-cols-2 gap-3 sm:w-auto sm:grid-cols-3">
               <select
                 v-model="selectedTimeWindow"
-                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                class="rounded-2xl border border-[#202225] bg-[#40444b] px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
               >
                 <option value="all">Any date</option>
                 <option value="14">Next 14 days</option>
@@ -77,7 +89,11 @@
               <button
                 type="button"
                 class="rounded-2xl border px-4 py-3 text-sm font-medium transition"
-                :class="onlyRegisterable ? 'border-emerald-500 bg-emerald-600 text-white shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100'"
+                :class="
+                  onlyRegisterable
+                    ? 'border-emerald-500 bg-emerald-600 text-white shadow-sm'
+                    : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
+                "
                 @click="onlyRegisterable = !onlyRegisterable"
               >
                 Registerable
@@ -86,7 +102,11 @@
               <button
                 type="button"
                 class="col-span-2 rounded-2xl border px-4 py-3 text-sm font-medium transition sm:col-span-1"
-                :class="hasActiveFilters ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50' : 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'"
+                :class="
+                  hasActiveFilters
+                    ? 'border-gray-500 bg-[#36393f] text-gray-200 hover:bg-[#40444b]'
+                    : 'border-[#202225] bg-[#2b2d31] text-gray-500 cursor-not-allowed'
+                "
                 :disabled="!hasActiveFilters"
                 @click="resetFilters"
               >
@@ -97,28 +117,9 @@
 
           <div class="space-y-3">
             <div>
-              <div class="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                Source
-              </div>
-              <div class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                <button
-                  v-for="option in sourceOptions"
-                  :key="option.value"
-                  type="button"
-                  class="whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition"
-                  :class="selectedSource === option.value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'"
-                  @click="selectedSource = option.value"
-                >
-                  {{ option.label }}
-                  <span class="ml-2 rounded-full bg-black/5 px-2 py-0.5 text-xs" :class="selectedSource === option.value ? 'bg-white/20 text-white' : 'text-slate-500'">
-                    {{ option.count }}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div class="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              <div
+                class="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-gray-400"
+              >
                 Type
               </div>
               <div class="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -127,11 +128,22 @@
                   :key="option.value"
                   type="button"
                   class="whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition"
-                  :class="selectedType === option.value ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'"
+                  :class="
+                    selectedType === option.value
+                      ? 'border-emerald-600 bg-emerald-600 text-white'
+                      : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
+                  "
                   @click="selectedType = option.value"
                 >
                   {{ option.label }}
-                  <span class="ml-2 rounded-full bg-black/5 px-2 py-0.5 text-xs" :class="selectedType === option.value ? 'bg-white/20 text-white' : 'text-slate-500'">
+                  <span
+                    class="ml-2 rounded-full px-2 py-0.5 text-xs"
+                    :class="
+                      selectedType === option.value
+                        ? 'bg-white/20 text-white'
+                        : 'bg-black/20 text-gray-300'
+                    "
+                  >
                     {{ option.count }}
                   </span>
                 </button>
@@ -139,33 +151,181 @@
             </div>
           </div>
         </div>
+
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0"
+          enter-to-class="opacity-100"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
+        >
+          <div
+            v-if="showMobileFilters"
+            class="fixed inset-0 z-40 bg-slate-950/60 sm:hidden"
+            @click="showMobileFilters = false"
+          />
+        </Transition>
+
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="translate-y-6 opacity-0"
+          enter-to-class="translate-y-0 opacity-100"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="translate-y-0 opacity-100"
+          leave-to-class="translate-y-6 opacity-0"
+        >
+          <div
+            v-if="showMobileFilters"
+            class="fixed inset-x-3 bottom-20 z-50 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.5rem] border border-[#202225] bg-[#2f3136] p-4 shadow-2xl sm:hidden"
+          >
+            <div class="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <div class="text-sm font-semibold text-white">Filters</div>
+                <div class="text-xs text-gray-400">
+                  Search and narrow upcoming events
+                </div>
+              </div>
+              <button
+                type="button"
+                class="rounded-xl border border-[#202225] bg-[#40444b] px-3 py-2 text-xs font-medium text-gray-200"
+                @click="showMobileFilters = false"
+              >
+                Close
+              </button>
+            </div>
+
+            <div class="grid gap-3">
+              <label class="relative">
+                <span class="sr-only">Search events</span>
+                <MagnifyingGlassIcon
+                  class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Search by name, venue, city, or game"
+                  class="w-full rounded-2xl border border-[#202225] bg-[#40444b] py-3 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-gray-400 focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
+                />
+              </label>
+
+              <div class="grid grid-cols-2 gap-3">
+                <select
+                  v-model="selectedTimeWindow"
+                  class="rounded-2xl border border-[#202225] bg-[#40444b] px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
+                >
+                  <option value="all">Any date</option>
+                  <option value="14">Next 14 days</option>
+                  <option value="30">Next 30 days</option>
+                  <option value="90">Next 90 days</option>
+                </select>
+
+                <button
+                  type="button"
+                  class="rounded-2xl border px-4 py-3 text-sm font-medium transition"
+                  :class="
+                    onlyRegisterable
+                      ? 'border-emerald-500 bg-emerald-600 text-white shadow-sm'
+                      : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
+                  "
+                  @click="onlyRegisterable = !onlyRegisterable"
+                >
+                  Registerable
+                </button>
+              </div>
+
+              <div>
+                <div
+                  class="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-gray-400"
+                >
+                  Type
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    v-for="option in typeOptions"
+                    :key="`mobile-${option.value}`"
+                    type="button"
+                    class="flex min-w-0 items-center justify-between gap-2 rounded-full border px-4 py-2 text-sm font-medium transition"
+                    :class="
+                      selectedType === option.value
+                        ? 'border-emerald-600 bg-emerald-600 text-white'
+                        : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
+                    "
+                    @click="selectedType = option.value"
+                  >
+                    <span class="truncate">{{ option.label }}</span>
+                    <span
+                      class="shrink-0 rounded-full px-2 py-0.5 text-xs"
+                      :class="
+                        selectedType === option.value
+                          ? 'bg-white/20 text-white'
+                          : 'bg-black/20 text-gray-300'
+                      "
+                    >
+                      {{ option.count }}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="rounded-2xl border px-4 py-3 text-sm font-medium transition"
+                :class="
+                  hasActiveFilters
+                    ? 'border-gray-500 bg-[#36393f] text-gray-200 hover:bg-[#40444b]'
+                    : 'border-[#202225] bg-[#2b2d31] text-gray-500 cursor-not-allowed'
+                "
+                :disabled="!hasActiveFilters"
+                @click="resetFilters"
+              >
+                Clear filters
+              </button>
+            </div>
+          </div>
+        </Transition>
       </div>
 
-      <div class="border-t border-slate-200/80 px-4 py-5 sm:px-6 lg:px-8">
-        <div v-if="isLoading" class="flex min-h-[18rem] items-center justify-center">
-          <div class="flex flex-col items-center gap-3 text-slate-600">
-            <div class="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-600"></div>
+      <div class="border-t border-[#202225] px-4 py-5 sm:px-6 lg:px-8">
+        <div
+          v-if="isLoading"
+          class="flex min-h-[18rem] items-center justify-center"
+        >
+          <div class="flex flex-col items-center gap-3 text-gray-300">
+            <div
+              class="h-10 w-10 animate-spin rounded-full border-4 border-[#202225] border-t-emerald-500"
+            ></div>
             <span class="text-sm font-medium">Loading event feed...</span>
           </div>
         </div>
 
         <div
           v-else-if="filteredEvents.length === 0"
-          class="flex min-h-[18rem] flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-slate-300 bg-white/70 px-6 text-center"
+          class="flex min-h-[18rem] flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-[#4f545c] bg-[#2f3136]/70 px-6 text-center"
         >
-          <CalendarIcon class="h-12 w-12 text-slate-300" />
-          <h3 class="mt-4 text-lg font-semibold text-slate-900">No matching events</h3>
-          <p class="mt-2 max-w-md text-sm leading-6 text-slate-600">
+          <CalendarIcon class="h-12 w-12 text-gray-500" />
+          <h3 class="mt-4 text-lg font-semibold text-white">
+            No matching events
+          </h3>
+          <p class="mt-2 max-w-md text-sm leading-6 text-gray-300">
             Try widening the date range or clearing one of the filters.
           </p>
         </div>
 
         <div v-else class="space-y-8">
-          <section v-for="group in groupedEvents" :key="group.key" class="space-y-4">
+          <section
+            v-for="group in groupedEvents"
+            :key="group.key"
+            class="space-y-4"
+          >
             <div class="flex items-end justify-between gap-3">
               <div>
-                <h3 class="text-lg font-semibold text-slate-950 sm:text-xl">{{ group.label }}</h3>
-                <p class="text-sm text-slate-500">{{ group.events.length }} events</p>
+                <h3 class="text-base font-semibold text-white sm:text-xl">
+                  {{ group.label }}
+                </h3>
+                <p class="text-xs text-gray-400 sm:text-sm">
+                  {{ group.events.length }} events
+                </p>
               </div>
             </div>
 
@@ -173,110 +333,131 @@
               <article
                 v-for="event in group.events"
                 :key="event.key"
-                class="group rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md sm:p-5"
+                class="group cursor-pointer rounded-[1.25rem] border border-[#202225] bg-[#2f3136] p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-[#4f545c] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#5865f2]/70 focus:ring-offset-2 focus:ring-offset-[#1e2124] sm:rounded-[1.75rem] sm:p-5"
+                role="button"
+                tabindex="0"
+                @click="openEventDetails(event)"
+                @keydown.enter.prevent="openEventDetails(event)"
+                @keydown.space.prevent="openEventDetails(event)"
               >
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div class="flex min-w-0 gap-4">
+                <div
+                  class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+                >
+                  <div class="flex min-w-0 gap-3">
                     <div
-                      class="flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-2xl text-center"
+                      class="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl text-center sm:h-16 sm:w-16 sm:rounded-2xl"
                       :class="event.dateBadgeClass"
                     >
-                      <div class="text-2xl font-semibold leading-none">{{ formatDay(event.date) }}</div>
-                      <div class="mt-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em]">{{ formatMonth(event.date) }}</div>
+                      <div class="text-xl font-semibold leading-none sm:text-2xl">
+                        {{ formatDay(event.date) }}
+                      </div>
+                      <div
+                        class="mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] sm:text-[0.7rem] sm:tracking-[0.18em]"
+                      >
+                        {{ formatMonth(event.date) }}
+                      </div>
                     </div>
 
                     <div class="min-w-0 flex-1">
                       <div class="flex flex-wrap items-center gap-2">
-                        <span class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]" :class="event.sourceBadgeClass">
-                          {{ event.sourceLabel }}
-                        </span>
-                        <span class="rounded-full border px-3 py-1 text-xs font-medium" :class="event.typeBadgeClass">
+                        <span
+                          class="rounded-full border px-2.5 py-1 text-[11px] font-medium sm:px-3 sm:text-xs"
+                          :class="event.typeBadgeClass"
+                        >
                           {{ event.typeLabel }}
                         </span>
                         <span
                           v-if="event.gameLabel"
-                          class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600"
+                          class="rounded-full border border-[#202225] bg-[#40444b] px-2.5 py-1 text-[11px] font-medium text-gray-300 sm:px-3 sm:text-xs"
                         >
                           {{ event.gameLabel }}
                         </span>
                       </div>
 
-                      <h4 class="mt-3 text-lg font-semibold leading-tight text-slate-950 sm:text-xl">
+                      <h4
+                        class="mt-2 text-base font-semibold leading-tight text-white sm:mt-3 sm:text-xl"
+                      >
                         {{ event.title }}
                       </h4>
 
-                      <div class="mt-3 space-y-2 text-sm text-slate-600">
+                      <div class="mt-2 space-y-1.5 text-xs text-gray-300 sm:mt-3 sm:space-y-2 sm:text-sm">
                         <div class="flex items-start gap-2">
-                          <ClockIcon class="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
+                          <ClockIcon
+                            class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-gray-400 sm:h-4 sm:w-4"
+                          />
                           <span>{{ formatEventDate(event.date) }}</span>
                         </div>
                         <div class="flex items-start gap-2">
-                          <BuildingOfficeIcon class="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
+                          <BuildingOfficeIcon
+                            class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-gray-400 sm:h-4 sm:w-4"
+                          />
                           <span>{{ event.venue }}</span>
                         </div>
-                        <div v-if="event.locationLabel" class="flex items-start gap-2">
-                          <MapPinIcon class="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
+                        <div
+                          v-if="event.locationLabel"
+                          class="flex items-start gap-2"
+                        >
+                          <MapPinIcon
+                            class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-gray-400 sm:h-4 sm:w-4"
+                          />
                           <span>{{ event.locationLabel }}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div class="flex flex-wrap gap-2 sm:max-w-[13rem] sm:justify-end">
-                    <div v-if="event.priceLabel" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">
+                  <div
+                    class="flex flex-wrap gap-2 sm:max-w-[13rem] sm:justify-end"
+                  >
+                    <div
+                      v-if="event.priceLabel"
+                      class="rounded-xl border border-emerald-800 bg-emerald-950/40 px-2.5 py-1.5 text-xs font-semibold text-emerald-200 sm:rounded-2xl sm:px-3 sm:py-2 sm:text-sm"
+                    >
                       {{ event.priceLabel }}
                     </div>
-                    <div v-if="event.capacityLabel" class="rounded-2xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800">
+                    <div
+                      v-if="event.capacityLabel"
+                      class="rounded-xl border border-sky-800 bg-sky-950/40 px-2.5 py-1.5 text-xs font-semibold text-sky-200 sm:rounded-2xl sm:px-3 sm:py-2 sm:text-sm"
+                    >
                       {{ event.capacityLabel }}
                     </div>
-                    <div v-if="event.requiresDecklist" class="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+                    <div
+                      v-if="event.requiresDecklist"
+                      class="rounded-xl border border-amber-800 bg-amber-950/40 px-2.5 py-1.5 text-xs font-semibold text-amber-200 sm:rounded-2xl sm:px-3 sm:py-2 sm:text-sm"
+                    >
                       Decklist required
                     </div>
                   </div>
                 </div>
 
-                <p v-if="event.description" class="mt-4 text-sm leading-6 text-slate-600">
+                <p
+                  v-if="event.description"
+                  class="mt-3 text-xs leading-5 text-gray-300 sm:mt-4 sm:text-sm sm:leading-6"
+                >
                   {{ event.description }}
                 </p>
 
-                <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div
+                  class="mt-4 flex items-center justify-between gap-3 border-t border-[#202225] pt-3 sm:mt-5 sm:pt-4"
+                >
+                  <span class="text-xs font-medium text-gray-400">
+                    Tap for details
+                  </span>
                   <button
+                    v-if="canBookmarkEvent(event)"
                     type="button"
-                    class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
-                    @click="openEventDetails(event)"
+                    class="inline-flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition sm:px-4 sm:text-sm"
+                    :class="
+                      isBookmarked(event.id)
+                        ? 'border-sky-500 bg-sky-600 text-white hover:bg-sky-700'
+                        : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
+                    "
+                    :disabled="bookmarkPendingId === event.id"
+                    @click.stop="toggleBookmark(event)"
                   >
-                    <InformationCircleIcon class="h-5 w-5" />
-                    Details
+                    <BookmarkIcon class="h-4 w-4" />
+                    {{ isBookmarked(event.id) ? "Vorgemerkt" : "Vormerken" }}
                   </button>
-
-                  <div class="flex flex-col gap-3 sm:flex-row">
-                    <NuxtLink
-                      v-if="event.internalLink"
-                      :to="event.internalLink"
-                      class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white no-underline transition hover:bg-slate-800"
-                    >
-                      <TicketIcon class="h-5 w-5" />
-                      {{ event.ctaLabel }}
-                    </NuxtLink>
-                    <a
-                      v-else-if="event.externalLink"
-                      :href="event.externalLink"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white no-underline transition hover:bg-slate-800"
-                    >
-                      <ArrowTopRightOnSquareIcon class="h-5 w-5" />
-                      {{ event.ctaLabel }}
-                    </a>
-                    <button
-                      v-else
-                      type="button"
-                      class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-500"
-                      disabled
-                    >
-                      No registration link
-                    </button>
-                  </div>
                 </div>
               </article>
             </div>
@@ -285,104 +466,207 @@
       </div>
     </div>
 
+    <button
+      type="button"
+      aria-label="Open filters"
+      class="fixed bottom-5 right-5 z-[60] inline-flex h-14 w-14 items-center justify-center rounded-full border border-[#202225] bg-[#5865f2] text-white shadow-[0_12px_32px_rgba(0,0,0,0.45)] sm:hidden"
+      @click="showMobileFilters = true"
+    >
+      <FunnelIcon class="h-5 w-5" />
+    </button>
+
     <div
       v-if="selectedEvent"
       class="fixed inset-0 z-50 flex items-end bg-slate-950/55 p-0 sm:items-center sm:p-6"
       @click="closeEventDetails"
     >
       <div
-        class="max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-white shadow-2xl sm:mx-auto sm:max-w-3xl sm:rounded-[2rem]"
+        class="max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-[#2f3136] shadow-2xl sm:mx-auto sm:max-w-3xl sm:rounded-[2rem]"
         @click.stop
       >
-        <div class="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6">
+        <div
+          class="flex items-start justify-between gap-4 border-b border-[#202225] px-5 py-4 sm:px-6"
+        >
           <div>
             <div class="flex flex-wrap items-center gap-2">
-              <span class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]" :class="selectedEvent.sourceBadgeClass">
-                {{ selectedEvent.sourceLabel }}
-              </span>
-              <span class="rounded-full border px-3 py-1 text-xs font-medium" :class="selectedEvent.typeBadgeClass">
+              <span
+                class="rounded-full border px-3 py-1 text-xs font-medium"
+                :class="selectedEvent.typeBadgeClass"
+              >
                 {{ selectedEvent.typeLabel }}
               </span>
             </div>
-            <h3 class="mt-3 text-xl font-semibold text-slate-950 sm:text-2xl">{{ selectedEvent.title }}</h3>
+            <h3 class="mt-3 text-xl font-semibold text-white sm:text-2xl">
+              {{ selectedEvent.title }}
+            </h3>
           </div>
 
           <button
             type="button"
-            class="rounded-2xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+            class="rounded-2xl border border-[#202225] p-2 text-gray-400 transition hover:bg-[#40444b] hover:text-white"
             @click="closeEventDetails"
           >
             <XMarkIcon class="h-5 w-5" />
           </button>
         </div>
 
-        <div class="max-h-[calc(92vh-5.5rem)] overflow-y-auto px-5 py-5 sm:px-6">
-          <div class="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,1fr)]">
+        <div
+          class="max-h-[calc(92vh-5.5rem)] overflow-y-auto px-5 py-5 sm:px-6"
+        >
+          <div
+            class="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,1fr)]"
+          >
             <div class="space-y-5">
-              <div class="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+              <div
+                class="rounded-[1.5rem] border border-[#202225] bg-[#36393f] p-4"
+              >
                 <div class="grid gap-4 sm:grid-cols-2">
                   <div class="flex gap-3">
-                    <ClockIcon class="mt-0.5 h-5 w-5 flex-shrink-0 text-slate-400" />
+                    <ClockIcon
+                      class="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400"
+                    />
                     <div>
-                      <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Date & time</div>
-                      <div class="mt-1 text-sm font-medium text-slate-900">{{ formatEventDate(selectedEvent.date) }}</div>
+                      <div
+                        class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
+                      >
+                        Date & time
+                      </div>
+                      <div class="mt-1 text-sm font-medium text-white">
+                        {{ formatEventDate(selectedEvent.date) }}
+                      </div>
                     </div>
                   </div>
 
                   <div class="flex gap-3">
-                    <BuildingOfficeIcon class="mt-0.5 h-5 w-5 flex-shrink-0 text-slate-400" />
+                    <BuildingOfficeIcon
+                      class="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400"
+                    />
                     <div>
-                      <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Venue</div>
-                      <div class="mt-1 text-sm font-medium text-slate-900">{{ selectedEvent.venue }}</div>
+                      <div
+                        class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
+                      >
+                        Venue
+                      </div>
+                      <div class="mt-1 text-sm font-medium text-white">
+                        {{ selectedEvent.venue }}
+                      </div>
                     </div>
                   </div>
 
                   <div v-if="selectedEvent.locationLabel" class="flex gap-3">
-                    <MapPinIcon class="mt-0.5 h-5 w-5 flex-shrink-0 text-slate-400" />
+                    <MapPinIcon
+                      class="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400"
+                    />
                     <div>
-                      <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Location</div>
-                      <div class="mt-1 text-sm font-medium text-slate-900">{{ selectedEvent.locationLabel }}</div>
+                      <div
+                        class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
+                      >
+                        Location
+                      </div>
+                      <div class="mt-1 text-sm font-medium text-white">
+                        {{ selectedEvent.locationLabel }}
+                      </div>
                     </div>
                   </div>
 
                   <div v-if="selectedEvent.streetAddress" class="flex gap-3">
-                    <MapIcon class="mt-0.5 h-5 w-5 flex-shrink-0 text-slate-400" />
+                    <MapIcon
+                      class="mt-0.5 h-5 w-5 flex-shrink-0 text-gray-400"
+                    />
                     <div>
-                      <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Address</div>
-                      <div class="mt-1 text-sm font-medium text-slate-900">{{ selectedEvent.streetAddress }}</div>
+                      <div
+                        class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
+                      >
+                        Address
+                      </div>
+                      <div class="mt-1 text-sm font-medium text-white">
+                        {{ selectedEvent.streetAddress }}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div v-if="selectedEvent.description" class="rounded-[1.5rem] border border-slate-200 bg-white p-4">
-                <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">About this event</div>
-                <p class="mt-3 text-sm leading-6 text-slate-700">{{ selectedEvent.description }}</p>
+              <div
+                v-if="selectedEvent.description"
+                class="rounded-[1.5rem] border border-[#202225] bg-[#36393f] p-4"
+              >
+                <div
+                  class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
+                >
+                  About this event
+                </div>
+                <p class="mt-3 text-sm leading-6 text-gray-300">
+                  {{ selectedEvent.description }}
+                </p>
               </div>
             </div>
 
             <div class="space-y-4">
-              <div class="rounded-[1.5rem] border border-slate-200 bg-white p-4">
-                <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Registration</div>
+              <div
+                class="rounded-[1.5rem] border border-[#202225] bg-[#36393f] p-4"
+              >
+                <div
+                  class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
+                >
+                  Registration
+                </div>
                 <div class="mt-4 space-y-3">
-                  <div v-if="selectedEvent.priceLabel" class="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                  <div
+                    v-if="selectedEvent.priceLabel"
+                    class="flex items-center justify-between gap-3 rounded-2xl bg-[#40444b] px-4 py-3 text-sm text-gray-300"
+                  >
                     <span>Entry fee</span>
-                    <span class="font-semibold text-slate-950">{{ selectedEvent.priceLabel }}</span>
+                    <span class="font-semibold text-white">{{
+                      selectedEvent.priceLabel
+                    }}</span>
                   </div>
-                  <div v-if="selectedEvent.capacityLabel" class="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                  <div
+                    v-if="selectedEvent.capacityLabel"
+                    class="flex items-center justify-between gap-3 rounded-2xl bg-[#40444b] px-4 py-3 text-sm text-gray-300"
+                  >
                     <span>Capacity</span>
-                    <span class="font-semibold text-slate-950">{{ selectedEvent.capacityLabel }}</span>
+                    <span class="font-semibold text-white">{{
+                      selectedEvent.capacityLabel
+                    }}</span>
                   </div>
-                  <div v-if="selectedEvent.registrationDeadlineLabel" class="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                  <div
+                    v-if="selectedEvent.registrationDeadlineLabel"
+                    class="flex items-center justify-between gap-3 rounded-2xl bg-[#40444b] px-4 py-3 text-sm text-gray-300"
+                  >
                     <span>Deadline</span>
-                    <span class="text-right font-semibold text-slate-950">{{ selectedEvent.registrationDeadlineLabel }}</span>
+                    <span class="text-right font-semibold text-white">{{
+                      selectedEvent.registrationDeadlineLabel
+                    }}</span>
                   </div>
-                  <div v-if="selectedEvent.requiresDecklist" class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+                  <div
+                    v-if="selectedEvent.requiresDecklist"
+                    class="rounded-2xl border border-amber-800 bg-amber-950/40 px-4 py-3 text-sm font-medium text-amber-200"
+                  >
                     Decklist submission is required for this event.
                   </div>
                 </div>
 
                 <div class="mt-4 flex flex-col gap-3">
+                  <button
+                    v-if="canBookmarkEvent(selectedEvent)"
+                    type="button"
+                    class="inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition"
+                    :class="
+                      isBookmarked(selectedEvent.id)
+                        ? 'border-sky-500 bg-sky-600 text-white hover:bg-sky-700'
+                        : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
+                    "
+                    :disabled="bookmarkPendingId === selectedEvent.id"
+                    @click="toggleBookmark(selectedEvent)"
+                  >
+                    <BookmarkIcon class="h-5 w-5" />
+                    {{
+                      isBookmarked(selectedEvent.id)
+                        ? "Vormerkung entfernen"
+                        : "Event vormerken"
+                    }}
+                  </button>
                   <NuxtLink
                     v-if="selectedEvent.internalLink"
                     :to="selectedEvent.internalLink"
@@ -404,11 +688,14 @@
                 </div>
               </div>
 
-              <div class="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+              <div
+                class="rounded-[1.5rem] border border-[#202225] bg-[#36393f] p-4 text-sm text-gray-300"
+              >
                 <div class="font-semibold">Quick filter tip</div>
                 <p class="mt-2 leading-6">
-                  Use the source chips for “Custom events” when you want local
-                  tournaments only, or toggle “Registerable” to hide placeholders.
+                  Use the type chips together with the date range to narrow the
+                  calendar quickly, or toggle “Registerable” to hide
+                  placeholders.
                 </p>
               </div>
             </div>
@@ -420,20 +707,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import {
   ArrowTopRightOnSquareIcon,
+  BookmarkIcon,
   BuildingOfficeIcon,
   CalendarIcon,
   ClockIcon,
-  InformationCircleIcon,
+  FunnelIcon,
   MagnifyingGlassIcon,
   MapIcon,
   MapPinIcon,
   TicketIcon,
   XMarkIcon,
 } from "@heroicons/vue/24/outline";
-import { getEventTypeLabel, parseEventTags, type TagType } from "~/types/eventTags";
+import {
+  parseEventTags,
+  type TagType,
+} from "~/types/eventTags";
+import {
+  getEventDisplayBadgeClass,
+  getEventDisplayDateBadgeClass,
+  getEventDisplayKey,
+  getEventDisplayLabel,
+} from "~/utils/eventDisplay";
 
 interface ExternalEvent {
   id: string;
@@ -463,11 +760,11 @@ interface CustomEventResponse {
   requiresDecklist?: boolean;
   description?: string | null;
   status?: string;
+  eventType?: string;
   tagType?: string;
   tags?: unknown;
 }
 
-type EventSourceFilter = "all" | "custom" | "external" | "local";
 type TimeWindowFilter = "all" | "14" | "30" | "90";
 
 interface UnifiedEvent {
@@ -501,18 +798,22 @@ interface UnifiedEvent {
 }
 
 const searchQuery = ref("");
-const selectedSource = ref<EventSourceFilter>("all");
 const selectedType = ref("all");
 const selectedTimeWindow = ref<TimeWindowFilter>("30");
 const onlyRegisterable = ref(false);
+const showMobileFilters = ref(false);
 const selectedEvent = ref<UnifiedEvent | null>(null);
 const externalEvents = ref<ExternalEvent[]>([]);
 const customEvents = ref<CustomEventResponse[]>([]);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+const bookmarkedEventIds = ref<Set<string>>(new Set());
+const bookmarkPendingId = ref<string | null>(null);
+const user = useSupabaseUser();
 
 onMounted(async () => {
   await fetchEvents();
+  await loadBookmarks();
 });
 
 const fetchEvents = async () => {
@@ -522,11 +823,15 @@ const fetchEvents = async () => {
   try {
     const [externalResponse, customResponse] = await Promise.all([
       $fetch<{ events: ExternalEvent[] }>("/api/events/detailed"),
-      $fetch<{ success: boolean; events: CustomEventResponse[] }>("/api/events/custom"),
+      $fetch<{ success: boolean; events: CustomEventResponse[] }>(
+        "/api/events/custom",
+      ),
     ]);
 
     externalEvents.value = externalResponse.events || [];
-    customEvents.value = customResponse.success ? customResponse.events || [] : [];
+    customEvents.value = customResponse.success
+      ? customResponse.events || []
+      : [];
   } catch (err) {
     console.error("Failed to load events:", err);
     error.value = err instanceof Error ? err.message : "Failed to load events";
@@ -536,7 +841,9 @@ const fetchEvents = async () => {
 };
 
 const normalizedEvents = computed<UnifiedEvent[]>(() => {
-  const external = externalEvents.value.map((event) => normalizeExternalEvent(event));
+  const external = externalEvents.value.map((event) =>
+    normalizeExternalEvent(event),
+  );
   const custom = customEvents.value.map((event) => normalizeCustomEvent(event));
 
   return [...external, ...custom].sort((first, second) => {
@@ -544,32 +851,38 @@ const normalizedEvents = computed<UnifiedEvent[]>(() => {
   });
 });
 
-const sourceOptions = computed(() => {
-  const events = normalizedEvents.value;
-  return [
-    { value: "all", label: "All events", count: events.length },
-    {
-      value: "custom",
-      label: "Custom events",
-      count: events.filter((event) => event.source === "custom").length,
-    },
-    {
-      value: "external",
-      label: "Official feed",
-      count: events.filter((event) => event.source === "external").length,
-    },
-    {
-      value: "local",
-      label: "Local registration",
-      count: events.filter((event) => event.isLocalRegistration).length,
-    },
-  ] satisfies Array<{ value: EventSourceFilter; label: string; count: number }>;
+const timeWindowFilteredEvents = computed(() => {
+  const timeWindowDays =
+    selectedTimeWindow.value === "all"
+      ? null
+      : Number(selectedTimeWindow.value);
+  const now = new Date();
+  const latestDate =
+    timeWindowDays === null ? null : addDays(now, timeWindowDays);
+
+  return normalizedEvents.value.filter((event) => {
+    if (!latestDate) {
+      return true;
+    }
+
+    const eventDate = new Date(event.date);
+    return eventDate >= startOfDay(now) && eventDate <= latestDate;
+  });
 });
 
 const typeOptions = computed(() => {
   const counts = new Map<string, { label: string; count: number }>();
 
-  for (const event of normalizedEvents.value) {
+  for (const event of timeWindowFilteredEvents.value) {
+    if (onlyRegisterable.value && !event.isRegisterable) {
+      continue;
+    }
+
+    const query = searchQuery.value.trim().toLowerCase();
+    if (query && !event.searchableText.includes(query)) {
+      continue;
+    }
+
     const existing = counts.get(event.typeKey);
     if (existing) {
       existing.count += 1;
@@ -583,43 +896,36 @@ const typeOptions = computed(() => {
   }
 
   return [
-    { value: "all", label: "All types", count: normalizedEvents.value.length },
+    {
+      value: "all",
+      label: "All types",
+      count: timeWindowFilteredEvents.value.filter((event) => {
+        if (onlyRegisterable.value && !event.isRegisterable) {
+          return false;
+        }
+
+        const query = searchQuery.value.trim().toLowerCase();
+        return !query || event.searchableText.includes(query);
+      }).length,
+    },
     ...Array.from(counts.entries())
       .map(([value, data]) => ({ value, label: data.label, count: data.count }))
-      .sort((first, second) => second.count - first.count || first.label.localeCompare(second.label)),
+      .sort(
+        (first, second) =>
+          second.count - first.count || first.label.localeCompare(second.label),
+      ),
   ];
 });
 
 const filteredEvents = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
-  const timeWindowDays = selectedTimeWindow.value === "all" ? null : Number(selectedTimeWindow.value);
-  const now = new Date();
-  const latestDate = timeWindowDays === null ? null : addDays(now, timeWindowDays);
 
-  return normalizedEvents.value.filter((event) => {
-    const eventDate = new Date(event.date);
-
-    if (selectedSource.value === "custom" && event.source !== "custom") {
-      return false;
-    }
-
-    if (selectedSource.value === "external" && event.source !== "external") {
-      return false;
-    }
-
-    if (selectedSource.value === "local" && !event.isLocalRegistration) {
-      return false;
-    }
-
+  return timeWindowFilteredEvents.value.filter((event) => {
     if (selectedType.value !== "all" && event.typeKey !== selectedType.value) {
       return false;
     }
 
     if (onlyRegisterable.value && !event.isRegisterable) {
-      return false;
-    }
-
-    if (latestDate && (eventDate < startOfDay(now) || eventDate > latestDate)) {
       return false;
     }
 
@@ -632,7 +938,10 @@ const filteredEvents = computed(() => {
 });
 
 const groupedEvents = computed(() => {
-  const groups = new Map<string, { key: string; label: string; events: UnifiedEvent[] }>();
+  const groups = new Map<
+    string,
+    { key: string; label: string; events: UnifiedEvent[] }
+  >();
 
   for (const event of filteredEvents.value) {
     const groupDate = new Date(event.date);
@@ -657,8 +966,6 @@ const groupedEvents = computed(() => {
   return Array.from(groups.values());
 });
 
-const customEventsCount = computed(() => normalizedEvents.value.filter((event) => event.source === "custom").length);
-const localRegistrationCount = computed(() => normalizedEvents.value.filter((event) => event.isLocalRegistration).length);
 const upcomingThirtyDayCount = computed(() => {
   const now = startOfDay(new Date());
   const inThirtyDays = addDays(now, 30);
@@ -671,7 +978,6 @@ const upcomingThirtyDayCount = computed(() => {
 const hasActiveFilters = computed(() => {
   return (
     searchQuery.value.trim().length > 0 ||
-    selectedSource.value !== "all" ||
     selectedType.value !== "all" ||
     selectedTimeWindow.value !== "30" ||
     onlyRegisterable.value
@@ -680,10 +986,10 @@ const hasActiveFilters = computed(() => {
 
 const resetFilters = () => {
   searchQuery.value = "";
-  selectedSource.value = "all";
   selectedType.value = "all";
   selectedTimeWindow.value = "30";
   onlyRegisterable.value = false;
+  showMobileFilters.value = false;
 };
 
 const openEventDetails = (event: UnifiedEvent) => {
@@ -694,14 +1000,99 @@ const closeEventDetails = () => {
   selectedEvent.value = null;
 };
 
+async function loadBookmarks(): Promise<void> {
+  if (!user.value) {
+    bookmarkedEventIds.value = new Set();
+    return;
+  }
+
+  try {
+    const response = await $fetch<{
+      data: Array<{ externalEventId: string }>;
+    }>("/api/events/bookmarks");
+    bookmarkedEventIds.value = new Set(
+      (response.data || []).map((bookmark) => bookmark.externalEventId)
+    );
+  } catch (err) {
+    console.error("Failed to load bookmarks:", err);
+  }
+}
+
+function canBookmarkEvent(event: UnifiedEvent | null): boolean {
+  if (!event || !user.value) {
+    return false;
+  }
+
+  return event.source === "external" && !event.isLocalRegistration;
+}
+
+function isBookmarked(eventId: string): boolean {
+  return bookmarkedEventIds.value.has(eventId);
+}
+
+async function toggleBookmark(event: UnifiedEvent): Promise<void> {
+  if (!canBookmarkEvent(event) || bookmarkPendingId.value) {
+    return;
+  }
+
+  bookmarkPendingId.value = event.id;
+
+  try {
+    if (isBookmarked(event.id)) {
+      await $fetch(`/api/events/bookmarks/${event.id}`, {
+        method: "DELETE",
+      });
+      const next = new Set(bookmarkedEventIds.value);
+      next.delete(event.id);
+      bookmarkedEventIds.value = next;
+    } else {
+      await $fetch("/api/events/bookmarks", {
+        method: "POST",
+        body: {
+          externalEventId: event.id,
+          title: event.title,
+          eventType: event.typeKey,
+          venue: event.venue,
+          location: event.locationLabel || null,
+          country: event.country || null,
+          eventDate: event.date,
+          registrationUrl: event.externalLink || null,
+          cost: event.priceLabel || null,
+          streetAddress: event.streetAddress || null,
+          icon: null,
+        },
+      });
+      bookmarkedEventIds.value = new Set(bookmarkedEventIds.value).add(event.id);
+    }
+  } catch (err) {
+    console.error("Failed to toggle bookmark:", err);
+  } finally {
+    bookmarkPendingId.value = null;
+  }
+}
+
 function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
   const venue = stripHtmlTags(event.venue) || "Venue TBA";
-  const locationParts = [stripHtmlTags(event.location), stripHtmlTags(event.country)].filter(Boolean);
-  const typeKey = normalizeTypeKey(event.type || iconToTypeKey(event.icon));
-  const typeLabel = event.type || fallbackTypeLabel(typeKey);
+  const locationParts = [
+    stripHtmlTags(event.location),
+    stripHtmlTags(event.country),
+  ].filter(Boolean);
+  const typeKey = getEventDisplayKey({
+    type: event.type,
+    icon: event.icon,
+  });
+  const typeLabel = getEventDisplayLabel({
+    type: event.type,
+    icon: event.icon,
+  });
   const hasLocalRegistration = Boolean(event.hasLocalRegistration);
-  const internalLink = hasLocalRegistration ? `/events/register/${event.id}` : undefined;
-  const externalLink = !hasLocalRegistration && isValidExternalLink(event.link) ? event.link : undefined;
+  const internalLink = hasLocalRegistration
+    ? `/events/register/${event.id}`
+    : undefined;
+  const externalLink =
+    !hasLocalRegistration && isValidExternalLink(event.link)
+      ? event.link
+      : undefined;
 
   return {
     key: `external-${event.id}`,
@@ -709,11 +1100,18 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
     title: stripHtmlTags(event.title) || "External Event",
     date: normalizeDateValue(event.dateTime),
     source: "external",
-    sourceLabel: hasLocalRegistration ? "Official feed + local signup" : "Official feed",
-    sourceBadgeClass: hasLocalRegistration ? "bg-sky-100 text-sky-800" : "bg-slate-100 text-slate-700",
+    sourceLabel: hasLocalRegistration
+      ? "Official feed + local signup"
+      : "Official feed",
+    sourceBadgeClass: hasLocalRegistration
+      ? "bg-[#5865f2]/20 text-[#c9cdfb]"
+      : "bg-[#40444b] text-gray-300",
     typeKey,
     typeLabel,
-    typeBadgeClass: getTypeBadgeClass(typeKey),
+    typeBadgeClass: getEventDisplayBadgeClass({
+      type: event.type,
+      icon: event.icon,
+    }),
     venue,
     locationLabel: locationParts.join(", "),
     country: stripHtmlTags(event.country),
@@ -726,7 +1124,11 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
     registrationDeadlineLabel: undefined,
     internalLink,
     externalLink,
-    ctaLabel: hasLocalRegistration ? "Open registration" : externalLink ? "Visit registration" : "Details only",
+    ctaLabel: hasLocalRegistration
+      ? "Open registration"
+      : externalLink
+        ? "Visit registration"
+        : "Details only",
     isRegisterable: Boolean(internalLink || externalLink),
     isLocalRegistration: hasLocalRegistration,
     searchableText: [
@@ -740,14 +1142,23 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
       .filter(Boolean)
       .join(" ")
       .toLowerCase(),
-    dateBadgeClass: getDateBadgeClass(typeKey, "external"),
+    dateBadgeClass: getEventDisplayDateBadgeClass({
+      type: event.type,
+      icon: event.icon,
+    }),
   };
 }
 
 function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
-  const parsedTags = event.tagType ? parseEventTags(event.tags, event.tagType as TagType) : null;
-  const rawType = parsedTags?.type || "custom";
-  const typeKey = normalizeTypeKey(rawType);
+  const parsedTags = event.tagType
+    ? parseEventTags(event.tags, event.tagType as TagType)
+    : null;
+  const typeKey = getEventDisplayKey({
+    isCustomEvent: true,
+    eventType: event.eventType,
+    tags: event.tags,
+    tagType: event.tagType,
+  });
   const gameLabel = parsedTags?.game || formatGameLabel(event.tagType);
   const capacityLabel =
     typeof event.maxParticipants === "number"
@@ -761,10 +1172,20 @@ function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
     date: normalizeDateValue(event.eventDate),
     source: "custom",
     sourceLabel: "Custom event",
-    sourceBadgeClass: "bg-emerald-100 text-emerald-800",
+    sourceBadgeClass: "bg-emerald-500/20 text-emerald-200",
     typeKey,
-    typeLabel: formatCustomTypeLabel(rawType),
-    typeBadgeClass: getTypeBadgeClass(typeKey),
+    typeLabel: getEventDisplayLabel({
+      isCustomEvent: true,
+      eventType: event.eventType,
+      tags: event.tags,
+      tagType: event.tagType,
+    }),
+    typeBadgeClass: getEventDisplayBadgeClass({
+      isCustomEvent: true,
+      eventType: event.eventType,
+      tags: event.tags,
+      tagType: event.tagType,
+    }),
     venue: stripHtmlTags(event.venue) || "Venue TBA",
     locationLabel: "",
     country: "",
@@ -773,7 +1194,9 @@ function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
     priceLabel: formatCustomPrice(event.participationFee),
     capacityLabel,
     requiresDecklist: Boolean(event.requiresDecklist),
-    registrationDeadlineLabel: event.registrationDeadline ? formatCompactDate(event.registrationDeadline) : undefined,
+    registrationDeadlineLabel: event.registrationDeadline
+      ? formatCompactDate(event.registrationDeadline)
+      : undefined,
     internalLink: `/events/${event.id}`,
     externalLink: undefined,
     ctaLabel: "View event",
@@ -783,14 +1206,24 @@ function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
       event.name,
       event.venue,
       gameLabel,
-      formatCustomTypeLabel(rawType),
+      getEventDisplayLabel({
+        isCustomEvent: true,
+        eventType: event.eventType,
+        tags: event.tags,
+        tagType: event.tagType,
+      }),
       parsedTags?.host,
       parsedTags?.format,
     ]
       .filter(Boolean)
       .join(" ")
       .toLowerCase(),
-    dateBadgeClass: getDateBadgeClass(typeKey, "custom"),
+    dateBadgeClass: getEventDisplayDateBadgeClass({
+      isCustomEvent: true,
+      eventType: event.eventType,
+      tags: event.tags,
+      tagType: event.tagType,
+    }),
   };
 }
 
@@ -799,7 +1232,10 @@ function normalizeDateValue(value: string): string {
 }
 
 function stripHtmlTags(value: string): string {
-  return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function formatDay(dateString: string): string {
@@ -829,48 +1265,6 @@ function formatCompactDate(dateString: string): string {
   });
 }
 
-function normalizeTypeKey(value?: string): string {
-  return (value || "custom")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_|_$/g, "") || "custom";
-}
-
-function iconToTypeKey(icon?: string): string {
-  if (icon === "cup") return "league_cup";
-  if (icon === "chall") return "league_challenge";
-  if (icon === "pre") return "pre_release";
-  if (icon === "friendly") return "friendly";
-  return "custom";
-}
-
-function fallbackTypeLabel(typeKey: string): string {
-  switch (typeKey) {
-    case "league_cup":
-      return "League Cup";
-    case "league_challenge":
-      return "League Challenge";
-    case "pre_release":
-      return "Pre-release";
-    case "friendly":
-      return "Friendly";
-    default:
-      return "Event";
-  }
-}
-
-function formatCustomTypeLabel(value?: string): string {
-  if (!value) {
-    return "Custom Event";
-  }
-
-  if (value === "local_tournament") {
-    return "Local Tournament";
-  }
-
-  return getEventTypeLabel(value) || value;
-}
-
 function formatGameLabel(tagType?: string): string | undefined {
   if (!tagType) return "Custom";
   if (tagType === "pokemon") return "Pokemon TCG";
@@ -898,40 +1292,6 @@ function formatCustomPrice(value?: number | null): string | undefined {
   return `EUR ${value}`;
 }
 
-function getTypeBadgeClass(typeKey: string): string {
-  switch (typeKey) {
-    case "league_cup":
-      return "border-rose-200 bg-rose-50 text-rose-700";
-    case "league_challenge":
-      return "border-sky-200 bg-sky-50 text-sky-700";
-    case "pre_release":
-      return "border-amber-200 bg-amber-50 text-amber-800";
-    case "local":
-    case "local_tournament":
-    case "friendly":
-      return "border-slate-200 bg-slate-50 text-slate-700";
-    default:
-      return "border-emerald-200 bg-emerald-50 text-emerald-800";
-  }
-}
-
-function getDateBadgeClass(typeKey: string, source: "custom" | "external"): string {
-  if (source === "custom") {
-    return "bg-emerald-600 text-white";
-  }
-
-  switch (typeKey) {
-    case "league_cup":
-      return "bg-rose-600 text-white";
-    case "league_challenge":
-      return "bg-sky-600 text-white";
-    case "pre_release":
-      return "bg-amber-500 text-white";
-    default:
-      return "bg-slate-800 text-white";
-  }
-}
-
 function isValidExternalLink(link?: string): boolean {
   return Boolean(link && link !== "//");
 }
@@ -947,4 +1307,8 @@ function startOfDay(date: Date): Date {
   next.setHours(0, 0, 0, 0);
   return next;
 }
+
+watch(user, async () => {
+  await loadBookmarks();
+});
 </script>

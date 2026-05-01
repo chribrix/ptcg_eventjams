@@ -44,10 +44,10 @@
         class="bg-[#2f3136] rounded-lg shadow-sm border border-[#202225] p-8 text-center"
       >
         <h3 class="text-2xl font-semibold text-white mb-2">
-          No Event Registrations
+          No Events Yet
         </h3>
         <p class="text-gray-300 mb-6">
-          You haven't registered for any events yet.
+          You have no registrations or bookmarked external events yet.
         </p>
         <NuxtLink
           to="/events"
@@ -63,10 +63,9 @@
           {{ t("dashboard.currentRegistrations") }}
         </h2>
         <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 mb-12">
-          <NuxtLink
+          <article
             v-for="registration in registrations"
             :key="registration.id"
-            :to="`/booking/${registration.id}`"
             class="rounded-lg shadow-sm border p-4 sm:p-6 hover:shadow-lg transition-all duration-200 cursor-pointer block"
             :class="
               getCardBackgroundClass(
@@ -144,6 +143,8 @@
                     registration.status === 'registered',
                   'bg-yellow-100 text-yellow-800':
                     registration.status === 'reserved',
+                  'bg-sky-100 text-sky-800':
+                    registration.status === 'bookmarked',
                   'bg-blue-100 text-blue-800':
                     registration.status === 'attended',
                   'bg-red-100 text-red-800': registration.status === 'no-show',
@@ -184,7 +185,11 @@
               <div class="flex items-center gap-2 text-gray-300">
                 <ClockIcon class="w-4 h-4 flex-shrink-0" />
                 <span class="text-sm">
-                  Registered:
+                  {{
+                    registration.entryType === "bookmark"
+                      ? "Vorgemerkt:"
+                      : "Registered:"
+                  }}
                   {{ formatRegistrationDate(registration.registeredAt) }}
                 </span>
               </div>
@@ -192,7 +197,9 @@
 
             <!-- Edit Booking Button -->
             <div class="mt-4 pt-4 border-t border-[#202225]">
-              <button
+              <NuxtLink
+                v-if="registration.entryType !== 'bookmark'"
+                :to="`/booking/${registration.id}`"
                 class="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg"
               >
                 <svg
@@ -209,12 +216,59 @@
                   />
                 </svg>
                 <span>Manage Booking & Tickets</span>
-              </button>
+              </NuxtLink>
+              <div v-else class="grid gap-3 sm:grid-cols-2">
+                <a
+                  v-if="registration.externalRegistrationUrl"
+                  :href="registration.externalRegistrationUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13.5 6H18m0 0v4.5M18 6l-7.5 7.5M7.5 9H6A1.5 1.5 0 004.5 10.5v7.5A1.5 1.5 0 006 19.5h7.5a1.5 1.5 0 001.5-1.5v-1.5"
+                    />
+                  </svg>
+                  <span>Open External Event</span>
+                </a>
+                <button
+                  type="button"
+                  class="w-full border border-[#202225] bg-[#40444b] hover:bg-[#4f545c] text-gray-200 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                  @click="removeBookmark(registration)"
+                >
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 5l14 14M19 5L5 19"
+                    />
+                  </svg>
+                  <span>Remove Bookmark</span>
+                </button>
+              </div>
             </div>
 
             <!-- Decklist Status Notification -->
             <div
-              v-if="registration.customEvent.requiresDecklist"
+              v-if="
+                registration.entryType !== 'bookmark' &&
+                registration.customEvent.requiresDecklist
+              "
               class="mt-4 p-3 sm:p-4 rounded-lg border"
               :class="{
                 'bg-[#40444b] border-yellow-500': needsAttention(registration),
@@ -265,7 +319,7 @@
                 </span>
               </div>
             </div>
-          </NuxtLink>
+          </article>
         </div>
       </div>
 
@@ -289,12 +343,6 @@ import {
   CheckCircleIcon,
   ClipboardDocumentIcon,
 } from "@heroicons/vue/24/outline";
-import {
-  parseEventTags,
-  getEventTypeLabel,
-  type TagType,
-} from "~/types/eventTags";
-
 // Use centralized composables
 const { getDisplayTags } = useTagDisplay();
 const {
@@ -309,6 +357,7 @@ const { t } = useI18n();
 
 interface EventRegistration {
   id: string;
+  entryType?: "registration" | "bookmark";
   customEventId: string | null;
   externalEventId: string | null;
   playerId: string;
@@ -319,6 +368,7 @@ interface EventRegistration {
   bringingDecklistOnsite?: boolean | null;
   isExternalEvent?: boolean;
   eventType?: string;
+  externalRegistrationUrl?: string | null;
   ticketCount?: number;
   tickets?: Array<{
     id: string;
@@ -335,7 +385,7 @@ interface EventRegistration {
     venue: string;
     eventDate: string;
     maxParticipants: number;
-    participationFee?: string | null; // Decimal fields are serialized as strings
+    participationFee?: string | number | null;
     description?: string | null;
     registrationDeadline?: string | null;
     requiresDecklist: boolean;
@@ -343,7 +393,6 @@ interface EventRegistration {
   };
 }
 
-const { $client: supabase } = useNuxtApp();
 const { user } = useAuth();
 
 const registrations = ref<EventRegistration[]>([]);
@@ -377,6 +426,29 @@ const fetchRegistrations = async () => {
       err instanceof Error ? err.message : "Failed to load registrations";
   } finally {
     isLoading.value = false;
+  }
+};
+
+const removeBookmark = async (registration: EventRegistration) => {
+  if (registration.entryType !== "bookmark" || !registration.externalEventId) {
+    return;
+  }
+
+  try {
+    await $fetch(
+      `/api/events/bookmarks/${registration.externalEventId}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    registrations.value = registrations.value.filter(
+      (entry) => entry.id !== registration.id
+    );
+  } catch (err) {
+    console.error("Failed to remove bookmark:", err);
+    error.value =
+      err instanceof Error ? err.message : "Failed to remove bookmark";
   }
 };
 

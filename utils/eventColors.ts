@@ -44,18 +44,22 @@ export const EVENT_COLORS = {
 /**
  * Get event color configuration based on event type or icon
  */
-export function getEventColor(typeOrIcon: string): typeof EVENT_COLORS.cup {
-  const normalized = typeOrIcon.toLowerCase();
+export type EventColorConfig =
+  (typeof EVENT_COLORS)[keyof typeof EVENT_COLORS];
 
-  if (normalized === "cup" || normalized.includes("league cup")) {
+export function getEventColor(typeOrIcon: string): EventColorConfig {
+  const normalized = typeOrIcon.toLowerCase();
+  const normalizedLoose = normalized.replace(/[-_]/g, " ");
+
+  if (normalized === "cup" || normalizedLoose.includes("league cup")) {
     return EVENT_COLORS.cup;
   }
-  if (normalized === "chall" || normalized.includes("challenge")) {
+  if (normalized === "chall" || normalizedLoose.includes("challenge")) {
     return EVENT_COLORS.challenge;
   }
   if (
     normalized === "pre" ||
-    normalized.includes("pre release") ||
+    normalizedLoose.includes("pre release") ||
     normalized.includes("prerelease")
   ) {
     return EVENT_COLORS.prerelease;

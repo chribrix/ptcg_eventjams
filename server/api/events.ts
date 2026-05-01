@@ -117,7 +117,7 @@ function groupEventsByDate(events: ParsedEvent[]): CalendarEvent[] {
 export default defineEventHandler(async (event) => {
   try {
     // Define cache key and TTL (18 hours)
-    const CACHE_KEY = "pokedata:events";
+    const CACHE_KEY = "pokedata-events-v2";
     const CACHE_TTL = 18 * 60 * 60 * 1000; // 18 hours in milliseconds
 
     // Try to get cached data
@@ -147,7 +147,7 @@ export default defineEventHandler(async (event) => {
       challenges: "1",
       vcups: "0",
       vchallenges: "0",
-      prereleases: "0",
+      prereleases: "1",
       premier: "1",
       go: "0",
       gocup: "0",
@@ -181,7 +181,7 @@ export default defineEventHandler(async (event) => {
     apiData.sort((a: ExternalAPIEvent, b: ExternalAPIEvent) => {
       const dateA = new Date(a.when || a.date || "1970-01-01");
       const dateB = new Date(b.when || b.date || "1970-01-01");
-      const today = new Date("2025-08-27");
+      const today = new Date();
 
       const diffA = dateA.getTime() - today.getTime();
       const diffB = dateB.getTime() - today.getTime();

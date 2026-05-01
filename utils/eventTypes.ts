@@ -6,7 +6,7 @@
 /**
  * Determine event type from external event overrides
  * @param overrides - The overrides JSON object from ExternalEventOverride
- * @returns Event type string: "cup", "challenge", "local", or "custom"
+ * @returns Event type string: "cup", "challenge", "prerelease", "local", or "custom"
  */
 export function getEventTypeFromOverrides(overrides: any): string {
   if (!overrides) return "custom";
@@ -16,7 +16,7 @@ export function getEventTypeFromOverrides(overrides: any): string {
     const iconMap: Record<string, string> = {
       cup: "cup",
       chall: "challenge",
-      pre: "local",
+      pre: "prerelease",
       friendly: "local",
     };
     return iconMap[overrides.icon] || "local";
@@ -40,6 +40,7 @@ export function getEventTypeName(eventType: string): string {
   const types: Record<string, string> = {
     cup: "League Cup",
     challenge: "League Challenge",
+    prerelease: "Pre Release",
     local: "Local Event",
     custom: "Custom Event",
   };

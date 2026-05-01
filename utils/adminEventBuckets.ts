@@ -1,3 +1,8 @@
+import {
+  DEFAULT_EVENT_TIME_ZONE,
+  getDateKeyInTimeZone,
+} from "~/utils/eventDateTime";
+
 export type AdminEventBucketInput = {
   eventDate: string | Date;
   status?: string | null;
@@ -12,38 +17,58 @@ function getEventTimestamp(event: AdminEventBucketInput) {
   return Number.isNaN(timestamp) ? null : timestamp;
 }
 
+function compareEventDayToNow(
+  event: AdminEventBucketInput,
+  now: Date,
+  timeZone: string = DEFAULT_EVENT_TIME_ZONE,
+) {
+  const timestamp = getEventTimestamp(event);
+
+  if (timestamp === null) {
+    return null;
+  }
+
+  const eventDay = getDateKeyInTimeZone(event.eventDate, timeZone);
+  const currentDay = getDateKeyInTimeZone(now, timeZone);
+
+  if (eventDay === currentDay) return 0;
+  return eventDay > currentDay ? 1 : -1;
+}
+
 export function isUpcomingAdminEvent(
   event: AdminEventBucketInput,
   now = new Date(),
+  timeZone: string = DEFAULT_EVENT_TIME_ZONE,
 ) {
   const status = normalizeStatus(event.status);
-  const timestamp = getEventTimestamp(event);
+  const dayComparison = compareEventDayToNow(event, now, timeZone);
 
   if (status === "completed" || status === "cancelled") {
     return false;
   }
 
-  if (timestamp === null) {
+  if (dayComparison === null) {
     return status === "upcoming" || status === "ongoing";
   }
 
-  return timestamp >= now.getTime();
+  return dayComparison >= 0;
 }
 
 export function isCompletedAdminEvent(
   event: AdminEventBucketInput,
   now = new Date(),
+  timeZone: string = DEFAULT_EVENT_TIME_ZONE,
 ) {
   const status = normalizeStatus(event.status);
-  const timestamp = getEventTimestamp(event);
+  const dayComparison = compareEventDayToNow(event, now, timeZone);
 
   if (status === "completed" || status === "cancelled") {
     return true;
   }
 
-  if (timestamp === null) {
+  if (dayComparison === null) {
     return false;
   }
 
-  return timestamp < now.getTime();
+  return dayComparison < 0;
 }

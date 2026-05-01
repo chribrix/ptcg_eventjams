@@ -181,8 +181,32 @@ model Player {
   createdAt            DateTime            @default(now()) @map("created_at")
   updatedAt            DateTime            @updatedAt @map("updated_at")
   registrations        EventRegistration[]
+  bookmarks            EventBookmark[]
 
   @@map("players")
+  @@schema("public")
+}
+
+model EventBookmark {
+  id              String   @id @default(cuid())
+  playerId        String   @map("player_id")
+  externalEventId String   @map("external_event_id")
+  title           String
+  eventType       String?  @map("event_type")
+  venue           String
+  location        String?
+  country         String?
+  eventDate       DateTime @map("event_date")
+  registrationUrl String?  @map("registration_url")
+  cost            String?
+  streetAddress   String?  @map("street_address")
+  icon            String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, externalEventId])
+  @@map("event_bookmarks")
   @@schema("public")
 }
 

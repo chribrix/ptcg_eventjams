@@ -162,6 +162,23 @@
                     <div
                       class="flex justify-end gap-2 pt-2 border-t border-[#202225]"
                     >
+                      <button
+                        v-if="canBookmarkEvent(event)"
+                        type="button"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200"
+                        :class="
+                          isBookmarked(event.id)
+                            ? 'text-white bg-sky-600 hover:bg-sky-700'
+                            : 'text-gray-300 bg-[#40444b] border border-[#202225] hover:bg-[#4f545c] hover:border-gray-500'
+                        "
+                        :disabled="bookmarkPendingId === event.id"
+                        @click.stop="toggleBookmark(event)"
+                      >
+                        <BookmarkIcon class="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{{
+                          isBookmarked(event.id) ? "Vorgemerkt" : "Vormerken"
+                        }}</span>
+                      </button>
                       <a
                         v-if="getGoogleMapsUrl(event)"
                         :href="getGoogleMapsUrl(event)"
@@ -224,6 +241,7 @@
 
 <script setup lang="ts">
 import {
+  BookmarkIcon,
   CurrencyDollarIcon,
   BuildingOfficeIcon,
   MapPinIcon,
@@ -235,8 +253,10 @@ import {
   CalendarIcon,
   MapIcon,
 } from "@heroicons/vue/24/outline";
-import { getEventBadgeStyles as getColorStyles } from "~/utils/eventColors";
-import { parseEventTags, type TagType } from "~/types/eventTags";
+import {
+  getEventDisplayBadgeStyles,
+  getEventDisplayLabel,
+} from "~/utils/eventDisplay";
 
 interface ParsedEvent {
   id: string;
@@ -285,9 +305,11 @@ const emit = defineEmits<{
 
 // For accessing custom events data (assuming it's available globally or passed down)
 const customEvents = ref<CustomEvent[]>([]);
-const supabase = useSupabaseClient();
+const user = useSupabaseUser();
 const isUserLoggedIn = ref(false);
 const expandedEvents = ref<Set<string>>(new Set());
+const bookmarkedEventIds = ref<Set<string>>(new Set());
+const bookmarkPendingId = ref<string | null>(null);
 
 // Auto-expand all events if there are 3 or fewer
 watch(
@@ -344,8 +366,8 @@ onMounted(async () => {
   }
 
   // Check if user is logged in
-  const { data: session } = await supabase.auth.getSession();
-  isUserLoggedIn.value = !!session?.session;
+  isUserLoggedIn.value = !!user.value;
+  await loadBookmarks();
 });
 
 // Helper functions
@@ -362,57 +384,95 @@ const hasLocalRegistration = (event: ParsedEvent): boolean => {
   return !!(event as any).hasLocalRegistration;
 };
 
-// Helper to determine the actual event type from tags
-const getActualEventType = (event: ParsedEvent): string => {
-  if (!isCustomEvent(event)) {
-    // External events use icon field
-    return event.icon || event.type || "local";
-  }
-
-  // For custom events, check tags
-  if (event.tags && event.tagType) {
-    try {
-      const parsedTags = parseEventTags(event.tags, event.tagType as TagType);
-
-      // Riftbound events
-      if (event.tagType === "riftbound") {
-        return "riftbound";
-      }
-
-      // Pokemon events with type field
-      if (parsedTags.game === "Pokemon" && parsedTags.type) {
-        if (parsedTags.type === "league_cup") return "cup";
-        if (parsedTags.type === "league_challenge") return "challenge";
-      }
-    } catch (e) {
-      console.error("Error parsing tags:", e);
-    }
-  }
-
-  // Fallback to eventType or custom
-  return event.eventType || "custom";
+const canBookmarkEvent = (event: ParsedEvent): boolean => {
+  return isUserLoggedIn.value && !isCustomEvent(event) && !hasLocalRegistration(event);
 };
+
+const isBookmarked = (eventId: string): boolean => {
+  return bookmarkedEventIds.value.has(eventId);
+};
+
+async function loadBookmarks(): Promise<void> {
+  if (!user.value) {
+    bookmarkedEventIds.value = new Set();
+    return;
+  }
+
+  try {
+    const response = await $fetch<{
+      data: Array<{ externalEventId: string }>;
+    }>("/api/events/bookmarks");
+    bookmarkedEventIds.value = new Set(
+      (response.data || []).map((bookmark) => bookmark.externalEventId)
+    );
+  } catch (error) {
+    console.error("Failed to load bookmarks:", error);
+  }
+}
+
+async function toggleBookmark(event: ParsedEvent): Promise<void> {
+  if (!canBookmarkEvent(event) || bookmarkPendingId.value) {
+    return;
+  }
+
+  bookmarkPendingId.value = event.id;
+
+  try {
+    if (isBookmarked(event.id)) {
+      await $fetch(`/api/events/bookmarks/${event.id}`, {
+        method: "DELETE",
+      });
+      const next = new Set(bookmarkedEventIds.value);
+      next.delete(event.id);
+      bookmarkedEventIds.value = next;
+    } else {
+      await $fetch("/api/events/bookmarks", {
+        method: "POST",
+        body: {
+          externalEventId: event.id,
+          title: getEventTitle(event),
+          eventType: event.type,
+          venue: stripHtmlTags(event.venue) || getEventTitle(event),
+          location: stripHtmlTags(event.location || "") || null,
+          country: stripHtmlTags(event.country || "") || null,
+          eventDate: new Date(event.dateTime).toISOString(),
+          registrationUrl: event.link || null,
+          cost: typeof getEventCost(event) === "string" ? String(getEventCost(event)) : null,
+          streetAddress: stripHtmlTags(event.streetAddress || "") || null,
+          icon: event.icon || null,
+        },
+      });
+      bookmarkedEventIds.value = new Set(bookmarkedEventIds.value).add(event.id);
+    }
+  } catch (error) {
+    console.error("Failed to toggle bookmark:", error);
+  } finally {
+    bookmarkPendingId.value = null;
+  }
+}
 
 const getEventBadgeStyles = (
   event: ParsedEvent
 ): { backgroundColor: string; color: string } => {
-  const actualType = getActualEventType(event);
-  return getColorStyles(actualType);
+  return getEventDisplayBadgeStyles({
+    isCustomEvent: event.isCustomEvent,
+    type: event.type,
+    icon: event.icon,
+    eventType: event.eventType,
+    tags: event.tags,
+    tagType: event.tagType,
+  });
 };
 
 const getEventTypeLabel = (event: ParsedEvent): string => {
-  const actualType = getActualEventType(event);
-  const labels: Record<string, string> = {
-    cup: "League Cup",
-    challenge: "League Challenge",
-    chall: "League Challenge",
-    local: "Local Event",
-    custom: "Local Event",
-    riftbound: "Riftbound",
-    pre: "Pre-Release",
-    friendly: "Friendly",
-  };
-  return labels[actualType] || event.type || "Event";
+  return getEventDisplayLabel({
+    isCustomEvent: event.isCustomEvent,
+    type: event.type,
+    icon: event.icon,
+    eventType: event.eventType,
+    tags: event.tags,
+    tagType: event.tagType,
+  });
 };
 
 const getEventCost = (event: ParsedEvent): number | string | undefined => {
@@ -539,4 +599,9 @@ const getGoogleMapsUrl = (event: ParsedEvent): string => {
     address
   )}`;
 };
+
+watch(user, async (newUser) => {
+  isUserLoggedIn.value = !!newUser;
+  await loadBookmarks();
+});
 </script>

@@ -28,7 +28,7 @@
           <span
             v-for="tag in getDisplayTags(
               registration.customEvent.tags || null,
-              registration.customEvent.tagType || 'pokemon'
+              registration.customEvent.tagType || 'pokemon',
             )"
             :key="tag.value"
             class="event-type-badge"
@@ -69,7 +69,7 @@
       <div class="flex items-center gap-4">
         <!-- Participation Fee -->
         <div
-          v-if="registration.customEvent.participationFee > 0"
+          v-if="hasNumericFee(registration.customEvent.participationFee)"
           class="flex items-center gap-1"
         >
           <CurrencyEuroIcon class="w-4 h-4" />
@@ -100,7 +100,7 @@
       <div class="flex items-center gap-1 text-xs">
         <CalendarDaysIcon class="w-3 h-3" />
         <span
-          >Registered
+          >{{ registration.entryType === "bookmark" ? "Vorgemerkt" : "Registered" }}
           {{ formatRegistrationDate(registration.registeredAt) }}</span
         >
       </div>
@@ -108,7 +108,10 @@
 
     <!-- Decklist Status (if required) -->
     <div
-      v-if="registration.customEvent.requiresDecklist"
+      v-if="
+        registration.entryType !== 'bookmark' &&
+        registration.customEvent.requiresDecklist
+      "
       class="mb-4 p-3 rounded-lg border"
       :class="getDecklistStatusClasses(registration)"
     >
@@ -131,6 +134,7 @@
       <!-- Submit Decklist Button (for reserved status with pending decklist) -->
       <NuxtLink
         v-if="
+          registration.entryType !== 'bookmark' &&
           registration.status === 'reserved' &&
           registration.customEvent.requiresDecklist &&
           !registration.decklist &&
@@ -143,7 +147,18 @@
       </NuxtLink>
 
       <!-- Event Details Button -->
+      <a
+        v-if="registration.entryType === 'bookmark' && registration.externalRegistrationUrl"
+        :href="registration.externalRegistrationUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
+      >
+        Open External Event
+      </a>
+
       <NuxtLink
+        v-else
         :to="`/events/${registration.customEvent.id}`"
         class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
       >
@@ -161,12 +176,23 @@
 
       <!-- Edit Booking Button - Always show for non-cancelled registrations -->
       <NuxtLink
-        v-else-if="registration.status !== 'cancelled'"
+        v-else-if="
+          registration.entryType !== 'bookmark' &&
+          registration.status !== 'cancelled'
+        "
         :to="`/booking/${registration.id}`"
         class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
       >
         Edit Booking
       </NuxtLink>
+
+      <button
+        v-else-if="registration.entryType === 'bookmark'"
+        type="button"
+        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
+      >
+        Vormerkung aktiv
+      </button>
     </div>
   </div>
 </template>
@@ -193,6 +219,7 @@ import {
 
 interface EventRegistration {
   id: string;
+  entryType?: "registration" | "bookmark";
   customEventId: string | null;
   externalEventId?: string | null;
   playerId: string;
@@ -203,13 +230,14 @@ interface EventRegistration {
   notes?: string | null;
   isExternalEvent?: boolean;
   eventType?: string;
+  externalRegistrationUrl?: string | null;
   customEvent: {
     id: string;
     name: string;
     venue: string;
     maxParticipants: number;
-    participationFee: number;
-    description: string;
+    participationFee: number | string | null;
+    description: string | null;
     eventDate: string;
     registrationDeadline?: string;
     status: string;
@@ -237,6 +265,8 @@ function getStatusBadgeClass(status: string): string {
       return "bg-[#40444b] text-gray-300 border border-gray-500";
     case "cancelled":
       return "bg-gray-600 text-gray-200 border border-gray-600";
+    case "bookmarked":
+      return "bg-sky-600 text-white border border-sky-600";
     default:
       return "bg-[#40444b] text-gray-300 border border-gray-500";
   }
@@ -250,6 +280,8 @@ function getStatusDotClass(status: string): string {
       return "bg-gray-600";
     case "cancelled":
       return "bg-gray-900";
+    case "bookmarked":
+      return "bg-white";
     default:
       return "bg-gray-500";
   }
@@ -263,9 +295,24 @@ function getStatusLabel(status: string): string {
       return "Reserved";
     case "cancelled":
       return "Cancelled";
+    case "bookmarked":
+      return "VORGEMERKT";
     default:
       return status.charAt(0).toUpperCase() + status.slice(1);
   }
+}
+
+function hasNumericFee(value: number | string | null | undefined): boolean {
+  if (typeof value === "number") {
+    return value > 0;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value.replace(",", "."));
+    return Number.isFinite(parsed) && parsed > 0;
+  }
+
+  return false;
 }
 
 function getDecklistStatusClasses(registration: EventRegistration): string {

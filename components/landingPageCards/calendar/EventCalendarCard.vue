@@ -45,104 +45,18 @@
         <!-- Legend -->
         <div class="w-full max-w-[620px] mt-4 px-2 sm:px-4">
           <div
-            class="flex flex-wrap gap-1.5 sm:gap-2 justify-center items-center"
+            class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2"
           >
-            <button
-              @click="openTypeFilter('cup')"
-              class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 hover:brightness-110 cursor-pointer border-0 whitespace-nowrap flex-shrink-0 active:scale-95"
-              :style="{
-                backgroundColor: EVENT_COLORS.cup.bg,
-                color: EVENT_COLORS.cup.text,
-              }"
-              title="Click to filter League Cup events"
-            >
-              {{ EVENT_COLORS.cup.name }}
-              <svg
-                class="w-3 h-3 opacity-70"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </button>
-            <button
-              @click="openTypeFilter('challenge')"
-              class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 hover:brightness-110 cursor-pointer border-0 whitespace-nowrap flex-shrink-0 active:scale-95"
-              :style="{
-                backgroundColor: EVENT_COLORS.challenge.bg,
-                color: EVENT_COLORS.challenge.text,
-              }"
-              title="Click to filter League Challenge events"
-            >
-              {{ EVENT_COLORS.challenge.name }}
-              <svg
-                class="w-3 h-3 opacity-70"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </button>
-            <button
-              @click="openTypeFilter('custom')"
-              class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 hover:brightness-110 cursor-pointer border-0 whitespace-nowrap flex-shrink-0 active:scale-95"
-              :style="{
-                backgroundColor: EVENT_COLORS.custom.bg,
-                color: EVENT_COLORS.custom.text,
-              }"
-              title="Click to filter Custom events"
-            >
-              {{ EVENT_COLORS.custom.name }}
-              <svg
-                class="w-3 h-3 opacity-70"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </button>
-            <button
-              @click="openTypeFilter('riftbound')"
-              class="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-lg hover:scale-105 hover:brightness-110 cursor-pointer border-0 whitespace-nowrap flex-shrink-0 active:scale-95"
-              :style="{
-                backgroundColor: EVENT_COLORS.riftbound.bg,
-                color: EVENT_COLORS.riftbound.text,
-              }"
-              title="Click to filter Riftbound events"
-            >
-              {{ EVENT_COLORS.riftbound.name }}
-              <svg
-                class="w-3 h-3 opacity-70"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </button>
+            <CalendarCategoryPill
+              v-for="category in categoryPills"
+              :key="category.key"
+              :label="category.label"
+              :background-color="category.bg"
+              :text-color="category.text"
+              :is-active="isCategoryVisible(category.key)"
+              @select="openTypeFilter(category.key)"
+              @toggle="toggleCategoryVisibility(category.key)"
+            />
           </div>
         </div>
 
@@ -213,74 +127,69 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import CalendarCategoryPill from "./CalendarCategoryPill.vue";
 import EventDetailsPopover from "./EventDetailsPopover.vue";
 import { EVENT_COLORS } from "~/utils/eventColors";
-import { parseEventTags, type TagType } from "~/types/eventTags";
 import {
   getDateKeyInTimeZone,
   getUserTimeZone,
 } from "~/utils/eventDateTime";
-
-interface CalendarEvent {
-  id: number | string;
-  title: string;
-  start: string;
-  type: "external" | "cup" | "local" | "challenge" | "custom" | "riftbound";
-  isCustom?: boolean;
-}
-
-interface ParsedEvent {
-  id: string;
-  title: string;
-  name?: string;
-  dateTime: string;
-  time?: string;
-  type: string;
-  venue: string;
-  location: string;
-  country: string;
-  link: string;
-  cost?: string;
-  streetAddress?: string;
-  icon?: string;
-  isCustomEvent?: boolean;
-  eventType?: string;
-}
-
-interface CustomEvent {
-  id: string | number;
-  name: string;
-  eventDate: string;
-  venue: string;
-  maxParticipants: number;
-  participationFee: number;
-  registrationCount?: number;
-  eventType?: "custom" | "challenge" | "cup" | "local";
-  tags?: any;
-  tagType?: string;
-}
+import {
+  CALENDAR_CATEGORY_DEFINITIONS,
+  eventMatchesCategory,
+  getCalendarCategoryTitle,
+  isUpcomingCalendarEvent,
+  normalizeCustomCalendarEvent,
+  normalizeExternalCalendarEvent,
+  sortCalendarEvents,
+  type CalendarCategory,
+  type CalendarEventType,
+  type CustomCalendarEvent,
+  type ExternalCalendarEvent,
+  type UnifiedCalendarEvent,
+} from "~/utils/calendarEventUtils";
 
 const userTimeZone = getUserTimeZone();
 
 const today = new Date();
 const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+const todayKey = getDateKeyInTimeZone(new Date().toISOString(), userTimeZone);
+const categoryPills = CALENDAR_CATEGORY_DEFINITIONS;
+const calendarTypePriority: CalendarEventType[] = [
+  "challenge",
+  "cup",
+  "prerelease",
+  "custom",
+  "local",
+  "riftbound",
+];
+const dotColors: Record<CalendarEventType, string> = {
+  custom: EVENT_COLORS.custom.text,
+  cup: "#16a34a",
+  challenge: EVENT_COLORS.challenge.text,
+  local: EVENT_COLORS.local.text,
+  prerelease: EVENT_COLORS.prerelease.text,
+  riftbound: EVENT_COLORS.riftbound.text,
+};
 
 const eventStore = useEventStore();
-const customEvents = ref<CustomEvent[]>([]);
+const customEvents = ref<CustomCalendarEvent[]>([]);
 const isLoading = ref(false);
 const selectedDate = ref<string | null>(null);
-const selectedDateEvents = ref<ParsedEvent[]>([]);
-const selectedEventType = ref<string | null>(null);
+const selectedDateEvents = ref<UnifiedCalendarEvent[]>([]);
+const selectedEventType = ref<CalendarCategory | null>(null);
 const showTypeFilterModal = ref(false);
 const showNoEventsToast = ref(false);
 const noEventsMessage = ref("");
+const disabledCategories = ref<Set<CalendarCategory>>(new Set());
 
 // Fetch custom events
 const fetchCustomEvents = async () => {
   try {
-    const response = await $fetch<{ success: boolean; events: CustomEvent[] }>(
-      "/api/events/custom"
-    );
+    const response = await $fetch<{
+      success: boolean;
+      events: CustomCalendarEvent[];
+    }>("/api/events/custom");
     if (response.success && response.events) {
       customEvents.value = response.events;
     }
@@ -300,79 +209,71 @@ onMounted(async () => {
   }
 });
 
-// Helper function to determine actual event type from tags
-const getActualEventType = (event: CustomEvent): CalendarEvent["type"] => {
-  // First, try to parse tags if they exist
-  if (event.tags && event.tagType) {
-    const parsedTags = parseEventTags(event.tags, event.tagType as TagType);
+const allCalendarEvents = computed<UnifiedCalendarEvent[]>(() => {
+  const storeEvents = Array.isArray(eventStore.events.value)
+    ? eventStore.events.value
+    : [];
 
-    // Check if it's a Riftbound event (any game under riftbound tag)
-    if (event.tagType === "riftbound") {
-      return "riftbound";
+  return sortCalendarEvents([
+    ...storeEvents.map((event: ExternalCalendarEvent) =>
+      normalizeExternalCalendarEvent(event)
+    ),
+    ...customEvents.value.map((event) =>
+      normalizeCustomCalendarEvent(event, userTimeZone)
+    ),
+  ]);
+});
+
+const isCategoryVisible = (category: CalendarCategory) =>
+  !disabledCategories.value.has(category);
+
+const visibleCalendarEvents = computed(() =>
+  allCalendarEvents.value.filter((event) => {
+    if (event.type === "local" && !event.isCustomEvent) {
+      return true;
     }
 
-    // Check if it's a Pokemon event with a specific type
-    if (parsedTags.game === "Pokemon" && parsedTags.type) {
-      // Map Pokemon event types to calendar types
-      if (parsedTags.type === "league_cup") return "cup";
-      if (parsedTags.type === "league_challenge") return "challenge";
-      if (parsedTags.type === "local") return "local";
-    }
+    return categoryPills
+      .filter((category) => !disabledCategories.value.has(category.key))
+      .some((category) => eventMatchesCategory(event, category.key));
+  })
+);
+
+const getBackgroundForTypes = (types: CalendarEventType[]) => {
+  const orderedTypes = [...types].sort(
+    (first, second) =>
+      calendarTypePriority.indexOf(first) - calendarTypePriority.indexOf(second)
+  );
+  const uniqueColors = orderedTypes.map((type) => {
+    if (type === "cup") return EVENT_COLORS.cup.bg;
+    if (type === "challenge") return EVENT_COLORS.challenge.bg;
+    if (type === "prerelease") return EVENT_COLORS.prerelease.bg;
+    if (type === "custom") return EVENT_COLORS.custom.bg;
+    if (type === "riftbound") return EVENT_COLORS.riftbound.bg;
+    return EVENT_COLORS.local.bg;
+  });
+
+  if (uniqueColors.length <= 1) {
+    return uniqueColors[0] || EVENT_COLORS.local.bg;
   }
 
-  // Fall back to eventType or "custom"
-  return (event.eventType || "custom") as CalendarEvent["type"];
+  const step = 100 / uniqueColors.length;
+  const segments = uniqueColors.map((color, index) => {
+    const start = Math.round(index * step);
+    const end = Math.round((index + 1) * step);
+    return `${color} ${start}%, ${color} ${end}%`;
+  });
+
+  return `linear-gradient(135deg, ${segments.join(", ")})`;
 };
 
 // Build calendar attributes with automatic highlighting
 const calendarAttributes = computed(() => {
   const attributes: Array<Record<string, unknown>> = [];
-  const eventsByDate = new Map<string, CalendarEvent[]>();
-
-  // Safely get events array - eventStore.events is a ref, need .value
-  const storeEvents = Array.isArray(eventStore.events.value)
-    ? eventStore.events.value
-    : [];
-
-  // Combine regular and custom events
-  const allEvents: CalendarEvent[] = [
-    ...storeEvents.map((event: any) => {
-      // Use icon field to determine event type
-      let eventType = "local";
-      if (event.icon === "cup") {
-        eventType = "cup";
-      } else if (event.icon === "chall") {
-        eventType = "challenge";
-      } else if (event.icon === "pre") {
-        eventType = "local"; // Pre-release events as local type
-      } else if (event.icon === "friendly") {
-        eventType = "local";
-      }
-
-      // Handle date extraction - dateTime might be "YYYY-MM-DD" or "YYYY-MM-DD HH:MM:SS"
-      const dateOnly = event.dateTime.includes(" ")
-        ? event.dateTime.split(" ")[0]
-        : event.dateTime;
-
-      return {
-        id: event.id,
-        title: event.title,
-        start: dateOnly,
-        type: eventType,
-        isCustom: false,
-      };
-    }),
-    ...customEvents.value.map((event: CustomEvent) => ({
-      id: event.id,
-      title: event.name,
-      start: getDateKeyInTimeZone(event.eventDate, userTimeZone),
-      type: getActualEventType(event),
-      isCustom: true,
-    })),
-  ];
+  const eventsByDate = new Map<string, UnifiedCalendarEvent[]>();
 
   // Group by date
-  allEvents.forEach((event) => {
+  visibleCalendarEvents.value.forEach((event) => {
     if (!eventsByDate.has(event.start)) {
       eventsByDate.set(event.start, []);
     }
@@ -381,59 +282,8 @@ const calendarAttributes = computed(() => {
 
   // Create highlights for each date
   eventsByDate.forEach((dayEvents, dateKey) => {
-    const hasCustom = dayEvents.some((e) => e.type === "custom");
-    const hasCup = dayEvents.some((e) => e.type === "cup");
-    const hasChallenge = dayEvents.some((e) => e.type === "challenge");
-    const hasLocal = dayEvents.some((e) => e.type === "local");
-    const hasRiftbound = dayEvents.some((e) => e.type === "riftbound");
-
-    // Determine background color/gradient based on event types
-    // Using centralized EVENT_COLORS
-    // Priority: Cup/Challenge first (even if from custom events), then custom, then local
-    let bgColor = EVENT_COLORS.local.bg; // default fallback
-    let background = "";
-
-    if (hasCup && hasChallenge) {
-      // Both cup and challenge: soft blue left, soft green right
-      background = `linear-gradient(to bottom right, ${EVENT_COLORS.challenge.bg} 0%, ${EVENT_COLORS.challenge.bg} 50%, ${EVENT_COLORS.cup.bg} 50%, ${EVENT_COLORS.cup.bg} 100%)`;
-      bgColor = EVENT_COLORS.cup.bg;
-    } else if (hasCup && hasLocal) {
-      // Cup and local: soft sky blue left, soft green right
-      background = `linear-gradient(to bottom right, ${EVENT_COLORS.local.bg} 0%, ${EVENT_COLORS.local.bg} 50%, ${EVENT_COLORS.cup.bg} 50%, ${EVENT_COLORS.cup.bg} 100%)`;
-      bgColor = EVENT_COLORS.cup.bg;
-    } else if (hasChallenge && hasLocal) {
-      // Challenge and local: soft sky blue left, soft blue right
-      background = `linear-gradient(to bottom right, ${EVENT_COLORS.local.bg} 0%, ${EVENT_COLORS.local.bg} 50%, ${EVENT_COLORS.challenge.bg} 50%, ${EVENT_COLORS.challenge.bg} 100%)`;
-      bgColor = EVENT_COLORS.challenge.bg;
-    } else if (hasCup && hasCustom) {
-      // Cup and custom: soft orange left, soft green right
-      background = `linear-gradient(to bottom right, ${EVENT_COLORS.custom.bg} 0%, ${EVENT_COLORS.custom.bg} 50%, ${EVENT_COLORS.cup.bg} 50%, ${EVENT_COLORS.cup.bg} 100%)`;
-      bgColor = EVENT_COLORS.cup.bg;
-    } else if (hasChallenge && hasCustom) {
-      // Challenge and custom: soft orange left, soft blue right
-      background = `linear-gradient(to bottom right, ${EVENT_COLORS.custom.bg} 0%, ${EVENT_COLORS.custom.bg} 50%, ${EVENT_COLORS.challenge.bg} 50%, ${EVENT_COLORS.challenge.bg} 100%)`;
-      bgColor = EVENT_COLORS.challenge.bg;
-    } else if (hasCup) {
-      // Cup only: soft green
-      bgColor = EVENT_COLORS.cup.bg;
-      background = bgColor;
-    } else if (hasChallenge) {
-      // Challenge only: soft blue
-      bgColor = EVENT_COLORS.challenge.bg;
-      background = bgColor;
-    } else if (hasRiftbound) {
-      // Riftbound only: soft purple
-      bgColor = EVENT_COLORS.riftbound.bg;
-      background = bgColor;
-    } else if (hasCustom) {
-      // Custom events: soft orange
-      bgColor = EVENT_COLORS.custom.bg;
-      background = bgColor;
-    } else {
-      // Local events: soft sky blue
-      bgColor = EVENT_COLORS.local.bg;
-      background = bgColor;
-    }
+    const uniqueTypes = [...new Set(dayEvents.map((event) => event.type))];
+    const background = getBackgroundForTypes(uniqueTypes);
 
     attributes.push({
       key: `highlight-${dateKey}`,
@@ -448,36 +298,9 @@ const calendarAttributes = computed(() => {
           background: background,
         },
       },
-      customData: {
-        hasEvents: true,
-      },
     });
 
-    // Add purple dot for riftbound events
-    if (hasRiftbound) {
-      attributes.push({
-        key: `riftbound-dot-${dateKey}`,
-        dates: new Date(dateKey),
-        dot: {
-          style: {
-            backgroundColor: EVENT_COLORS.riftbound.bg, // soft purple
-          },
-        },
-      });
-    }
-
-    // Add dots for multiple event types - use darker shades for better visibility
-    const uniqueTypes = [...new Set(dayEvents.map((e) => e.type))];
     uniqueTypes.forEach((type) => {
-      // Use text colors from EVENT_COLORS for dots (they're darker and more visible)
-      // Exception: cup uses medium green for better visibility
-      const dotColors: Record<string, string> = {
-        custom: EVENT_COLORS.custom.text,
-        cup: "#16a34a", // green-600 - lighter than text color
-        challenge: EVENT_COLORS.challenge.text,
-        local: EVENT_COLORS.local.text,
-      };
-
       attributes.push({
         key: `dot-${dateKey}-${type}`,
         dates: new Date(dateKey),
@@ -497,49 +320,9 @@ const calendarAttributes = computed(() => {
 const onDayClick = (day: any) => {
   const clickedDate = day.id;
   selectedDate.value = clickedDate;
-
-  const storeEvents = Array.isArray(eventStore.events.value)
-    ? eventStore.events.value
-    : [];
-
-  const regularEvents = storeEvents
-    .filter((event: any) => {
-      const eventDate = event.dateTime.includes(" ")
-        ? event.dateTime.split(" ")[0]
-        : event.dateTime;
-      return eventDate === clickedDate;
-    })
-    .map(
-      (event: any): ParsedEvent => ({
-        ...event,
-        isCustomEvent: false,
-      })
-    );
-
-  const customEventsForDate = customEvents.value
-    .filter((event: CustomEvent) => {
-      const eventDate = getDateKeyInTimeZone(event.eventDate, userTimeZone);
-      return eventDate === clickedDate;
-    })
-    .map(
-      (event: CustomEvent): ParsedEvent => ({
-        id: String(event.id),
-        title: event.name,
-        name: event.name,
-        dateTime: event.eventDate,
-        type: event.eventType || "custom",
-        venue: event.venue,
-        location: "",
-        country: "",
-        link: "",
-        isCustomEvent: true,
-        eventType: event.eventType,
-        tags: (event as any).tags,
-        tagType: (event as any).tagType,
-      })
-    );
-
-  selectedDateEvents.value = [...customEventsForDate, ...regularEvents];
+  selectedDateEvents.value = visibleCalendarEvents.value.filter(
+    (event) => event.start === clickedDate
+  );
 };
 
 const closeEventDetails = () => {
@@ -559,77 +342,14 @@ const formatSelectedDate = computed(() => {
 });
 
 // Type filter functions
-const openTypeFilter = (type: string) => {
+const openTypeFilter = (type: CalendarCategory) => {
   selectedEventType.value = type;
 
-  // Check if there are any events for this type
-  const todayDate = new Date();
-  todayDate.setHours(0, 0, 0, 0);
-
-  const storeEvents = Array.isArray(eventStore.events.value)
-    ? eventStore.events.value
-    : [];
-
-  // Count regular events of this type
-  let hasRegularEvents = false;
-  if (type === "cup" || type === "challenge") {
-    hasRegularEvents = storeEvents.some((event: any) => {
-      const eventDate = new Date(
-        event.dateTime.includes(" ")
-          ? event.dateTime.split(" ")[0]
-          : event.dateTime
-      );
-      eventDate.setHours(0, 0, 0, 0);
-
-      if (eventDate < todayDate) return false;
-
-      if (type === "cup") {
-        return (
-          event.type?.toLowerCase().includes("cup") ||
-          event.icon === "cup" ||
-          event.type === "cup"
-        );
-      } else {
-        return (
-          event.type?.toLowerCase().includes("challenge") ||
-          event.icon === "chall" ||
-          event.type === "challenge"
-        );
-      }
-    });
-  }
-
-  // Count custom events of this type
-  let hasCustomEvents = false;
-  if (type === "custom") {
-    hasCustomEvents = customEvents.value.some((event: CustomEvent) => {
-      const eventDate = new Date(event.eventDate);
-      eventDate.setHours(0, 0, 0, 0);
-      return (
-        eventDate >= todayDate &&
-        event.eventType !== "cup" &&
-        event.eventType !== "challenge"
-      );
-    });
-  } else if (type === "cup" || type === "challenge") {
-    hasCustomEvents = customEvents.value.some((event: CustomEvent) => {
-      const eventDate = new Date(event.eventDate);
-      eventDate.setHours(0, 0, 0, 0);
-      return eventDate >= todayDate && event.eventType === type;
-    });
-  }
-
-  // If no events found, show toast
-  if (!hasRegularEvents && !hasCustomEvents) {
-    const typeNames: Record<string, string> = {
-      cup: EVENT_COLORS.cup.name,
-      challenge: EVENT_COLORS.challenge.name,
-      custom: EVENT_COLORS.custom.name,
-    };
-    noEventsMessage.value = `No upcoming ${typeNames[type] || "events"} found.`;
+  if (filteredEventsByType.value.length === 0) {
+    showTypeFilterModal.value = false;
+    noEventsMessage.value = `No upcoming ${getCalendarCategoryTitle(type)} found.`;
     showNoEventsToast.value = true;
 
-    // Auto-hide toast after 3 seconds
     setTimeout(() => {
       showNoEventsToast.value = false;
     }, 3000);
@@ -648,128 +368,39 @@ const closeTypeFilter = () => {
 
 const typeFilterModalTitle = computed(() => {
   if (!selectedEventType.value) return "";
-  const typeNames: Record<string, string> = {
-    cup: EVENT_COLORS.cup.name,
-    challenge: EVENT_COLORS.challenge.name,
-    custom: EVENT_COLORS.custom.name,
-  };
-  return `Upcoming ${typeNames[selectedEventType.value] || "Events"}`;
+  return `Upcoming ${getCalendarCategoryTitle(selectedEventType.value)}`;
 });
 
 const filteredEventsByType = computed(() => {
   if (!selectedEventType.value) return [];
 
-  const todayDate = new Date();
-  todayDate.setHours(0, 0, 0, 0);
-
-  // Filter regular events
-  const storeEvents = Array.isArray(eventStore.events.value)
-    ? eventStore.events.value
-    : [];
-
-  const regularEvents = storeEvents
-    .filter((event: any) => {
-      const eventDate = new Date(
-        event.dateTime.includes(" ")
-          ? event.dateTime.split(" ")[0]
-          : event.dateTime
+  return sortCalendarEvents(
+    allCalendarEvents.value.filter((event) => {
+      return (
+        isUpcomingCalendarEvent(event, todayKey) &&
+        eventMatchesCategory(event, selectedEventType.value!)
       );
-      eventDate.setHours(0, 0, 0, 0);
-
-      // Check if event is today or in the future
-      if (eventDate < todayDate) return false;
-
-      // Match event type
-      if (selectedEventType.value === "cup") {
-        return (
-          event.type?.toLowerCase().includes("cup") ||
-          event.icon === "cup" ||
-          event.type === "cup"
-        );
-      } else if (selectedEventType.value === "challenge") {
-        return (
-          event.type?.toLowerCase().includes("challenge") ||
-          event.icon === "chall" ||
-          event.type === "challenge"
-        );
-      }
-      return false;
     })
-    .map(
-      (event: any): ParsedEvent => ({
-        ...event,
-        isCustomEvent: false,
-      })
-    );
+  );
+});
 
-  // Filter custom events based on selectedEventType
-  let filteredCustomEvents: ParsedEvent[] = [];
+const toggleCategoryVisibility = (category: CalendarCategory) => {
+  const next = new Set(disabledCategories.value);
 
-  if (selectedEventType.value === "custom") {
-    // For "Locals" button: only show custom events that are NOT cup or challenge
-    filteredCustomEvents = customEvents.value
-      .filter((event: CustomEvent) => {
-        const eventDate = new Date(event.eventDate);
-        eventDate.setHours(0, 0, 0, 0);
-        return (
-          eventDate >= todayDate &&
-          event.eventType !== "cup" &&
-          event.eventType !== "challenge"
-        );
-      })
-      .map(
-        (event: CustomEvent): ParsedEvent => ({
-          id: String(event.id),
-          title: event.name,
-          name: event.name,
-          dateTime: event.eventDate,
-          type: event.eventType || "custom",
-          venue: event.venue,
-          location: "",
-          country: "",
-          link: "",
-          isCustomEvent: true,
-          eventType: event.eventType,
-        })
-      );
-  } else if (
-    selectedEventType.value === "cup" ||
-    selectedEventType.value === "challenge"
-  ) {
-    // For Cup/Challenge buttons: include custom events with matching eventType
-    filteredCustomEvents = customEvents.value
-      .filter((event: CustomEvent) => {
-        const eventDate = new Date(event.eventDate);
-        eventDate.setHours(0, 0, 0, 0);
-        return (
-          eventDate >= todayDate && event.eventType === selectedEventType.value
-        );
-      })
-      .map(
-        (event: CustomEvent): ParsedEvent => ({
-          id: String(event.id),
-          title: event.name,
-          name: event.name,
-          dateTime: event.eventDate,
-          type: event.eventType || "custom",
-          venue: event.venue,
-          location: "",
-          country: "",
-          link: "",
-          isCustomEvent: true,
-          eventType: event.eventType,
-        })
-      );
+  if (next.has(category)) {
+    next.delete(category);
+  } else {
+    next.add(category);
   }
 
-  // Combine and sort by date
-  const allEvents = [...regularEvents, ...filteredCustomEvents];
-  return allEvents.sort((a, b) => {
-    const dateA = new Date(a.dateTime);
-    const dateB = new Date(b.dateTime);
-    return dateA.getTime() - dateB.getTime();
-  });
-});
+  disabledCategories.value = next;
+
+  if (selectedDate.value) {
+    selectedDateEvents.value = visibleCalendarEvents.value.filter(
+      (event) => event.start === selectedDate.value
+    );
+  }
+};
 </script>
 
 <style scoped>
