@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import {
   CalendarDaysIcon,
   DocumentIcon,
@@ -24,12 +24,66 @@ const {
 // Admin composable - now uses server-side verification
 const { isAdmin, user: adminUser, loading } = useAdmin();
 
+type HeaderRegistration = {
+  entryType?: "registration" | "bookmark";
+  customEventId: string | null;
+  status: string;
+  customEvent?: {
+    id: string;
+    eventDate: string;
+    status: string;
+  };
+};
+
+const myTournamentTarget = ref<string | null>(null);
+const myTournamentCount = ref(0);
+let myTournamentTimer: ReturnType<typeof setInterval> | null = null;
+
 // Mobile logout handler - close menu first, then logout
 const handleMobileLogout = async () => {
   mobileMenuOpen.value = false;
   // Small delay to let menu close animation complete
   await new Promise((resolve) => setTimeout(resolve, 150));
   await logout();
+};
+
+const loadMyTournamentNav = async () => {
+  if (!authUser.value) {
+    myTournamentTarget.value = null;
+    myTournamentCount.value = 0;
+    return;
+  }
+
+  try {
+    const registrations = await $fetch<HeaderRegistration[]>(
+      "/api/dashboard/registrations",
+    );
+    const now = Date.now();
+    const eligible = (registrations || [])
+      .filter((registration) => registration.entryType !== "bookmark")
+      .filter((registration) => registration.customEventId && registration.customEvent?.id)
+      .filter((registration) => registration.status !== "cancelled")
+      .filter((registration) => {
+        const status = registration.customEvent?.status;
+        return status === "upcoming" || status === "ongoing" || status === "on_hold";
+      })
+      .filter((registration) => {
+        const eventDate = new Date(registration.customEvent!.eventDate).getTime();
+        return now >= eventDate - 15 * 60 * 1000;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.customEvent!.eventDate).getTime() -
+          new Date(b.customEvent!.eventDate).getTime(),
+      );
+
+    myTournamentCount.value = eligible.length;
+    myTournamentTarget.value =
+      eligible.length > 0 ? `/tournaments/${eligible[0].customEvent!.id}` : null;
+  } catch {
+    myTournamentTarget.value = null;
+    myTournamentCount.value = 0;
+  }
 };
 
 onMounted(async () => {
@@ -51,17 +105,28 @@ onMounted(async () => {
       }
     }
   }
+
+  await loadMyTournamentNav();
+  myTournamentTimer = setInterval(loadMyTournamentNav, 60_000);
 });
 
 // Watch for auth state changes - no need to set userName, it's computed in useAuth
 watch(
   [authUser, adminUser],
-  ([newAuthUser, newAdminUser]) => {
+  async ([newAuthUser, newAdminUser]) => {
     // Session validation happens automatically through useAuth
     // userName is now a computed property from useAuth
+    await loadMyTournamentNav();
   },
   { immediate: true },
 );
+
+onBeforeUnmount(() => {
+  if (myTournamentTimer) {
+    clearInterval(myTournamentTimer);
+    myTournamentTimer = null;
+  }
+});
 
 const route = useRoute();
 
@@ -129,6 +194,16 @@ const { t } = useI18n();
                   <span>{{ t("nav.events") }}</span>
                 </NuxtLink>
 
+                <NuxtLink
+                  v-if="myTournamentTarget"
+                  :to="myTournamentTarget"
+                  class="nav-link"
+                >
+                  <DocumentIcon class="w-4 h-4" />
+                  <span>{{ t("nav.myTournaments") }}</span>
+                  <span v-if="myTournamentCount > 1" class="nav-count">{{ myTournamentCount }}</span>
+                </NuxtLink>
+
                 <!-- Dashboard for logged-in users -->
                 <NuxtLink
                   v-if="userName"
@@ -179,6 +254,17 @@ const { t } = useI18n();
             >
               <CalendarDaysIcon class="w-5 h-5" />
               <span>{{ t("nav.events") }}</span>
+            </NuxtLink>
+
+            <NuxtLink
+              v-if="myTournamentTarget"
+              :to="myTournamentTarget"
+              @click="mobileMenuOpen = false"
+              class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
+            >
+              <DocumentIcon class="w-5 h-5" />
+              <span>{{ t("nav.myTournaments") }}</span>
+              <span v-if="myTournamentCount > 1" class="nav-count">{{ myTournamentCount }}</span>
             </NuxtLink>
 
             <!-- Dashboard for logged-in users -->
@@ -365,6 +451,21 @@ const { t } = useI18n();
 .signin-button:hover {
   background: linear-gradient(to right, #111827, #000000);
   transform: translateY(-1px) scale(1.05);
+}
+
+.nav-count {
+  margin-left: 0.25rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #0ea5e9;
+  color: #ffffff;
+  padding: 0 0.3rem;
 }
 
 /* Mobile responsive adjustments */

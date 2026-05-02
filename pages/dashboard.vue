@@ -43,9 +43,9 @@
         v-else-if="registrations.length === 0"
         class="bg-[#2f3136] rounded-lg shadow-sm border border-[#202225] p-8 text-center"
       >
-        <h3 class="text-2xl font-semibold text-white mb-2">No Events Yet</h3>
+        <h3 class="text-2xl font-semibold text-white mb-2">{{ t("dashboard.emptyTitle") }}</h3>
         <p class="text-gray-300 mb-6">
-          You have no registrations or bookmarked external events yet.
+          {{ t("dashboard.emptyText") }}
         </p>
         <NuxtLink
           to="/events"
@@ -127,7 +127,7 @@
                       d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
                     />
                   </svg>
-                  {{ registration.ticketCount }} Tickets
+                  {{ t("dashboard.ticketCount", { count: registration.ticketCount }) }}
                 </div>
               </div>
               <span
@@ -148,6 +148,13 @@
               >
                 {{ formatStatus(registration.status) }}
               </span>
+            </div>
+
+            <div
+              v-if="registration.tournamentPlacement"
+              class="mb-3 text-sm font-semibold text-emerald-300"
+            >
+              Platzierung: #{{ registration.tournamentPlacement }}
             </div>
 
             <!-- Event Details -->
@@ -181,8 +188,8 @@
                 <span class="text-sm">
                   {{
                     registration.entryType === "bookmark"
-                      ? "Vorgemerkt:"
-                      : "Registered:"
+                      ? t("dashboard.bookmarkedAt")
+                      : t("dashboard.registeredAt")
                   }}
                   {{ formatRegistrationDate(registration.registeredAt) }}
                 </span>
@@ -191,26 +198,50 @@
 
             <!-- Edit Booking Button -->
             <div class="mt-4 pt-4 border-t border-[#202225]">
-              <NuxtLink
+              <div
                 v-if="registration.entryType !== 'bookmark'"
-                :to="`/booking/${registration.id}`"
-                class="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg"
+                class="grid gap-3 sm:grid-cols-2"
               >
-                <svg
-                  class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <NuxtLink
+                  :to="`/booking/${registration.id}`"
+                  class="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                <span>Manage Booking & Tickets</span>
-              </NuxtLink>
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  <span>{{ t("dashboard.manageBooking") }}</span>
+                </NuxtLink>
+                <NuxtLink
+                  v-if="registration.customEventId"
+                  :to="`/tournaments/${registration.customEventId}`"
+                  class="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg"
+                >
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 17v-6m4 6V7m4 10V4M5 20h14"
+                    />
+                  </svg>
+                  <span>{{ t("dashboard.tournamentView") }}</span>
+                </NuxtLink>
+              </div>
               <div v-else class="grid gap-3 sm:grid-cols-2">
                 <a
                   v-if="registration.externalRegistrationUrl"
@@ -232,7 +263,7 @@
                       d="M13.5 6H18m0 0v4.5M18 6l-7.5 7.5M7.5 9H6A1.5 1.5 0 004.5 10.5v7.5A1.5 1.5 0 006 19.5h7.5a1.5 1.5 0 001.5-1.5v-1.5"
                     />
                   </svg>
-                  <span>Eventdetails</span>
+                  <span>{{ t("dashboard.eventDetails") }}</span>
                 </a>
                 <button
                   type="button"
@@ -252,7 +283,7 @@
                       d="M5 5l14 14M19 5L5 19"
                     />
                   </svg>
-                  <span>Entfernen</span>
+                  <span>{{ t("dashboard.remove") }}</span>
                 </button>
               </div>
             </div>
@@ -288,7 +319,7 @@
                         'text-green-300': !needsAttention(registration),
                       }"
                     >
-                      Decklist Status
+                      {{ t("dashboard.decklistStatus") }}
                     </h4>
                     <p
                       class="text-xs sm:text-sm"
@@ -298,10 +329,9 @@
                       }"
                     >
                       <span v-if="needsAttention(registration)">
-                        {{ getTicketsNeedingAttention(registration) }} ticket(s)
-                        need decklist submission
+                        {{ t("dashboard.decklistNeeded", { count: getTicketsNeedingAttention(registration) }) }}
                       </span>
-                      <span v-else> All tickets have decklists </span>
+                      <span v-else>{{ t("dashboard.allDecklistsPresent") }}</span>
                     </p>
                   </div>
                 </div>
@@ -309,7 +339,7 @@
                   v-if="needsAttention(registration)"
                   class="px-2 py-1 text-xs font-medium bg-yellow-500 text-gray-900 rounded-full flex-shrink-0"
                 >
-                  Action Required
+                  {{ t("dashboard.actionRequired") }}
                 </span>
               </div>
             </div>
@@ -365,6 +395,7 @@ interface EventRegistration {
   bringingDecklistOnsite?: boolean | null;
   isExternalEvent?: boolean;
   eventType?: string;
+  tournamentPlacement?: number | null;
   externalRegistrationUrl?: string | null;
   ticketCount?: number;
   tickets?: Array<{
@@ -433,7 +464,7 @@ const removeBookmark = async (registration: EventRegistration) => {
   }
 
   const shouldRemove = window.confirm(
-    `Vormerkung fuer "${registration.customEvent.name}" entfernen?`,
+    t("dashboard.removeBookmarkConfirm", { eventName: registration.customEvent.name }),
   );
 
   if (!shouldRemove) {

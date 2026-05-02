@@ -43,7 +43,8 @@
     "bannerSettings": "Banner Settings",
     "customEvents": "Custom Events",
     "eventHistory": "Event History",
-    "hello": "Hello"
+    "hello": "Hello",
+    "myTournaments": "My Tournaments"
   },
   "auth": {
     "signIn": "Sign In",
@@ -75,7 +76,21 @@
     "reserved": "Reserved",
     "attended": "Attended",
     "noShow": "No Show",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "emptyTitle": "No events yet",
+    "emptyText": "You have no registrations or bookmarked external events yet.",
+    "ticketCount": "{count} Tickets",
+    "bookmarkedAt": "Bookmarked:",
+    "registeredAt": "Registered:",
+    "manageBooking": "Manage Booking",
+    "tournamentView": "My Tournament View",
+    "eventDetails": "Event Details",
+    "remove": "Remove",
+    "decklistStatus": "Decklist Status",
+    "decklistNeeded": "{count} ticket(s) need decklist submission",
+    "allDecklistsPresent": "All tickets have decklists",
+    "actionRequired": "Action Required",
+    "removeBookmarkConfirm": "Remove bookmark for \"{eventName}\"?"
   },
   "landingPage": {
     "calendarTitle": "Event Calendar",
@@ -393,5 +408,40 @@
     "minutesAgo": "{count} minutes ago | {count} minute ago | {count} minutes ago",
     "hoursAgo": "{count} hours ago | {count} hour ago | {count} hours ago",
     "daysAgo": "{count} days ago | {count} day ago | {count} days ago"
+  },
+  "tournamentPlayer": {
+    "title": "My Tournament Run",
+    "points": "{count} pts",
+    "currentRound": "Current Round",
+    "refresh": "Refresh",
+    "loadingState": "Loading tournament data...",
+    "roundLabel": "Round:",
+    "divisionLabel": "Division:",
+    "tableLabel": "Table:",
+    "opponentLabel": "Opponent:",
+    "statusLabel": "Status:",
+    "opponentReported": "Your opponent has already submitted a result.",
+    "disputeWindow": "Dispute window: {seconds}s",
+    "impersonationView": "Impersonation view: result submission is disabled.",
+    "win": "Win",
+    "loss": "Loss",
+    "draw": "Draw",
+    "pairingsNotReleased": "Pairings exist but have not been released yet.",
+    "noOpenPairing": "You currently have no open pairing.",
+    "myRounds": "My Rounds",
+    "round": "Round",
+    "division": "Division",
+    "opponent": "Opponent",
+    "table": "Table",
+    "result": "Result",
+    "errorLoad": "Failed to load tournament run.",
+    "errorSubmit": "Failed to submit result.",
+    "outcomes": {
+      "pending": "Pending",
+      "winLossRecorded": "Win/loss recorded",
+      "draw": "Draw",
+      "byeWin": "Bye (win)",
+      "doubleGameLoss": "Double game loss"
+    }
   }
 }
