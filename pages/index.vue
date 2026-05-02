@@ -268,11 +268,12 @@ import EventCalendarCard from "~/components/landingPageCards/calendar/EventCalen
 import EventMiniDashboardCard from "~/components/landingPageCards/dashboard/EventMiniDashboardCard.vue";
 import GetStartedCard from "~/components/landingPageCards/GetStartedCard.vue";
 
-const { userName, user } = useAuth();
+const { userName, user, ensureValidSession } = useAuth();
 const { t } = useI18n();
 const activeTab = ref<"calendar" | "registrations">("calendar");
 const previousTab = ref<"calendar" | "registrations">("calendar");
 const registrationsCount = ref<number>(0);
+const sessionReady = ref(false);
 
 // Touch gesture tracking
 const touchStartX = ref(0);
@@ -317,26 +318,32 @@ const handleSwipe = () => {
   }
 };
 
-onMounted(async () => {
-  // Watch for userName changes to fetch registrations
-  watch(
-    userName,
-    async (newUserName) => {
-      if (newUserName) {
-        // Fetch registrations count
-        try {
-          const response = await $fetch("/api/dashboard/registrations");
-          if (response && response.data && Array.isArray(response.data)) {
-            registrationsCount.value = response.data.length;
-          }
-        } catch (error) {
-          console.error("Failed to fetch registrations count:", error);
+watch(
+  userName,
+  async (newUserName) => {
+    if (!sessionReady.value) return;
+
+    if (newUserName) {
+      // Fetch registrations count
+      try {
+        const response = await $fetch("/api/dashboard/registrations");
+        if (response && response.data && Array.isArray(response.data)) {
+          registrationsCount.value = response.data.length;
         }
-      } else {
-        registrationsCount.value = 0;
+      } catch (error) {
+        console.error("Failed to fetch registrations count:", error);
       }
-    },
-    { immediate: true },
-  );
+    } else {
+      registrationsCount.value = 0;
+    }
+  },
+  { immediate: true },
+);
+
+onMounted(async () => {
+  if (user.value) {
+    await ensureValidSession();
+  }
+  sessionReady.value = true;
 });
 </script>

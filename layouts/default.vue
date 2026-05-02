@@ -37,6 +37,7 @@ type HeaderRegistration = {
 
 const myTournamentTarget = ref<string | null>(null);
 const myTournamentCount = ref(0);
+const sessionReady = ref(false);
 let myTournamentTimer: ReturnType<typeof setInterval> | null = null;
 
 // Mobile logout handler - close menu first, then logout
@@ -48,6 +49,10 @@ const handleMobileLogout = async () => {
 };
 
 const loadMyTournamentNav = async () => {
+  if (!sessionReady.value) {
+    return;
+  }
+
   if (!authUser.value) {
     myTournamentTarget.value = null;
     myTournamentCount.value = 0;
@@ -106,6 +111,7 @@ onMounted(async () => {
     }
   }
 
+  sessionReady.value = true;
   await loadMyTournamentNav();
   myTournamentTimer = setInterval(loadMyTournamentNav, 60_000);
 });
