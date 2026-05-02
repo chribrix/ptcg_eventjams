@@ -1,7 +1,7 @@
 <template>
   <div class="event-history rounded-xl border border-[#202225] bg-[#2f3136] p-4 sm:p-6">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h2 class="text-2xl font-bold text-white">
           {{ t("eventHistory.title") }}
@@ -16,11 +16,11 @@
       </div>
 
       <!-- Filter Controls -->
-      <div class="flex items-center space-x-3">
+      <div class="grid grid-cols-1 gap-2 sm:flex sm:items-center sm:space-x-3 sm:gap-3 w-full sm:w-auto">
         <select
           v-model="selectedYear"
           @change="fetchEvents"
-          class="rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-100 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+          class="w-full sm:w-auto rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-100 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
         >
           <option value="">{{ t("eventHistory.allYears") }}</option>
           <option v-for="year in availableYears" :key="year" :value="year">
@@ -31,7 +31,7 @@
         <select
           v-model="sortBy"
           @change="sortEvents"
-          class="rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-100 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+          class="w-full sm:w-auto rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-100 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
         >
           <option value="date-desc">{{ t("eventHistory.newestFirst") }}</option>
           <option value="date-asc">{{ t("eventHistory.oldestFirst") }}</option>

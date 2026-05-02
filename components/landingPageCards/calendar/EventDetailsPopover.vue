@@ -160,12 +160,12 @@
 
                     <!-- Action buttons -->
                     <div
-                      class="flex justify-end gap-2 pt-2 border-t border-[#202225]"
+                      class="flex flex-col sm:flex-row sm:flex-wrap sm:justify-end gap-2 pt-2 border-t border-[#202225]"
                     >
                       <button
                         v-if="canBookmarkEvent(event)"
                         type="button"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200"
+                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200"
                         :class="
                           isBookmarked(event.id)
                             ? 'text-white bg-sky-600 hover:bg-sky-700'
@@ -186,7 +186,7 @@
                         :href="getGoogleMapsUrl(event)"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 bg-[#40444b] border border-[#202225] hover:bg-[#4f545c] hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
+                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-300 bg-[#40444b] border border-[#202225] hover:bg-[#4f545c] hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
                         @click.stop
                       >
                         <MapIcon class="w-3.5 h-3.5 flex-shrink-0" />
@@ -201,7 +201,7 @@
                             ? `/events/register/${event.id}`
                             : '/login'
                         "
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black shadow-sm transition-all duration-200 no-underline"
+                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black shadow-sm transition-all duration-200 no-underline"
                         @click.stop
                       >
                         <UserPlusIcon class="w-3.5 h-3.5 flex-shrink-0" />
@@ -212,7 +212,7 @@
                         :href="event.link"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 bg-[#40444b] border border-[#202225] hover:bg-[#4f545c] hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
+                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-300 bg-[#40444b] border border-[#202225] hover:bg-[#4f545c] hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
                         @click.stop
                       >
                         <LinkIcon class="w-3.5 h-3.5 flex-shrink-0" />

@@ -92,9 +92,13 @@
     "actionRequired": "Aktion erforderlich",
     "removeBookmarkConfirm": "Vormerkung für \"{eventName}\" entfernen?",
     "timelineTitle": "Zeitstrahl",
+    "timelinePlanningTitle": "Meine Eventplanung",
     "timelineEmpty": "Im aktuellen Fenster liegen keine vorgemerkten oder registrierten Turniere.",
     "timelineBookmarked": "Vorgemerkt",
-    "timelineRegistered": "Registriert"
+    "timelineRegistered": "Registriert",
+    "timelinePast": "Vergangen",
+    "openRoutePlanner": "Routenplaner öffnen",
+    "timelineEventDetails": "Eventdetails"
   },
   "landingPage": {
     "calendarTitle": "Eventkalender",
@@ -209,7 +213,6 @@
     "timeWindow14": "Nächste 14 Tage",
     "timeWindow30": "Nächste 30 Tage",
     "timeWindow90": "Nächste 90 Tage",
-    "registerableOnly": "Anmeldbar",
     "clearFilters": "Filter zurücksetzen",
     "type": "Typ",
     "filters": "Filter",
@@ -232,7 +235,7 @@
     "removeBookmark": "Vormerkung entfernen",
     "bookmarkEvent": "Event vormerken",
     "quickTipTitle": "Schnelltipp",
-    "quickFilterTip": "Nutze die Typ-Chips zusammen mit dem Zeitraum, um die Liste schneller einzugrenzen, oder aktiviere „Anmeldbar“, um Platzhalter auszublenden.",
+    "quickFilterTip": "Nutze die Typ-Chips zusammen mit dem Zeitraum, um die Liste schneller einzugrenzen.",
     "allTypes": "Alle Typen",
     "externalEventFallback": "Externes Event",
     "sourceOfficialFeed": "Offizieller Feed",

@@ -1,14 +1,11 @@
 <template>
-  <div class="min-h-screen bg-[#36393f] py-8 px-4">
+  <div class="min-h-screen bg-[#36393f] py-4 px-4">
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
-      <div class="mb-8 text-center">
-        <h1 class="text-4xl font-bold text-white mb-2">
+      <div class="mb-5 text-center">
+        <h1 class="text-3xl font-bold text-white sm:text-4xl">
           {{ t("dashboard.title") }}
         </h1>
-        <p class="text-lg text-gray-300">
-          {{ t("dashboard.subtitle") }}
-        </p>
       </div>
 
       <!-- Loading State -->
@@ -57,56 +54,109 @@
 
       <!-- Current Registrations List -->
       <div v-else>
-        <div class="mb-10 rounded-xl border border-[#202225] bg-[#2f3136] p-4 sm:p-6">
-          <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-7 rounded-xl border border-[#202225] bg-[#2f3136] p-3 sm:p-4">
+          <div class="mb-3 flex items-start justify-between gap-3">
             <div>
-              <h2 class="text-xl font-bold text-white">{{ t("dashboard.timelineTitle") }}</h2>
-              <p class="text-sm text-gray-300">{{ timelineRangeLabel }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                class="rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-200 hover:bg-[#4f545c]"
-                @click="shiftTimelineWindow(-14)"
-              >
-                -2 Wochen
-              </button>
-              <button
-                type="button"
-                class="rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-200 hover:bg-[#4f545c]"
-                @click="shiftTimelineWindow(14)"
-              >
-                +2 Wochen
-              </button>
+              <h2 class="text-lg font-bold text-white">{{ t("dashboard.timelinePlanningTitle") }}</h2>
+              <p class="text-xs text-gray-300">{{ timelineRangeLabel }}</p>
             </div>
           </div>
 
-          <div v-if="timelineEvents.length === 0" class="rounded-lg border border-[#202225] bg-[#36393f] p-4 text-sm text-gray-400">
-            {{ t("dashboard.timelineEmpty") }}
-          </div>
-
-          <div v-else class="flex gap-3 overflow-x-auto pb-2">
-            <article
-              v-for="entry in timelineEvents"
-              :key="`timeline-${entry.id}`"
-              class="min-w-[260px] max-w-[320px] rounded-lg border p-3"
-              :class="timelineCardClass(entry)"
-            >
-              <div class="mb-2 flex items-center justify-between gap-2">
-                <span class="rounded-full px-2 py-1 text-xs font-semibold" :class="timelineBadgeClass(entry)">
-                  {{ timelineBadgeLabel(entry) }}
-                </span>
-                <span class="text-xs" :class="entry.isPast ? 'text-gray-500' : 'text-gray-300'">
-                  {{ formatTimelineDate(entry.customEvent.eventDate) }}
-                </span>
-              </div>
-              <h3 class="text-sm font-semibold" :class="entry.isPast ? 'text-gray-400' : 'text-white'">
-                {{ entry.customEvent.name }}
+          <div class="mb-3 rounded-lg border border-[#202225] bg-[#36393f] p-2.5">
+            <div class="mb-2 flex items-center justify-between">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-300">
+                {{ miniCalendarMonthLabel }}
               </h3>
-              <p class="mt-1 text-xs" :class="entry.isPast ? 'text-gray-500' : 'text-gray-300'">
-                {{ entry.customEvent.venue }}
-              </p>
-            </article>
+            </div>
+            <div class="mb-1 grid grid-cols-7 gap-1">
+              <span
+                v-for="weekday in miniCalendarWeekdays"
+                :key="`wk-${weekday}`"
+                class="text-center text-[10px] font-semibold text-gray-500"
+              >
+                {{ weekday }}
+              </span>
+            </div>
+            <div class="grid grid-cols-7 gap-1">
+              <button
+                v-for="day in miniCalendarDays"
+                :key="day.key"
+                type="button"
+                class="h-7 rounded-md border text-[11px] font-semibold"
+                :class="miniCalendarDayClass(day)"
+                :disabled="!day.inMonth"
+                @click="day.event ? openTimelineModal(day.event) : null"
+              >
+                {{ day.label }}
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-3 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              class="rounded-lg border border-[#202225] bg-[#40444b] px-4 py-2.5 text-base font-semibold text-gray-100 shadow hover:bg-[#4f545c]"
+              @click="shiftTimelineWindowByMonth(-1)"
+            >
+              &lt; Früher
+            </button>
+            <button
+              type="button"
+              class="rounded-lg border border-[#202225] bg-[#40444b] px-4 py-2.5 text-base font-semibold text-gray-100 shadow hover:bg-[#4f545c]"
+              @click="shiftTimelineWindowByMonth(1)"
+            >
+              Später &gt;
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-if="selectedTimelineEntry"
+          class="fixed inset-0 z-50 flex items-end bg-black/60 p-0 sm:items-center sm:justify-center sm:p-4"
+          @click="selectedTimelineEntry = null"
+        >
+          <div
+            class="w-full rounded-t-2xl border border-[#202225] bg-[#2f3136] p-4 sm:max-w-md sm:rounded-2xl"
+            @click.stop
+          >
+            <div class="mb-3 flex items-start justify-between gap-3">
+              <h3 class="text-lg font-bold text-white">{{ selectedTimelineEntry.customEvent.name }}</h3>
+              <button
+                type="button"
+                class="rounded-md border border-[#202225] bg-[#40444b] px-2 py-1 text-sm text-gray-200 hover:bg-[#4f545c]"
+                @click="selectedTimelineEntry = null"
+              >
+                ×
+              </button>
+            </div>
+            <p class="text-sm text-gray-300">{{ formatEventDate(selectedTimelineEntry.customEvent.eventDate) }}</p>
+            <p class="mt-1 text-sm text-gray-300">{{ selectedTimelineEntry.customEvent.venue }}</p>
+            <div class="mt-4 grid grid-cols-1 gap-2">
+              <a
+                :href="routePlannerUrl(selectedTimelineEntry)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+              >
+                {{ t("dashboard.openRoutePlanner") }}
+              </a>
+              <NuxtLink
+                v-if="selectedTimelineEntry.customEventId"
+                :to="`/events/${selectedTimelineEntry.customEventId}`"
+                class="inline-flex items-center justify-center rounded-lg bg-[#40444b] px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-[#4f545c]"
+              >
+                {{ t("dashboard.timelineEventDetails") }}
+              </NuxtLink>
+              <a
+                v-else-if="selectedTimelineEntry.externalRegistrationUrl"
+                :href="selectedTimelineEntry.externalRegistrationUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center rounded-lg bg-[#40444b] px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-[#4f545c]"
+              >
+                {{ t("dashboard.timelineEventDetails") }}
+              </a>
+            </div>
           </div>
         </div>
 
@@ -479,8 +529,8 @@ const { user } = useAuth();
 const registrations = ref<EventRegistration[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
-const timelineWindowStart = ref<Date>(startOfDay(addDays(new Date(), -28)));
-const TIMELINE_WINDOW_DAYS = 42;
+const timelineWindowStart = ref<Date>(startOfMonth(new Date()));
+const selectedTimelineEntry = ref<(EventRegistration & { isPast: boolean }) | null>(null);
 let removeBookmarksListener: (() => void) | null = null;
 
 const fetchRegistrations = async () => {
@@ -593,7 +643,61 @@ const formatRegistrationDate = (dateString: string): string => {
   });
 };
 
-const timelineWindowEnd = computed(() => addDays(timelineWindowStart.value, TIMELINE_WINDOW_DAYS));
+const timelineWindowEnd = computed(() => endOfMonth(timelineWindowStart.value));
+const miniCalendarWeekdays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+
+const timelineEventsByDay = computed(() => {
+  const map = new Map<string, (EventRegistration & { isPast: boolean })>();
+  for (const entry of timelineEvents.value) {
+    const key = isoDayKey(entry.customEvent.eventDate);
+    if (!map.has(key)) {
+      map.set(key, entry);
+    }
+  }
+  return map;
+});
+
+const miniCalendarMonthStart = computed(() => {
+  const d = new Date(timelineWindowStart.value);
+  d.setDate(1);
+  return startOfDay(d);
+});
+
+const miniCalendarMonthLabel = computed(() => {
+  return miniCalendarMonthStart.value.toLocaleDateString("de-DE", {
+    month: "long",
+    year: "numeric",
+  });
+});
+
+type MiniCalDay = {
+  key: string;
+  label: string;
+  date: Date;
+  inMonth: boolean;
+  event: (EventRegistration & { isPast: boolean }) | null;
+};
+
+const miniCalendarDays = computed<MiniCalDay[]>(() => {
+  const monthStart = miniCalendarMonthStart.value;
+  const firstWeekday = (monthStart.getDay() + 6) % 7;
+  const gridStart = addDays(monthStart, -firstWeekday);
+  const days: MiniCalDay[] = [];
+
+  for (let i = 0; i < 42; i += 1) {
+    const date = addDays(gridStart, i);
+    const key = isoDayKey(date.toISOString());
+    days.push({
+      key: `${key}-${i}`,
+      label: String(date.getDate()),
+      date,
+      inMonth: date.getMonth() === monthStart.getMonth(),
+      event: timelineEventsByDay.value.get(key) || null,
+    });
+  }
+
+  return days;
+});
 
 const timelineRangeLabel = computed(() => {
   return `${formatTimelineDate(timelineWindowStart.value.toISOString())} - ${formatTimelineDate(timelineWindowEnd.value.toISOString())}`;
@@ -624,39 +728,87 @@ const shiftTimelineWindow = (days: number) => {
   timelineWindowStart.value = startOfDay(addDays(timelineWindowStart.value, days));
 };
 
-const timelineBadgeLabel = (entry: EventRegistration & { isPast: boolean }) => {
-  return entry.entryType === "bookmark"
-    ? t("dashboard.timelineBookmarked")
-    : t("dashboard.timelineRegistered");
+const shiftTimelineWindowByMonth = (months: number) => {
+  const next = new Date(timelineWindowStart.value);
+  next.setDate(1);
+  next.setMonth(next.getMonth() + months);
+  timelineWindowStart.value = startOfMonth(next);
 };
 
-const timelineCardClass = (entry: EventRegistration & { isPast: boolean }) => {
-  if (entry.isPast) {
-    return "border-[#3b3f46] bg-[#2a2d32]";
-  }
-  if (entry.entryType === "bookmark") {
-    return "border-blue-800 bg-blue-950/40";
-  }
-  return "border-emerald-800 bg-emerald-950/30";
+const openTimelineModal = (entry: EventRegistration & { isPast: boolean }) => {
+  selectedTimelineEntry.value = entry;
 };
 
-const timelineBadgeClass = (entry: EventRegistration & { isPast: boolean }) => {
-  if (entry.isPast) {
-    return "bg-gray-700 text-gray-300";
-  }
-  if (entry.entryType === "bookmark") {
-    return "bg-blue-700 text-blue-100";
-  }
-  return "bg-emerald-700 text-emerald-100";
+const routePlannerUrl = (entry: EventRegistration) => {
+  const target = entry.customEvent.venue || entry.customEvent.name;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(target)}`;
 };
 
 const formatTimelineDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("de-DE", {
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) {
+    return "—";
+  }
+  return parsed.toLocaleDateString("de-DE", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   });
 };
+
+const miniCalendarDayClass = (day: MiniCalDay) => {
+  if (!day.inMonth) {
+    return "border-transparent bg-transparent text-gray-600";
+  }
+
+  if (!day.event) {
+    return "border-[#2a2d32] bg-[#2f3136] text-gray-300";
+  }
+
+  const typeBgClass = miniCalendarTypeBgClass(day.event);
+
+  if (day.event.isPast) {
+    return `${typeBgClass} border-gray-500 text-gray-300 opacity-70`;
+  }
+
+  if (day.event.entryType === "bookmark") {
+    return `${typeBgClass} border-blue-500 text-blue-100`;
+  }
+
+  if (day.event.status === "reserved") {
+    return `${typeBgClass} border-amber-500 text-amber-100`;
+  }
+
+  return `${typeBgClass} border-emerald-500 text-emerald-100`;
+};
+
+function isoDayKey(dateString: string): string {
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return "invalid";
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function miniCalendarTypeBgClass(event: EventRegistration & { isPast: boolean }): string {
+  const type = String((event.customEvent as any).eventType || "").toLowerCase();
+  const tags = String((event.customEvent as any).tags || "").toLowerCase();
+  const name = String(event.customEvent.name || "").toLowerCase();
+  const haystack = `${type} ${tags} ${name}`;
+
+  if (haystack.includes("pre") && haystack.includes("release")) {
+    return "bg-yellow-900/60";
+  }
+  if (haystack.includes("challenge")) {
+    return "bg-blue-900/55";
+  }
+  if (haystack.includes("cup")) {
+    return "bg-rose-900/55";
+  }
+
+  return "bg-slate-800";
+}
 
 function addDays(date: Date, days: number): Date {
   const next = new Date(date);
@@ -668,6 +820,18 @@ function startOfDay(date: Date): Date {
   const next = new Date(date);
   next.setHours(0, 0, 0, 0);
   return next;
+}
+
+function startOfMonth(date: Date): Date {
+  const next = new Date(date);
+  next.setDate(1);
+  return startOfDay(next);
+}
+
+function endOfMonth(date: Date): Date {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + 1, 0);
+  return startOfDay(next);
 }
 
 // Load data on mount

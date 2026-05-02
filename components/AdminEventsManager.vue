@@ -1233,27 +1233,42 @@ const formatCompactDate = (dateString: string): string => {
 
   // Check if today
   if (dateKey === getDateKeyInTimeZone(now, timeZone)) {
-    return `Today, ${formatDateInTimeZone(date, {
-      hour: "2-digit",
-      minute: "2-digit",
-    }, "en-US", timeZone)}`;
+    return `Today, ${formatDateInTimeZone(
+      date,
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      },
+      "en-US",
+      timeZone,
+    )}`;
   }
 
   // Check if tomorrow
   if (dateKey === getDateKeyInTimeZone(tomorrow, timeZone)) {
-    return `Tomorrow, ${formatDateInTimeZone(date, {
-      hour: "2-digit",
-      minute: "2-digit",
-    }, "en-US", timeZone)}`;
+    return `Tomorrow, ${formatDateInTimeZone(
+      date,
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      },
+      "en-US",
+      timeZone,
+    )}`;
   }
 
   // Otherwise show full date
-  return formatDateInTimeZone(date, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }, "en-US", timeZone);
+  return formatDateInTimeZone(
+    date,
+    {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+    "en-US",
+    timeZone,
+  );
 };
 
 // Status badge classes
@@ -1323,16 +1338,26 @@ const getNextFriday = (): Date => {
 const formatDateWithWeekday = (dateString: string): string => {
   if (!dateString) return "";
   const timeZone = userTimeZone.value;
-  const weekday = formatDateInTimeZone(dateString, {
-    weekday: "short",
-  }, "de-DE", timeZone);
-  const formatted = formatDateInTimeZone(dateString, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }, "de-DE", timeZone);
+  const weekday = formatDateInTimeZone(
+    dateString,
+    {
+      weekday: "short",
+    },
+    "de-DE",
+    timeZone,
+  );
+  const formatted = formatDateInTimeZone(
+    dateString,
+    {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+    "de-DE",
+    timeZone,
+  );
   return `${weekday}, ${formatted}`;
 };
 
@@ -1380,7 +1405,8 @@ const normalizeRegistrationDeadlineInput = () => {
   }
 };
 
-const normalizedText = (value?: string | null) => value?.trim().toLowerCase() || "";
+const normalizedText = (value?: string | null) =>
+  value?.trim().toLowerCase() || "";
 
 const findVenueEntryByOrganization = (organizationName?: string) => {
   const search = normalizedText(organizationName);
@@ -1419,9 +1445,9 @@ const syncOrganizationFromVenue = () => {
 };
 
 const hostOrganizationOptions = computed(() =>
-  [...new Set(venueDirectory.value.map((entry) => entry.organizationName))].sort(
-    (left, right) => left.localeCompare(right),
-  ),
+  [
+    ...new Set(venueDirectory.value.map((entry) => entry.organizationName)),
+  ].sort((left, right) => left.localeCompare(right)),
 );
 
 const venueOptions = computed(() =>
@@ -1590,10 +1616,7 @@ const editEvent = (event: CustomEvent) => {
     description: event.description || "",
     eventDate: formatDateTimeLocalInput(event.eventDate, userTimeZone.value),
     registrationDeadline: event.registrationDeadline
-      ? formatDateTimeLocalInput(
-          event.registrationDeadline,
-          userTimeZone.value,
-        )
+      ? formatDateTimeLocalInput(event.registrationDeadline, userTimeZone.value)
       : "",
     requiresDecklist: event.requiresDecklist,
     status: event.status,
@@ -1690,13 +1713,18 @@ const closeDecklistModal = () => {
 };
 
 const formatDate = (dateString: string) => {
-  return formatDateInTimeZone(dateString, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }, "de-DE", userTimeZone.value);
+  return formatDateInTimeZone(
+    dateString,
+    {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+    "de-DE",
+    userTimeZone.value,
+  );
 };
 
 const getRegistrationUrl = (eventId: string) => {

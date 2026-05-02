@@ -100,8 +100,9 @@
                 <th>Email</th>
                 <th>Birth Date</th>
                 <th>Registered At</th>
+                <th>Tournament Status</th>
                 <th v-if="event.requiresDecklist">Decklist Status</th>
-                <th v-if="event.requiresDecklist">Actions</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -111,6 +112,14 @@
                 <td>{{ reg.player.email || "N/A" }}</td>
                 <td>{{ formatDate(reg.player.birthDate) }}</td>
                 <td>{{ formatDateTime(reg.registeredAt) }}</td>
+                <td>
+                  <span
+                    class="status-badge"
+                    :class="getTournamentStatusClass(getRegistrationTournamentStatus(reg))"
+                  >
+                    {{ getRegistrationTournamentStatus(reg) }}
+                  </span>
+                </td>
                 <td v-if="event.requiresDecklist">
                   <span
                     class="status-badge"
@@ -119,15 +128,38 @@
                     {{ getDecklistStatusText(reg) }}
                   </span>
                 </td>
-                <td v-if="event.requiresDecklist">
-                  <button
-                    v-if="reg.decklist"
-                    @click="viewDecklist(reg)"
-                    class="btn btn-small btn-primary"
-                  >
-                    View Decklist
-                  </button>
-                  <span v-else class="text-gray-400 text-sm">—</span>
+                <td>
+                  <div class="action-group">
+                    <button
+                      @click="applyPlayerAction(reg, 'drop')"
+                      class="btn btn-small btn-secondary"
+                      :disabled="actionLoadingByRegistration[reg.id]"
+                    >
+                      Drop
+                    </button>
+                    <button
+                      @click="applyPlayerAction(reg, 'dq')"
+                      class="btn btn-small btn-danger"
+                      :disabled="actionLoadingByRegistration[reg.id]"
+                    >
+                      DQ
+                    </button>
+                    <button
+                      @click="applyPlayerAction(reg, 'reinstate')"
+                      class="btn btn-small btn-primary"
+                      :disabled="actionLoadingByRegistration[reg.id]"
+                    >
+                      Reinstate
+                    </button>
+                    <button
+                      v-if="event.requiresDecklist && reg.decklist"
+                      @click="viewDecklist(reg)"
+                      class="btn btn-small btn-primary"
+                      :disabled="actionLoadingByRegistration[reg.id]"
+                    >
+                      View Decklist
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -185,6 +217,14 @@ interface Registration {
   registeredAt: string;
   decklist: string | null;
   bringingDecklistOnsite: boolean;
+  tickets: {
+    id: string;
+    participantName: string;
+    participantPlayerId: string | null;
+    status: string;
+    decklist: string | null;
+    bringingDecklistOnsite: boolean;
+  }[];
   player: Player;
 }
 
@@ -210,6 +250,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const showDecklistModal = ref(false);
 const selectedRegistration = ref<Registration | null>(null);
+const actionLoadingByRegistration = ref<Record<string, boolean>>({});
 
 // Load event details
 const loadEventDetails = async () => {
@@ -291,6 +332,82 @@ const viewDecklist = (reg: Registration) => {
 const closeDecklistModal = () => {
   showDecklistModal.value = false;
   selectedRegistration.value = null;
+};
+
+const getRegistrationTournamentStatus = (reg: Registration): string => {
+  const statuses = reg.tickets?.map((ticket) => ticket.status).filter(Boolean) || [];
+  if (!statuses.length) {
+    return "registered";
+  }
+
+  if (statuses.includes("disqualified")) {
+    return "disqualified";
+  }
+
+  if (statuses.includes("dropped")) {
+    return "dropped";
+  }
+
+  if (statuses.includes("no-show")) {
+    return "no-show";
+  }
+
+  if (statuses.includes("attended")) {
+    return "attended";
+  }
+
+  return statuses[0];
+};
+
+const getTournamentStatusClass = (status: string): string => {
+  if (status === "disqualified" || status === "dropped") {
+    return "status-danger";
+  }
+  if (status === "attended") {
+    return "status-success";
+  }
+  if (status === "no-show") {
+    return "status-warning";
+  }
+
+  return "status-neutral";
+};
+
+const applyPlayerAction = async (
+  reg: Registration,
+  action: "drop" | "dq" | "reinstate",
+) => {
+  try {
+    actionLoadingByRegistration.value = {
+      ...actionLoadingByRegistration.value,
+      [reg.id]: true,
+    };
+
+    const reasonInput = window.prompt(
+      `Optional reason for ${action.toUpperCase()} (${reg.player.name}):`,
+      "",
+    );
+
+    const reason = reasonInput?.trim() || undefined;
+
+    await $fetch(`/api/admin/events/${eventId}/registrations/${reg.id}/action`, {
+      method: "POST",
+      body: {
+        action,
+        reason,
+      },
+    });
+
+    await loadEventDetails();
+  } catch (err: any) {
+    console.error("Failed to apply player action:", err);
+    alert(err?.data?.statusMessage || "Failed to apply player action");
+  } finally {
+    actionLoadingByRegistration.value = {
+      ...actionLoadingByRegistration.value,
+      [reg.id]: false,
+    };
+  }
 };
 
 // Export registrations to CSV
@@ -421,6 +538,17 @@ onMounted(() => {
   padding: 3rem;
   color: #6b7280;
   font-size: 1rem;
+}
+
+.status-neutral {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.action-group {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .decklist-viewer {

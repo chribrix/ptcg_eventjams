@@ -64,7 +64,9 @@ export const updateCustomEventInputSchema = z.object({
     .refine(validateDatetimeLocal, "Invalid datetime format")
     .optional(),
   requiresDecklist: z.boolean().optional(),
-  status: z.enum(["upcoming", "ongoing", "completed", "cancelled"]).optional(),
+  status: z
+    .enum(["upcoming", "ongoing", "on_hold", "completed", "cancelled"])
+    .optional(),
   timeZone: z.string().min(1).optional(),
 });
 
@@ -346,5 +348,76 @@ export async function listAdminCombinedEvents() {
   return {
     success: true,
     events: allEvents,
+  };
+}
+
+export async function updateAdminRegistrationAction(input: {
+  eventId: string;
+  registrationId: string;
+  action: "drop" | "dq" | "reinstate";
+  reason?: string;
+  adminUserId: string;
+}) {
+  const registration = await prisma.eventRegistration.findFirst({
+    where: {
+      id: input.registrationId,
+      customEventId: input.eventId,
+    },
+    include: {
+      tickets: true,
+      player: {
+        select: {
+          playerId: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  if (!registration) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: "Registration not found for this event",
+    });
+  }
+
+  const targetStatus =
+    input.action === "drop"
+      ? "dropped"
+      : input.action === "dq"
+        ? "disqualified"
+        : "registered";
+
+  const now = new Date().toISOString();
+  const reasonSuffix = input.reason ? ` reason="${input.reason}"` : "";
+  const noteLine = `[${now}] admin=${input.adminUserId} action=${input.action} player=${registration.player.playerId}${reasonSuffix}`;
+
+  await prisma.$transaction([
+    prisma.registrationTicket.updateMany({
+      where: {
+        registrationId: registration.id,
+      },
+      data: {
+        status: targetStatus,
+      },
+    }),
+    prisma.eventRegistration.update({
+      where: {
+        id: registration.id,
+      },
+      data: {
+        notes: registration.notes
+          ? `${registration.notes}\n${noteLine}`
+          : noteLine,
+      },
+    }),
+  ]);
+
+  return {
+    success: true,
+    registrationId: registration.id,
+    action: input.action,
+    status: targetStatus,
+    player: registration.player,
   };
 }

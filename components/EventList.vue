@@ -74,7 +74,7 @@
               />
             </label>
 
-            <div class="grid grid-cols-2 gap-3 sm:w-auto sm:grid-cols-3">
+            <div class="grid grid-cols-2 gap-3 sm:w-auto sm:grid-cols-2">
               <select
                 v-model="selectedTimeWindow"
                 class="rounded-2xl border border-[#202225] bg-[#40444b] px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
@@ -88,19 +88,6 @@
               <button
                 type="button"
                 class="rounded-2xl border px-4 py-3 text-sm font-medium transition"
-                :class="
-                  onlyRegisterable
-                    ? 'border-emerald-500 bg-emerald-600 text-white shadow-sm'
-                    : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
-                "
-                @click="onlyRegisterable = !onlyRegisterable"
-              >
-                {{ t("eventList.registerableOnly") }}
-              </button>
-
-              <button
-                type="button"
-                class="col-span-2 rounded-2xl border px-4 py-3 text-sm font-medium transition sm:col-span-1"
                 :class="
                   hasActiveFilters
                     ? 'border-gray-500 bg-[#36393f] text-gray-200 hover:bg-[#40444b]'
@@ -210,7 +197,7 @@
                 />
               </label>
 
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid gap-3">
                 <select
                   v-model="selectedTimeWindow"
                   class="rounded-2xl border border-[#202225] bg-[#40444b] px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
@@ -220,19 +207,6 @@
                   <option value="30">{{ t("eventList.timeWindow30") }}</option>
                   <option value="90">{{ t("eventList.timeWindow90") }}</option>
                 </select>
-
-                <button
-                  type="button"
-                  class="rounded-2xl border px-4 py-3 text-sm font-medium transition"
-                  :class="
-                    onlyRegisterable
-                      ? 'border-emerald-500 bg-emerald-600 text-white shadow-sm'
-                      : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
-                  "
-                  @click="onlyRegisterable = !onlyRegisterable"
-                >
-                  {{ t("eventList.registerableOnly") }}
-                </button>
               </div>
 
               <div>
@@ -446,7 +420,7 @@
                     {{ t("eventList.tapForDetails") }}
                   </span>
                   <button
-                    v-if="canBookmarkEvent(event)"
+                    v-if="shouldShowBookmark(event)"
                     type="button"
                     class="inline-flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition sm:px-4 sm:text-sm"
                     :class="
@@ -655,7 +629,7 @@
 
                 <div class="mt-4 flex flex-col gap-3">
                   <button
-                    v-if="canBookmarkEvent(selectedEvent)"
+                    v-if="shouldShowBookmark(selectedEvent)"
                     type="button"
                     class="inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition"
                     :class="
@@ -805,7 +779,6 @@ interface UnifiedEvent {
 const searchQuery = ref("");
 const selectedType = ref("all");
 const selectedTimeWindow = ref<TimeWindowFilter>("30");
-const onlyRegisterable = ref(false);
 const showMobileFilters = ref(false);
 const selectedEvent = ref<UnifiedEvent | null>(null);
 const externalEvents = ref<ExternalEvent[]>([]);
@@ -880,10 +853,6 @@ const typeOptions = computed(() => {
   const counts = new Map<string, { label: string; count: number }>();
 
   for (const event of timeWindowFilteredEvents.value) {
-    if (onlyRegisterable.value && !event.isRegisterable) {
-      continue;
-    }
-
     const query = searchQuery.value.trim().toLowerCase();
     if (query && !event.searchableText.includes(query)) {
       continue;
@@ -906,10 +875,6 @@ const typeOptions = computed(() => {
       value: "all",
       label: t("eventList.allTypes"),
       count: timeWindowFilteredEvents.value.filter((event) => {
-        if (onlyRegisterable.value && !event.isRegisterable) {
-          return false;
-        }
-
         const query = searchQuery.value.trim().toLowerCase();
         return !query || event.searchableText.includes(query);
       }).length,
@@ -928,10 +893,6 @@ const filteredEvents = computed(() => {
 
   return timeWindowFilteredEvents.value.filter((event) => {
     if (selectedType.value !== "all" && event.typeKey !== selectedType.value) {
-      return false;
-    }
-
-    if (onlyRegisterable.value && !event.isRegisterable) {
       return false;
     }
 
@@ -985,8 +946,7 @@ const hasActiveFilters = computed(() => {
   return (
     searchQuery.value.trim().length > 0 ||
     selectedType.value !== "all" ||
-    selectedTimeWindow.value !== "30" ||
-    onlyRegisterable.value
+    selectedTimeWindow.value !== "30"
   );
 });
 
@@ -994,7 +954,6 @@ const resetFilters = () => {
   searchQuery.value = "";
   selectedType.value = "all";
   selectedTimeWindow.value = "30";
-  onlyRegisterable.value = false;
   showMobileFilters.value = false;
 };
 
@@ -1032,6 +991,11 @@ function canBookmarkEvent(event: UnifiedEvent | null): boolean {
   return event.source === "external" && !event.isLocalRegistration;
 }
 
+function shouldShowBookmark(event: UnifiedEvent | null): boolean {
+  if (!event) return false;
+  return event.source === "external" && !event.isLocalRegistration;
+}
+
 function isBookmarked(eventId: string): boolean {
   return bookmarkedEventIds.value.has(eventId);
 }
@@ -1044,7 +1008,11 @@ function getEventCardClass(event: UnifiedEvent): string {
 }
 
 async function toggleBookmark(event: UnifiedEvent): Promise<void> {
-  if (!canBookmarkEvent(event) || bookmarkPendingId.value) {
+  if (!shouldShowBookmark(event) || bookmarkPendingId.value) {
+    return;
+  }
+  if (!user.value) {
+    await navigateTo("/login");
     return;
   }
 
