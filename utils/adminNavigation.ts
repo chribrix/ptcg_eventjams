@@ -1,6 +1,7 @@
 import {
   ChartBarIcon,
   CalendarIcon,
+  PlayCircleIcon,
   UserCircleIcon,
   UsersIcon,
   Cog6ToothIcon,
@@ -28,6 +29,12 @@ export const adminNavigationItems: AdminNavItem[] = [
     to: "/admin/events",
     icon: CalendarIcon,
     match: (path) => path.startsWith("/admin/events"),
+  },
+  {
+    label: "Tournament Management",
+    to: "/admin/tournament-management",
+    icon: PlayCircleIcon,
+    match: (path) => path.startsWith("/admin/tournament-management"),
   },
   {
     label: "Users",

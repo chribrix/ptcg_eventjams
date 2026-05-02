@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { parseEventTags, type TagType } from "~/types/eventTags";
 import { getExternalCalendarEventType } from "~/utils/calendarEventUtils";
 import { isUpcomingAdminEvent } from "~/utils/adminEventBuckets";
+import { buildTomStateView } from "~/server/services/events/tournamentTomStateService";
 import {
   logDatabaseError,
   logAuthError,
@@ -92,6 +93,44 @@ export default defineEventHandler(async (event) => {
         registeredAt: "desc",
       },
     });
+
+    const customEventIds = Array.from(
+      new Set(
+        registrations
+          .map((registration) => registration.customEventId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const tomStates = customEventIds.length
+      ? await prisma.tournamentTomState.findMany({
+          where: {
+            customEventId: {
+              in: customEventIds,
+            },
+          },
+          select: {
+            customEventId: true,
+            currentXml: true,
+          },
+        })
+      : [];
+    const placementByEventId = new Map<string, number>();
+    for (const tomState of tomStates) {
+      try {
+        const view = buildTomStateView(tomState.currentXml);
+        for (const division of view.divisions || []) {
+          const index = (division.standings || []).findIndex(
+            (entry) => entry.userId === player.playerId,
+          );
+          if (index >= 0) {
+            placementByEventId.set(tomState.customEventId, index + 1);
+            break;
+          }
+        }
+      } catch {
+        // ignore malformed TOM state for dashboard rendering
+      }
+    }
 
     const bookmarks = await prisma.eventBookmark.findMany({
       where: {
@@ -211,6 +250,10 @@ export default defineEventHandler(async (event) => {
         customEvent: reg.customEvent,
         isExternalEvent: false,
         eventType: customEventType,
+        tournamentPlacement:
+          reg.customEventId && placementByEventId.has(reg.customEventId)
+            ? placementByEventId.get(reg.customEventId)
+            : null,
       };
     });
 
