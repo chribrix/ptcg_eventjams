@@ -1,8 +1,0 @@
-{
-  "chat.tools.terminal.autoApprove": {
-    "printf": true,
-    "npx vitest": true,
-    "git add": true,
-    "git commit": true
-  }
-}

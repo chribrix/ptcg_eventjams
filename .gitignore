@@ -31,3 +31,9 @@ TOM
 *.tdf
 *.TDF
 *.tom.xml
+
+# Local planning / personal workspace
+roadmap.md
+small-todos
+.vscode/settings.json
+aidocs/roadmap.md
