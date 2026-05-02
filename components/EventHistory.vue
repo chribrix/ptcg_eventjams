@@ -1,12 +1,12 @@
 <template>
-  <div class="event-history">
+  <div class="event-history rounded-xl border border-[#202225] bg-[#2f3136] p-4 sm:p-6">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">
+        <h2 class="text-2xl font-bold text-white">
           {{ t("eventHistory.title") }}
         </h2>
-        <p class="text-gray-600 mt-1">
+        <p class="mt-1 text-gray-300">
           {{
             isAdmin
               ? t("eventHistory.adminSubtitle")
@@ -20,7 +20,7 @@
         <select
           v-model="selectedYear"
           @change="fetchEvents"
-          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          class="rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-100 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
         >
           <option value="">{{ t("eventHistory.allYears") }}</option>
           <option v-for="year in availableYears" :key="year" :value="year">
@@ -31,7 +31,7 @@
         <select
           v-model="sortBy"
           @change="sortEvents"
-          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          class="rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-100 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
         >
           <option value="date-desc">{{ t("eventHistory.newestFirst") }}</option>
           <option value="date-asc">{{ t("eventHistory.oldestFirst") }}</option>
@@ -43,7 +43,7 @@
 
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="flex items-center gap-3 text-gray-600">
+      <div class="flex items-center gap-3 text-gray-300">
         <ArrowPathIcon class="w-5 h-5 animate-spin" />
         <span>{{ t("eventHistory.loadingHistory") }}</span>
       </div>
@@ -52,16 +52,16 @@
     <!-- Error State -->
     <div
       v-else-if="error"
-      class="bg-red-50 border border-red-200 rounded-lg p-6 text-center"
+      class="rounded-lg border border-red-700 bg-red-950/40 p-6 text-center"
     >
       <ExclamationTriangleIcon class="w-8 h-8 text-red-500 mx-auto mb-3" />
-      <h3 class="text-lg font-semibold text-red-800 mb-2">
+      <h3 class="mb-2 text-lg font-semibold text-red-300">
         {{ t("eventHistory.failedToLoad") }}
       </h3>
-      <p class="text-red-600 mb-4">{{ error }}</p>
+      <p class="mb-4 text-red-200">{{ error }}</p>
       <button
         @click="fetchEvents"
-        class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+      class="rounded-lg bg-red-700 px-4 py-2 font-medium text-white transition-colors duration-200 hover:bg-red-800"
       >
         Try Again
       </button>
@@ -70,13 +70,13 @@
     <!-- Empty State -->
     <div
       v-else-if="events.length === 0"
-      class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center"
+      class="rounded-lg border border-[#202225] bg-[#36393f] p-8 text-center"
     >
-      <CalendarDaysIcon class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-      <h3 class="text-xl font-semibold text-gray-900 mb-2">
+      <CalendarDaysIcon class="mx-auto mb-4 h-12 w-12 text-gray-500" />
+      <h3 class="mb-2 text-xl font-semibold text-white">
         {{ t("eventHistory.noPastEvents") }}
       </h3>
-      <p class="text-gray-600">
+      <p class="text-gray-300">
         {{
           isAdmin
             ? t("eventHistory.noEventsAdmin")
@@ -90,17 +90,17 @@
       <div
         v-for="event in sortedEvents"
         :key="event.id"
-        class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200"
+        class="overflow-hidden rounded-xl border border-[#202225] bg-[#36393f] transition-shadow duration-200 hover:shadow-md"
       >
         <!-- Event Header -->
         <div class="p-6 pb-4">
           <div class="flex items-start justify-between mb-4">
             <div class="flex-1">
-              <h3 class="text-xl font-semibold text-gray-900 mb-2">
+              <h3 class="mb-2 text-xl font-semibold text-white">
                 {{ event.name }}
               </h3>
               <div
-                class="flex flex-wrap items-center gap-4 text-sm text-gray-600"
+                class="flex flex-wrap items-center gap-4 text-sm text-gray-300"
               >
                 <div class="flex items-center gap-1">
                   <CalendarDaysIcon class="w-4 h-4" />
@@ -125,9 +125,9 @@
               <span
                 class="px-3 py-1 text-xs font-medium rounded-full"
                 :class="{
-                  'bg-green-100 text-green-800': event.status === 'completed',
-                  'bg-red-100 text-red-800': event.status === 'cancelled',
-                  'bg-gray-100 text-gray-800': ![
+                    'bg-green-900/50 text-green-200': event.status === 'completed',
+                    'bg-red-900/50 text-red-200': event.status === 'cancelled',
+                    'bg-gray-700 text-gray-200': ![
                     'completed',
                     'cancelled',
                   ].includes(event.status),
@@ -141,21 +141,21 @@
           <!-- Event Description -->
           <p
             v-if="event.description"
-            class="text-gray-700 text-sm mb-4 line-clamp-2"
+            class="mb-4 line-clamp-2 text-sm text-gray-300"
           >
             {{ event.description }}
           </p>
         </div>
 
         <!-- Participants Summary -->
-        <div class="px-6 pb-4 border-t border-gray-100 bg-gray-50">
+        <div class="border-t border-[#202225] bg-[#2f3136] px-6 pb-4">
           <div class="flex items-center justify-between py-3">
             <div class="flex items-center gap-6 text-sm">
               <!-- Total Participants -->
-              <div class="flex items-center gap-2 text-gray-600">
+              <div class="flex items-center gap-2 text-gray-300">
                 <UsersIcon class="w-4 h-4" />
                 <span class="font-medium">{{ event.totalParticipants }}</span>
-                <span class="text-gray-500">
+                <span class="text-gray-400">
                   {{ t("common.participants") }}
                 </span>
               </div>
@@ -175,7 +175,7 @@
                       event.userRegistration.status === 'cancelled',
                   }"
                 ></div>
-                <span class="text-xs font-medium text-gray-600">
+                <span class="text-xs font-medium text-gray-300">
                   {{ formatUserStatus(event.userRegistration.status) }}
                 </span>
               </div>
@@ -183,7 +183,7 @@
               <!-- Requires Decklist Indicator -->
               <div
                 v-if="event.requiresDecklist"
-                class="flex items-center gap-1 text-blue-600"
+                class="flex items-center gap-1 text-sky-300"
               >
                 <DocumentTextIcon class="w-4 h-4" />
                 <span class="text-xs font-medium">Decklist Required</span>
@@ -194,7 +194,7 @@
             <div v-if="isAdmin" class="flex items-center gap-2">
               <button
                 @click="toggleParticipants(event.id)"
-                class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200"
+                class="text-sm font-medium text-sky-300 transition-colors duration-200 hover:text-sky-200"
               >
                 {{
                   expandedEvents.has(event.id)
@@ -209,10 +209,10 @@
         <!-- Expanded Participants List (Admin only) -->
         <div
           v-if="isAdmin && expandedEvents.has(event.id)"
-          class="border-t border-gray-200 bg-white"
+          class="border-t border-[#202225] bg-[#36393f]"
         >
           <div class="p-4">
-            <h4 class="font-semibold text-gray-900 mb-3">
+            <h4 class="mb-3 font-semibold text-white">
               {{ t("eventHistory.eventParticipants") }}
             </h4>
             <div
@@ -222,17 +222,17 @@
               <div
                 v-for="participant in event.participants"
                 :key="participant.id"
-                class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg"
+                class="flex items-center justify-between rounded-lg bg-[#2f3136] px-3 py-2"
               >
                 <div class="flex items-center gap-3">
-                  <UserIcon class="w-4 h-4 text-gray-500" />
+                  <UserIcon class="h-4 w-4 text-gray-400" />
                   <div>
-                    <span class="font-medium text-gray-900">{{
+                    <span class="font-medium text-gray-100">{{
                       participant.player.name
                     }}</span>
                     <span
                       v-if="participant.player.playerId"
-                      class="text-xs text-gray-500 ml-2"
+                      class="ml-2 text-xs text-gray-400"
                     >
                       ID: {{ participant.player.playerId }}
                     </span>
@@ -242,7 +242,7 @@
                   <!-- Placement (if available) -->
                   <div
                     v-if="participant.placement"
-                    class="text-amber-600 font-medium"
+                    class="font-medium text-amber-300"
                   >
                     #{{ participant.placement }}
                   </div>
@@ -251,13 +251,13 @@
                   <span
                     class="px-2 py-1 text-xs font-medium rounded-full"
                     :class="{
-                      'bg-green-100 text-green-800':
+                        'bg-green-900/50 text-green-200':
                         participant.status === 'attended',
-                      'bg-red-100 text-red-800':
+                        'bg-red-900/50 text-red-200':
                         participant.status === 'no-show',
-                      'bg-yellow-100 text-yellow-800':
+                        'bg-yellow-900/50 text-yellow-200':
                         participant.status === 'registered',
-                      'bg-gray-100 text-gray-800':
+                        'bg-gray-700 text-gray-200':
                         participant.status === 'cancelled',
                     }"
                   >
@@ -266,7 +266,7 @@
                 </div>
               </div>
             </div>
-            <div v-else class="text-center text-gray-500 py-4">
+            <div v-else class="py-4 text-center text-gray-400">
               {{ t("eventHistory.noParticipants") }}
             </div>
           </div>
@@ -290,7 +290,7 @@ import {
 } from "@heroicons/vue/24/outline";
 
 // Use i18n for translations
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 interface EventParticipant {
   id: string;
@@ -423,7 +423,7 @@ const toggleParticipants = (eventId: string) => {
 };
 
 const formatEventDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("en-US", {
+  return new Date(dateString).toLocaleDateString(locale.value, {
     weekday: "long",
     year: "numeric",
     month: "long",

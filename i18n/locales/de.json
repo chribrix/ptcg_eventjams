@@ -90,7 +90,11 @@
     "decklistNeeded": "{count} Ticket(s) benötigen eine Decklisten-Abgabe",
     "allDecklistsPresent": "Alle Tickets haben Decklisten",
     "actionRequired": "Aktion erforderlich",
-    "removeBookmarkConfirm": "Vormerkung für \"{eventName}\" entfernen?"
+    "removeBookmarkConfirm": "Vormerkung für \"{eventName}\" entfernen?",
+    "timelineTitle": "Zeitstrahl",
+    "timelineEmpty": "Im aktuellen Fenster liegen keine vorgemerkten oder registrierten Turniere.",
+    "timelineBookmarked": "Vorgemerkt",
+    "timelineRegistered": "Registriert"
   },
   "landingPage": {
     "calendarTitle": "Eventkalender",
@@ -131,7 +135,7 @@
     "browseEvents": "Events entdecken",
     "registrationCount": "{count} Einträge",
     "scrollHint": "Scrollen für alle Einträge",
-    "viewDashboard": "Vollständiges Dashboard ansehen",
+    "viewDashboard": "Zum Dashboard",
     "cancelTitle": "Registrierung stornieren",
     "cancelPrompt": "Möchtest du deine Registrierung für",
     "eventDateLabel": "Eventdatum:",
@@ -195,7 +199,7 @@
   "eventList": {
     "eyebrow": "Events entdecken",
     "title": "Finde schnell dein nächstes Event",
-    "subtitle": "Durchsuche offizielle Event-Feed-Einträge und lokale Turniere an einem Ort, mit Filtern, die auch mobil gut funktionieren.",
+    "subtitle": "Durchsuche offizielle Events und lokale Turniere an einem Ort",
     "shown": "Angezeigt",
     "next30Days": "Nächste 30 T.",
     "errorLoading": "Fehler beim Laden der Events",

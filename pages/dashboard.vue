@@ -57,6 +57,59 @@
 
       <!-- Current Registrations List -->
       <div v-else>
+        <div class="mb-10 rounded-xl border border-[#202225] bg-[#2f3136] p-4 sm:p-6">
+          <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-white">{{ t("dashboard.timelineTitle") }}</h2>
+              <p class="text-sm text-gray-300">{{ timelineRangeLabel }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-200 hover:bg-[#4f545c]"
+                @click="shiftTimelineWindow(-14)"
+              >
+                -2 Wochen
+              </button>
+              <button
+                type="button"
+                class="rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-200 hover:bg-[#4f545c]"
+                @click="shiftTimelineWindow(14)"
+              >
+                +2 Wochen
+              </button>
+            </div>
+          </div>
+
+          <div v-if="timelineEvents.length === 0" class="rounded-lg border border-[#202225] bg-[#36393f] p-4 text-sm text-gray-400">
+            {{ t("dashboard.timelineEmpty") }}
+          </div>
+
+          <div v-else class="flex gap-3 overflow-x-auto pb-2">
+            <article
+              v-for="entry in timelineEvents"
+              :key="`timeline-${entry.id}`"
+              class="min-w-[260px] max-w-[320px] rounded-lg border p-3"
+              :class="timelineCardClass(entry)"
+            >
+              <div class="mb-2 flex items-center justify-between gap-2">
+                <span class="rounded-full px-2 py-1 text-xs font-semibold" :class="timelineBadgeClass(entry)">
+                  {{ timelineBadgeLabel(entry) }}
+                </span>
+                <span class="text-xs" :class="entry.isPast ? 'text-gray-500' : 'text-gray-300'">
+                  {{ formatTimelineDate(entry.customEvent.eventDate) }}
+                </span>
+              </div>
+              <h3 class="text-sm font-semibold" :class="entry.isPast ? 'text-gray-400' : 'text-white'">
+                {{ entry.customEvent.name }}
+              </h3>
+              <p class="mt-1 text-xs" :class="entry.isPast ? 'text-gray-500' : 'text-gray-300'">
+                {{ entry.customEvent.venue }}
+              </p>
+            </article>
+          </div>
+        </div>
+
         <h2 class="text-2xl font-bold text-white mb-6">
           {{ t("dashboard.currentRegistrations") }}
         </h2>
@@ -356,7 +409,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue";
+import { onMounted, onBeforeUnmount, computed } from "vue";
 // Page is automatically protected by auth.global.ts middleware
 import {
   CalendarIcon,
@@ -426,6 +479,8 @@ const { user } = useAuth();
 const registrations = ref<EventRegistration[]>([]);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
+const timelineWindowStart = ref<Date>(startOfDay(addDays(new Date(), -28)));
+const TIMELINE_WINDOW_DAYS = 42;
 let removeBookmarksListener: (() => void) | null = null;
 
 const fetchRegistrations = async () => {
@@ -537,6 +592,83 @@ const formatRegistrationDate = (dateString: string): string => {
     day: "numeric",
   });
 };
+
+const timelineWindowEnd = computed(() => addDays(timelineWindowStart.value, TIMELINE_WINDOW_DAYS));
+
+const timelineRangeLabel = computed(() => {
+  return `${formatTimelineDate(timelineWindowStart.value.toISOString())} - ${formatTimelineDate(timelineWindowEnd.value.toISOString())}`;
+});
+
+const timelineEvents = computed(() => {
+  const start = startOfDay(timelineWindowStart.value);
+  const end = startOfDay(timelineWindowEnd.value);
+
+  return registrations.value
+    .filter((entry) => {
+      const eventDate = new Date(entry.customEvent.eventDate);
+      const day = startOfDay(eventDate);
+      return day >= start && day <= end;
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.customEvent.eventDate).getTime() -
+        new Date(b.customEvent.eventDate).getTime(),
+    )
+    .map((entry) => ({
+      ...entry,
+      isPast: startOfDay(new Date(entry.customEvent.eventDate)) < startOfDay(new Date()),
+    }));
+});
+
+const shiftTimelineWindow = (days: number) => {
+  timelineWindowStart.value = startOfDay(addDays(timelineWindowStart.value, days));
+};
+
+const timelineBadgeLabel = (entry: EventRegistration & { isPast: boolean }) => {
+  return entry.entryType === "bookmark"
+    ? t("dashboard.timelineBookmarked")
+    : t("dashboard.timelineRegistered");
+};
+
+const timelineCardClass = (entry: EventRegistration & { isPast: boolean }) => {
+  if (entry.isPast) {
+    return "border-[#3b3f46] bg-[#2a2d32]";
+  }
+  if (entry.entryType === "bookmark") {
+    return "border-blue-800 bg-blue-950/40";
+  }
+  return "border-emerald-800 bg-emerald-950/30";
+};
+
+const timelineBadgeClass = (entry: EventRegistration & { isPast: boolean }) => {
+  if (entry.isPast) {
+    return "bg-gray-700 text-gray-300";
+  }
+  if (entry.entryType === "bookmark") {
+    return "bg-blue-700 text-blue-100";
+  }
+  return "bg-emerald-700 text-emerald-100";
+};
+
+const formatTimelineDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function startOfDay(date: Date): Date {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
 
 // Load data on mount
 onMounted(() => {
