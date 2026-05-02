@@ -150,8 +150,24 @@ model CustomEvent {
   updatedAt            DateTime            @updatedAt @map("updated_at")
   creator              AdminUser           @relation(fields: [createdBy], references: [id])
   registrations        EventRegistration[]
+  tomState             TournamentTomState?
 
   @@map("custom_events")
+  @@schema("public")
+}
+
+model TournamentTomState {
+  id                String    @id @default(cuid())
+  customEventId     String    @unique @map("custom_event_id")
+  sourceXml         String    @map("source_xml")
+  currentXml        String    @map("current_xml")
+  importedByAdminId String    @map("imported_by_admin_id")
+  importedAt        DateTime  @default(now()) @map("imported_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  metadata          Json?     @db.JsonB
+  customEvent       CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
+
+  @@map("tournament_tom_states")
   @@schema("public")
 }
 
