@@ -90,7 +90,18 @@
     "decklistNeeded": "{count} ticket(s) need decklist submission",
     "allDecklistsPresent": "All tickets have decklists",
     "actionRequired": "Action Required",
-    "removeBookmarkConfirm": "Remove bookmark for \"{eventName}\"?"
+    "removeBookmarkConfirm": "Remove bookmark for \"{eventName}\"?",
+    "removeBookmarkAction": "Remove bookmark",
+    "cancelRegistrationAction": "Confirm cancellation",
+    "processingAction": "Processing...",
+    "cancelTicketsTitle": "Tickets to cancel",
+    "selectAllTickets": "Select all",
+    "unselectAllTickets": "Unselect all",
+    "unnamedTicket": "Unnamed ticket",
+    "selectAtLeastOneTicket": "Please select at least one ticket.",
+    "cancelAllTicketsConfirm": "Cancel all tickets for \"{eventName}\" and fully unregister?",
+    "cancelSelectedTicketsConfirm": "Cancel {count} selected ticket(s) for \"{eventName}\"?",
+    "actionFailed": "Action could not be completed."
   },
   "landingPage": {
     "calendarTitle": "Event Calendar",

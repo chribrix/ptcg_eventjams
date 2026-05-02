@@ -55,7 +55,7 @@
             <span class="info-label">Event Type:</span>
             <span class="info-value">
               <span
-                class="event-type-badge"
+                class="event-type-badge event-type-badge-compact"
                 :class="`type-${parseEventTags(event.tags, event.tagType as TagType).type}`"
               >
                 {{
@@ -566,36 +566,6 @@ onMounted(() => {
   word-wrap: break-word;
   margin: 0;
   color: #1f2937;
-}
-
-.event-type-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.type-cup {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.type-challenge {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.type-local {
-  background-color: #e9d5ff;
-  color: #6b21a8;
-}
-
-.type-custom {
-  background-color: #fed7aa;
-  color: #9a3412;
 }
 
 .section-header {

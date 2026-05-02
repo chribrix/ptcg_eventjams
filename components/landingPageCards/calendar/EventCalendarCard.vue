@@ -1,7 +1,7 @@
 <template>
   <div class="w-full h-full">
     <div
-      class="p-4 sm:p-6 flex flex-col justify-center items-center h-full min-h-[400px] bg-[#36393f]"
+      class="p-4 sm:p-6 flex flex-col justify-center items-center h-full min-h-[400px] app-bg-page"
     >
       <div
         class="relative w-full calendar-wrapper flex flex-col justify-center items-center flex-1"
@@ -9,7 +9,7 @@
         <!-- Loading indicator -->
         <div
           v-if="isLoading"
-          class="absolute inset-0 bg-[#2f3136]/95 flex justify-center items-center z-10 rounded-lg"
+          class="absolute inset-0 app-surface-0 flex justify-center items-center z-10 rounded-lg"
         >
           <div class="flex flex-col items-center gap-3">
             <div
@@ -92,7 +92,7 @@
             class="fixed bottom-4 right-4 z-50 max-w-md"
           >
             <div
-              class="bg-gray-700 text-white rounded-lg shadow-2xl p-4 flex items-start gap-3"
+              class="app-surface-2 text-white rounded-lg shadow-2xl p-4 flex items-start gap-3"
             >
               <div class="flex-shrink-0">
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -174,7 +174,7 @@ const calendarTypePriority: CalendarEventType[] = [
 ];
 const dotColors: Record<CalendarEventType, string> = {
   custom: EVENT_COLORS.custom.text,
-  cup: "#16a34a",
+  cup: EVENT_COLORS.cup.text,
   challenge: EVENT_COLORS.challenge.text,
   local: EVENT_COLORS.local.text,
   prerelease: EVENT_COLORS.prerelease.text,
@@ -302,7 +302,7 @@ const calendarAttributes = computed(() => {
           background: background,
         },
         contentStyle: {
-          color: "#1f2937", // gray-800
+          color: "var(--app-border)",
           fontWeight: "600",
           background: background,
         },
@@ -440,25 +440,25 @@ const toggleCategoryVisibility = (category: CalendarCategory) => {
   box-shadow: none;
   display: flex;
   justify-content: center;
-  background: #36393f;
+  background: var(--app-surface-1);
 }
 
 :deep(.vc-pane-container) {
   width: 100%;
   display: flex;
   justify-content: center;
-  background: #36393f;
+  background: var(--app-surface-1);
 }
 
 :deep(.vc-pane) {
   margin: 0 auto;
   width: 100%;
-  background: #36393f;
+  background: var(--app-surface-1);
 }
 
 :deep(.vc-calendar) {
   font-size: 1.08rem;
-  background: #36393f;
+  background: var(--app-surface-1);
   box-shadow: 0 6px 32px 0 rgba(0, 0, 0, 0.3);
   border: none;
   padding: 1.5rem 1rem;
@@ -500,21 +500,21 @@ const toggleCategoryVisibility = (category: CalendarCategory) => {
 :deep(.vc-weekday) {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--app-text-primary);
 }
 
 :deep(.vc-weekday) {
   text-transform: uppercase;
   font-size: 0.95rem;
-  color: #d1d5db;
+  color: var(--app-text-secondary);
 }
 
 :deep(.vc-day-content) {
   cursor: pointer;
   border-radius: 0.75rem;
   transition: all 0.2s;
-  background-color: #40444b;
-  color: #d1d5db;
+  background-color: var(--app-surface-2);
+  color: var(--app-text-secondary);
 }
 
 /* Override background for days with highlights (events) */
@@ -525,7 +525,7 @@ const toggleCategoryVisibility = (category: CalendarCategory) => {
 :deep(.vc-day-content:hover) {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  background-color: #4f545c;
+  background-color: var(--app-surface-3);
 }
 
 :deep(.vc-highlight) {

@@ -13,18 +13,18 @@
         @click="emit('close')"
       >
         <div
-          class="bg-[#2f3136] rounded-xl shadow-xl max-w-2xl max-h-[80vh] w-[90%] overflow-hidden flex flex-col transform transition-transform min-w-0"
+          class="app-surface-0 rounded-xl shadow-xl max-w-2xl max-h-[80vh] w-[90%] overflow-hidden flex flex-col transform transition-transform min-w-0"
           @click.stop
         >
           <div
-            class="px-6 py-4 border-b border-[#202225] flex justify-between items-center bg-[#36393f]"
+            class="px-6 py-4 border-b app-border flex justify-between items-center app-bg-page"
           >
             <h3 class="text-xl font-semibold text-white m-0">
               {{ t("eventPopover.eventsOn", { date: formattedDate }) }}
             </h3>
             <button
               @click="emit('close')"
-              class="bg-none border-none text-2xl text-gray-400 hover:bg-[#40444b] hover:text-gray-300 cursor-pointer p-1 rounded transition-colors duration-200"
+              class="bg-none border-none text-2xl text-gray-400 hover:bg-[var(--app-surface-2)] hover:text-gray-300 cursor-pointer p-1 rounded transition-colors duration-200"
             >
               &times;
             </button>
@@ -33,7 +33,7 @@
             <div
               v-for="event in events"
               :key="event.id"
-              class="border border-[#202225] rounded-lg mb-2 transition-all duration-200 hover:shadow-md hover:border-[#40444b] last:mb-0 min-w-0 border-l-4 cursor-pointer bg-[#36393f]"
+              class="border app-border rounded-lg mb-2 transition-all duration-200 hover:shadow-md last:mb-0 min-w-0 border-l-4 cursor-pointer app-bg-page"
               :style="{
                 borderLeftColor: getEventBadgeStyles(event).backgroundColor,
               }"
@@ -80,7 +80,7 @@
               >
                 <div
                   v-if="expandedEvents.has(event.id)"
-                  class="px-3 pb-3 border-t border-[#202225] overflow-hidden"
+                  class="px-3 pb-3 border-t app-border overflow-hidden"
                   @click.stop
                 >
                   <div class="pt-3">
@@ -96,7 +96,7 @@
                       <!-- Time badge -->
                       <div
                         v-if="getEventTime(event)"
-                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-300 bg-[#40444b] border border-[#202225]"
+                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-300 app-surface-2 border app-border"
                       >
                         <ClockIcon class="w-3 h-3 flex-shrink-0" />
                         <span>{{ getEventTime(event) }}</span>
@@ -104,7 +104,7 @@
                       <!-- Cost badge -->
                       <div
                         v-if="getEventCost(event) !== undefined"
-                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-300 bg-[#40444b] border border-[#202225]"
+                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-300 app-surface-2 border app-border"
                       >
                         <CurrencyDollarIcon class="w-3 h-3 flex-shrink-0" />
                         <span>{{ formatEventCost(event) }}</span>
@@ -160,7 +160,7 @@
 
                     <!-- Action buttons -->
                     <div
-                      class="flex flex-col sm:flex-row sm:flex-wrap sm:justify-end gap-2 pt-2 border-t border-[#202225]"
+                      class="flex flex-col sm:flex-row sm:flex-wrap sm:justify-end gap-2 pt-2 border-t app-border"
                     >
                       <button
                         v-if="canBookmarkEvent(event)"
@@ -169,7 +169,7 @@
                         :class="
                           isBookmarked(event.id)
                             ? 'text-white bg-sky-600 hover:bg-sky-700'
-                            : 'text-gray-300 bg-[#40444b] border border-[#202225] hover:bg-[#4f545c] hover:border-gray-500'
+                            : 'text-gray-300 app-btn-neutral hover:border-gray-500'
                         "
                         :disabled="bookmarkPendingId === event.id"
                         @click.stop="toggleBookmark(event)"
@@ -186,7 +186,7 @@
                         :href="getGoogleMapsUrl(event)"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-300 bg-[#40444b] border border-[#202225] hover:bg-[#4f545c] hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
+                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-300 app-btn-neutral hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
                         @click.stop
                       >
                         <MapIcon class="w-3.5 h-3.5 flex-shrink-0" />
@@ -212,7 +212,7 @@
                         :href="event.link"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-300 bg-[#40444b] border border-[#202225] hover:bg-[#4f545c] hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
+                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-300 app-btn-neutral hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
                         @click.stop
                       >
                         <LinkIcon class="w-3.5 h-3.5 flex-shrink-0" />
@@ -226,7 +226,7 @@
           </div>
           <!-- Back button at bottom -->
           <div
-            class="px-6 py-4 border-t border-[#202225] bg-[#2f3136] flex justify-end"
+            class="px-6 py-4 border-t app-border app-surface-0 flex justify-end"
           >
             <button
               @click="emit('close')"

@@ -1,5 +1,5 @@
 <template>
-  <div class="event-history rounded-xl border border-[#202225] bg-[#2f3136] p-4 sm:p-6">
+  <div class="event-history rounded-xl border app-border app-surface-0 p-4 sm:p-6">
     <!-- Header -->
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
@@ -20,7 +20,7 @@
         <select
           v-model="selectedYear"
           @change="fetchEvents"
-          class="w-full sm:w-auto rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-100 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+          class="w-full sm:w-auto rounded-lg border app-border app-surface-2 px-3 py-2 text-sm text-gray-100 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
         >
           <option value="">{{ t("eventHistory.allYears") }}</option>
           <option v-for="year in availableYears" :key="year" :value="year">
@@ -31,7 +31,7 @@
         <select
           v-model="sortBy"
           @change="sortEvents"
-          class="w-full sm:w-auto rounded-lg border border-[#202225] bg-[#40444b] px-3 py-2 text-sm text-gray-100 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+          class="w-full sm:w-auto rounded-lg border app-border app-surface-2 px-3 py-2 text-sm text-gray-100 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
         >
           <option value="date-desc">{{ t("eventHistory.newestFirst") }}</option>
           <option value="date-asc">{{ t("eventHistory.oldestFirst") }}</option>
@@ -70,7 +70,7 @@
     <!-- Empty State -->
     <div
       v-else-if="events.length === 0"
-      class="rounded-lg border border-[#202225] bg-[#36393f] p-8 text-center"
+      class="rounded-lg border app-border app-bg-page p-8 text-center"
     >
       <CalendarDaysIcon class="mx-auto mb-4 h-12 w-12 text-gray-500" />
       <h3 class="mb-2 text-xl font-semibold text-white">
@@ -90,7 +90,7 @@
       <div
         v-for="event in sortedEvents"
         :key="event.id"
-        class="overflow-hidden rounded-xl border border-[#202225] bg-[#36393f] transition-shadow duration-200 hover:shadow-md"
+        class="overflow-hidden rounded-xl border app-border app-bg-page transition-shadow duration-200 hover:shadow-md"
       >
         <!-- Event Header -->
         <div class="p-6 pb-4">
@@ -148,7 +148,7 @@
         </div>
 
         <!-- Participants Summary -->
-        <div class="border-t border-[#202225] bg-[#2f3136] px-6 pb-4">
+        <div class="border-t app-border app-surface-0 px-6 pb-4">
           <div class="flex items-center justify-between py-3">
             <div class="flex items-center gap-6 text-sm">
               <!-- Total Participants -->
@@ -209,7 +209,7 @@
         <!-- Expanded Participants List (Admin only) -->
         <div
           v-if="isAdmin && expandedEvents.has(event.id)"
-          class="border-t border-[#202225] bg-[#36393f]"
+          class="border-t app-border app-bg-page"
         >
           <div class="p-4">
             <h4 class="mb-3 font-semibold text-white">
@@ -222,7 +222,7 @@
               <div
                 v-for="participant in event.participants"
                 :key="participant.id"
-                class="flex items-center justify-between rounded-lg bg-[#2f3136] px-3 py-2"
+                class="flex items-center justify-between rounded-lg app-surface-0 px-3 py-2"
               >
                 <div class="flex items-center gap-3">
                   <UserIcon class="h-4 w-4 text-gray-400" />

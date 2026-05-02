@@ -15,6 +15,19 @@ Item 8 goal:
 - remove the remaining compatibility logic after the migration window
 - make runtime behavior match the approved auth and player invariants everywhere
 
+## Current State
+
+Phase 1 and Phase 2 of the Step 8 plan are now complete:
+
+- `players/register` accepts only its real request contract
+- `players/check` accepts `email` only
+- `preferred-login-method` and `ensure-player` accept only `password | otp` on the write side
+- write-side provisioning input types no longer accept `magiclink`
+- read-side normalization still tolerates legacy stored values where needed
+- focused validation passed for the touched registration, check, provisioning, and authenticated-player slices
+
+Step 8 is not fully closed yet because one operational reconciliation step and one final product decision still remain.
+
 ## Current Preconditions
 
 Before the final cleanup pass, one manual reconciliation still matters:
@@ -131,16 +144,38 @@ Why first:
 - active callers are already close to the target behavior
 - they remove the clearest remaining legacy surfaces without changing the domain model again
 
+Status:
+
+- complete
+
 ### Phase 2: Compatibility Type Cleanup
 
 1. Remove `magiclink` from write-side provisioning input types.
 2. Keep read-side normalization for stored legacy values only where still necessary.
 3. Re-run focused tests for login, registration, provisioning, and preferred login method updates.
 
+Status:
+
+- complete
+
 ### Phase 3: Optional Post-Cutover Simplification
 
 1. Revisit whether `players/check` should keep `authOnly` and `legacyPlayerOnly` response flags.
 2. If manual reconciliation is complete and support cases are resolved, simplify the endpoint contract further.
+
+Status:
+
+- pending
+
+## Remaining Closeout Process
+
+Before marking Step 8 fully complete:
+
+1. Reconcile the known auth-player ambiguity recorded in `AUTH_IDENTITY_DATA_AUDIT.md`.
+2. Migrate any remaining legacy admin row that still lacks Supabase admin metadata.
+3. Re-run `node scripts/audit-auth-identity.js` and capture the post-reconciliation state.
+4. Decide whether `authOnly` and `legacyPlayerOnly` stay as intentional support semantics or are removed.
+5. Update `AUTH_IDENTITY_IMPLEMENTATION_CHECKLIST.md` to mark Item 8 complete only after step 4 is resolved.
 
 ## Focused Validation Set
 

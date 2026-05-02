@@ -55,7 +55,9 @@ Recommended template:
 ```html
 <h2>Your login code</h2>
 <p>Enter this code in PTCG Eventjams:</p>
-<p style="font-size: 32px; font-weight: 700; letter-spacing: 0.3em;">{{ .Token }}</p>
+<p style="font-size: 32px; font-weight: 700; letter-spacing: 0.3em;">
+  {{ .Token }}
+</p>
 <p>This code can only be used once and should expire after 15 minutes.</p>
 ```
 
@@ -64,27 +66,40 @@ Ready-to-paste polished templates:
 German:
 
 ```html
-<div style="font-family: Arial, Helvetica, sans-serif; color: #111827; line-height: 1.6; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h2 style="margin: 0 0 16px; font-size: 24px; line-height: 1.3; color: #111827;">Dein Anmeldecode für PTCG Eventjams</h2>
+<div
+  style="font-family: Arial, Helvetica, sans-serif; color: #111827; line-height: 1.6; max-width: 560px; margin: 0 auto; padding: 24px;"
+>
+  <h2
+    style="margin: 0 0 16px; font-size: 24px; line-height: 1.3; color: #111827;"
+  >
+    Dein Anmeldecode für PTCG Eventjams
+  </h2>
 
   <p style="margin: 0 0 16px;">Hallo,</p>
 
   <p style="margin: 0 0 16px;">
-    verwende bitte den folgenden sechsstelligen Code, um dich bei PTCG Eventjams anzumelden oder deine Anmeldung zu bestätigen:
+    verwende bitte den folgenden sechsstelligen Code, um dich bei PTCG Eventjams
+    anzumelden oder deine Anmeldung zu bestätigen:
   </p>
 
-  <div style="margin: 24px 0; padding: 18px 20px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 12px; text-align: center;">
-    <div style="font-size: 34px; line-height: 1; font-weight: 700; letter-spacing: 0.32em; color: #111827; font-family: 'Courier New', monospace;">
+  <div
+    style="margin: 24px 0; padding: 18px 20px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 12px; text-align: center;"
+  >
+    <div
+      style="font-size: 34px; line-height: 1; font-weight: 700; letter-spacing: 0.32em; color: #111827; font-family: 'Courier New', monospace;"
+    >
       {{ .Token }}
     </div>
   </div>
 
   <p style="margin: 0 0 12px;">
-    Der Code kann nur einmal verwendet werden und sollte nach kurzer Zeit ablaufen.
+    Der Code kann nur einmal verwendet werden und sollte nach kurzer Zeit
+    ablaufen.
   </p>
 
   <p style="margin: 0 0 12px; color: #4b5563; font-size: 14px;">
-    Falls du diese Anmeldung nicht angefordert hast, kannst du diese E-Mail ignorieren.
+    Falls du diese Anmeldung nicht angefordert hast, kannst du diese E-Mail
+    ignorieren.
   </p>
 
   <p style="margin: 24px 0 0; color: #6b7280; font-size: 13px;">
@@ -96,17 +111,28 @@ German:
 English:
 
 ```html
-<div style="font-family: Arial, Helvetica, sans-serif; color: #111827; line-height: 1.6; max-width: 560px; margin: 0 auto; padding: 24px;">
-  <h2 style="margin: 0 0 16px; font-size: 24px; line-height: 1.3; color: #111827;">Your PTCG Eventjams login code</h2>
+<div
+  style="font-family: Arial, Helvetica, sans-serif; color: #111827; line-height: 1.6; max-width: 560px; margin: 0 auto; padding: 24px;"
+>
+  <h2
+    style="margin: 0 0 16px; font-size: 24px; line-height: 1.3; color: #111827;"
+  >
+    Your PTCG Eventjams login code
+  </h2>
 
   <p style="margin: 0 0 16px;">Hello,</p>
 
   <p style="margin: 0 0 16px;">
-    Please use the following six-digit code to sign in to PTCG Eventjams or confirm your sign-in:
+    Please use the following six-digit code to sign in to PTCG Eventjams or
+    confirm your sign-in:
   </p>
 
-  <div style="margin: 24px 0; padding: 18px 20px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 12px; text-align: center;">
-    <div style="font-size: 34px; line-height: 1; font-weight: 700; letter-spacing: 0.32em; color: #111827; font-family: 'Courier New', monospace;">
+  <div
+    style="margin: 24px 0; padding: 18px 20px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 12px; text-align: center;"
+  >
+    <div
+      style="font-size: 34px; line-height: 1; font-weight: 700; letter-spacing: 0.32em; color: #111827; font-family: 'Courier New', monospace;"
+    >
       {{ .Token }}
     </div>
   </div>
@@ -224,7 +250,7 @@ The active passwordless behavior in the app is:
 await supabase.auth.signInWithOtp({
   email,
   options: { shouldCreateUser: false },
-})
+});
 ```
 
 2. Verify code:
@@ -234,7 +260,7 @@ await supabase.auth.verifyOtp({
   email,
   token: code,
   type: "email",
-})
+});
 ```
 
 Important:

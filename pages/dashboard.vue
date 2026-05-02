@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#36393f] py-4 px-4">
+  <div class="min-h-screen app-bg-page py-4 px-4">
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-5 text-center">
@@ -21,7 +21,7 @@
       <!-- Error State -->
       <div
         v-else-if="error"
-        class="bg-[#2f3136] border border-red-600 rounded-lg p-6 text-center"
+        class="app-surface-0 border border-red-600 rounded-lg p-6 text-center"
       >
         <h3 class="text-xl font-semibold text-red-400 mb-2">
           {{ t("dashboard.errorLoading") }}
@@ -38,7 +38,7 @@
       <!-- Empty State -->
       <div
         v-else-if="registrations.length === 0"
-        class="bg-[#2f3136] rounded-lg shadow-sm border border-[#202225] p-8 text-center"
+        class="app-surface-0 rounded-lg shadow-sm border app-border p-8 text-center"
       >
         <h3 class="text-2xl font-semibold text-white mb-2">{{ t("dashboard.emptyTitle") }}</h3>
         <p class="text-gray-300 mb-6">
@@ -54,7 +54,7 @@
 
       <!-- Current Registrations List -->
       <div v-else>
-        <div class="mb-7 rounded-xl border border-[#202225] bg-[#2f3136] p-3 sm:p-4">
+        <div class="mb-7 rounded-xl border app-border app-surface-0 p-3 sm:p-4">
           <div class="mb-3 flex items-start justify-between gap-3">
             <div>
               <h2 class="text-lg font-bold text-white">{{ t("dashboard.timelinePlanningTitle") }}</h2>
@@ -62,7 +62,7 @@
             </div>
           </div>
 
-          <div class="mb-3 rounded-lg border border-[#202225] bg-[#36393f] p-2.5">
+          <div class="mb-3 rounded-lg border app-border app-bg-page p-2.5">
             <div class="mb-2 flex items-center justify-between">
               <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-300">
                 {{ miniCalendarMonthLabel }}
@@ -84,6 +84,7 @@
                 type="button"
                 class="h-7 rounded-md border text-[11px] font-semibold"
                 :class="miniCalendarDayClass(day)"
+                :style="miniCalendarDayStyle(day)"
                 :disabled="!day.inMonth"
                 @click="day.event ? openTimelineModal(day.event) : null"
               >
@@ -95,14 +96,14 @@
           <div class="mt-3 flex items-center justify-between gap-2">
             <button
               type="button"
-              class="rounded-lg border border-[#202225] bg-[#40444b] px-4 py-2.5 text-base font-semibold text-gray-100 shadow hover:bg-[#4f545c]"
+              class="rounded-lg app-btn-neutral px-4 py-2.5 text-base font-semibold shadow"
               @click="shiftTimelineWindowByMonth(-1)"
             >
               &lt; Früher
             </button>
             <button
               type="button"
-              class="rounded-lg border border-[#202225] bg-[#40444b] px-4 py-2.5 text-base font-semibold text-gray-100 shadow hover:bg-[#4f545c]"
+              class="rounded-lg app-btn-neutral px-4 py-2.5 text-base font-semibold shadow"
               @click="shiftTimelineWindowByMonth(1)"
             >
               Später &gt;
@@ -113,24 +114,30 @@
         <div
           v-if="selectedTimelineEntry"
           class="fixed inset-0 z-50 flex items-end bg-black/60 p-0 sm:items-center sm:justify-center sm:p-4"
-          @click="selectedTimelineEntry = null"
+          @click="closeTimelineModal"
         >
           <div
-            class="w-full rounded-t-2xl border border-[#202225] bg-[#2f3136] p-4 sm:max-w-md sm:rounded-2xl"
+            class="w-full rounded-t-2xl border app-border app-surface-0 p-4 sm:max-w-md sm:rounded-2xl"
             @click.stop
           >
             <div class="mb-3 flex items-start justify-between gap-3">
               <h3 class="text-lg font-bold text-white">{{ selectedTimelineEntry.customEvent.name }}</h3>
               <button
                 type="button"
-                class="rounded-md border border-[#202225] bg-[#40444b] px-2 py-1 text-sm text-gray-200 hover:bg-[#4f545c]"
-                @click="selectedTimelineEntry = null"
+                class="rounded-md app-btn-neutral px-2 py-1 text-sm"
+                @click="closeTimelineModal"
               >
                 ×
               </button>
             </div>
             <p class="text-sm text-gray-300">{{ formatEventDate(selectedTimelineEntry.customEvent.eventDate) }}</p>
             <p class="mt-1 text-sm text-gray-300">{{ selectedTimelineEntry.customEvent.venue }}</p>
+            <p
+              v-if="timelineActionError"
+              class="mt-3 rounded-md border border-red-600/60 bg-red-900/30 px-3 py-2 text-xs text-red-200"
+            >
+              {{ timelineActionError }}
+            </p>
             <div class="mt-4 grid grid-cols-1 gap-2">
               <a
                 :href="routePlannerUrl(selectedTimelineEntry)"
@@ -143,7 +150,7 @@
               <NuxtLink
                 v-if="selectedTimelineEntry.customEventId"
                 :to="`/events/${selectedTimelineEntry.customEventId}`"
-                class="inline-flex items-center justify-center rounded-lg bg-[#40444b] px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-[#4f545c]"
+                class="inline-flex items-center justify-center rounded-lg app-btn-neutral px-3 py-2 text-sm font-semibold"
               >
                 {{ t("dashboard.timelineEventDetails") }}
               </NuxtLink>
@@ -152,10 +159,77 @@
                 :href="selectedTimelineEntry.externalRegistrationUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center justify-center rounded-lg bg-[#40444b] px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-[#4f545c]"
+                class="inline-flex items-center justify-center rounded-lg app-btn-neutral px-3 py-2 text-sm font-semibold"
               >
                 {{ t("dashboard.timelineEventDetails") }}
               </a>
+            </div>
+
+            <div class="mt-4 border-t app-border pt-3">
+              <template v-if="selectedTimelineEntry.entryType === 'bookmark'">
+                <button
+                  type="button"
+                  class="inline-flex w-full items-center justify-center rounded-lg border border-red-600/70 bg-red-950/40 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  :disabled="timelineActionPending"
+                  @click="removeTimelineBookmark"
+                >
+                  {{ timelineActionPending ? t("dashboard.processingAction") : t("dashboard.removeBookmarkAction") }}
+                </button>
+              </template>
+              <template v-else>
+                <div
+                  v-if="selectedTimelineActiveTickets.length > 1"
+                  class="mb-3 rounded-md border app-border app-bg-page p-3"
+                >
+                  <div class="mb-2 flex items-center justify-between gap-2">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-300">
+                      {{ t("dashboard.cancelTicketsTitle") }}
+                    </p>
+                    <button
+                      type="button"
+                      class="text-xs font-semibold text-sky-300 hover:text-sky-200"
+                      @click="toggleAllTimelineTickets"
+                    >
+                      {{
+                        timelineAllActiveSelected
+                          ? t("dashboard.unselectAllTickets")
+                          : t("dashboard.selectAllTickets")
+                      }}
+                    </button>
+                  </div>
+                  <div class="grid gap-2">
+                    <label
+                      v-for="ticket in selectedTimelineActiveTickets"
+                      :key="ticket.id"
+                      class="flex items-center gap-2 rounded-md border app-border app-surface-0 px-2 py-2 text-sm text-gray-200"
+                    >
+                      <input
+                        :checked="timelineSelectedTicketIds.includes(ticket.id)"
+                        type="checkbox"
+                        class="h-4 w-4 rounded border-gray-500 bg-transparent"
+                        @change="toggleTimelineTicket(ticket.id)"
+                      />
+                      <span class="truncate">
+                        {{ ticket.participantName || t("dashboard.unnamedTicket") }}
+                        <span
+                          v-if="ticket.participantPlayerId"
+                          class="text-xs text-gray-400"
+                        >
+                          (#{{ ticket.participantPlayerId }})
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex w-full items-center justify-center rounded-lg border border-red-600/70 bg-red-950/40 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  :disabled="timelineActionPending || timelineSelectedTicketIds.length === 0"
+                  @click="cancelTimelineRegistrationSelection"
+                >
+                  {{ timelineActionPending ? t("dashboard.processingAction") : t("dashboard.cancelRegistrationAction") }}
+                </button>
+              </template>
             </div>
           </div>
         </div>
@@ -300,7 +374,7 @@
             </div>
 
             <!-- Edit Booking Button -->
-            <div class="mt-4 pt-4 border-t border-[#202225]">
+            <div class="mt-4 pt-4 border-t app-border">
               <div
                 v-if="registration.entryType !== 'bookmark'"
                 class="grid gap-3 sm:grid-cols-2"
@@ -370,7 +444,7 @@
                 </a>
                 <button
                   type="button"
-                  class="w-full border border-[#202225] bg-[#40444b] hover:bg-[#4f545c] text-gray-200 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                  class="w-full app-btn-neutral font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
                   @click="removeBookmark(registration)"
                 >
                   <svg
@@ -399,8 +473,8 @@
               "
               class="mt-4 p-3 sm:p-4 rounded-lg border"
               :class="{
-                'bg-[#40444b] border-yellow-500': needsAttention(registration),
-                'bg-[#40444b] border-green-500': !needsAttention(registration),
+                'app-surface-2 border-yellow-500': needsAttention(registration),
+                'app-surface-2 border-green-500': !needsAttention(registration),
               }"
               @click.prevent.stop
             >
@@ -473,6 +547,11 @@ import {
 } from "@heroicons/vue/24/outline";
 import { onEventBookmarksUpdated } from "~/utils/eventBookmarks";
 import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
+import { getEventColor } from "~/utils/eventColors";
+import {
+  getCustomCalendarEventType,
+  getExternalCalendarEventType,
+} from "~/utils/calendarEventUtils";
 // Use centralized composables
 const { getDisplayTags } = useTagDisplay();
 const {
@@ -521,6 +600,9 @@ interface EventRegistration {
     registrationDeadline?: string | null;
     requiresDecklist: boolean;
     status: string;
+    eventType?: string;
+    tags?: unknown;
+    tagType?: string;
   };
 }
 
@@ -531,6 +613,9 @@ const isLoading = ref(true);
 const error = ref<string | null>(null);
 const timelineWindowStart = ref<Date>(startOfMonth(new Date()));
 const selectedTimelineEntry = ref<(EventRegistration & { isPast: boolean }) | null>(null);
+const timelineActionPending = ref(false);
+const timelineActionError = ref<string | null>(null);
+const timelineSelectedTicketIds = ref<string[]>([]);
 let removeBookmarksListener: (() => void) | null = null;
 
 const fetchRegistrations = async () => {
@@ -686,7 +771,7 @@ const miniCalendarDays = computed<MiniCalDay[]>(() => {
 
   for (let i = 0; i < 42; i += 1) {
     const date = addDays(gridStart, i);
-    const key = isoDayKey(date.toISOString());
+    const key = isoDayKey(date);
     days.push({
       key: `${key}-${i}`,
       label: String(date.getDate()),
@@ -700,7 +785,7 @@ const miniCalendarDays = computed<MiniCalDay[]>(() => {
 });
 
 const timelineRangeLabel = computed(() => {
-  return `${formatTimelineDate(timelineWindowStart.value.toISOString())} - ${formatTimelineDate(timelineWindowEnd.value.toISOString())}`;
+  return `${formatTimelineDate(timelineWindowStart.value)} - ${formatTimelineDate(timelineWindowEnd.value)}`;
 });
 
 const timelineEvents = computed(() => {
@@ -737,6 +822,157 @@ const shiftTimelineWindowByMonth = (months: number) => {
 
 const openTimelineModal = (entry: EventRegistration & { isPast: boolean }) => {
   selectedTimelineEntry.value = entry;
+  timelineActionError.value = null;
+  timelineSelectedTicketIds.value = getActiveTickets(entry).map((ticket) => ticket.id);
+};
+
+const closeTimelineModal = () => {
+  if (timelineActionPending.value) return;
+  selectedTimelineEntry.value = null;
+  timelineActionError.value = null;
+  timelineSelectedTicketIds.value = [];
+};
+
+const getActiveTickets = (
+  entry: EventRegistration | (EventRegistration & { isPast: boolean }) | null,
+) => {
+  if (!entry?.tickets?.length) return [];
+  return entry.tickets.filter((ticket) => ticket.status !== "cancelled");
+};
+
+const selectedTimelineActiveTickets = computed(() =>
+  getActiveTickets(selectedTimelineEntry.value),
+);
+
+const timelineAllActiveSelected = computed(() => {
+  const activeIds = selectedTimelineActiveTickets.value.map((ticket) => ticket.id);
+  return (
+    activeIds.length > 0 &&
+    activeIds.every((ticketId) =>
+      timelineSelectedTicketIds.value.includes(ticketId),
+    )
+  );
+});
+
+const toggleTimelineTicket = (ticketId: string) => {
+  if (timelineActionPending.value) return;
+  if (timelineSelectedTicketIds.value.includes(ticketId)) {
+    timelineSelectedTicketIds.value = timelineSelectedTicketIds.value.filter(
+      (id) => id !== ticketId,
+    );
+    return;
+  }
+  timelineSelectedTicketIds.value = [...timelineSelectedTicketIds.value, ticketId];
+};
+
+const toggleAllTimelineTickets = () => {
+  if (timelineActionPending.value) return;
+  if (timelineAllActiveSelected.value) {
+    timelineSelectedTicketIds.value = [];
+    return;
+  }
+  timelineSelectedTicketIds.value = selectedTimelineActiveTickets.value.map(
+    (ticket) => ticket.id,
+  );
+};
+
+const refreshAfterTimelineMutation = async (targetId: string) => {
+  await fetchRegistrations();
+  const refreshedEntry = timelineEvents.value.find((entry) => entry.id === targetId);
+  if (!refreshedEntry) {
+    closeTimelineModal();
+    return;
+  }
+  closeTimelineModal();
+};
+
+const removeTimelineBookmark = async () => {
+  const entry = selectedTimelineEntry.value;
+  if (
+    !entry ||
+    entry.entryType !== "bookmark" ||
+    !entry.externalEventId ||
+    timelineActionPending.value
+  ) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    t("dashboard.removeBookmarkConfirm", { eventName: entry.customEvent.name }),
+  );
+  if (!confirmed) return;
+
+  try {
+    timelineActionPending.value = true;
+    timelineActionError.value = null;
+    await $fetch(`/api/events/bookmarks/${entry.externalEventId}`, {
+      method: "DELETE",
+    });
+    notifyEventBookmarksUpdated();
+    await refreshAfterTimelineMutation(entry.id);
+  } catch (err) {
+    console.error("Failed to remove bookmark from timeline:", err);
+    timelineActionError.value =
+      err instanceof Error ? err.message : t("dashboard.actionFailed");
+  } finally {
+    timelineActionPending.value = false;
+  }
+};
+
+const cancelTimelineRegistrationSelection = async () => {
+  const entry = selectedTimelineEntry.value;
+  if (!entry || entry.entryType === "bookmark" || timelineActionPending.value) {
+    return;
+  }
+
+  const activeTickets = getActiveTickets(entry);
+  const selectedTickets = activeTickets.filter((ticket) =>
+    timelineSelectedTicketIds.value.includes(ticket.id),
+  );
+
+  if (selectedTickets.length === 0) {
+    timelineActionError.value = t("dashboard.selectAtLeastOneTicket");
+    return;
+  }
+
+  const cancellingAll = selectedTickets.length === activeTickets.length;
+  const confirmationMessage = cancellingAll
+    ? t("dashboard.cancelAllTicketsConfirm", { eventName: entry.customEvent.name })
+    : t("dashboard.cancelSelectedTicketsConfirm", {
+        count: selectedTickets.length,
+        eventName: entry.customEvent.name,
+      });
+
+  if (!window.confirm(confirmationMessage)) {
+    return;
+  }
+
+  try {
+    timelineActionPending.value = true;
+    timelineActionError.value = null;
+
+    if (cancellingAll) {
+      await $fetch(`/api/dashboard/registrations/${entry.id}/cancel`, {
+        method: "POST",
+      });
+    } else {
+      await Promise.all(
+        selectedTickets.map((ticket) =>
+          $fetch(`/api/bookings/${entry.id}/tickets/${ticket.id}`, {
+            method: "DELETE",
+          }),
+        ),
+      );
+    }
+
+    await refreshAfterTimelineMutation(entry.id);
+  } catch (err) {
+    console.error("Failed to cancel timeline registration:", err);
+    timelineActionError.value =
+      err instanceof Error ? err.message : t("dashboard.actionFailed");
+  } finally {
+    timelineActionPending.value = false;
+  }
 };
 
 const routePlannerUrl = (entry: EventRegistration) => {
@@ -744,8 +980,8 @@ const routePlannerUrl = (entry: EventRegistration) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(target)}`;
 };
 
-const formatTimelineDate = (dateString: string): string => {
-  const parsed = new Date(dateString);
+const formatTimelineDate = (input: string | Date): string => {
+  const parsed = input instanceof Date ? new Date(input) : new Date(input);
   if (Number.isNaN(parsed.getTime())) {
     return "—";
   }
@@ -762,28 +998,26 @@ const miniCalendarDayClass = (day: MiniCalDay) => {
   }
 
   if (!day.event) {
-    return "border-[#2a2d32] bg-[#2f3136] text-gray-300";
+    return "app-border app-surface-0 text-gray-300";
   }
 
-  const typeBgClass = miniCalendarTypeBgClass(day.event);
-
   if (day.event.isPast) {
-    return `${typeBgClass} border-gray-500 text-gray-300 opacity-70`;
+    return "border-gray-500 opacity-70";
   }
 
   if (day.event.entryType === "bookmark") {
-    return `${typeBgClass} border-blue-500 text-blue-100`;
+    return "border-blue-500";
   }
 
   if (day.event.status === "reserved") {
-    return `${typeBgClass} border-amber-500 text-amber-100`;
+    return "border-amber-500";
   }
 
-  return `${typeBgClass} border-emerald-500 text-emerald-100`;
+  return "border-emerald-500";
 };
 
-function isoDayKey(dateString: string): string {
-  const d = new Date(dateString);
+function isoDayKey(input: string | Date): string {
+  const d = input instanceof Date ? new Date(input) : new Date(input);
   if (Number.isNaN(d.getTime())) return "invalid";
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -791,24 +1025,33 @@ function isoDayKey(dateString: string): string {
   return `${year}-${month}-${day}`;
 }
 
-function miniCalendarTypeBgClass(event: EventRegistration & { isPast: boolean }): string {
-  const type = String((event.customEvent as any).eventType || "").toLowerCase();
-  const tags = String((event.customEvent as any).tags || "").toLowerCase();
-  const name = String(event.customEvent.name || "").toLowerCase();
-  const haystack = `${type} ${tags} ${name}`;
-
-  if (haystack.includes("pre") && haystack.includes("release")) {
-    return "bg-yellow-900/60";
-  }
-  if (haystack.includes("challenge")) {
-    return "bg-blue-900/55";
-  }
-  if (haystack.includes("cup")) {
-    return "bg-rose-900/55";
+function resolveMiniCalendarColor(event: EventRegistration & { isPast: boolean }) {
+  if (event.entryType === "bookmark") {
+    return getEventColor(
+      getExternalCalendarEventType({
+        type: event.eventType || event.customEvent.eventType || "",
+        icon: "",
+      }),
+    );
   }
 
-  return "bg-slate-800";
+  return getEventColor(
+    getCustomCalendarEventType({
+      eventType: event.customEvent.eventType,
+      tags: event.customEvent.tags,
+      tagType: event.customEvent.tagType,
+    }),
+  );
 }
+
+const miniCalendarDayStyle = (day: MiniCalDay) => {
+  if (!day.inMonth || !day.event) return undefined;
+  const palette = resolveMiniCalendarColor(day.event);
+  return {
+    backgroundColor: palette.bg,
+    color: palette.text,
+  };
+};
 
 function addDays(date: Date, days: number): Date {
   const next = new Date(date);
@@ -846,79 +1089,3 @@ onBeforeUnmount(() => {
   removeBookmarksListener?.();
 });
 </script>
-
-<style scoped>
-.event-type-badge {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 9999px;
-  white-space: nowrap;
-}
-
-/* Tag type badges */
-.event-type-badge.type-league_cup {
-  background-color: #bbf7d0;
-  color: #166534;
-}
-
-.event-type-badge.type-league_challenge {
-  background-color: #bfdbfe;
-  color: #1e40af;
-}
-
-.event-type-badge.type-local_tournament,
-.event-type-badge.type-store_tournament {
-  background-color: #e0f2fe;
-  color: #075985;
-}
-
-.event-type-badge.type-premier_challenge,
-.event-type-badge.type-special_event,
-.event-type-badge.type-custom {
-  background-color: #fed7aa;
-  color: #9a3412;
-}
-
-.event-type-badge.type-prerelease,
-.event-type-badge.type-pre_release {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.event-type-badge.type-midseason_showdown,
-.event-type-badge.type-regional_championships {
-  background-color: #ddd6fe;
-  color: #5b21b6;
-}
-
-/* Game badges */
-.event-type-badge.game-pokemon {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.event-type-badge.game-riftbound {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.event-type-badge.game-generic {
-  background-color: #e5e7eb;
-  color: #374151;
-}
-
-/* Format badges */
-.event-type-badge.format-standard,
-.event-type-badge.format-expanded,
-.event-type-badge.format-unlimited {
-  background-color: #cffafe;
-  color: #155e75;
-}
-
-/* Host badges */
-.event-type-badge.host {
-  background-color: #f3e8ff;
-  color: #6b21a8;
-}
-</style>

@@ -234,7 +234,7 @@ Acceptance criteria:
 
 ### Item 8 - Enforce New Invariants and Retire Legacy Paths
 
-Status: In progress on 2026-05-01
+Status: In progress on 2026-05-01. Core contract cleanup is complete; final closeout still depends on manual reconciliation and one optional post-cutover simplification pass.
 
 Goal:
 
@@ -257,10 +257,43 @@ Progress so far:
 - added focused unit coverage for the `players/check` invariant
 - removed unused legacy Prisma auth/account models (`users.User`, `users.UserDeck`, and `public.Participants`) from the generated client surface
 - clarified `users.admin_users` in the Prisma schema as legacy compatibility data only
+- narrowed `players/register` to its real request contract by removing deprecated `email`, `supabaseId`, and `userId` request fields
+- narrowed `players/check` to an email-only request contract
+- narrowed `preferred-login-method` and `ensure-player` write-side request types to `password | otp`
+- removed `magiclink` from write-side provisioning input types while retaining read-side normalization for legacy stored values
+- added a regression test that rejects legacy `magiclink` writes for preferred login method updates
+- re-ran focused validation for player registration, player checks, provisioning, and authenticated-player handlers after the contract cleanup
+
+Remaining to close Item 8:
+
+- perform the manual reconciliation recorded in `AUTH_IDENTITY_DATA_AUDIT.md`
+- migrate the remaining legacy admin authority into Supabase metadata if not already done
+- decide whether `authOnly` and `legacyPlayerOnly` remain intentional support semantics or should be removed in a final simplification pass
+
+Frontend core-route follow-up identified on 2026-05-01:
+
+1. [x] Migrate booking ownership checks from `Player.email` to the shared authenticated-player / `supabaseId` path in all player-facing booking endpoints.
+2. [x] Update protected-route redirects for `/dashboard`, `/profile`, `/booking/[id]`, and event reservation flows so unauthenticated users land on `/login?redirect=...` instead of being bounced to `/`.
+3. [x] Remove reservation-form fallback assumptions that treat auth metadata as a substitute for a canonical linked `Player`; surface missing-player integrity issues explicitly instead.
+4. [x] Consolidate logout behavior into one shared client path so layout/menu variants clear state consistently without duplicated storage and cookie logic.
+5. [ ] Add focused user-flow coverage for password login, OTP login, password registration, OTP registration, self-registration, friend ticket addition, and logout.
+
+Frontend follow-up progress update:
+
+- protected-route auth middleware now preserves the requested destination via `/login?redirect=...`, and the login workflow consumes that redirect on successful sign-in
+- booking detail and ticket mutation endpoints now authorize ownership through the shared authenticated-player resolver instead of email matching
+- event registration now blocks on missing canonical player linkage with `playerIntegrityError` instead of falling back to auth metadata for player name or player ID
+- client auth-state cleanup now flows through one shared helper used by logout, auth monitoring, route-guard invalid-session cleanup, and session cleanup on app startup
+- focused validation passed for `clientAuthState`, logout action, and auth route middleware after the cleanup consolidation
+
+Why these frontend items are still open:
+
+- focused user-flow coverage has not yet been expanded across the remaining password, OTP, registration, and friend-ticket flows.
 
 Acceptance criteria:
 
 - runtime behavior matches the approved domain model
+- remaining legacy compatibility behavior is either intentionally retained and documented or removed after manual reconciliation
 
 ## Migration Checklist
 
@@ -294,6 +327,13 @@ Acceptance criteria:
 
 ## Recommended Next Action
 
-Continue Item 8 by removing the next remaining legacy identity fallback path after `players/check` and `players/register`, then perform the manual reconciliation identified in the live audit.
+Do not treat Item 8 as fully closed yet.
+
+Next process:
+
+1. Perform the manual reconciliation identified in `AUTH_IDENTITY_DATA_AUDIT.md`.
+2. Re-run the live audit and confirm the known ambiguity/admin backlog is gone or explicitly accepted.
+3. Decide whether to keep or retire the temporary `authOnly` and `legacyPlayerOnly` response flags.
+4. Mark Item 8 complete only after that final decision is implemented or explicitly documented.
 
 Detailed cut list and execution order for this step are recorded in `AUTH_IDENTITY_STEP8_PREP.md`.

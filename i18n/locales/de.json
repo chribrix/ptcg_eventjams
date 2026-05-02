@@ -98,7 +98,18 @@
     "timelineRegistered": "Registriert",
     "timelinePast": "Vergangen",
     "openRoutePlanner": "Routenplaner öffnen",
-    "timelineEventDetails": "Eventdetails"
+    "timelineEventDetails": "Eventdetails",
+    "removeBookmarkAction": "Vormerkung entfernen",
+    "cancelRegistrationAction": "Abmeldung bestätigen",
+    "processingAction": "Wird verarbeitet...",
+    "cancelTicketsTitle": "Tickets zur Abmeldung",
+    "selectAllTickets": "Alle auswählen",
+    "unselectAllTickets": "Alle abwählen",
+    "unnamedTicket": "Unbenanntes Ticket",
+    "selectAtLeastOneTicket": "Bitte mindestens ein Ticket auswählen.",
+    "cancelAllTicketsConfirm": "Alle Tickets für \"{eventName}\" stornieren und vollständig abmelden?",
+    "cancelSelectedTicketsConfirm": "{count} ausgewählte Ticket(s) für \"{eventName}\" stornieren?",
+    "actionFailed": "Aktion konnte nicht abgeschlossen werden."
   },
   "landingPage": {
     "calendarTitle": "Eventkalender",

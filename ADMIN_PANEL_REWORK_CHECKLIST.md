@@ -4,6 +4,11 @@ Date: 2026-05-01
 Scope: admin events, admin users, admin account actions, and landing-page information banner management
 Out of scope: player-facing auth flows, registration-flow redesign, and unrelated visual polish outside the admin surface
 
+Follow-up UI backlog after the core rework:
+
+- replace the global top-nav admin dropdown with a dedicated `/admin` shell that owns admin navigation via a responsive sidebar
+- use sidebar entries as the canonical admin navigation surface on desktop and behind a hamburger menu on mobile
+
 Detailed file/API/model planning is documented in `ADMIN_PANEL_REWORK_SPEC.md`.
 
 ## Non-Negotiable Architecture Rules

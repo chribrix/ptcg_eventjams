@@ -1,9 +1,9 @@
 <template>
   <section class="w-full max-w-6xl mx-auto">
     <div
-      class="overflow-hidden rounded-[2rem] border border-[#202225] bg-gradient-to-br from-[#36393f] via-[#313338] to-[#2b2d31] shadow-[0_24px_80px_-40px_rgba(0,0,0,0.65)]"
+      class="overflow-hidden rounded-[2rem] border app-border app-surface-1 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.65)]"
     >
-      <div class="border-b border-[#202225] px-4 py-5 sm:px-6 lg:px-8">
+      <div class="border-b app-border px-4 py-5 sm:px-6 lg:px-8">
         <div
           class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
         >
@@ -25,7 +25,7 @@
 
           <div class="grid grid-cols-2 gap-3 lg:min-w-[16rem]">
             <div
-              class="rounded-2xl border border-[#202225] bg-[#2f3136]/90 p-3 shadow-sm backdrop-blur"
+              class="rounded-2xl border app-border app-surface-0 p-3 shadow-sm backdrop-blur"
             >
               <div class="text-xs uppercase tracking-[0.2em] text-gray-400">
                 {{ t("eventList.shown") }}
@@ -35,7 +35,7 @@
               </div>
             </div>
             <div
-              class="rounded-2xl border border-[#202225] bg-[#2f3136]/90 p-3 shadow-sm backdrop-blur"
+              class="rounded-2xl border app-border app-surface-0 p-3 shadow-sm backdrop-blur"
             >
               <div class="text-xs uppercase tracking-[0.2em] text-gray-400">
                 {{ t("eventList.next30Days") }}
@@ -57,7 +57,7 @@
         </div>
 
         <div
-          class="mt-0 hidden gap-4 rounded-[1.75rem] border border-[#202225] bg-[#2f3136]/95 p-4 shadow-sm sm:grid sm:p-5"
+          class="mt-0 hidden gap-4 rounded-[1.75rem] border app-border app-surface-0 p-4 shadow-sm sm:grid sm:p-5"
           :class="error ? 'mt-4' : ''"
         >
           <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -70,14 +70,14 @@
                 v-model="searchQuery"
                 type="text"
                 :placeholder="t('eventList.searchPlaceholder')"
-                class="w-full rounded-2xl border border-[#202225] bg-[#40444b] py-3 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-gray-400 focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
+                class="w-full rounded-2xl border app-border app-surface-2 py-3 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-gray-400 focus:border-emerald-500 focus:bg-[var(--app-surface-3)] focus:ring-4 focus:ring-emerald-900/30"
               />
             </label>
 
             <div class="grid grid-cols-2 gap-3 sm:w-auto sm:grid-cols-2">
               <select
                 v-model="selectedTimeWindow"
-                class="rounded-2xl border border-[#202225] bg-[#40444b] px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
+                class="rounded-2xl border app-border app-surface-2 px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:bg-[var(--app-surface-3)] focus:ring-4 focus:ring-emerald-900/30"
               >
                 <option value="all">{{ t("eventList.timeWindowAll") }}</option>
                 <option value="14">{{ t("eventList.timeWindow14") }}</option>
@@ -90,8 +90,8 @@
                 class="rounded-2xl border px-4 py-3 text-sm font-medium transition"
                 :class="
                   hasActiveFilters
-                    ? 'border-gray-500 bg-[#36393f] text-gray-200 hover:bg-[#40444b]'
-                    : 'border-[#202225] bg-[#2b2d31] text-gray-500 cursor-not-allowed'
+                    ? 'app-btn-neutral text-gray-200'
+                    : 'app-border app-surface-0 text-gray-500 cursor-not-allowed'
                 "
                 :disabled="!hasActiveFilters"
                 @click="resetFilters"
@@ -117,7 +117,7 @@
                   :class="
                     selectedType === option.value
                       ? 'border-emerald-600 bg-emerald-600 text-white'
-                      : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
+                      : 'app-border app-surface-2 text-gray-200 hover:border-gray-500 hover:bg-[var(--app-surface-3)]'
                   "
                   @click="selectedType = option.value"
                 >
@@ -163,7 +163,7 @@
         >
           <div
             v-if="showMobileFilters"
-            class="fixed inset-x-3 bottom-20 z-50 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.5rem] border border-[#202225] bg-[#2f3136] p-4 shadow-2xl sm:hidden"
+            class="fixed inset-x-3 bottom-20 z-50 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.5rem] border app-border app-surface-0 p-4 shadow-2xl sm:hidden"
           >
             <div class="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -176,7 +176,7 @@
               </div>
               <button
                 type="button"
-                class="rounded-xl border border-[#202225] bg-[#40444b] px-3 py-2 text-xs font-medium text-gray-200"
+                class="rounded-xl border app-border app-surface-2 px-3 py-2 text-xs font-medium text-gray-200"
                 @click="showMobileFilters = false"
               >
                 {{ t("common.cancel") }}
@@ -193,14 +193,14 @@
                   v-model="searchQuery"
                   type="text"
                   :placeholder="t('eventList.searchPlaceholder')"
-                  class="w-full rounded-2xl border border-[#202225] bg-[#40444b] py-3 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-gray-400 focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
+                  class="w-full rounded-2xl border app-border app-surface-2 py-3 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-gray-400 focus:border-emerald-500 focus:bg-[var(--app-surface-3)] focus:ring-4 focus:ring-emerald-900/30"
                 />
               </label>
 
               <div class="grid gap-3">
                 <select
                   v-model="selectedTimeWindow"
-                  class="rounded-2xl border border-[#202225] bg-[#40444b] px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:bg-[#454950] focus:ring-4 focus:ring-emerald-900/30"
+                  class="rounded-2xl border app-border app-surface-2 px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500 focus:bg-[var(--app-surface-3)] focus:ring-4 focus:ring-emerald-900/30"
                 >
                   <option value="all">{{ t("eventList.timeWindowAll") }}</option>
                   <option value="14">{{ t("eventList.timeWindow14") }}</option>
@@ -224,7 +224,7 @@
                     :class="
                       selectedType === option.value
                         ? 'border-emerald-600 bg-emerald-600 text-white'
-                        : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
+                        : 'app-border app-surface-2 text-gray-200 hover:border-gray-500 hover:bg-[var(--app-surface-3)]'
                     "
                     @click="selectedType = option.value"
                   >
@@ -248,8 +248,8 @@
                 class="rounded-2xl border px-4 py-3 text-sm font-medium transition"
                 :class="
                   hasActiveFilters
-                    ? 'border-gray-500 bg-[#36393f] text-gray-200 hover:bg-[#40444b]'
-                    : 'border-[#202225] bg-[#2b2d31] text-gray-500 cursor-not-allowed'
+                    ? 'app-btn-neutral text-gray-200'
+                    : 'app-border app-surface-0 text-gray-500 cursor-not-allowed'
                 "
                 :disabled="!hasActiveFilters"
                 @click="resetFilters"
@@ -261,14 +261,14 @@
         </Transition>
       </div>
 
-      <div class="border-t border-[#202225] px-4 py-5 sm:px-6 lg:px-8">
+      <div class="border-t app-border px-4 py-5 sm:px-6 lg:px-8">
         <div
           v-if="isLoading"
           class="flex min-h-[18rem] items-center justify-center"
         >
           <div class="flex flex-col items-center gap-3 text-gray-300">
             <div
-              class="h-10 w-10 animate-spin rounded-full border-4 border-[#202225] border-t-emerald-500"
+              class="h-10 w-10 animate-spin rounded-full border-4 app-border border-t-emerald-500"
             ></div>
             <span class="text-sm font-medium">{{ t("eventList.loading") }}</span>
           </div>
@@ -276,7 +276,7 @@
 
         <div
           v-else-if="filteredEvents.length === 0"
-          class="flex min-h-[18rem] flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-[#4f545c] bg-[#2f3136]/70 px-6 text-center"
+          class="flex min-h-[18rem] flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-[var(--app-surface-3)] app-surface-0 px-6 text-center"
         >
           <CalendarIcon class="h-12 w-12 text-gray-500" />
           <h3 class="mt-4 text-lg font-semibold text-white">
@@ -308,7 +308,7 @@
               <article
                 v-for="event in group.events"
                 :key="event.key"
-                class="group cursor-pointer rounded-[1.25rem] border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#5865f2]/70 focus:ring-offset-2 focus:ring-offset-[#1e2124] sm:rounded-[1.75rem] sm:p-5"
+                class="group cursor-pointer rounded-[1.25rem] border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/70 focus:ring-offset-2 focus:ring-offset-[var(--app-surface-0)] sm:rounded-[1.75rem] sm:p-5"
                 :class="getEventCardClass(event)"
                 role="button"
                 tabindex="0"
@@ -344,7 +344,7 @@
                         </span>
                         <span
                           v-if="event.gameLabel"
-                          class="rounded-full border border-[#202225] bg-[#40444b] px-2.5 py-1 text-[11px] font-medium text-gray-300 sm:px-3 sm:text-xs"
+                          class="rounded-full border app-border app-surface-2 px-2.5 py-1 text-[11px] font-medium text-gray-300 sm:px-3 sm:text-xs"
                         >
                           {{ event.gameLabel }}
                         </span>
@@ -414,7 +414,7 @@
                 </p>
 
                 <div
-                  class="mt-4 flex items-center justify-between gap-3 border-t border-[#202225] pt-3 sm:mt-5 sm:pt-4"
+                  class="mt-4 flex items-center justify-between gap-3 border-t app-border pt-3 sm:mt-5 sm:pt-4"
                 >
                   <span class="text-xs font-medium text-gray-400">
                     {{ t("eventList.tapForDetails") }}
@@ -426,7 +426,7 @@
                     :class="
                       isBookmarked(event.id)
                         ? 'border-sky-500 bg-sky-600 text-white hover:bg-sky-700'
-                        : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
+                        : 'app-border app-surface-2 text-gray-200 hover:border-gray-500 hover:bg-[var(--app-surface-3)]'
                     "
                     :disabled="bookmarkPendingId === event.id"
                     @click.stop="toggleBookmark(event)"
@@ -449,7 +449,7 @@
     <button
       type="button"
       aria-label="Open filters"
-      class="fixed bottom-5 right-5 z-[60] inline-flex h-14 w-14 items-center justify-center rounded-full border border-[#202225] bg-[#5865f2] text-white shadow-[0_12px_32px_rgba(0,0,0,0.45)] sm:hidden"
+      class="fixed bottom-5 right-5 z-[60] inline-flex h-14 w-14 items-center justify-center rounded-full border app-border app-surface-3 text-white shadow-[0_12px_32px_rgba(0,0,0,0.45)] sm:hidden"
       @click="showMobileFilters = true"
     >
       <FunnelIcon class="h-5 w-5" />
@@ -461,11 +461,11 @@
       @click="closeEventDetails"
     >
       <div
-        class="max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] bg-[#2f3136] shadow-2xl sm:mx-auto sm:max-w-3xl sm:rounded-[2rem]"
+        class="max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] app-surface-0 shadow-2xl sm:mx-auto sm:max-w-3xl sm:rounded-[2rem]"
         @click.stop
       >
         <div
-          class="flex items-start justify-between gap-4 border-b border-[#202225] px-5 py-4 sm:px-6"
+          class="flex items-start justify-between gap-4 border-b app-border px-5 py-4 sm:px-6"
         >
           <div>
             <div class="flex flex-wrap items-center gap-2">
@@ -483,7 +483,7 @@
 
           <button
             type="button"
-            class="rounded-2xl border border-[#202225] p-2 text-gray-400 transition hover:bg-[#40444b] hover:text-white"
+            class="rounded-2xl border app-border p-2 text-gray-400 transition hover:bg-[var(--app-surface-2)] hover:text-white"
             @click="closeEventDetails"
           >
             <XMarkIcon class="h-5 w-5" />
@@ -498,7 +498,7 @@
           >
             <div class="space-y-5">
               <div
-                class="rounded-[1.5rem] border border-[#202225] bg-[#36393f] p-4"
+                class="rounded-[1.5rem] border app-border app-bg-page p-4"
               >
                 <div class="grid gap-4 sm:grid-cols-2">
                   <div class="flex gap-3">
@@ -569,7 +569,7 @@
 
               <div
                 v-if="selectedEvent.description"
-                class="rounded-[1.5rem] border border-[#202225] bg-[#36393f] p-4"
+                class="rounded-[1.5rem] border app-border app-bg-page p-4"
               >
                 <div
                   class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
@@ -584,7 +584,7 @@
 
             <div class="space-y-4">
               <div
-                class="rounded-[1.5rem] border border-[#202225] bg-[#36393f] p-4"
+                class="rounded-[1.5rem] border app-border app-bg-page p-4"
               >
                 <div
                   class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400"
@@ -594,7 +594,7 @@
                 <div class="mt-4 space-y-3">
                   <div
                     v-if="selectedEvent.priceLabel"
-                    class="flex items-center justify-between gap-3 rounded-2xl bg-[#40444b] px-4 py-3 text-sm text-gray-300"
+                    class="flex items-center justify-between gap-3 rounded-2xl app-surface-2 px-4 py-3 text-sm text-gray-300"
                   >
                     <span>{{ t("eventList.entryFee") }}</span>
                     <span class="font-semibold text-white">{{
@@ -603,7 +603,7 @@
                   </div>
                   <div
                     v-if="selectedEvent.capacityLabel"
-                    class="flex items-center justify-between gap-3 rounded-2xl bg-[#40444b] px-4 py-3 text-sm text-gray-300"
+                    class="flex items-center justify-between gap-3 rounded-2xl app-surface-2 px-4 py-3 text-sm text-gray-300"
                   >
                     <span>{{ t("eventList.capacity") }}</span>
                     <span class="font-semibold text-white">{{
@@ -612,7 +612,7 @@
                   </div>
                   <div
                     v-if="selectedEvent.registrationDeadlineLabel"
-                    class="flex items-center justify-between gap-3 rounded-2xl bg-[#40444b] px-4 py-3 text-sm text-gray-300"
+                    class="flex items-center justify-between gap-3 rounded-2xl app-surface-2 px-4 py-3 text-sm text-gray-300"
                   >
                     <span>{{ t("eventList.deadline") }}</span>
                     <span class="text-right font-semibold text-white">{{
@@ -635,7 +635,7 @@
                     :class="
                       isBookmarked(selectedEvent.id)
                         ? 'border-sky-500 bg-sky-600 text-white hover:bg-sky-700'
-                        : 'border-[#202225] bg-[#40444b] text-gray-200 hover:border-gray-500 hover:bg-[#4f545c]'
+                        : 'app-border app-surface-2 text-gray-200 hover:border-gray-500 hover:bg-[var(--app-surface-3)]'
                     "
                     :disabled="bookmarkPendingId === selectedEvent.id"
                     @click="toggleBookmark(selectedEvent)"
@@ -669,7 +669,7 @@
               </div>
 
               <div
-                class="rounded-[1.5rem] border border-[#202225] bg-[#36393f] p-4 text-sm text-gray-300"
+                class="rounded-[1.5rem] border app-border app-bg-page p-4 text-sm text-gray-300"
               >
                 <div class="font-semibold">{{ t("eventList.quickTipTitle") }}</div>
                 <p class="mt-2 leading-6">
@@ -1004,7 +1004,7 @@ function getEventCardClass(event: UnifiedEvent): string {
   if (event.source === "external" && isBookmarked(event.id)) {
     return "border-sky-700 bg-gradient-to-br from-sky-950/90 via-blue-950/70 to-slate-900 hover:border-sky-500";
   }
-  return "border-[#202225] bg-[#2f3136] hover:border-[#4f545c]";
+  return "app-border app-surface-0 hover:border-[var(--app-surface-3)]";
 }
 
 async function toggleBookmark(event: UnifiedEvent): Promise<void> {
@@ -1087,8 +1087,8 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
       ? t("eventList.sourceLocalSignup")
       : t("eventList.sourceOfficialFeed"),
     sourceBadgeClass: hasLocalRegistration
-      ? "bg-[#5865f2]/20 text-[#c9cdfb]"
-      : "bg-[#40444b] text-gray-300",
+      ? "app-badge-accent"
+      : "app-surface-2 text-gray-300",
     typeKey,
     typeLabel,
     typeBadgeClass: getEventDisplayBadgeClass({

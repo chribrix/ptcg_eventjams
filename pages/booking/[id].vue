@@ -90,7 +90,7 @@
                     booking.event.tagType || 'pokemon'
                   )"
                   :key="tag.value"
-                  class="event-type-badge"
+                  class="event-type-badge event-type-badge-compact"
                   :class="tag.badgeClass"
                 >
                   {{ tag.label }}
@@ -962,57 +962,3 @@ onMounted(() => {
   fetchBookingDetails();
 });
 </script>
-
-<style scoped>
-.event-type-badge {
-  padding: 0.125rem 0.5rem;
-  font-size: 0.625rem;
-  font-weight: 600;
-  border-radius: 9999px;
-  white-space: nowrap;
-}
-
-/* Tag type badges */
-.event-type-badge.type-league_cup {
-  background-color: #bbf7d0;
-  color: #166534;
-}
-
-.event-type-badge.type-league_challenge {
-  background-color: #bfdbfe;
-  color: #1e40af;
-}
-
-.event-type-badge.type-local_tournament,
-.event-type-badge.type-store_tournament {
-  background-color: #e0f2fe;
-  color: #075985;
-}
-
-.event-type-badge.type-premier_challenge,
-.event-type-badge.type-special_event,
-.event-type-badge.type-custom {
-  background-color: #fed7aa;
-  color: #9a3412;
-}
-
-.event-type-badge.type-midseason_showdown,
-.event-type-badge.type-regional_championships {
-  background-color: #ddd6fe;
-  color: #5b21b6;
-}
-
-/* Format badges */
-.event-type-badge.format-standard,
-.event-type-badge.format-expanded,
-.event-type-badge.format-unlimited {
-  background-color: #cffafe;
-  color: #155e75;
-}
-
-/* Host badges */
-.event-type-badge.host {
-  background-color: #f3e8ff;
-  color: #6b21a8;
-}
-</style>
