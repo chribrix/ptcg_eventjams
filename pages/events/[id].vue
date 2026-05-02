@@ -59,6 +59,14 @@
               {{ t("eventDetailPage.registeredCount", { count: registrationCount, max: event.maxParticipants }) }}
             </div>
           </div>
+          <div v-if="isAdmin" class="mt-4">
+            <NuxtLink
+              :to="`/admin/tournament-management?eventId=${event.id}`"
+              class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-sky-700 to-blue-700 px-4 py-2 text-sm font-semibold text-white shadow hover:from-sky-800 hover:to-blue-800"
+            >
+              Turnier organisieren
+            </NuxtLink>
+          </div>
         </div>
 
         <!-- Event Info -->
@@ -370,6 +378,7 @@ const { id } = useRoute().params;
 const supabase = useSupabaseClient();
 const user = useSupabaseUser();
 const { t, locale } = useI18n();
+const { checkAdminStatus } = useAdmin();
 
 const event = ref<CustomEvent | null>(null);
 const registrationCount = ref(0);
@@ -385,6 +394,7 @@ const isSavingDecklist = ref(false);
 const isCancelling = ref(false);
 const cancelSuccess = ref(false);
 const showCancelModal = ref(false);
+const isAdmin = ref(false);
 const userTimeZone = getUserTimeZone();
 
 function formatEventDate(dateString: string): string {
@@ -560,6 +570,7 @@ function closeCancelModal(): void {
 // Fetch event details on mount
 onMounted(async () => {
   await fetchEventDetails();
+  isAdmin.value = await checkAdminStatus();
   if (user.value) {
     await fetchUserRegistration();
   }

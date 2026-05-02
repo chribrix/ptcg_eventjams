@@ -334,7 +334,8 @@
               <article
                 v-for="event in group.events"
                 :key="event.key"
-                class="group cursor-pointer rounded-[1.25rem] border border-[#202225] bg-[#2f3136] p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-[#4f545c] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#5865f2]/70 focus:ring-offset-2 focus:ring-offset-[#1e2124] sm:rounded-[1.75rem] sm:p-5"
+                class="group cursor-pointer rounded-[1.25rem] border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#5865f2]/70 focus:ring-offset-2 focus:ring-offset-[#1e2124] sm:rounded-[1.75rem] sm:p-5"
+                :class="getEventCardClass(event)"
                 role="button"
                 tabindex="0"
                 @click="openEventDetails(event)"
@@ -1033,6 +1034,13 @@ function canBookmarkEvent(event: UnifiedEvent | null): boolean {
 
 function isBookmarked(eventId: string): boolean {
   return bookmarkedEventIds.value.has(eventId);
+}
+
+function getEventCardClass(event: UnifiedEvent): string {
+  if (event.source === "external" && isBookmarked(event.id)) {
+    return "border-sky-700 bg-gradient-to-br from-sky-950/90 via-blue-950/70 to-slate-900 hover:border-sky-500";
+  }
+  return "border-[#202225] bg-[#2f3136] hover:border-[#4f545c]";
 }
 
 async function toggleBookmark(event: UnifiedEvent): Promise<void> {
