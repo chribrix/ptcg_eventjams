@@ -219,6 +219,15 @@
                         <span>{{ t("events.eventDetails") }}</span>
                       </a>
                     </div>
+                    <p
+                      v-if="!isUserLoggedIn && canBookmarkEvent(event)"
+                      class="text-xs text-emerald-200"
+                    >
+                      {{ t("eventList.guestBookmarkHint") }}
+                      <NuxtLink to="/register" class="underline font-semibold">
+                        {{ t("eventList.guestBookmarkHintCta") }}
+                      </NuxtLink>
+                    </p>
                   </div>
                 </div>
               </Transition>
@@ -260,6 +269,8 @@ import {
   getEventDisplayLabel,
 } from "~/utils/eventDisplay";
 import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
+import { useEventBookmarks } from "~/composables/useEventBookmarks";
+import type { EventBookmarkDraft } from "~/utils/guestEventBookmarks";
 const { t, locale } = useI18n();
 
 interface ParsedEvent {
@@ -310,7 +321,9 @@ const emit = defineEmits<{
 // For accessing custom events data (assuming it's available globally or passed down)
 const customEvents = ref<CustomEvent[]>([]);
 const user = useSupabaseUser();
-const isUserLoggedIn = ref(false);
+const isUserLoggedIn = computed(() => Boolean(user.value));
+const { loadBookmarkedEventIds, toggleBookmark: toggleUnifiedBookmark } =
+  useEventBookmarks();
 const expandedEvents = ref<Set<string>>(new Set());
 const bookmarkedEventIds = ref<Set<string>>(new Set());
 const bookmarkPendingId = ref<string | null>(null);
@@ -372,8 +385,6 @@ onMounted(async () => {
     console.error("Failed to load custom events:", error);
   }
 
-  // Check if user is logged in
-  isUserLoggedIn.value = !!user.value;
   await loadBookmarks();
 });
 
@@ -392,7 +403,7 @@ const hasLocalRegistration = (event: ParsedEvent): boolean => {
 };
 
 const canBookmarkEvent = (event: ParsedEvent): boolean => {
-  return isUserLoggedIn.value && !isCustomEvent(event) && !hasLocalRegistration(event);
+  return !isCustomEvent(event) && !hasLocalRegistration(event);
 };
 
 const isBookmarked = (eventId: string): boolean => {
@@ -400,18 +411,8 @@ const isBookmarked = (eventId: string): boolean => {
 };
 
 async function loadBookmarks(): Promise<void> {
-  if (!user.value) {
-    bookmarkedEventIds.value = new Set();
-    return;
-  }
-
   try {
-    const response = await $fetch<{
-      data: Array<{ externalEventId: string }>;
-    }>("/api/events/bookmarks");
-    bookmarkedEventIds.value = new Set(
-      (response.data || []).map((bookmark) => bookmark.externalEventId)
-    );
+    bookmarkedEventIds.value = await loadBookmarkedEventIds(Boolean(user.value));
   } catch (error) {
     console.error("Failed to load bookmarks:", error);
   }
@@ -425,32 +426,27 @@ async function toggleBookmark(event: ParsedEvent): Promise<void> {
   bookmarkPendingId.value = event.id;
 
   try {
-    if (isBookmarked(event.id)) {
-      await $fetch(`/api/events/bookmarks/${event.id}`, {
-        method: "DELETE",
-      });
-      const next = new Set(bookmarkedEventIds.value);
-      next.delete(event.id);
-      bookmarkedEventIds.value = next;
-    } else {
-      await $fetch("/api/events/bookmarks", {
-        method: "POST",
-        body: {
-          externalEventId: event.id,
-          title: getEventTitle(event),
-          eventType: event.type,
-          venue: stripHtmlTags(event.venue) || getEventTitle(event),
-          location: stripHtmlTags(event.location || "") || null,
-          country: stripHtmlTags(event.country || "") || null,
-          eventDate: new Date(event.dateTime).toISOString(),
-          registrationUrl: event.link || null,
-          cost: typeof getEventCost(event) === "string" ? String(getEventCost(event)) : null,
-          streetAddress: stripHtmlTags(event.streetAddress || "") || null,
-          icon: event.icon || null,
-        },
-      });
-      bookmarkedEventIds.value = new Set(bookmarkedEventIds.value).add(event.id);
-    }
+    const bookmark: EventBookmarkDraft = {
+      externalEventId: event.id,
+      title: getEventTitle(event),
+      eventType: event.type,
+      venue: stripHtmlTags(event.venue) || getEventTitle(event),
+      location: stripHtmlTags(event.location || "") || null,
+      country: stripHtmlTags(event.country || "") || null,
+      eventDate: new Date(event.dateTime).toISOString(),
+      registrationUrl: event.link || null,
+      cost: typeof getEventCost(event) === "string" ? String(getEventCost(event)) : null,
+      streetAddress: stripHtmlTags(event.streetAddress || "") || null,
+      icon: event.icon || null,
+    };
+
+    await toggleUnifiedBookmark({
+      isAuthenticated: Boolean(user.value),
+      isBookmarked: isBookmarked(event.id),
+      bookmark,
+    });
+
+    bookmarkedEventIds.value = await loadBookmarkedEventIds(Boolean(user.value));
 
     notifyEventBookmarksUpdated();
   } catch (error) {
@@ -609,8 +605,7 @@ const getGoogleMapsUrl = (event: ParsedEvent): string => {
   )}`;
 };
 
-watch(user, async (newUser) => {
-  isUserLoggedIn.value = !!newUser;
+watch(user, async () => {
   await loadBookmarks();
 });
 </script>

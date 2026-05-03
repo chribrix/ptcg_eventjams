@@ -549,6 +549,10 @@ import { onEventBookmarksUpdated } from "~/utils/eventBookmarks";
 import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
 import { getEventColor } from "~/utils/eventColors";
 import {
+  getGuestEventBookmarks,
+  removeGuestEventBookmark,
+} from "~/utils/guestEventBookmarks";
+import {
   getCustomCalendarEventType,
   getExternalCalendarEventType,
 } from "~/utils/calendarEventUtils";
@@ -618,16 +622,55 @@ const timelineActionError = ref<string | null>(null);
 const timelineSelectedTicketIds = ref<string[]>([]);
 let removeBookmarksListener: (() => void) | null = null;
 
+const toGuestDashboardEntry = (bookmark: ReturnType<typeof getGuestEventBookmarks>[number]): EventRegistration => ({
+  id: `guest-${bookmark.externalEventId}`,
+  entryType: "bookmark",
+  customEventId: null,
+  externalEventId: bookmark.externalEventId,
+  playerId: "guest",
+  registeredAt: bookmark.createdAt,
+  status: "bookmarked",
+  eventType: bookmark.eventType || undefined,
+  externalRegistrationUrl: bookmark.registrationUrl || null,
+  ticketCount: 0,
+  tickets: [],
+  customEvent: {
+    id: bookmark.externalEventId,
+    name: bookmark.title,
+    venue: bookmark.venue,
+    eventDate: bookmark.eventDate,
+    maxParticipants: 0,
+    participationFee: bookmark.cost || null,
+    description: null,
+    registrationDeadline: null,
+    requiresDecklist: false,
+    status: "bookmarked",
+    eventType: bookmark.eventType || undefined,
+    tags: undefined,
+    tagType: undefined,
+  },
+});
+
 const fetchRegistrations = async () => {
   try {
     isLoading.value = true;
     error.value = null;
 
     if (!user.value?.id) {
-      throw new Error("User not authenticated");
+      registrations.value = getGuestEventBookmarks()
+        .map(toGuestDashboardEntry)
+        .sort(
+          (a, b) =>
+            new Date(a.customEvent.eventDate).getTime() -
+            new Date(b.customEvent.eventDate).getTime(),
+        );
+      return;
     }
 
-    const { data, error: fetchError } = await $fetch(
+    const { data, error: fetchError } = await $fetch<{
+      data: EventRegistration[];
+      error: string | null;
+    }>(
       "/api/dashboard/registrations",
       {
         method: "GET",
@@ -638,7 +681,7 @@ const fetchRegistrations = async () => {
       throw new Error(fetchError);
     }
 
-    registrations.value = data || [];
+    registrations.value = (data || []) as EventRegistration[];
   } catch (err) {
     console.error("Failed to fetch registrations:", err);
     error.value =
@@ -662,9 +705,13 @@ const removeBookmark = async (registration: EventRegistration) => {
   }
 
   try {
-    await $fetch(`/api/events/bookmarks/${registration.externalEventId}`, {
-      method: "DELETE",
-    });
+    if (user.value?.id) {
+      await $fetch(`/api/events/bookmarks/${registration.externalEventId}`, {
+        method: "DELETE",
+      });
+    } else {
+      removeGuestEventBookmark(registration.externalEventId);
+    }
 
     registrations.value = registrations.value.filter(
       (entry) => entry.id !== registration.id,
@@ -905,9 +952,13 @@ const removeTimelineBookmark = async () => {
   try {
     timelineActionPending.value = true;
     timelineActionError.value = null;
-    await $fetch(`/api/events/bookmarks/${entry.externalEventId}`, {
-      method: "DELETE",
-    });
+    if (user.value?.id) {
+      await $fetch(`/api/events/bookmarks/${entry.externalEventId}`, {
+        method: "DELETE",
+      });
+    } else {
+      removeGuestEventBookmark(entry.externalEventId);
+    }
     notifyEventBookmarksUpdated();
     await refreshAfterTimelineMutation(entry.id);
   } catch (err) {

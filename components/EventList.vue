@@ -21,6 +21,15 @@
             <p class="mt-2 text-sm leading-6 text-gray-300 sm:text-base">
               {{ t("eventList.subtitle") }}
             </p>
+            <p
+              v-if="!user"
+              class="mt-2 text-xs leading-5 text-emerald-200 sm:text-sm"
+            >
+              {{ t("eventList.guestBookmarkHint") }}
+              <NuxtLink to="/register" class="underline font-semibold">
+                {{ t("eventList.guestBookmarkHintCta") }}
+              </NuxtLink>
+            </p>
           </div>
 
           <div class="grid grid-cols-2 gap-3 lg:min-w-[16rem]">
@@ -710,6 +719,8 @@ import {
   getEventDisplayLabel,
 } from "~/utils/eventDisplay";
 import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
+import { useEventBookmarks } from "~/composables/useEventBookmarks";
+import type { EventBookmarkDraft } from "~/utils/guestEventBookmarks";
 
 interface ExternalEvent {
   id: string;
@@ -788,6 +799,8 @@ const error = ref<string | null>(null);
 const bookmarkedEventIds = ref<Set<string>>(new Set());
 const bookmarkPendingId = ref<string | null>(null);
 const user = useSupabaseUser();
+const { loadBookmarkedEventIds, toggleBookmark: toggleUnifiedBookmark } =
+  useEventBookmarks();
 const { t, locale } = useI18n();
 
 onMounted(async () => {
@@ -966,25 +979,15 @@ const closeEventDetails = () => {
 };
 
 async function loadBookmarks(): Promise<void> {
-  if (!user.value) {
-    bookmarkedEventIds.value = new Set();
-    return;
-  }
-
   try {
-    const response = await $fetch<{
-      data: Array<{ externalEventId: string }>;
-    }>("/api/events/bookmarks");
-    bookmarkedEventIds.value = new Set(
-      (response.data || []).map((bookmark) => bookmark.externalEventId)
-    );
+    bookmarkedEventIds.value = await loadBookmarkedEventIds(Boolean(user.value));
   } catch (err) {
     console.error("Failed to load bookmarks:", err);
   }
 }
 
 function canBookmarkEvent(event: UnifiedEvent | null): boolean {
-  if (!event || !user.value) {
+  if (!event) {
     return false;
   }
 
@@ -1011,40 +1014,31 @@ async function toggleBookmark(event: UnifiedEvent): Promise<void> {
   if (!shouldShowBookmark(event) || bookmarkPendingId.value) {
     return;
   }
-  if (!user.value) {
-    await navigateTo("/login");
-    return;
-  }
 
   bookmarkPendingId.value = event.id;
 
   try {
-    if (isBookmarked(event.id)) {
-      await $fetch(`/api/events/bookmarks/${event.id}`, {
-        method: "DELETE",
-      });
-      const next = new Set(bookmarkedEventIds.value);
-      next.delete(event.id);
-      bookmarkedEventIds.value = next;
-    } else {
-      await $fetch("/api/events/bookmarks", {
-        method: "POST",
-        body: {
-          externalEventId: event.id,
-          title: event.title,
-          eventType: event.typeKey,
-          venue: event.venue,
-          location: event.locationLabel || null,
-          country: event.country || null,
-          eventDate: event.date,
-          registrationUrl: event.externalLink || null,
-          cost: event.priceLabel || null,
-          streetAddress: event.streetAddress || null,
-          icon: null,
-        },
-      });
-      bookmarkedEventIds.value = new Set(bookmarkedEventIds.value).add(event.id);
-    }
+    const bookmark: EventBookmarkDraft = {
+      externalEventId: event.id,
+      title: event.title,
+      eventType: event.typeKey,
+      venue: event.venue,
+      location: event.locationLabel || null,
+      country: event.country || null,
+      eventDate: event.date,
+      registrationUrl: event.externalLink || null,
+      cost: event.priceLabel || null,
+      streetAddress: event.streetAddress || null,
+      icon: null,
+    };
+
+    await toggleUnifiedBookmark({
+      isAuthenticated: Boolean(user.value),
+      isBookmarked: isBookmarked(event.id),
+      bookmark,
+    });
+
+    bookmarkedEventIds.value = await loadBookmarkedEventIds(Boolean(user.value));
 
     notifyEventBookmarksUpdated();
   } catch (err) {

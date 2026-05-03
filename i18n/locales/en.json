@@ -227,6 +227,8 @@
     "tapForDetails": "Tap for details",
     "bookmark": "Bookmark",
     "bookmarked": "Bookmarked",
+    "guestBookmarkHint": "Tip: Create an account to keep your bookmarks across devices.",
+    "guestBookmarkHintCta": "Create account",
     "dateTime": "Date & time",
     "location": "Location",
     "address": "Address",

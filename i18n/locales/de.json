@@ -235,6 +235,8 @@
     "tapForDetails": "Tippen für Details",
     "bookmark": "Vormerken",
     "bookmarked": "Vorgemerkt",
+    "guestBookmarkHint": "Tipp: Erstelle ein Konto, damit deine Vormerkungen geräteübergreifend erhalten bleiben.",
+    "guestBookmarkHintCta": "Konto erstellen",
     "dateTime": "Datum & Uhrzeit",
     "location": "Ort",
     "address": "Adresse",

@@ -248,6 +248,10 @@ import {
   notifyEventBookmarksUpdated,
   onEventBookmarksUpdated,
 } from "~/utils/eventBookmarks";
+import {
+  getGuestEventBookmarks,
+  removeGuestEventBookmark,
+} from "~/utils/guestEventBookmarks";
 
 // Explicit component import due to nested folder structure
 import RegistrationMiniEntry from "./RegistrationMiniEntry.vue";
@@ -279,6 +283,9 @@ interface EventRegistration {
     registrationDeadline?: string;
     status: string;
     requiresDecklist: boolean;
+    eventType?: string;
+    tags?: unknown;
+    tagType?: string;
   };
 }
 
@@ -306,6 +313,31 @@ const loadRegistrations = async () => {
   error.value = null;
 
   try {
+    if (!user.value?.id) {
+      registrations.value = getGuestEventBookmarks().map((bookmark) => ({
+        id: `guest-${bookmark.externalEventId}`,
+        entryType: "bookmark",
+        customEventId: null,
+        externalEventId: bookmark.externalEventId,
+        playerId: "guest",
+        registeredAt: bookmark.createdAt,
+        status: "bookmarked",
+        bringingDecklistOnsite: false,
+        customEvent: {
+          id: bookmark.externalEventId,
+          name: bookmark.title,
+          venue: bookmark.venue,
+          maxParticipants: 0,
+          participationFee: bookmark.cost || null,
+          description: null,
+          eventDate: bookmark.eventDate,
+          status: "bookmarked",
+          requiresDecklist: false,
+        },
+      }));
+      return;
+    }
+
     const response = await $fetch<{
       data: EventRegistration[];
       error: string | null;
@@ -417,9 +449,13 @@ async function removeBookmark(registration: EventRegistration): Promise<void> {
   }
 
   try {
-    await $fetch(`/api/events/bookmarks/${registration.externalEventId}` as string, {
-      method: "DELETE" as const,
-    });
+    if (user.value?.id) {
+      await $fetch(`/api/events/bookmarks/${registration.externalEventId}` as string, {
+        method: "DELETE" as const,
+      });
+    } else {
+      removeGuestEventBookmark(registration.externalEventId);
+    }
 
     registrations.value = registrations.value.filter(
       (entry) => entry.id !== registration.id,
@@ -456,8 +492,8 @@ const { user } = useAuth();
 // Only run on client to avoid SSR auth issues
 watch(
   user,
-  async (newUser) => {
-    if (newUser && process.client) {
+  async () => {
+    if (process.client) {
       await loadRegistrations();
     }
   },
