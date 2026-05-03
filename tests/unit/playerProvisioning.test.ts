@@ -14,8 +14,8 @@ describe("playerProvisioning", () => {
         findUnique: vi
           .fn()
           .mockResolvedValueOnce(null)
-          .mockResolvedValueOnce(null)
           .mockResolvedValueOnce(null),
+        findFirst: vi.fn().mockResolvedValueOnce(null),
         create: vi.fn().mockResolvedValue({
           id: "player-1",
           supabaseId: "auth-1",
@@ -57,6 +57,7 @@ describe("playerProvisioning", () => {
           name: "Imported Player",
           email: "imported@example.com",
         }),
+        findFirst: vi.fn(),
         create: vi.fn(),
         update: vi.fn().mockResolvedValue({
           id: "player-1",
@@ -91,6 +92,7 @@ describe("playerProvisioning", () => {
           playerId: "1001",
           email: "other@example.com",
         }),
+        findFirst: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
       },

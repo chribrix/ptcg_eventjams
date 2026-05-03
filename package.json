@@ -5,6 +5,8 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "dev:sync-prisma": "prisma generate && prisma migrate deploy",
+    "dev:safe": "npm run dev:sync-prisma && nuxt dev",
     "generate": "nuxt generate",
     "migrate:supabase-ids": "tsx scripts/migrate-supabase-ids.ts",
     "migrate:supabase-ids:dry-run": "tsx scripts/migrate-supabase-ids.ts --dry-run",

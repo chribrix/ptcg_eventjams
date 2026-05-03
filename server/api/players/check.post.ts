@@ -132,7 +132,7 @@ export const createCheckPlayerHandler = (
 
       // Email-only player matches are legacy ambiguity and must not be auto-linked.
       if (!player && normalizedEmail && !supabaseUserExists) {
-        legacyPlayerCandidate = await prisma.player.findUnique({
+        legacyPlayerCandidate = await prisma.player.findFirst({
           where: {
             email: normalizedEmail,
           },

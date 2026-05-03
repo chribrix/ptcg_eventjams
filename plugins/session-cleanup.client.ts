@@ -2,6 +2,7 @@ import { clearClientAuthState } from "~/utils/clientAuthState";
 
 export default defineNuxtPlugin(async () => {
   const supabaseClient = useSupabaseClient();
+  const isDev = import.meta.dev;
 
   // On app initialization, check for stale/expired sessions
   if (process.client) {
@@ -12,7 +13,8 @@ export default defineNuxtPlugin(async () => {
       } = await supabaseClient.auth.getSession();
 
       if (error) {
-        console.log("Session check error on init, keeping local state:", error);
+        if (isDev)
+          console.log("Session check error on init, keeping local state:", error);
         return;
       }
 
@@ -22,7 +24,7 @@ export default defineNuxtPlugin(async () => {
         const now = Math.floor(Date.now() / 1000);
 
         if (expiresAt && expiresAt < now) {
-          console.log("Detected expired session on app init, cleaning up");
+          if (isDev) console.log("Detected expired session on app init, cleaning up");
           clearClientAuthState({ clearAllStorage: true });
           await supabaseClient.auth.signOut();
         }

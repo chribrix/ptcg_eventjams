@@ -2,7 +2,7 @@
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== "production" },
   modules: [
     // "@prisma/nuxt", // Optional helper module if Prisma runtime helpers are needed
     "@nuxtjs/supabase",

@@ -8,6 +8,7 @@ import { createError } from "h3";
 export type PlayerProvisioningClient = {
   player: {
     findUnique: (args: any) => Promise<any>;
+    findFirst: (args: any) => Promise<any>;
     create: (args: any) => Promise<any>;
     update: (args: any) => Promise<any>;
   };
@@ -127,7 +128,7 @@ export const ensurePlayerForAuthUser = async (
     });
   }
 
-  const existingByEmail = await prisma.player.findUnique({
+  const existingByEmail = await prisma.player.findFirst({
     where: { email: normalizedEmail },
   });
 

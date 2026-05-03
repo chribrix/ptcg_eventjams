@@ -46,6 +46,7 @@ describe("players/check endpoint", () => {
     const mockPrisma = {
       player: {
         findUnique: vi.fn().mockResolvedValue(null),
+        findFirst: vi.fn().mockResolvedValue(null),
       },
       $queryRaw: vi.fn(),
       $disconnect: vi.fn().mockResolvedValue(undefined),
@@ -91,7 +92,8 @@ describe("players/check endpoint", () => {
     );
     const mockPrisma = {
       player: {
-        findUnique: vi.fn().mockResolvedValue({
+        findUnique: vi.fn().mockResolvedValue(null),
+        findFirst: vi.fn().mockResolvedValue({
           id: "player-1",
           playerId: "198193",
           name: "Chris",
