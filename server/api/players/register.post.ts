@@ -12,8 +12,9 @@ const prisma = new PrismaClient();
 const registerPlayerSchema = z.object({
   playerId: z
     .string()
-    .min(1, "Player ID is required")
-    .regex(/^\d+$/, "Player ID must contain only numbers"),
+    .regex(/^\d+$/, "Player ID must contain only numbers")
+    .optional()
+    .or(z.literal("")),
   name: z.string().min(1, "Name is required"),
   birthDate: z.string().datetime().optional(),
   preferredLoginMethod: z.enum(["password", "otp"]).optional(),
@@ -48,7 +49,7 @@ export default defineEventHandler(async (event) => {
       supabaseId: user.id,
       email: user.email,
       name,
-      playerId,
+      playerId: playerId || null,
       preferredLoginMethod,
       birthDate: birthDate ? new Date(birthDate) : undefined,
     });

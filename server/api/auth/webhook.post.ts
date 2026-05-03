@@ -13,7 +13,7 @@ const prisma = new PrismaClient();
  *
  * This endpoint receives webhooks from Supabase Database when a new user is created.
  * When a new user is inserted into auth.users after passwordless or password signup, we automatically
- * create a Player record if the user has registration metadata (name + playerId).
+ * create a Player record if the user has registration metadata (name).
  *
  * Setup in Supabase Dashboard:
  * 1. Go to Database > Webhooks > Create a new webhook
@@ -92,9 +92,13 @@ export default defineEventHandler(async (event) => {
       const { id: supabaseId, email, raw_user_meta_data, user_metadata } = user;
       const metadata = raw_user_meta_data || user_metadata || {};
 
-      // Only create Player if we have registration metadata (name + playerId)
+      // Only create Player if we have registration metadata (name)
       // This distinguishes registration from login
-      if (metadata?.playerId && metadata?.name) {
+      if (metadata?.name) {
+        const metadataPlayerId =
+          typeof metadata.playerId === "string" && metadata.playerId.trim().length > 0
+            ? metadata.playerId.trim()
+            : null;
         try {
           // Check if player already exists
           const existingPlayer = await prisma.player.findUnique({
@@ -109,6 +113,7 @@ export default defineEventHandler(async (event) => {
               data: {
                 email: email.toLowerCase(),
                 name: metadata.name,
+                ...(metadataPlayerId ? { playerId: metadataPlayerId } : {}),
               },
             });
           } else {
@@ -116,7 +121,7 @@ export default defineEventHandler(async (event) => {
             player = await prisma.player.create({
               data: {
                 supabaseId,
-                playerId: metadata.playerId,
+                playerId: metadataPlayerId,
                 name: metadata.name,
                 email: email.toLowerCase(),
                 birthDate: new Date("2000-01-01T00:00:00.000Z"),
@@ -142,7 +147,7 @@ export default defineEventHandler(async (event) => {
               {
                 supabaseId,
                 email,
-                playerId: metadata.playerId,
+                playerId: metadataPlayerId,
               },
             );
 

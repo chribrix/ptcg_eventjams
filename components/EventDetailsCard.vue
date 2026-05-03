@@ -1,9 +1,9 @@
 <template>
   <aside
     v-if="eventDetails"
-    class="bg-white rounded-2xl shadow-lg p-6 mt-8 mb-6"
+    class="app-surface-0 border app-border rounded-2xl shadow-lg p-6 mb-6"
   >
-    <h1 class="text-2xl font-bold text-gray-900 mb-4">
+    <h1 class="text-2xl font-bold text-white mb-4">
       {{ eventDetails.name }}
     </h1>
 
@@ -23,10 +23,10 @@
           ></path>
         </svg>
         <div>
-          <div class="text-xs text-gray-500 font-medium uppercase">
+          <div class="text-xs text-gray-400 font-medium uppercase">
             Date & Time
           </div>
-          <div class="text-sm text-gray-900 font-medium">
+          <div class="text-sm text-gray-100 font-medium">
             {{ formatEventDate(eventDetails.eventDate) }}
           </div>
         </div>
@@ -53,8 +53,8 @@
           ></path>
         </svg>
         <div>
-          <div class="text-xs text-gray-500 font-medium uppercase">Venue</div>
-          <div class="text-sm text-gray-900 font-medium">
+          <div class="text-xs text-gray-400 font-medium uppercase">Venue</div>
+          <div class="text-sm text-gray-100 font-medium">
             {{ eventDetails.venue }}
           </div>
         </div>
@@ -75,10 +75,10 @@
           ></path>
         </svg>
         <div>
-          <div class="text-xs text-gray-500 font-medium uppercase">
+          <div class="text-xs text-gray-400 font-medium uppercase">
             Participants
           </div>
-          <div class="text-sm text-gray-900 font-medium">
+          <div class="text-sm text-gray-100 font-medium">
             <span class="text-green-600">
               {{ eventDetails.registrationCount }}
             </span>
@@ -92,9 +92,9 @@
 
     <div
       v-if="eventDetails.requiresDecklist"
-      class="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg"
+      class="mt-6 p-3 bg-amber-500/10 border border-amber-400/40 rounded-lg"
     >
-      <div class="flex items-center gap-2 text-amber-800">
+      <div class="flex items-center gap-2 text-amber-300">
         <svg
           class="w-4 h-4 flex-shrink-0"
           fill="none"
@@ -112,8 +112,8 @@
       </div>
     </div>
 
-    <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <p class="text-sm text-blue-900 font-medium text-center">
+    <div class="mt-6 p-4 bg-blue-500/10 border border-blue-400/40 rounded-lg">
+      <p class="text-sm text-blue-200 font-medium text-center">
         👉 Log in or create an account to reserve your spot
       </p>
     </div>

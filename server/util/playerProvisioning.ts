@@ -17,7 +17,7 @@ export type ProvisionPlayerInput = {
   supabaseId: string;
   email: string;
   name: string;
-  playerId: string;
+  playerId?: string | null;
   preferredLoginMethod?: "password" | "otp";
   birthDate?: Date;
 };
@@ -56,15 +56,18 @@ export const getProvisionPlayerInputFromAuthUser = (
   const metadata = authUser.user_metadata || authUser.raw_user_meta_data || {};
   const email = (options.fallbackEmail || authUser.email || "").trim();
 
-  if (!authUser.id || !email || !metadata?.name || !metadata?.playerId) {
+  if (!authUser.id || !email || !metadata?.name) {
     return null;
   }
+
+  const metadataPlayerId =
+    typeof metadata.playerId === "string" ? metadata.playerId.trim() : "";
 
   return {
     supabaseId: authUser.id,
     email,
     name: String(metadata.name),
-    playerId: String(metadata.playerId),
+    playerId: metadataPlayerId || null,
     preferredLoginMethod: options.preferredLoginMethod,
     birthDate: options.birthDate,
   };
@@ -75,6 +78,7 @@ export const ensurePlayerForAuthUser = async (
   input: ProvisionPlayerInput,
 ) => {
   const normalizedEmail = input.email.trim().toLowerCase();
+  const normalizedPlayerId = (input.playerId || "").trim() || null;
   const preferredLoginMethod = toStoredPreferredLoginMethod(
     input.preferredLoginMethod,
   );
@@ -89,15 +93,17 @@ export const ensurePlayerForAuthUser = async (
       data: {
         email: normalizedEmail,
         name: input.name,
-        playerId: input.playerId,
+        ...(normalizedPlayerId ? { playerId: normalizedPlayerId } : {}),
         preferredLoginMethod,
       },
     });
   }
 
-  const existingByPlayerId = await prisma.player.findUnique({
-    where: { playerId: input.playerId },
-  });
+  const existingByPlayerId = normalizedPlayerId
+    ? await prisma.player.findUnique({
+        where: { playerId: normalizedPlayerId },
+      })
+    : null;
 
   if (existingByPlayerId) {
     if (
@@ -135,7 +141,7 @@ export const ensurePlayerForAuthUser = async (
   return prisma.player.create({
     data: {
       supabaseId: input.supabaseId,
-      playerId: input.playerId,
+      playerId: normalizedPlayerId,
       name: input.name,
       email: normalizedEmail,
       preferredLoginMethod,

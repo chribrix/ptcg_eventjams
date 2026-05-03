@@ -35,10 +35,10 @@ export const createRegisterPasswordHandler = (
       playerId?: string;
     }>(event);
 
-    if (!email || !password || !name || !playerId) {
+    if (!email || !password || !name) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Email, password, name and playerId are required",
+        statusMessage: "Email, password and name are required",
       });
     }
 
@@ -68,6 +68,11 @@ export const createRegisterPasswordHandler = (
 
     const normalizedEmail = email.trim().toLowerCase();
 
+    const normalizedPlayerId =
+      typeof playerId === "string" && playerId.trim().length > 0
+        ? playerId.trim()
+        : null;
+
     let createdUserId: string | null = null;
 
     try {
@@ -77,7 +82,7 @@ export const createRegisterPasswordHandler = (
         email_confirm: true,
         user_metadata: {
           name,
-          playerId,
+          ...(normalizedPlayerId ? { playerId: normalizedPlayerId } : {}),
         },
         app_metadata: {
           has_password: true,
@@ -110,7 +115,7 @@ export const createRegisterPasswordHandler = (
         supabaseId: data.user.id,
         email: normalizedEmail,
         name,
-        playerId,
+        playerId: normalizedPlayerId,
         preferredLoginMethod: "password",
       });
 
