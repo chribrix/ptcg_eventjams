@@ -102,6 +102,7 @@ const banner = computed(() => data.value?.banner || null);
   margin: 0;
   font-size: 0.925rem;
   line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .landing-banner__cta {

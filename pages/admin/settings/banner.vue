@@ -359,6 +359,10 @@ await loadBanner();
   margin: 0;
 }
 
+.preview-banner__content p {
+  white-space: pre-wrap;
+}
+
 .preview-banner__content {
   display: flex;
   flex-direction: column;
