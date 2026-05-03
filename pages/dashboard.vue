@@ -45,7 +45,7 @@
           {{ t("dashboard.emptyText") }}
         </p>
         <NuxtLink
-          to="/events"
+          to="/eventlist"
           class="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg"
         >
           Browse Events
