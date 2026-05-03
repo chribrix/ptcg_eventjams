@@ -249,6 +249,7 @@ const error = ref("");
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 const { t } = useI18n();
+const { mergeGuestBookmarksIntoAccount } = useEventBookmarks();
 
 const successTitle = computed(() =>
   registerMethod.value === "password"
@@ -329,6 +330,12 @@ const verifyOtpRegistration = async () => {
     },
     body: { preferredLoginMethod: "otp" },
   });
+
+  try {
+    await mergeGuestBookmarksIntoAccount();
+  } catch (mergeError) {
+    console.error("Failed to merge guest bookmarks after OTP registration:", mergeError);
+  }
 
   await navigateTo((route.query.redirect as string) || "/");
 };
@@ -481,6 +488,15 @@ const submitForm = async () => {
 
       if (sessionError) {
         throw sessionError;
+      }
+
+      try {
+        await mergeGuestBookmarksIntoAccount();
+      } catch (mergeError) {
+        console.error(
+          "Failed to merge guest bookmarks after password registration:",
+          mergeError,
+        );
       }
 
       await navigateTo((route.query.redirect as string) || "/");

@@ -23,9 +23,9 @@
             </p>
           </div>
 
-          <MyEventsCompactPanel v-if="userName" class="mt-4" />
+          <MyEventsCompactPanel class="mt-4" />
 
-          <div v-else class="mt-4 grid grid-cols-1 gap-2">
+          <div v-if="!userName" class="mt-4 grid grid-cols-1 gap-2">
             <NuxtLink
               to="/register"
               class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-3 text-sm font-bold text-white"

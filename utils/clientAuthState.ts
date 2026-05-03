@@ -1,6 +1,8 @@
 type StorageLike = {
   length: number;
   key: (index: number) => string | null;
+  getItem?: (key: string) => string | null;
+  setItem?: (key: string, value: string) => void;
   clear: () => void;
   removeItem: (key: string) => void;
 };
@@ -17,6 +19,8 @@ type ClientAuthStateDependencies = {
 type ClearClientAuthStateOptions = {
   clearAllStorage?: boolean;
 };
+
+const PRESERVED_LOCAL_STORAGE_KEYS = ["guest_event_bookmarks_v1"] as const;
 
 export const createClientAuthStateCleaner = (
   dependencies: ClientAuthStateDependencies = {},
@@ -43,8 +47,20 @@ export const createClientAuthStateCleaner = (
 
     try {
       if (clearAllStorage) {
+        const preservedEntries: Array<[string, string]> = [];
+        for (const key of PRESERVED_LOCAL_STORAGE_KEYS) {
+          const value = localStorageRef.getItem?.(key) ?? null;
+          if (value !== null) {
+            preservedEntries.push([key, value]);
+          }
+        }
+
         localStorageRef.clear();
         sessionStorageRef.clear();
+
+        for (const [key, value] of preservedEntries) {
+          localStorageRef.setItem?.(key, value);
+        }
       } else {
         const keysToRemove: string[] = [];
 

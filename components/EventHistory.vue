@@ -291,6 +291,7 @@ import {
 
 // Use i18n for translations
 const { t, locale } = useI18n();
+const { user } = useAuth();
 
 interface EventParticipant {
   id: string;
@@ -387,6 +388,12 @@ const fetchEvents = async () => {
   try {
     loading.value = true;
     error.value = null;
+
+    // Guest dashboard: skip protected API and render an empty history state.
+    if (!props.isAdmin && !user.value?.id) {
+      events.value = [];
+      return;
+    }
 
     const endpoint = props.isAdmin
       ? "/api/admin/events/history"

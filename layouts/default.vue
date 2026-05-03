@@ -211,11 +211,10 @@ const { t } = useI18n();
                   <span v-if="myTournamentCount > 1" class="nav-count">{{ myTournamentCount }}</span>
                 </NuxtLink>
 
-                <!-- Dashboard for logged-in users -->
+                <!-- Dashboard (also available for guests with local bookmarks) -->
                 <NuxtLink
-                  v-if="userName"
                   to="/dashboard"
-                  class="nav-link-primary"
+                  :class="userName ? 'nav-link-primary' : 'nav-link'"
                 >
                   <ChartBarIcon class="w-4 h-4" />
                   <span>{{ t("nav.dashboard") }}</span>
@@ -274,9 +273,8 @@ const { t } = useI18n();
               <span v-if="myTournamentCount > 1" class="nav-count">{{ myTournamentCount }}</span>
             </NuxtLink>
 
-            <!-- Dashboard for logged-in users -->
+            <!-- Dashboard (also available for guests with local bookmarks) -->
             <NuxtLink
-              v-if="userName"
               to="/dashboard"
               @click="mobileMenuOpen = false"
               class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
