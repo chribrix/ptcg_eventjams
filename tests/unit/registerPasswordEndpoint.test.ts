@@ -154,4 +154,68 @@ describe("register-password endpoint", () => {
 
     expect(deleteUser).toHaveBeenCalledWith("auth-1");
   });
+
+  it("allows registration without playerId", async () => {
+    vi.stubGlobal("defineEventHandler", (handler: unknown) => handler);
+    vi.stubGlobal("createError", createError);
+    vi.stubGlobal(
+      "readBody",
+      vi.fn().mockResolvedValue({
+        email: "new@example.com",
+        password: "password123",
+        name: "New User",
+      }),
+    );
+
+    const ensurePlayerForAuthUser = vi
+      .fn()
+      .mockResolvedValue({ id: "player-1" });
+    const deleteUser = vi.fn().mockResolvedValue({ error: null });
+    const createUser = vi.fn().mockResolvedValue({
+      data: { user: { id: "auth-1" } },
+      error: null,
+    });
+
+    const { createRegisterPasswordHandler } =
+      await import("../../server/api/auth/register-password.post");
+
+    const handler = createRegisterPasswordHandler({
+      getRuntimeConfig: () =>
+        ({
+          public: { supabaseUrl: "https://example.supabase.co" },
+          supabaseServiceKey: "service-key",
+          passwordPepper: "pepper",
+        }) as any,
+      createPrismaClient: () =>
+        ({
+          $disconnect: vi.fn().mockResolvedValue(undefined),
+        }) as any,
+      createSupabaseAdminClient: () => ({
+        auth: {
+          admin: {
+            createUser,
+            deleteUser,
+          },
+        },
+      }),
+      provisionPlayer: ensurePlayerForAuthUser as any,
+    });
+
+    await expect(handler(createEvent())).resolves.toEqual({
+      success: true,
+      requiresEmailConfirmation: false,
+    });
+
+    expect(createUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_metadata: { name: "New User" },
+      }),
+    );
+    expect(ensurePlayerForAuthUser).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        playerId: null,
+      }),
+    );
+  });
 });
