@@ -18,31 +18,6 @@ const safeDecode = (value: string) => {
   }
 };
 
-const isValidSupabaseTokenCookie = (rawValue: string) => {
-  const decodedValue = safeDecode(rawValue);
-
-  // Supabase token cookies are JSON values. Accept both array and object shapes.
-  try {
-    const parsed = JSON.parse(decodedValue);
-
-    if (Array.isArray(parsed)) {
-      return parsed.length >= 2 && parsed.every((item) => typeof item === "string");
-    }
-
-    if (parsed && typeof parsed === "object") {
-      const tokenRecord = parsed as Record<string, unknown>;
-      return (
-        typeof tokenRecord.access_token === "string" &&
-        typeof tokenRecord.refresh_token === "string"
-      );
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
-};
-
 export default defineNuxtPlugin(() => {
   if (!import.meta.client) return;
 
@@ -72,22 +47,7 @@ export default defineNuxtPlugin(() => {
       }
     }
 
-    // Clear malformed Supabase auth cookies (including chunked variants .0, .1, ...)
-    const sbAuthRegex = /^sb-.*-auth-token(?:\.\d+)?$/;
-    for (const [name, value] of cookies.entries()) {
-      if (!sbAuthRegex.test(name)) continue;
-      if (isValidSupabaseTokenCookie(value)) continue;
-
-      const baseName = name.replace(/\.\d+$/, "");
-      expireCookie(baseName);
-      expireCookie(name);
-
-      for (const cookieName of cookies.keys()) {
-        if (cookieName.startsWith(`${baseName}.`)) {
-          expireCookie(cookieName);
-        }
-      }
-    }
+    // Keep auth cookies untouched to avoid accidental session invalidation.
   } catch (error) {
     console.warn("Cookie sanity check failed", error);
   }

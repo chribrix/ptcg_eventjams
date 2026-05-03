@@ -1,10 +1,10 @@
 <template>
-  <div class="w-full h-full">
+  <div class="w-full">
     <div
-      class="p-4 sm:p-6 flex flex-col justify-center items-center h-full min-h-[400px] app-bg-page"
+      class="px-3 pt-1 pb-3 sm:px-4 sm:pt-2 sm:pb-4 lg:px-5 lg:pt-3 lg:pb-5"
     >
       <div
-        class="relative w-full calendar-wrapper flex flex-col justify-center items-center flex-1"
+        class="relative w-full calendar-wrapper"
       >
         <!-- Loading indicator -->
         <div
@@ -21,6 +21,8 @@
           </div>
         </div>
 
+        <!-- Deprecated VCalendar implementation (kept for reference) -->
+        <!--
         <ClientOnly>
           <template #default>
             <VCalendar
@@ -43,11 +45,61 @@
             </div>
           </template>
         </ClientOnly>
+        -->
+
+        <div class="mt-1 w-full lg:mt-1">
+          <div class="rounded-xl border app-border app-surface-1 p-3 lg:p-4">
+            <div class="mb-2 flex items-center justify-between">
+              <button
+                type="button"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-lg app-btn-neutral lg:h-10 lg:w-10"
+                @click="shiftCustomCalendarMonth(-1)"
+                aria-label="Previous month"
+              >
+                <ChevronLeftIcon class="h-5 w-5" />
+              </button>
+              <p class="text-sm font-semibold text-white lg:text-2xl">
+                {{ customCalendarMonthLabel }}
+              </p>
+              <button
+                type="button"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-lg app-btn-neutral lg:h-10 lg:w-10"
+                @click="shiftCustomCalendarMonth(1)"
+                aria-label="Next month"
+              >
+                <ChevronRightIcon class="h-5 w-5" />
+              </button>
+            </div>
+            <div class="mb-1 grid grid-cols-7 gap-1 lg:gap-2">
+              <span
+                v-for="weekday in miniCalendarWeekdays"
+                :key="weekday"
+                class="text-center text-[10px] font-semibold text-gray-400 lg:text-base"
+              >
+                {{ weekday }}
+              </span>
+            </div>
+            <div class="grid grid-cols-7 gap-1 lg:gap-2">
+              <button
+                v-for="day in customCalendarDays"
+                :key="day.key"
+                type="button"
+                class="h-8 rounded-md border text-[11px] font-semibold lg:h-12 lg:rounded-lg lg:text-base"
+                :class="customCalendarDayClass(day)"
+                :style="customCalendarDayStyle(day)"
+                :disabled="!day.isInteractive"
+                @click="day.dateKey ? onCustomDayClick(day.dateKey) : null"
+              >
+                {{ day.label }}
+              </button>
+            </div>
+          </div>
+        </div>
 
         <!-- Legend -->
-        <div class="w-full max-w-[620px] mt-4 px-2 sm:px-4">
+        <div class="mt-3 w-full lg:mt-4">
           <div
-            class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2"
+            class="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2 lg:gap-2.5"
           >
             <CalendarCategoryPill
               v-for="category in categoryPills"
@@ -59,6 +111,17 @@
               @select="openTypeFilter(category.key)"
               @toggle="toggleCategoryVisibility(category.key)"
             />
+          </div>
+        </div>
+
+        <div v-if="showMobileAuthCta && !userName" class="mt-4 w-full md:hidden">
+          <div class="grid grid-cols-2 gap-2">
+            <NuxtLink to="/register" class="calendar-mobile-register-cta">
+              {{ t("nav.register") }}
+            </NuxtLink>
+            <NuxtLink to="/login" class="calendar-mobile-login-cta">
+              {{ t("nav.login") }}
+            </NuxtLink>
           </div>
         </div>
 
@@ -131,6 +194,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/vue/24/outline";
 import CalendarCategoryPill from "./CalendarCategoryPill.vue";
 import EventDetailsPopover from "./EventDetailsPopover.vue";
 import { EVENT_COLORS } from "~/utils/eventColors";
@@ -152,12 +219,24 @@ import {
   type UnifiedCalendarEvent,
 } from "~/utils/calendarEventUtils";
 
+withDefaults(
+  defineProps<{
+    showMobileAuthCta?: boolean;
+  }>(),
+  {
+    showMobileAuthCta: true,
+  },
+);
+
 const { t, locale } = useI18n();
+const { userName } = useAuth();
 const userTimeZone = getUserTimeZone();
 
 const today = new Date();
 const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 const todayKey = getDateKeyInTimeZone(new Date().toISOString(), userTimeZone);
+const rollingPreviewDays = 28;
+const miniCalendarWeekdays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const categoryPills = computed(() =>
   CALENDAR_CATEGORY_DEFINITIONS.map((category) => ({
     ...category,
@@ -186,6 +265,8 @@ const customEvents = ref<CustomCalendarEvent[]>([]);
 const isLoading = ref(false);
 const selectedDate = ref<string | null>(null);
 const selectedDateEvents = ref<UnifiedCalendarEvent[]>([]);
+const customCalendarMode = ref<"rolling" | "month">("rolling");
+const customCalendarMonthStart = ref<Date>(startOfMonth(today));
 const selectedEventType = ref<CalendarCategory | null>(null);
 const showTypeFilterModal = ref(false);
 const showNoEventsToast = ref(false);
@@ -248,6 +329,16 @@ const visibleCalendarEvents = computed(() =>
   })
 );
 
+const visibleEventsByDate = computed(() => {
+  const map = new Map<string, UnifiedCalendarEvent[]>();
+  for (const event of visibleCalendarEvents.value) {
+    const current = map.get(event.start) || [];
+    current.push(event);
+    map.set(event.start, current);
+  }
+  return map;
+});
+
 const getBackgroundForTypes = (types: CalendarEventType[]) => {
   const orderedTypes = [...types].sort(
     (first, second) =>
@@ -275,6 +366,61 @@ const getBackgroundForTypes = (types: CalendarEventType[]) => {
 
   return `linear-gradient(135deg, ${segments.join(", ")})`;
 };
+
+const customCalendarMonthLabel = computed(() =>
+  customCalendarMonthStart.value.toLocaleDateString(
+    locale.value.startsWith("de") ? "de-DE" : "en-US",
+    {
+      month: "long",
+      year: "numeric",
+    },
+  ),
+);
+
+type CustomCalendarDay = {
+  key: string;
+  label: string;
+  inMonth: boolean;
+  isInteractive: boolean;
+  dateKey: string | null;
+  types: CalendarEventType[];
+};
+
+const customCalendarDays = computed<CustomCalendarDay[]>(() => {
+  const monthStart = customCalendarMonthStart.value;
+  const rollingStart = startOfDay(today);
+  const rollingEnd = startOfDay(addDays(rollingStart, rollingPreviewDays));
+  const firstWeekday =
+    customCalendarMode.value === "month"
+      ? (monthStart.getDay() + 6) % 7
+      : (rollingStart.getDay() + 6) % 7;
+  const gridStart =
+    customCalendarMode.value === "month"
+      ? addDays(monthStart, -firstWeekday)
+      : addDays(rollingStart, -firstWeekday);
+  const days: CustomCalendarDay[] = [];
+
+  for (let i = 0; i < 42; i += 1) {
+    const date = addDays(gridStart, i);
+    const dateKey = getDateKeyInTimeZone(date.toISOString(), userTimeZone);
+    const dayEvents = visibleEventsByDate.value.get(dateKey) || [];
+    const isInteractive =
+      customCalendarMode.value === "month"
+        ? date.getMonth() === monthStart.getMonth()
+        : startOfDay(date) >= rollingStart && startOfDay(date) <= rollingEnd;
+
+    days.push({
+      key: `${dateKey}-${i}`,
+      label: String(date.getDate()),
+      inMonth: date.getMonth() === monthStart.getMonth(),
+      isInteractive,
+      dateKey: isInteractive && dayEvents.length ? dateKey : null,
+      types: [...new Set(dayEvents.map((event) => event.type))],
+    });
+  }
+
+  return days;
+});
 
 // Build calendar attributes with automatic highlighting
 const calendarAttributes = computed(() => {
@@ -332,6 +478,42 @@ const onDayClick = (day: any) => {
   selectedDateEvents.value = visibleCalendarEvents.value.filter(
     (event) => event.start === clickedDate
   );
+};
+
+const onCustomDayClick = (dateKey: string) => {
+  selectedDate.value = dateKey;
+  selectedDateEvents.value = visibleCalendarEvents.value.filter(
+    (event) => event.start === dateKey,
+  );
+};
+
+const customCalendarDayClass = (day: CustomCalendarDay) => {
+  if (!day.isInteractive) {
+    return "border-transparent bg-transparent text-gray-600";
+  }
+  if (!day.types.length) {
+    return "app-border app-surface-0 text-gray-300";
+  }
+  return "border-transparent text-white";
+};
+
+const customCalendarDayStyle = (day: CustomCalendarDay) => {
+  if (!day.types.length) return undefined;
+  return {
+    background: getBackgroundForTypes(day.types),
+    color: "#0f172a",
+    textShadow: "0 1px 0 rgba(255,255,255,0.3)",
+  };
+};
+
+const shiftCustomCalendarMonth = (offset: number) => {
+  if (customCalendarMode.value === "rolling") {
+    customCalendarMode.value = "month";
+  }
+  const next = new Date(customCalendarMonthStart.value);
+  next.setMonth(next.getMonth() + offset);
+  next.setDate(1);
+  customCalendarMonthStart.value = startOfMonth(next);
 };
 
 const closeEventDetails = () => {
@@ -420,16 +602,63 @@ const toggleCategoryVisibility = (category: CalendarCategory) => {
     );
   }
 };
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function startOfDay(date: Date): Date {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function startOfMonth(date: Date): Date {
+  const next = new Date(date);
+  next.setDate(1);
+  return startOfDay(next);
+}
 </script>
 
 <style scoped>
 .calendar-wrapper {
   width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: block;
+}
+
+.calendar-mobile-register-cta,
+.calendar-mobile-login-cta {
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  min-height: 2.75rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.calendar-mobile-register-cta {
+  color: #ffffff;
+  background: linear-gradient(to right, #2563eb, #7c3aed);
+  box-shadow: 0 6px 18px -8px rgba(37, 99, 235, 0.6);
+}
+
+.calendar-mobile-register-cta:hover {
+  filter: brightness(1.06);
+}
+
+.calendar-mobile-login-cta {
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+  background: #374151;
+}
+
+.calendar-mobile-login-cta:hover {
+  background: #4b5563;
 }
 
 .calendar-wrapper :deep(.vc-container) {

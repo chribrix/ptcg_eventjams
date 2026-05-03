@@ -12,8 +12,7 @@ export default defineNuxtPlugin(async () => {
       } = await supabaseClient.auth.getSession();
 
       if (error) {
-        console.log("Session check error on init, cleaning up:", error);
-        clearClientAuthState({ clearAllStorage: true });
+        console.log("Session check error on init, keeping local state:", error);
         return;
       }
 
@@ -30,8 +29,7 @@ export default defineNuxtPlugin(async () => {
       }
     } catch (error) {
       console.error("Error during session cleanup on init:", error);
-      // If there's any error checking session, clear storage to be safe
-      clearClientAuthState({ clearAllStorage: true });
+      // Avoid destructive cleanup on transient session check failures.
     }
   }
 });

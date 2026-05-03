@@ -8,6 +8,7 @@ import {
   UserPlusIcon,
   ChartBarIcon,
 } from "@heroicons/vue/24/outline";
+import siteLogo from "~/assets/images/logo.png";
 
 // Mobile menu state
 const mobileMenuOpen = ref(false);
@@ -152,19 +153,19 @@ const { t } = useI18n();
 
     <header class="bg-[#2f3136] shadow-lg border-b border-[#202225]">
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
+        <div class="flex justify-between items-center h-16 md:h-20">
           <!-- Left side - Logo/Brand -->
           <div class="flex items-center space-x-4">
             <NuxtLink
               to="/"
-              class="flex items-center space-x-2 text-xl font-bold text-white hover:text-gray-300 transition-colors duration-200"
+              class="mobile-brand flex items-center space-x-3 text-white hover:text-gray-300 transition-colors duration-200"
             >
-              <div
-                class="w-8 h-8 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg flex items-center justify-center"
-              >
-                <span class="text-white font-bold text-sm">P</span>
-              </div>
-              <span>ChrispyJams TCG Events</span>
+              <img
+                :src="siteLogo"
+                alt="PTCG Event Manager"
+                class="header-logo flex-shrink-0"
+              />
+              <span class="mobile-brand-title">ChrispyJams TCG Events</span>
             </NuxtLink>
           </div>
 
@@ -333,7 +334,11 @@ const { t } = useI18n();
       <div v-if="isAdminRoute" class="admin-route-shell">
         <slot />
       </div>
-      <div v-else class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div
+        v-else
+        class="container mx-auto px-4 sm:px-6 lg:px-8"
+        :class="route.path === '/' ? 'pt-1 pb-6' : 'py-6'"
+      >
         <slot />
       </div>
     </main>
@@ -474,6 +479,26 @@ const { t } = useI18n();
   padding: 0 0.3rem;
 }
 
+.mobile-brand {
+  font-weight: 800;
+  min-height: 100%;
+}
+
+.header-logo {
+  height: 3.9rem;
+  width: auto;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+}
+
+.mobile-brand-title {
+  font-size: clamp(1.15rem, 3.8vw, 1.75rem);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .nav-link,
@@ -491,6 +516,18 @@ const { t } = useI18n();
 
   .admin-dropdown-content {
     width: 10rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .header-logo {
+    height: 4.9rem;
+  }
+
+  .mobile-brand-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0;
   }
 }
 
