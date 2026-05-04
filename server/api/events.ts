@@ -1,3 +1,5 @@
+import { applyEventOverrides } from "./events/applyOverrides";
+
 interface ParsedEvent {
   id: string;
   title: string;
@@ -102,6 +104,12 @@ function createEventResponse(
   };
 }
 
+function filterVisibleEvents(events: CalendarEvent[]) {
+  return events.filter(
+    (event) => (event as { hideFromCalendar?: boolean }).hideFromCalendar !== true,
+  );
+}
+
 function groupEventsByDate(events: ParsedEvent[]): CalendarEvent[] {
   // Convert all events to calendar events first
   const allCalendarEvents = convertToCalendarEvents(events);
@@ -116,6 +124,9 @@ function groupEventsByDate(events: ParsedEvent[]): CalendarEvent[] {
 
 export default defineEventHandler(async (event) => {
   try {
+    const query = getQuery(event);
+    const includeHidden =
+      query.includeHidden === "1" || query.includeHidden === "true";
     // Define cache key and TTL (18 hours)
     const CACHE_KEY = "pokedata-events-v2";
     const CACHE_TTL = 18 * 60 * 60 * 1000; // 18 hours in milliseconds
@@ -130,7 +141,10 @@ export default defineEventHandler(async (event) => {
 
     // Return cached data if valid
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return createEventResponse(cached.data, cached.totalFound);
+      const responseEvents = includeHidden
+        ? cached.data
+        : filterVisibleEvents(cached.data);
+      return createEventResponse(responseEvents, responseEvents.length);
     }
 
     // Use the same API endpoint that the website uses
@@ -254,15 +268,22 @@ export default defineEventHandler(async (event) => {
 
     // Group events by date for calendar display
     const calendarEvents = groupEventsByDate(events);
+    const eventsWithOverrides = await applyEventOverrides(calendarEvents, {
+      includeHidden: true,
+    });
+    const visibleEvents = filterVisibleEvents(eventsWithOverrides);
 
     // Cache the results
     await storage.setItem(CACHE_KEY, {
-      data: calendarEvents,
-      totalFound: apiData.length,
+      data: eventsWithOverrides,
+      totalFound: visibleEvents.length,
       timestamp: Date.now(),
     });
 
-    return createEventResponse(calendarEvents, apiData.length);
+    return createEventResponse(
+      includeHidden ? eventsWithOverrides : visibleEvents,
+      includeHidden ? eventsWithOverrides.length : visibleEvents.length,
+    );
   } catch (error: unknown) {
     console.error("Failed to scrape events:", error);
     const errorMessage =

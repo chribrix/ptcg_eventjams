@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+// @vitest-environment node
+
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildExternalEventOverrideData } from "~/server/services/admin/externalEventAdminService";
 
 describe("buildExternalEventOverrideData", () => {
@@ -40,5 +42,43 @@ describe("buildExternalEventOverrideData", () => {
     expect(result.registrationDeadline).toBeNull();
     expect(result.requiresDecklist).toBe(false);
     expect(result.description).toBeNull();
+  });
+});
+
+describe("externalEventAdminService cache invalidation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+  });
+
+  it("invalidates events and detailed-events caches after toggling hidden flag", async () => {
+    const removeItem = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("useStorage", vi.fn(() => ({ removeItem })));
+    vi.stubGlobal("createError", (input: any) => {
+      const err = new Error(input?.statusMessage || "error") as Error & {
+        statusCode?: number;
+      };
+      err.statusCode = input?.statusCode;
+      return err;
+    });
+
+    vi.doMock("~/lib/prisma", () => ({
+      default: {
+        externalEventOverride: {
+          findUnique: vi.fn().mockResolvedValue({ hideFromCalendar: false }),
+          update: vi.fn().mockResolvedValue({ hideFromCalendar: true }),
+        },
+      },
+    }));
+
+    const { toggleExternalEventOverrideHidden } = await import(
+      "../../server/services/admin/externalEventAdminService"
+    );
+
+    const result = await toggleExternalEventOverrideHidden("override-1");
+
+    expect(result.success).toBe(true);
+    expect(removeItem).toHaveBeenCalledWith("pokedata-events-v2");
+    expect(removeItem).toHaveBeenCalledWith("pokedata-detailed-events-v2");
   });
 });

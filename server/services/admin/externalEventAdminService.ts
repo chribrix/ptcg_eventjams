@@ -22,7 +22,12 @@ type OverrideWriteInput = z.infer<typeof overrideWriteSchema>;
 
 async function invalidateDetailedEventsCache() {
   const storage = useStorage("cache");
-  await storage.removeItem("pokedata:detailed-events");
+  await Promise.all([
+    storage.removeItem("pokedata-events-v2"),
+    storage.removeItem("pokedata-detailed-events-v2"),
+    // Legacy key used by older builds
+    storage.removeItem("pokedata:detailed-events"),
+  ]);
 }
 
 export function buildExternalEventOverrideData(

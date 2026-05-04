@@ -273,6 +273,7 @@
 import { getEventTypeLabel } from "~/types/eventTags";
 import { ref, computed, onMounted } from "vue";
 import { useAdmin } from "~/composables/useAdmin";
+import { isDefaultHiddenExternalEvent } from "~/utils/externalEventVisibility";
 
 // Admin route - protected by global admin middleware
 
@@ -373,7 +374,14 @@ function getOverride(event: ParsedEvent): EventOverride | undefined {
 // Check if event is hidden from calendar
 function isHiddenFromCalendar(event: ParsedEvent): boolean {
   const override = getOverride(event);
-  return override ? (override as any).hideFromCalendar === true : false;
+  if (override) {
+    return (override as any).hideFromCalendar === true;
+  }
+
+  return isDefaultHiddenExternalEvent({
+    venue: event.venue,
+    streetAddress: event.streetAddress,
+  });
 }
 
 // Toggle hide from calendar status
@@ -413,7 +421,7 @@ async function toggleHideFromCalendar(event: ParsedEvent) {
               type: event.type,
               icon: event.icon,
             },
-            hideFromCalendar: true,
+            hideFromCalendar: !isCurrentlyHidden,
           },
         },
       );
@@ -629,7 +637,9 @@ async function loadEvents() {
   try {
     // Use /api/events instead of /api/events/detailed to get ALL events
     // including those hidden from calendar (admins need to see everything)
-    const response = await $fetch<{ events: ParsedEvent[] }>("/api/events");
+    const response = await $fetch<{ events: ParsedEvent[] }>(
+      "/api/events?includeHidden=1",
+    );
     events.value = response?.events || [];
   } catch (err) {
     console.error("Failed to load events:", err);

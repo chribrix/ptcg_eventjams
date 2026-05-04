@@ -22,10 +22,11 @@ interface ParsedEvent {
  */
 export async function applyEventOverrides(
   events: ParsedEvent[],
+  options: { includeHidden?: boolean } = {},
 ): Promise<ParsedEvent[]> {
   try {
     const overrides = await prisma.externalEventOverride.findMany();
-    return applyExternalEventOverridesToFeed(events, overrides);
+    return applyExternalEventOverridesToFeed(events, overrides, options);
   } catch (error) {
     console.error("Error applying event overrides:", error);
     // On error, return original events without overrides

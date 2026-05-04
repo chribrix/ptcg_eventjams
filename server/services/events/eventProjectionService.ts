@@ -1,6 +1,7 @@
 import { parseEventTags } from "~/types/eventTags";
 import { getEventTypeFromOverrides } from "~/utils/eventTypes";
 import { getDateKeyInTimeZone } from "~/utils/eventDateTime";
+import { isDefaultHiddenExternalEvent } from "~/utils/externalEventVisibility";
 
 type TicketCountRegistration = {
   _count?: {
@@ -97,11 +98,8 @@ export function projectEventTypeFromTags(
 export function applyExternalEventOverridesToFeed(
   events: ExternalEventLike[],
   overrides: ExternalEventOverrideLike[],
+  options: { includeHidden?: boolean } = {},
 ) {
-  if (overrides.length === 0) {
-    return events;
-  }
-
   return events
     .map((event) => {
       const override = overrides.find((entry) => {
@@ -119,8 +117,16 @@ export function applyExternalEventOverridesToFeed(
         return nameMatch && dateMatch && locationMatch;
       });
 
+      const defaultHidden = isDefaultHiddenExternalEvent({
+        venue: event.venue,
+        streetAddress: event.streetAddress,
+      });
+
       if (!override) {
-        return event;
+        return {
+          ...event,
+          hideFromCalendar: defaultHidden,
+        } as ExternalEventLike & { hideFromCalendar: boolean };
       }
 
       const overrideData = normalizeOverrideData(override.overrides);
@@ -136,7 +142,10 @@ export function applyExternalEventOverridesToFeed(
             ? overrideData.icon
             : event.icon,
         isOverridden: true,
-        hideFromCalendar: override.hideFromCalendar === true,
+        hideFromCalendar:
+          override.hideFromCalendar !== undefined
+            ? override.hideFromCalendar === true
+            : defaultHidden,
       } as ExternalEventLike & {
         isOverridden: boolean;
         hideFromCalendar: boolean;
@@ -153,6 +162,7 @@ export function applyExternalEventOverridesToFeed(
     })
     .filter(
       (event) =>
+        options.includeHidden === true ||
         (event as { hideFromCalendar?: boolean }).hideFromCalendar !== true,
     );
 }
