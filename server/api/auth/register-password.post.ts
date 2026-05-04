@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
 import { PrismaClient } from "@prisma/client";
 import { ensurePlayerForAuthUser } from "~/server/util/playerProvisioning";
 
@@ -19,7 +19,7 @@ export const createRegisterPasswordHandler = (
   const createSupabaseAdminClient =
     dependencies.createSupabaseAdminClient ||
     ((supabaseUrl: string, serviceKey: string) =>
-      createClient(supabaseUrl, serviceKey, {
+      createSupabaseServerClient(supabaseUrl, serviceKey, {
         auth: { autoRefreshToken: false, persistSession: false },
       }));
   const provisionPlayer =

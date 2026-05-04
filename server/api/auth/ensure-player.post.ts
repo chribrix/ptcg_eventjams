@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
 import { serverSupabaseUser } from "#supabase/server";
 import {
   ensurePlayerForAuthUser,
@@ -29,7 +29,7 @@ export const createEnsurePlayerHandler = (
   const createSupabaseAdminClient =
     dependencies.createSupabaseAdminClient ||
     ((supabaseUrl: string, serviceKey: string) =>
-      createClient(supabaseUrl, serviceKey, {
+      createSupabaseServerClient(supabaseUrl, serviceKey, {
         auth: { autoRefreshToken: false, persistSession: false },
       }));
   const getServerUser =

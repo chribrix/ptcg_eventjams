@@ -12,7 +12,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
 
 const hasSupabaseAdminRole = (
   appMetadata: Record<string, unknown> | null | undefined,
@@ -60,7 +60,7 @@ export default defineNitroPlugin(async (nitroApp) => {
       return;
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    const supabase = createSupabaseServerClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,

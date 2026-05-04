@@ -7,7 +7,7 @@
  * Requires: Authorization header (Bearer <access_token>) or session cookie.
  */
 import crypto from "crypto";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
 import { PrismaClient } from "@prisma/client";
 import { clearAdminPasswordResetState } from "~/server/util/passwordSetupState";
 
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify the access token and get the user
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+  const supabaseAdmin = createSupabaseServerClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 

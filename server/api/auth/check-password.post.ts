@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+  const supabaseAdmin = createSupabaseServerClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 

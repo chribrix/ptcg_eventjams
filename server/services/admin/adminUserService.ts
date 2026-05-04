@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
 import prisma from "~/lib/prisma";
 import { z } from "zod";
 import { hasAdminRole } from "~/server/util/adminAccess";
@@ -48,7 +48,7 @@ function getSupabaseConfig() {
 function createSupabaseAdminClient() {
   const { supabaseUrl, supabaseServiceKey } = getSupabaseConfig();
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  return createSupabaseServerClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -66,7 +66,7 @@ function createSupabasePublicAuthClient() {
     });
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey, {
+  return createSupabaseServerClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
