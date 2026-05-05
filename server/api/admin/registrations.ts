@@ -4,6 +4,7 @@ import {
   deleteAdminRegistration,
   listAdminRegistrationsForEvent,
   updateAdminRegistration,
+  updateAdminWaitlistPriority,
 } from "~/server/services/admin/adminRegistrationService";
 
 export default defineAdminRoute(async ({ event }) => {
@@ -26,6 +27,13 @@ export default defineAdminRoute(async ({ event }) => {
       return createAdminRegistration(body);
     }
     case "PUT": {
+      const waitlistId = query.waitlistId as string | undefined;
+      const body = await readBody(event);
+
+      if (waitlistId) {
+        return updateAdminWaitlistPriority(waitlistId, body);
+      }
+
       const registrationId = query.id as string;
       if (!registrationId) {
         throw createError({
@@ -33,7 +41,6 @@ export default defineAdminRoute(async ({ event }) => {
           statusMessage: "Registration ID is required",
         });
       }
-      const body = await readBody(event);
       return updateAdminRegistration(registrationId, body);
     }
     case "DELETE": {

@@ -11,6 +11,7 @@
     "migrate:supabase-ids": "tsx scripts/migrate-supabase-ids.ts",
     "migrate:supabase-ids:dry-run": "tsx scripts/migrate-supabase-ids.ts --dry-run",
     "migrate:supabase-ids:once": "tsx scripts/migrate-supabase-ids.ts --once",
+    "check:pokedata-hidden": "ts-node --esm scripts/check-pokedata-hidden.ts",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "test": "vitest run"
@@ -33,7 +34,8 @@
     "puppeteer-core": "^24.16.2",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1",
-    "vue-tsc": "^3.0.3"
+    "vue-tsc": "^3.0.3",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@mikro-orm/cli": "^6.4.16",

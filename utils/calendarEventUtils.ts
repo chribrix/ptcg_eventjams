@@ -61,6 +61,7 @@ export interface UnifiedCalendarEvent {
   streetAddress?: string;
   icon?: string;
   isCustomEvent: boolean;
+  isLocalRegistration?: boolean;
   eventType?: string;
   tags?: unknown;
   tagType?: string;
@@ -198,6 +199,7 @@ export function getCustomCalendarEventType(
 export function normalizeExternalCalendarEvent(
   event: ExternalCalendarEvent
 ): UnifiedCalendarEvent {
+  const isLocalRegistration = event.link?.startsWith("/events/register/") || false;
   return {
     id: String(event.id),
     title: event.title,
@@ -213,6 +215,7 @@ export function normalizeExternalCalendarEvent(
     streetAddress: event.streetAddress,
     icon: event.icon,
     isCustomEvent: false,
+    isLocalRegistration,
   };
 }
 
@@ -232,6 +235,7 @@ export function normalizeCustomCalendarEvent(
     country: "",
     link: "",
     isCustomEvent: true,
+    isLocalRegistration: true,
     eventType: event.eventType,
     tags: event.tags,
     tagType: event.tagType,
@@ -242,6 +246,19 @@ export function sortCalendarEvents<T extends { dateTime: string }>(
   events: T[]
 ): T[] {
   return [...events].sort((first, second) => {
+    const firstLocal =
+      ("isLocalRegistration" in first &&
+        Boolean((first as any).isLocalRegistration)) ||
+      ("isCustomEvent" in first && Boolean((first as any).isCustomEvent));
+    const secondLocal =
+      ("isLocalRegistration" in second &&
+        Boolean((second as any).isLocalRegistration)) ||
+      ("isCustomEvent" in second && Boolean((second as any).isCustomEvent));
+
+    if (firstLocal !== secondLocal) {
+      return firstLocal ? -1 : 1;
+    }
+
     return new Date(first.dateTime).getTime() - new Date(second.dateTime).getTime();
   });
 }

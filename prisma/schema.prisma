@@ -150,6 +150,7 @@ model CustomEvent {
   updatedAt            DateTime            @updatedAt @map("updated_at")
   creator              AdminUser           @relation(fields: [createdBy], references: [id])
   registrations        EventRegistration[]
+  waitlistEntries      WaitlistEntry[]
   tomState             TournamentTomState?
 
   @@map("custom_events")
@@ -197,6 +198,7 @@ model Player {
   createdAt            DateTime            @default(now()) @map("created_at")
   updatedAt            DateTime            @updatedAt @map("updated_at")
   registrations        EventRegistration[]
+  waitlistEntries      WaitlistEntry[]
   bookmarks            EventBookmark[]
 
   @@map("players")
@@ -241,6 +243,31 @@ model EventRegistration {
   @@unique([customEventId, playerId])
   @@unique([externalEventId, playerId])
   @@map("event_registrations")
+  @@schema("public")
+}
+
+model WaitlistEntry {
+  id              String                 @id @default(cuid())
+  eventKey        String                 @map("event_key")
+  customEventId   String?                @map("custom_event_id")
+  externalEventId String?                @map("external_event_id")
+  playerId        String                 @map("player_id")
+  status          String                 @default("waiting") // waiting, pending_claim, confirmed, expired, cancelled
+  priority        Int                    @default(0) // higher number = higher release priority
+  queuePositionAt DateTime               @default(now()) @map("queue_position_at")
+  notifiedAt      DateTime?              @map("notified_at")
+  claimExpiresAt  DateTime?              @map("claim_expires_at")
+  confirmedAt     DateTime?              @map("confirmed_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+  customEvent     CustomEvent?           @relation(fields: [customEventId], references: [id], onDelete: Cascade)
+  externalEvent   ExternalEventOverride? @relation(fields: [externalEventId], references: [id], onDelete: Cascade)
+  player          Player                 @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([eventKey, playerId])
+  @@index([customEventId, status, priority, queuePositionAt])
+  @@index([externalEventId, status, priority, queuePositionAt])
+  @@map("waitlist_entries")
   @@schema("public")
 }
 
@@ -296,6 +323,7 @@ model ExternalEventOverride {
 
   creator       AdminUser           @relation(fields: [createdBy], references: [id])
   registrations EventRegistration[]
+  waitlistEntries WaitlistEntry[]
 
   @@unique([eventName, eventDate]) // One override per event name+date combo
   @@map("external_event_overrides")

@@ -357,6 +357,18 @@
                         >
                           {{ event.gameLabel }}
                         </span>
+                        <span
+                          v-if="event.waitlistStatus === 'waitlist'"
+                          class="rounded-full border border-amber-700 bg-amber-950/50 px-2.5 py-1 text-[11px] font-semibold text-amber-200 sm:px-3 sm:text-xs"
+                        >
+                          Auf Warteliste
+                        </span>
+                        <span
+                          v-if="event.waitlistStatus === 'waitlist_claim'"
+                          class="rounded-full border border-emerald-700 bg-emerald-950/50 px-2.5 py-1 text-[11px] font-semibold text-emerald-200 sm:px-3 sm:text-xs"
+                        >
+                          Claim aktiv
+                        </span>
                       </div>
 
                       <h4
@@ -634,6 +646,18 @@
                   >
                     {{ t("eventList.decklistRequiredDetail") }}
                   </div>
+                  <div
+                    v-if="selectedEvent.waitlistStatus === 'waitlist'"
+                    class="rounded-2xl border border-amber-800 bg-amber-950/40 px-4 py-3 text-sm font-medium text-amber-200"
+                  >
+                    Du stehst auf der Warteliste.
+                  </div>
+                  <div
+                    v-if="selectedEvent.waitlistStatus === 'waitlist_claim'"
+                    class="rounded-2xl border border-emerald-800 bg-emerald-950/40 px-4 py-3 text-sm font-medium text-emerald-200"
+                  >
+                    Dein Teilnahme-Claim ist aktiv.
+                  </div>
                 </div>
 
                 <div class="mt-4 flex flex-col gap-3">
@@ -785,6 +809,7 @@ interface UnifiedEvent {
   isLocalRegistration: boolean;
   searchableText: string;
   dateBadgeClass: string;
+  waitlistStatus?: "waitlist" | "waitlist_claim" | null;
 }
 
 const searchQuery = ref("");
@@ -798,6 +823,7 @@ const isLoading = ref(false);
 const error = ref<string | null>(null);
 const bookmarkedEventIds = ref<Set<string>>(new Set());
 const bookmarkPendingId = ref<string | null>(null);
+const waitlistStatuses = ref<Record<string, "waitlist" | "waitlist_claim">>({});
 const user = useSupabaseUser();
 const { loadBookmarkedEventIds, toggleBookmark: toggleUnifiedBookmark } =
   useEventBookmarks();
@@ -806,7 +832,15 @@ const { t, locale } = useI18n();
 onMounted(async () => {
   await fetchEvents();
   await loadBookmarks();
+  await fetchWaitlistStatuses();
 });
+
+watch(
+  () => user.value?.id,
+  async () => {
+    await fetchWaitlistStatuses();
+  },
+);
 
 const fetchEvents = async () => {
   isLoading.value = true;
@@ -832,6 +866,21 @@ const fetchEvents = async () => {
   }
 };
 
+const fetchWaitlistStatuses = async () => {
+  if (!user.value) {
+    waitlistStatuses.value = {};
+    return;
+  }
+  try {
+    const response = await $fetch<{
+      statuses: Record<string, "waitlist" | "waitlist_claim">;
+    }>("/api/events/waitlist/my-statuses");
+    waitlistStatuses.value = response.statuses || {};
+  } catch {
+    waitlistStatuses.value = {};
+  }
+};
+
 const normalizedEvents = computed<UnifiedEvent[]>(() => {
   const external = externalEvents.value.map((event) =>
     normalizeExternalEvent(event),
@@ -839,6 +888,9 @@ const normalizedEvents = computed<UnifiedEvent[]>(() => {
   const custom = customEvents.value.map((event) => normalizeCustomEvent(event));
 
   return [...external, ...custom].sort((first, second) => {
+    if (first.isLocalRegistration !== second.isLocalRegistration) {
+      return first.isLocalRegistration ? -1 : 1;
+    }
     return new Date(first.date).getTime() - new Date(second.date).getTime();
   });
 });
@@ -853,6 +905,10 @@ const timeWindowFilteredEvents = computed(() => {
     timeWindowDays === null ? null : addDays(now, timeWindowDays);
 
   return normalizedEvents.value.filter((event) => {
+    if (event.waitlistStatus) {
+      return true;
+    }
+
     if (!latestDate) {
       return true;
     }
@@ -1123,6 +1179,7 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
       type: event.type,
       icon: event.icon,
     }),
+    waitlistStatus: waitlistStatuses.value[event.id] || null,
   };
 }
 
@@ -1204,6 +1261,7 @@ function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
       tags: event.tags,
       tagType: event.tagType,
     }),
+    waitlistStatus: waitlistStatuses.value[event.id] || null,
   };
 }
 

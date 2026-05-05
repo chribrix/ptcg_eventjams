@@ -758,6 +758,60 @@
           <div v-else class="no-registrations">
             No registrations yet for this event.
           </div>
+
+          <div class="registrations-table mt-6">
+            <h3 class="text-base font-semibold mb-2">
+              Waitlist ({{ waitlistEntries.length }})
+            </h3>
+            <table v-if="waitlistEntries.length > 0">
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Priority</th>
+                  <th>Player ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Claim Expires</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(entry, index) in waitlistEntries" :key="entry.id">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ entry.priority }}</td>
+                  <td>{{ entry.player.playerId || "—" }}</td>
+                  <td>{{ entry.player.name }}</td>
+                  <td>{{ entry.player.email || "N/A" }}</td>
+                  <td>{{ entry.status }}</td>
+                  <td>
+                    {{
+                      entry.claimExpiresAt
+                        ? formatDate(entry.claimExpiresAt)
+                        : "—"
+                    }}
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button
+                        @click="updateWaitlistPriority(entry, entry.priority + 1)"
+                        class="btn btn-small btn-info"
+                      >
+                        +1
+                      </button>
+                      <button
+                        @click="updateWaitlistPriority(entry, entry.priority - 1)"
+                        class="btn btn-small"
+                      >
+                        -1
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-else class="no-registrations">No waitlist entries.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1122,6 +1176,21 @@ interface Registration {
   };
 }
 
+interface WaitlistEntry {
+  id: string;
+  status: "waiting" | "pending_claim" | "confirmed" | "expired" | "cancelled";
+  priority: number;
+  claimExpiresAt?: string | null;
+  createdAt: string;
+  queuePositionAt: string;
+  player: {
+    id: string;
+    playerId?: string | null;
+    name: string;
+    email?: string | null;
+  };
+}
+
 interface VenueDirectoryEntry {
   id: string;
   organizationName: string;
@@ -1155,6 +1224,7 @@ interface EventFormState {
 // Reactive data
 const events = ref<CustomEvent[]>([]);
 const registrations = ref<Registration[]>([]);
+const waitlistEntries = ref<WaitlistEntry[]>([]);
 const loading = ref(true);
 const saving = ref(false);
 const showCreateForm = ref(false);
@@ -1647,10 +1717,20 @@ const deleteEvent = async (event: CustomEvent) => {
 const viewRegistrations = async (event: CustomEvent) => {
   try {
     selectedEvent.value = event;
-    const response = await $fetch<{ registrations: Registration[] }>(
+    const response = await $fetch<{
+      registrations: Registration[];
+      waitlist: WaitlistEntry[];
+    }>(
       `/api/admin/registrations?eventId=${event.id}`,
     );
     registrations.value = response.registrations || [];
+    waitlistEntries.value = (response.waitlist || []).sort((a, b) => {
+      if (a.priority !== b.priority) return b.priority - a.priority;
+      return (
+        new Date(a.queuePositionAt).getTime() -
+        new Date(b.queuePositionAt).getTime()
+      );
+    });
     showRegistrations.value = true;
   } catch (error) {
     console.error("Error loading registrations:", error);
@@ -1699,6 +1779,29 @@ const closeRegistrationsModal = () => {
   showRegistrations.value = false;
   selectedEvent.value = null;
   registrations.value = [];
+  waitlistEntries.value = [];
+};
+
+const updateWaitlistPriority = async (
+  entry: WaitlistEntry,
+  priority: number,
+) => {
+  try {
+    await $fetch(`/api/admin/registrations?waitlistId=${entry.id}`, {
+      method: "PUT",
+      body: { priority },
+    });
+    entry.priority = priority;
+    waitlistEntries.value = [...waitlistEntries.value].sort((a, b) => {
+      if (a.priority !== b.priority) return b.priority - a.priority;
+      return (
+        new Date(a.queuePositionAt).getTime() -
+        new Date(b.queuePositionAt).getTime()
+      );
+    });
+  } catch (error) {
+    console.error("Error updating waitlist priority:", error);
+  }
 };
 
 const viewDecklist = (row: TicketRow) => {

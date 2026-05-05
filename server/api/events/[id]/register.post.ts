@@ -192,17 +192,36 @@ export const createRegistrationHandler =
             },
           });
 
+          const waitlistDelegate = (tx as any).waitlistEntry;
+          const eventKey = isExternalEvent
+            ? `external:${eventId}`
+            : `custom:${eventId}`;
+          const now = new Date();
+          const activeClaimCount = waitlistDelegate
+            ? await waitlistDelegate.count({
+                where: {
+                  eventKey,
+                  status: "pending_claim",
+                  OR: [{ claimExpiresAt: null }, { claimExpiresAt: { gt: now } }],
+                },
+              })
+            : 0;
+
           const requestedTickets = tickets.length;
+          const effectiveOccupiedSpots = currentTickets + activeClaimCount;
           if (
             maxParticipants &&
-            currentTickets + requestedTickets > maxParticipants
+            effectiveOccupiedSpots + requestedTickets > maxParticipants
           ) {
-            const availableSpots = maxParticipants - currentTickets;
+            const availableSpots = Math.max(0, maxParticipants - effectiveOccupiedSpots);
             throw createError({
               statusCode: 400,
               statusMessage: "Not enough spots available",
               data: {
-                message: `Only ${availableSpots} spot(s) remaining. You requested ${requestedTickets} ticket(s).`,
+                message:
+                  activeClaimCount > 0
+                    ? `Only ${availableSpots} spot(s) remaining after reserved waitlist claims (${activeClaimCount}). You requested ${requestedTickets} ticket(s).`
+                    : `Only ${availableSpots} spot(s) remaining. You requested ${requestedTickets} ticket(s).`,
               },
             });
           }

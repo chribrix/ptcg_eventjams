@@ -187,6 +187,7 @@
       <NuxtLink
         v-else-if="
           registration.entryType !== 'bookmark' &&
+          registration.entryType !== 'waitlist' &&
           registration.status !== 'cancelled'
         "
         :to="`/booking/${registration.id}`"
@@ -230,7 +231,7 @@ import {
 
 interface EventRegistration {
   id: string;
-  entryType?: "registration" | "bookmark";
+  entryType?: "registration" | "bookmark" | "waitlist";
   customEventId: string | null;
   externalEventId?: string | null;
   playerId: string;
@@ -302,6 +303,10 @@ function getStatusBadgeClass(status: string): string {
       return "bg-gray-600 text-gray-200 border border-gray-600";
     case "bookmarked":
       return "bg-sky-600 text-white border border-sky-600";
+    case "waitlist":
+      return "bg-amber-700 text-white border border-amber-700";
+    case "waitlist_claim":
+      return "bg-emerald-700 text-white border border-emerald-700";
     default:
       return "bg-[#40444b] text-gray-300 border border-gray-500";
   }
@@ -316,6 +321,10 @@ function getStatusDotClass(status: string): string {
     case "cancelled":
       return "bg-gray-900";
     case "bookmarked":
+      return "bg-white";
+    case "waitlist":
+      return "bg-white";
+    case "waitlist_claim":
       return "bg-white";
     default:
       return "bg-gray-500";
@@ -332,6 +341,10 @@ function getStatusLabel(status: string): string {
       return t("registrationMiniEntry.statusCancelled");
     case "bookmarked":
       return t("registrationMiniEntry.statusBookmarked");
+    case "waitlist":
+      return "Auf Warteliste";
+    case "waitlist_claim":
+      return "Claim aktiv";
     default:
       return status.charAt(0).toUpperCase() + status.slice(1);
   }

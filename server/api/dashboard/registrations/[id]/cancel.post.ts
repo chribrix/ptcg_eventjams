@@ -5,6 +5,7 @@ import {
   logAuthError,
 } from "~/server/util/errorLogger";
 import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
+import { promoteWaitlistForEvent } from "~/server/services/events/waitlistService";
 
 const CANCELLATION_DEADLINE_HOURS = 2;
 const prisma = new PrismaClient();
@@ -128,6 +129,14 @@ export default defineEventHandler(async (event) => {
         status: "cancelled",
       },
     });
+
+    await promoteWaitlistForEvent(
+      {
+        customEventId: registration.customEvent?.id,
+        externalEventId: registration.externalEvent?.id,
+      },
+      activeTickets.length,
+    );
 
     // Log successful cancellation
     await prisma.errorLog.create({

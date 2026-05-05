@@ -171,12 +171,27 @@ describe("authenticatedPlayer utility", () => {
     expect(logError).not.toHaveBeenCalled();
   });
 
-  it("throws a player-not-found error when a strict lookup has no linked player", async () => {
+  it("auto-provisions a supabase identity by re-linking existing player via email", async () => {
     const { resolveAuthenticatedPlayerFactory, logError } =
       await loadAuthenticatedPlayerModule();
     const prisma = {
       player: {
         findUnique: vi.fn().mockResolvedValue(null),
+        findFirst: vi.fn().mockResolvedValue({
+          id: "player-db-id",
+          playerId: null,
+          supabaseId: null,
+          name: "Legacy Player",
+          email: "missing@example.com",
+        }),
+        update: vi.fn().mockResolvedValue({
+          id: "player-db-id",
+          playerId: null,
+          supabaseId: "supabase-user-1",
+          name: "Legacy Player",
+          email: "missing@example.com",
+        }),
+        create: vi.fn(),
       },
     };
 
@@ -189,14 +204,71 @@ describe("authenticatedPlayer utility", () => {
       }),
     );
 
-    await expect(
-      resolveAuthenticatedPlayer(createMockEvent()),
-    ).rejects.toMatchObject({
-      statusCode: 404,
-      statusMessage: "Player not found",
+    await expect(resolveAuthenticatedPlayer(createMockEvent())).resolves.toEqual({
+      id: "player-db-id",
+      playerId: null,
+      supabaseId: "supabase-user-1",
+      name: "Legacy Player",
+      email: "missing@example.com",
     });
 
-    expect(logError).toHaveBeenCalledTimes(1);
+    expect(prisma.player.update).toHaveBeenCalledWith({
+      where: { id: "player-db-id" },
+      data: {
+        supabaseId: "supabase-user-1",
+        email: "missing@example.com",
+      },
+      select: expect.any(Object),
+    });
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it("auto-creates a minimal player when no link and no email match exist", async () => {
+    const { resolveAuthenticatedPlayerFactory, logError } =
+      await loadAuthenticatedPlayerModule();
+    const prisma = {
+      player: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        findFirst: vi.fn().mockResolvedValue(null),
+        update: vi.fn(),
+        create: vi.fn().mockResolvedValue({
+          id: "created-player-id",
+          playerId: null,
+          supabaseId: "supabase-user-1",
+          name: "missing",
+          email: "missing@example.com",
+        }),
+      },
+    };
+
+    const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(
+      prisma as any,
+      vi.fn().mockResolvedValue({
+        source: "supabase",
+        supabaseUserId: "supabase-user-1",
+        email: "missing@example.com",
+      }),
+    );
+
+    await expect(resolveAuthenticatedPlayer(createMockEvent())).resolves.toEqual({
+      id: "created-player-id",
+      playerId: null,
+      supabaseId: "supabase-user-1",
+      name: "missing",
+      email: "missing@example.com",
+    });
+
+    expect(prisma.player.create).toHaveBeenCalledWith({
+      data: {
+        supabaseId: "supabase-user-1",
+        email: "missing@example.com",
+        name: "missing",
+        playerId: null,
+        birthDate: new Date("2000-01-01T00:00:00.000Z"),
+      },
+      select: expect.any(Object),
+    });
+    expect(logError).not.toHaveBeenCalled();
   });
 
   it("logs missing impersonated players with the impersonated playerId", async () => {

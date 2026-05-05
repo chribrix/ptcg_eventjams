@@ -2,6 +2,14 @@ import { z } from "zod";
 import prisma from "~/lib/prisma";
 import { projectPublicEventDetailsFromOverride } from "~/server/services/events/eventProjectionService";
 
+function getWaitlistCountDelegate() {
+  const delegate = (prisma as any).waitlistEntry;
+  if (!delegate || typeof delegate.count !== "function") {
+    return null;
+  }
+  return delegate;
+}
+
 // Get event details with registration count
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
@@ -34,9 +42,33 @@ export default defineEventHandler(async (event) => {
         },
       });
 
+      const waitlistDelegate = getWaitlistCountDelegate();
+      const now = new Date();
+      const waitlistCount = waitlistDelegate
+        ? await waitlistDelegate.count({
+            where: {
+              customEventId: eventId,
+              status: {
+                in: ["waiting", "pending_claim"],
+              },
+            },
+          })
+        : 0;
+      const activeClaimCount = waitlistDelegate
+        ? await waitlistDelegate.count({
+            where: {
+              customEventId: eventId,
+              status: "pending_claim",
+              OR: [{ claimExpiresAt: null }, { claimExpiresAt: { gt: now } }],
+            },
+          })
+        : 0;
+
       return {
         event: customEvent,
         registrationCount,
+        waitlistCount,
+        activeClaimCount,
       };
     }
 
@@ -72,10 +104,36 @@ export default defineEventHandler(async (event) => {
       },
     });
 
-    return projectPublicEventDetailsFromOverride(
-      externalEventOverride,
-      registrationCount,
-    );
+    const waitlistDelegate = getWaitlistCountDelegate();
+    const now = new Date();
+    const waitlistCount = waitlistDelegate
+      ? await waitlistDelegate.count({
+          where: {
+            externalEventId: eventId,
+            status: {
+              in: ["waiting", "pending_claim"],
+            },
+          },
+        })
+      : 0;
+    const activeClaimCount = waitlistDelegate
+      ? await waitlistDelegate.count({
+          where: {
+            externalEventId: eventId,
+            status: "pending_claim",
+            OR: [{ claimExpiresAt: null }, { claimExpiresAt: { gt: now } }],
+          },
+        })
+      : 0;
+
+    return {
+      ...projectPublicEventDetailsFromOverride(
+        externalEventOverride,
+        registrationCount,
+      ),
+      waitlistCount,
+      activeClaimCount,
+    };
   } catch (error: unknown) {
     console.error("Error fetching event details:", error);
 

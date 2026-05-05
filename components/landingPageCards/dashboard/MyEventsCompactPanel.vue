@@ -20,13 +20,16 @@
           @click="openEventModal(entry)"
         >
           <div
-            class="flex w-14 shrink-0 flex-col items-center justify-center border-r px-1 text-center"
+            class="flex w-24 shrink-0 flex-col items-center justify-center border-r px-2 text-center"
             :style="getEntryDateStyles(entry)"
           >
-            <p class="text-[11px] font-semibold">
-              {{ getDay(entry.customEvent.eventDate) }}.{{
-                getMonth(entry.customEvent.eventDate)
-              }}
+            <p
+              class="text-[15px] font-extrabold uppercase tracking-wide leading-none"
+            >
+              {{ formatCardDate(entry.customEvent.eventDate) }}
+            </p>
+            <p class="mt-2 text-[14px] font-semibold leading-none opacity-90">
+              {{ formatTime(entry.customEvent.eventDate) }}
             </p>
           </div>
 
@@ -37,23 +40,31 @@
               </p>
               <span
                 class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-                :class="
-                  entry.entryType === 'bookmark'
-                    ? 'bg-sky-700 text-white'
-                    : 'bg-emerald-700 text-white'
-                "
+                :class="[
+                  getEntryBadgeClass(entry),
+                  entry.status === 'waitlist_claim'
+                    ? 'claim-badge-animated'
+                    : '',
+                ]"
               >
-                {{
-                  entry.entryType === "bookmark"
-                    ? t("dashboard.timelineBookmarked")
-                    : t("dashboard.timelineRegistered")
-                }}
+                {{ getEntryBadgeText(entry) }}
               </span>
             </div>
 
             <div class="space-y-0.5 text-xs opacity-85">
-              <p>{{ formatTime(entry.customEvent.eventDate) }}</p>
               <p class="truncate">{{ entry.customEvent.venue }}</p>
+              <p
+                v-if="entry.status === 'waitlist_claim' && entry.claimExpiresAt"
+                class="font-bold text-emerald-900 opacity-100"
+              >
+                Platz reserviert bis:
+                {{ formatClaimRemaining(entry.claimExpiresAt) }}
+              </p>
+              <p
+                class="text-right text-[10px] font-semibold uppercase tracking-wide opacity-70"
+              >
+                Klicken für Details
+              </p>
             </div>
           </div>
         </button>
@@ -107,49 +118,117 @@
 
             <div class="space-y-2 text-sm text-gray-200">
               <div class="grid grid-cols-[7rem_1fr] gap-2">
-                <p class="text-gray-400">{{ t("eventList.dateTime") }}</p>
+                <p class="text-gray-400">{{ tr("eventList.dateTime", "Datum & Uhrzeit") }}</p>
                 <p>{{ formatLongDate(selectedEvent.customEvent.eventDate) }}</p>
               </div>
               <div class="grid grid-cols-[7rem_1fr] gap-2">
-                <p class="text-gray-400">{{ t("eventList.location") }}</p>
+                <p class="text-gray-400">{{ tr("eventList.location", "Ort") }}</p>
                 <p>{{ selectedEvent.customEvent.venue }}</p>
               </div>
               <div
                 v-if="selectedEvent.customEvent.participationFee"
                 class="grid grid-cols-[7rem_1fr] gap-2"
               >
-                <p class="text-gray-400">{{ t("eventList.entryFee") }}</p>
+                <p class="text-gray-400">{{ tr("eventList.entryFee", "Startgeld") }}</p>
                 <p>{{ selectedEvent.customEvent.participationFee }}</p>
               </div>
               <div class="grid grid-cols-[7rem_1fr] gap-2">
-                <p class="text-gray-400">{{ t("dashboard.statusLabel") }}</p>
+                <p class="text-gray-400">{{ tr("dashboard.statusLabel", "Status") }}</p>
                 <p>
-                  {{
-                    selectedEvent.entryType === "bookmark"
-                      ? t("dashboard.timelineBookmarked")
-                      : t("dashboard.timelineRegistered")
-                  }}
+                  {{ getEntryBadgeText(selectedEvent) }}
                 </p>
+              </div>
+              <div
+                v-if="
+                  selectedEvent.status === 'waitlist_claim' &&
+                  selectedEvent.claimExpiresAt
+                "
+                class="grid grid-cols-[7rem_1fr] gap-2"
+              >
+                <p class="text-gray-400">{{ tr("common.claim", "Claim") }}</p>
+                <p>{{ formatClaimRemaining(selectedEvent.claimExpiresAt) }}</p>
               </div>
               <div
                 v-if="selectedEvent.customEvent.description"
                 class="border-t border-[#3f495b] pt-2"
               >
-                <p class="text-gray-400">{{ t("eventList.aboutEvent") }}</p>
+                <p class="text-gray-400">{{ tr("eventList.aboutEvent", "Infos zum Event") }}</p>
                 <p class="mt-1 whitespace-pre-line text-gray-200">
                   {{ selectedEvent.customEvent.description }}
                 </p>
               </div>
             </div>
 
+            <div
+              v-if="
+                selectedEvent.entryType === 'registration' &&
+                getActiveTickets(selectedEvent).length > 1
+              "
+              class="mt-3 rounded-lg border border-[#3f495b] bg-[#313846] p-3"
+            >
+              <div class="mb-2 flex items-center justify-between">
+                <p
+                  class="text-xs font-semibold uppercase tracking-wide text-gray-300"
+                >
+                  Tickets absagen
+                </p>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-sky-300 hover:text-sky-200"
+                  @click="toggleAllTickets"
+                >
+                  {{
+                    hasAllActiveTicketsSelected
+                      ? "Alle abwählen"
+                      : "Alle auswählen"
+                  }}
+                </button>
+              </div>
+              <div class="grid gap-2">
+                <label
+                  v-for="ticket in getActiveTickets(selectedEvent)"
+                  :key="ticket.id"
+                  class="flex items-center gap-2 rounded-md border border-[#4b5568] bg-[#2b303a] px-2 py-2 text-xs text-gray-200"
+                >
+                  <input
+                    type="checkbox"
+                    class="h-4 w-4 rounded border-gray-500 bg-transparent"
+                    :checked="selectedTicketIds.includes(ticket.id)"
+                    @change="toggleTicketSelection(ticket.id)"
+                  />
+                  <span class="truncate">
+                    {{ ticket.participantName || "Unbenanntes Ticket" }}
+                    <span
+                      v-if="ticket.participantPlayerId"
+                      class="text-gray-400"
+                    >
+                      (#{{ ticket.participantPlayerId }})
+                    </span>
+                  </span>
+                </label>
+              </div>
+              <p class="mt-2 text-[11px] text-gray-400">
+                Hinweis: Das letzte verbleibende Ticket kann nicht einzeln
+                abgesagt werden.
+              </p>
+            </div>
+
+            <p
+              v-if="actionError"
+              class="mt-3 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+            >
+              {{ actionError }}
+            </p>
+
             <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <a
                 :href="routePlannerUrl(selectedEvent)"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center justify-center rounded-lg border border-[#4b5568] bg-[#313846] px-3 py-2 text-xs font-semibold text-gray-100 hover:bg-[#3a4252]"
+                class="inline-flex items-center justify-center gap-1 rounded-lg border border-[#4b5568] bg-[#313846] px-3 py-2 text-xs font-semibold text-gray-100 hover:bg-[#3a4252]"
               >
-                {{ t("dashboard.openRoutePlanner") }}
+                <MapIcon class="h-4 w-4" />
+                Maps
               </a>
               <button
                 v-if="
@@ -167,14 +246,58 @@
                     : t("dashboard.removeBookmarkAction")
                 }}
               </button>
-              <div v-else></div>
+              <NuxtLink
+                v-if="selectedEvent.entryType === 'registration'"
+                :to="`/booking/${selectedEvent.id}`"
+                class="inline-flex items-center justify-center gap-1 rounded-lg border border-[#4b5568] bg-[#313846] px-3 py-2 text-xs font-semibold text-gray-100 hover:bg-[#3a4252]"
+                @click="selectedEvent = null"
+              >
+                <PencilSquareIcon class="h-4 w-4" />
+                Buchung verwalten
+              </NuxtLink>
+              <button
+                v-if="selectedEvent.entryType === 'registration'"
+                type="button"
+                class="inline-flex items-center justify-center gap-1 rounded-lg border border-red-500/60 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 hover:bg-red-500/20 disabled:opacity-60"
+                :disabled="
+                  actionPending || getActiveTickets(selectedEvent).length === 0
+                "
+                @click="cancelSelectedTickets"
+              >
+                <XCircleIcon class="h-4 w-4" />
+                {{ actionPending ? "Bitte warten..." : "Absagen" }}
+              </button>
+              <button
+                v-if="
+                  selectedEvent.entryType === 'waitlist' &&
+                  selectedEvent.status === 'waitlist_claim'
+                "
+                type="button"
+                class="inline-flex items-center justify-center gap-1 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-60"
+                :disabled="actionPending"
+                @click="confirmWaitlistSpot"
+              >
+                <CheckCircleIcon class="h-4 w-4" />
+                {{ actionPending ? "Bitte warten..." : "Teilnehmen" }}
+              </button>
+              <button
+                v-if="selectedEvent.entryType === 'waitlist'"
+                type="button"
+                class="inline-flex items-center justify-center gap-1 rounded-lg border border-red-500/60 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 hover:bg-red-500/20 disabled:opacity-60"
+                :disabled="actionPending"
+                @click="dropFromWaitlist"
+              >
+                <ExclamationCircleIcon class="h-4 w-4" />
+                {{ actionPending ? "Bitte warten..." : "Absagen" }}
+              </button>
               <NuxtLink
                 v-if="selectedEvent.customEvent.id"
                 :to="`/events/${selectedEvent.customEvent.id}`"
-                class="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-sky-600 to-blue-600 px-3 py-2 text-xs font-bold text-white"
+                class="inline-flex items-center justify-center gap-1 rounded-lg bg-gradient-to-r from-sky-600 to-blue-600 px-3 py-2 text-xs font-bold text-white"
                 @click="selectedEvent = null"
               >
-                {{ t("events.eventDetails") }}
+                <TicketIcon class="h-4 w-4" />
+                {{ tr("events.eventDetails", "Eventdetails") }}
               </NuxtLink>
             </div>
           </div>
@@ -187,6 +310,14 @@
 <script setup lang="ts">
 import { getEventColor } from "~/utils/eventColors";
 import {
+  PencilSquareIcon,
+  XCircleIcon,
+  CheckCircleIcon,
+  TicketIcon,
+  ExclamationCircleIcon,
+  MapIcon,
+} from "@heroicons/vue/24/outline";
+import {
   notifyEventBookmarksUpdated,
   onEventBookmarksUpdated,
 } from "~/utils/eventBookmarks";
@@ -195,13 +326,28 @@ import {
   removeGuestEventBookmark,
 } from "~/utils/guestEventBookmarks";
 
-const { t, locale } = useI18n();
+const { t, locale } = useI18n({ useScope: "global" });
 const { userName } = useAuth();
+
+const tr = (key: string, fallback: string, params?: Record<string, unknown>) => {
+  const translated = t(key, params as any);
+  return translated === key ? fallback : translated;
+};
 
 type CompactEventEntry = {
   id: string;
-  entryType?: "registration" | "bookmark";
+  entryType?: "registration" | "bookmark" | "waitlist";
   externalEventId?: string | null;
+  status?: string;
+  claimExpiresAt?: string | null;
+  ticketCount?: number;
+  tickets?: Array<{
+    id: string;
+    participantName: string | null;
+    participantPlayerId: string | null;
+    status: string;
+    isAnonymous: boolean;
+  }>;
   eventType?: string;
   customEvent: {
     id?: string;
@@ -217,6 +363,8 @@ const entries = ref<CompactEventEntry[]>([]);
 const loading = ref(false);
 const selectedEvent = ref<CompactEventEntry | null>(null);
 const actionPending = ref(false);
+const actionError = ref<string>("");
+const selectedTicketIds = ref<string[]>([]);
 let removeBookmarksListener: (() => void) | null = null;
 
 const formatTime = (value: string) => {
@@ -245,10 +393,14 @@ const formatLongDate = (value: string) => {
   );
 };
 
-const getDay = (value: string) =>
-  String(new Date(value).getDate()).padStart(2, "0");
-const getMonth = (value: string) =>
-  String(new Date(value).getMonth() + 1).padStart(2, "0");
+const formatCardDate = (value: string) => {
+  const date = new Date(value);
+  const day = date.getDate();
+  const month = date
+    .toLocaleDateString("de-DE", { month: "short" })
+    .replace(".", "");
+  return `${day}. ${month.toUpperCase()}`;
+};
 
 const getEntryEventType = (entry: CompactEventEntry) =>
   entry.eventType || "local";
@@ -272,12 +424,195 @@ const getEntryDateStyles = (entry: CompactEventEntry) => {
 };
 
 const openEventModal = (entry: CompactEventEntry) => {
+  actionError.value = "";
+  selectedTicketIds.value = getActiveTickets(entry).map((ticket) => ticket.id);
   selectedEvent.value = entry;
+};
+
+const getEntryBadgeClass = (entry: CompactEventEntry) => {
+  if (entry.status === "waitlist_claim")
+    return "bg-emerald-800 text-white ring-2 ring-emerald-200/70";
+  if (entry.status === "waitlist") return "bg-amber-600 text-white";
+  if (entry.entryType === "bookmark") return "bg-sky-700 text-white";
+  return "bg-emerald-700 text-white";
+};
+
+const getEntryBadgeText = (entry: CompactEventEntry) => {
+  if (entry.status === "waitlist_claim") return "Freier Platz!";
+  if (entry.status === "waitlist") return "Warteliste";
+  return entry.entryType === "bookmark"
+    ? t("dashboard.timelineBookmarked")
+    : t("dashboard.timelineRegistered");
+};
+
+const formatClaimRemaining = (expiresAt: string) => {
+  const expires = new Date(expiresAt).getTime();
+  const now = Date.now();
+  const diffMs = expires - now;
+
+  if (diffMs <= 0) return "abgelaufen";
+
+  const totalMinutes = Math.floor(diffMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const until = new Date(expiresAt).toLocaleTimeString(
+    locale.value.startsWith("de") ? "de-DE" : "en-US",
+    { hour: "2-digit", minute: "2-digit" },
+  );
+
+  if (hours > 0) return `${until} (${hours}h ${minutes}m)`;
+  return `${until} (${minutes}m)`;
 };
 
 const routePlannerUrl = (entry: CompactEventEntry) => {
   const target = entry.customEvent.venue || entry.customEvent.name;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(target)}`;
+};
+
+const getActiveTickets = (entry: CompactEventEntry | null) => {
+  if (!entry?.tickets?.length) return [];
+  return entry.tickets.filter((ticket) => ticket.status !== "cancelled");
+};
+
+const hasAllActiveTicketsSelected = computed(() => {
+  const activeIds = getActiveTickets(selectedEvent.value).map(
+    (ticket) => ticket.id,
+  );
+  return (
+    activeIds.length > 0 &&
+    activeIds.every((id) => selectedTicketIds.value.includes(id))
+  );
+});
+
+const toggleTicketSelection = (ticketId: string) => {
+  if (actionPending.value) return;
+  if (selectedTicketIds.value.includes(ticketId)) {
+    selectedTicketIds.value = selectedTicketIds.value.filter(
+      (id) => id !== ticketId,
+    );
+    return;
+  }
+  selectedTicketIds.value = [...selectedTicketIds.value, ticketId];
+};
+
+const toggleAllTickets = () => {
+  if (actionPending.value || !selectedEvent.value) return;
+  const activeIds = getActiveTickets(selectedEvent.value).map(
+    (ticket) => ticket.id,
+  );
+  if (hasAllActiveTicketsSelected.value) {
+    selectedTicketIds.value = [];
+    return;
+  }
+  selectedTicketIds.value = activeIds;
+};
+
+const refreshEntriesAfterAction = async () => {
+  const currentId = selectedEvent.value?.id;
+  await loadEntries();
+  if (!currentId) {
+    selectedEvent.value = null;
+    return;
+  }
+  selectedEvent.value =
+    entries.value.find((entry) => entry.id === currentId) || null;
+  if (selectedEvent.value) {
+    selectedTicketIds.value = getActiveTickets(selectedEvent.value).map(
+      (ticket) => ticket.id,
+    );
+  }
+};
+
+const cancelSelectedTickets = async () => {
+  const entry = selectedEvent.value;
+  if (!entry || entry.entryType !== "registration" || actionPending.value)
+    return;
+
+  const activeTickets = getActiveTickets(entry);
+  const selectedTickets = activeTickets.filter((ticket) =>
+    selectedTicketIds.value.includes(ticket.id),
+  );
+
+  if (selectedTickets.length === 0) {
+    actionError.value = "Bitte mindestens ein Ticket auswählen.";
+    return;
+  }
+
+  const cancelAll = selectedTickets.length === activeTickets.length;
+  const message = cancelAll
+    ? `Möchtest du die komplette Buchung für "${entry.customEvent.name}" absagen?`
+    : `Möchtest du ${selectedTickets.length} Ticket(s) für "${entry.customEvent.name}" absagen?`;
+  if (!window.confirm(message)) return;
+
+  try {
+    actionPending.value = true;
+    actionError.value = "";
+    if (cancelAll) {
+      await $fetch(`/api/dashboard/registrations/${entry.id}/cancel`, {
+        method: "POST",
+      });
+    } else {
+      await Promise.all(
+        selectedTickets.map((ticket) =>
+          $fetch(`/api/bookings/${entry.id}/tickets/${ticket.id}`, {
+            method: "DELETE",
+          }),
+        ),
+      );
+    }
+    await refreshEntriesAfterAction();
+  } catch (error: any) {
+    actionError.value = error?.data?.statusMessage || "Absage fehlgeschlagen.";
+  } finally {
+    actionPending.value = false;
+  }
+};
+
+const confirmWaitlistSpot = async () => {
+  const entry = selectedEvent.value;
+  if (!entry || entry.entryType !== "waitlist" || actionPending.value) return;
+  const eventId = entry.customEvent.id;
+  if (!eventId) return;
+
+  try {
+    actionPending.value = true;
+    actionError.value = "";
+    await $fetch(`/api/events/${eventId}/waitlist/confirm`, {
+      method: "POST",
+    });
+    await refreshEntriesAfterAction();
+  } catch (error: any) {
+    actionError.value =
+      error?.data?.statusMessage || "Teilnahme konnte nicht bestätigt werden.";
+  } finally {
+    actionPending.value = false;
+  }
+};
+
+const dropFromWaitlist = async () => {
+  const entry = selectedEvent.value;
+  if (!entry || entry.entryType !== "waitlist" || actionPending.value) return;
+  const eventId = entry.customEvent.id;
+  if (!eventId) return;
+
+  const confirmed = window.confirm(
+    `Wirklich von der Warteliste für "${entry.customEvent.name}" austragen?`,
+  );
+  if (!confirmed) return;
+
+  try {
+    actionPending.value = true;
+    actionError.value = "";
+    await $fetch(`/api/events/${eventId}/waitlist/drop`, {
+      method: "POST",
+    });
+    await refreshEntriesAfterAction();
+  } catch (error: any) {
+    actionError.value =
+      error?.data?.statusMessage || "Wartelisten-Austragung fehlgeschlagen.";
+  } finally {
+    actionPending.value = false;
+  }
 };
 
 const removeBookmark = async (entry: CompactEventEntry) => {
@@ -363,3 +698,24 @@ onBeforeUnmount(() => {
   removeBookmarksListener?.();
 });
 </script>
+
+<style scoped>
+@keyframes claimPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
+  }
+  60% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.claim-badge-animated {
+  animation: claimPulse 1.8s ease-in-out infinite;
+}
+</style>

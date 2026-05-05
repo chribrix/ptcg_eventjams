@@ -260,7 +260,7 @@ const { t, locale } = useI18n();
 
 interface EventRegistration {
   id: string;
-  entryType?: "registration" | "bookmark";
+  entryType?: "registration" | "bookmark" | "waitlist";
   customEventId: string | null;
   externalEventId?: string | null;
   playerId: string;

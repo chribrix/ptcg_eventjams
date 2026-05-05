@@ -316,6 +316,10 @@
                     registration.status === 'reserved',
                   'bg-sky-100 text-sky-800':
                     registration.status === 'bookmarked',
+                  'bg-amber-100 text-amber-800':
+                    registration.status === 'waitlist',
+                  'bg-emerald-100 text-emerald-800':
+                    registration.status === 'waitlist_claim',
                   'bg-blue-100 text-blue-800':
                     registration.status === 'attended',
                   'bg-red-100 text-red-800': registration.status === 'no-show',
@@ -366,7 +370,9 @@
                   {{
                     registration.entryType === "bookmark"
                       ? t("dashboard.bookmarkedAt")
-                      : t("dashboard.registeredAt")
+                      : registration.entryType === "waitlist"
+                        ? "Warteliste seit"
+                        : t("dashboard.registeredAt")
                   }}
                   {{ formatRegistrationDate(registration.registeredAt) }}
                 </span>
@@ -376,7 +382,7 @@
             <!-- Edit Booking Button -->
             <div class="mt-4 pt-4 border-t app-border">
               <div
-                v-if="registration.entryType !== 'bookmark'"
+                v-if="registration.entryType === 'registration'"
                 class="grid gap-3 sm:grid-cols-2"
               >
                 <NuxtLink
@@ -418,6 +424,25 @@
                   </svg>
                   <span>{{ t("dashboard.tournamentView") }}</span>
                 </NuxtLink>
+              </div>
+              <div v-else-if="registration.entryType === 'waitlist'" class="grid gap-3 sm:grid-cols-1">
+                <NuxtLink
+                  :to="`/events/${registration.customEvent.id}`"
+                  class="w-full app-btn-neutral font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                  <span>{{
+                    registration.status === "waitlist_claim"
+                      ? "Claim prüfen / bestätigen"
+                      : "Event anzeigen"
+                  }}</span>
+                </NuxtLink>
+                <button
+                  type="button"
+                  class="w-full rounded-lg border border-red-600/70 bg-red-950/40 px-4 py-3 font-medium text-red-100 transition hover:bg-red-900/40"
+                  @click="dropFromWaitlist(registration)"
+                >
+                  Von Warteliste entfernen
+                </button>
               </div>
               <div v-else class="grid gap-3 sm:grid-cols-2">
                 <a
@@ -570,7 +595,7 @@ const { t } = useI18n();
 
 interface EventRegistration {
   id: string;
-  entryType?: "registration" | "bookmark";
+  entryType?: "registration" | "bookmark" | "waitlist";
   customEventId: string | null;
   externalEventId: string | null;
   playerId: string;
@@ -724,6 +749,28 @@ const removeBookmark = async (registration: EventRegistration) => {
   }
 };
 
+const dropFromWaitlist = async (registration: EventRegistration) => {
+  if (registration.entryType !== "waitlist") return;
+
+  const shouldDrop = window.confirm(
+    `Möchtest du dich wirklich von der Warteliste für "${registration.customEvent.name}" austragen?`,
+  );
+  if (!shouldDrop) return;
+
+  try {
+    await $fetch(`/api/events/${registration.customEvent.id}/waitlist/drop`, {
+      method: "POST",
+    });
+    await fetchRegistrations();
+  } catch (err) {
+    console.error("Failed to drop from waitlist:", err);
+    error.value =
+      err instanceof Error
+        ? err.message
+        : "Austragen von der Warteliste fehlgeschlagen";
+  }
+};
+
 const getDashboardEntryCardClass = (
   registration: EventRegistration,
 ): string => {
@@ -753,6 +800,8 @@ const getTicketsNeedingAttention = (
 
 // Format functions
 const formatStatus = (status: string): string => {
+  if (status === "waitlist") return "Auf Warteliste";
+  if (status === "waitlist_claim") return "Claim aktiv";
   return status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ");
 };
 

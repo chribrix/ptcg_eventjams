@@ -141,6 +141,51 @@ export default defineEventHandler(async (event) => {
       },
     });
 
+    const waitlistDelegate = (prisma as any).waitlistEntry;
+    const waitlistEntries = waitlistDelegate
+      ? await waitlistDelegate.findMany({
+          where: {
+            playerId: player.id,
+            status: {
+              in: ["waiting", "pending_claim"],
+            },
+          },
+          include: {
+            customEvent: {
+              select: {
+                id: true,
+                name: true,
+                venue: true,
+                tagType: true,
+                tags: true,
+                maxParticipants: true,
+                participationFee: true,
+                description: true,
+                eventDate: true,
+                registrationDeadline: true,
+                status: true,
+                requiresDecklist: true,
+              },
+            },
+            externalEvent: {
+              select: {
+                id: true,
+                eventName: true,
+                eventLocation: true,
+                eventDate: true,
+                maxParticipants: true,
+                participationFee: true,
+                description: true,
+                registrationDeadline: true,
+                requiresDecklist: true,
+                overrides: true,
+              },
+            },
+          },
+          orderBy: [{ priority: "desc" }, { queuePositionAt: "asc" }],
+        })
+      : [];
+
     // Keep events visible for their full calendar day and remove them the day after.
     const futureRegistrations = registrations.filter((reg) => {
       const eventDate =
@@ -296,8 +341,90 @@ export default defineEventHandler(async (event) => {
         }),
       }));
 
+    const futureWaitlistEntries = waitlistEntries
+      .filter((entry: any) => {
+        const eventDate =
+          entry.customEvent?.eventDate || entry.externalEvent?.eventDate;
+        if (!eventDate) return false;
+        return isUpcomingAdminEvent({ eventDate });
+      })
+      .map((entry: any) => {
+        const isExternal = Boolean(entry.externalEventId);
+        if (isExternal && entry.externalEvent) {
+          const overrides = normalizeOverrideData(entry.externalEvent.overrides);
+          return {
+            id: `waitlist-${entry.id}`,
+            entryType: "waitlist",
+            waitlistId: entry.id,
+            customEventId: null,
+            externalEventId: entry.externalEventId,
+            playerId: entry.playerId,
+            registeredAt: entry.createdAt,
+            status: entry.status === "pending_claim" ? "waitlist_claim" : "waitlist",
+            claimExpiresAt: entry.claimExpiresAt,
+            notes: null,
+            decklist: null,
+            bringingDecklistOnsite: false,
+            ticketCount: 0,
+            tickets: [],
+            externalRegistrationUrl: null,
+            customEvent: {
+              id: entry.externalEvent.id,
+              name:
+                overrides?.title ||
+                overrides?.venue ||
+                entry.externalEvent.eventName,
+              venue:
+                overrides?.venue ||
+                entry.externalEvent.eventLocation ||
+                entry.externalEvent.eventName,
+              eventDate: entry.externalEvent.eventDate,
+              maxParticipants: entry.externalEvent.maxParticipants || 0,
+              participationFee:
+                entry.externalEvent.participationFee?.toString() || null,
+              description: entry.externalEvent.description,
+              registrationDeadline: entry.externalEvent.registrationDeadline,
+              status: "published",
+              requiresDecklist: entry.externalEvent.requiresDecklist,
+              tags: "tags" in overrides ? overrides.tags : null,
+              tagType:
+                typeof overrides.tagType === "string"
+                  ? overrides.tagType
+                  : "pokemon",
+            },
+            isExternalEvent: true,
+            eventType: "custom",
+          };
+        }
+
+        return {
+          id: `waitlist-${entry.id}`,
+          entryType: "waitlist",
+          waitlistId: entry.id,
+          customEventId: entry.customEventId,
+          externalEventId: null,
+          playerId: entry.playerId,
+          registeredAt: entry.createdAt,
+          status: entry.status === "pending_claim" ? "waitlist_claim" : "waitlist",
+          claimExpiresAt: entry.claimExpiresAt,
+          notes: null,
+          decklist: null,
+          bringingDecklistOnsite: false,
+          ticketCount: 0,
+          tickets: [],
+          externalRegistrationUrl: null,
+          customEvent: entry.customEvent,
+          isExternalEvent: false,
+          eventType: "custom",
+        };
+      });
+
     // Sort by event date
-    const dashboardEntries = [...transformedRegistrations, ...futureBookmarks];
+    const dashboardEntries = [
+      ...transformedRegistrations,
+      ...futureBookmarks,
+      ...futureWaitlistEntries,
+    ];
 
     dashboardEntries.sort((a, b) => {
       const dateA = new Date(a.customEvent!.eventDate);
