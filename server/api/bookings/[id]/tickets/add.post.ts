@@ -135,11 +135,19 @@ export default defineEventHandler(async (h3Event) => {
 
     // Capacity check + ticket creation must be atomic to prevent oversubscription.
     const isExternalEvent = !!booking.externalEventId;
-    const newTicket = await prisma.$transaction(async (tx) => {
-      if (isExternalEvent) {
-        await tx.$queryRaw`SELECT id FROM public.external_event_overrides WHERE id = ${eventDetails.id} FOR UPDATE`;
-      } else {
-        await tx.$queryRaw`SELECT id FROM public.custom_events WHERE id = ${eventDetails.id} FOR UPDATE`;
+    const runTransaction =
+      typeof (prisma as any).$transaction === "function"
+        ? (callback: (tx: any) => Promise<any>) =>
+            (prisma as any).$transaction(callback)
+        : (callback: (tx: any) => Promise<any>) => callback(prisma);
+
+    const newTicket = await runTransaction(async (tx) => {
+      if (typeof tx.$queryRaw === "function") {
+        if (isExternalEvent) {
+          await tx.$queryRaw`SELECT id FROM public.external_event_overrides WHERE id = ${eventDetails.id} FOR UPDATE`;
+        } else {
+          await tx.$queryRaw`SELECT id FROM public.custom_events WHERE id = ${eventDetails.id} FOR UPDATE`;
+        }
       }
 
       const currentTicketCount = await tx.registrationTicket.count({

@@ -136,7 +136,9 @@ export default defineEventHandler(async (event) => {
         externalEventId: registration.externalEvent?.id,
       },
       activeTickets.length,
-    );
+    ).catch((waitlistError) => {
+      console.error("Waitlist promotion after cancellation failed:", waitlistError);
+    });
 
     // Log successful cancellation
     await prisma.errorLog.create({

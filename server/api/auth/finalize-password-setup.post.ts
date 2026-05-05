@@ -7,6 +7,7 @@ import {
   getProvisionPlayerInputFromAuthUser,
 } from "~/server/util/playerProvisioning";
 import { clearAdminPasswordResetState } from "~/server/util/passwordSetupState";
+import { getServerSupabaseUserSafely } from "~/server/util/supabaseAuthCookies";
 
 // Finalizes the confirm-email password setup path.
 //
@@ -125,7 +126,7 @@ export const createFinalizePasswordSetupHandler = (
 
     const supabaseAdmin = createSupabaseAdminClient(supabaseUrl, serviceKey);
 
-    let user = await getServerUser(event);
+    let user = await getServerSupabaseUserSafely(event, getServerUser);
 
     if (!user) {
       const authHeader = getHeader(event, "authorization");

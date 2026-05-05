@@ -28,7 +28,6 @@ export const createAuthRouteGuard = (
 
     const publicPages = [
       "/",
-      "/dashboard",
       "/login",
       "/register",
       "/events",

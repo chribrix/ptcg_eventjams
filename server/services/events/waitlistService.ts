@@ -28,6 +28,13 @@ function getClaimDeadline(now: Date, claimCutoffAt: Date): Date {
 }
 
 function ensureWaitlistActive(context: EventContext, now = new Date()): void {
+  if (!context.isSanctioned) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Waitlist is only available for sanctioned tournaments",
+    });
+  }
+
   if (now.getTime() >= context.eventDate.getTime()) {
     throw createError({
       statusCode: 400,
@@ -60,6 +67,10 @@ async function resolveEventContextById(
 ): Promise<EventContext> {
   const customEvent = await tx.customEvent.findUnique({ where: { id: eventId } });
   if (customEvent) {
+    const tags = customEvent.tags as
+      | { type?: string; sanctioned?: boolean }
+      | null
+      | undefined;
     const claimCutoffAt = new Date(
       customEvent.eventDate.getTime() -
         WAITLIST_CUTOFF_HOURS_BEFORE_EVENT * 60 * 60 * 1000,
@@ -73,7 +84,9 @@ async function resolveEventContextById(
       requiresDecklist: customEvent.requiresDecklist,
       isExternalEvent: false,
       eventKey: `custom:${eventId}`,
-      isSanctioned: true,
+      isSanctioned:
+        tags?.sanctioned === true ||
+        ["league_cup", "league_challenge"].includes(String(tags?.type || "")),
       claimCutoffAt,
     };
   }
@@ -160,7 +173,7 @@ async function recycleExpiredClaims(
   const expiredClaims = await waitlist.findMany({
     where: {
       eventKey: context.eventKey,
-      status: "pending_claim",
+      status: { in: ["pending_claim"] },
       OR: cutoffReached
         ? [{ id: { not: "" } }]
         : [{ claimExpiresAt: { lte: now } }, { claimExpiresAt: null }],
@@ -186,6 +199,9 @@ async function recycleExpiredClaims(
 
 export async function joinEventWaitlist(eventId: string, player: AuthenticatedPlayer) {
   return prisma.$transaction(async (tx) => {
+    const context = await resolveEventContextById(tx, eventId);
+    ensureWaitlistActive(context);
+
     const waitlist = getWaitlistDelegate(tx);
     if (!waitlist) {
       throw createError({
@@ -193,9 +209,6 @@ export async function joinEventWaitlist(eventId: string, player: AuthenticatedPl
         statusMessage: "Waitlist is temporarily unavailable",
       });
     }
-
-    const context = await resolveEventContextById(tx, eventId);
-    ensureWaitlistActive(context);
 
     await lockEventRow(tx, context);
 

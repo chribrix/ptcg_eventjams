@@ -82,7 +82,7 @@ export default defineEventHandler(async (h3Event) => {
 
     // Check if there are other active tickets
     const activeTickets = booking.tickets.filter(
-      (t) => t.status !== "cancelled"
+      (t) => t.status !== "cancelled",
     );
 
     if (activeTickets.length === 1) {
@@ -114,7 +114,7 @@ export default defineEventHandler(async (h3Event) => {
     }
 
     const cancellationDeadline = new Date(
-      eventDate.getTime() - CANCELLATION_DEADLINE_HOURS * 60 * 60 * 1000
+      eventDate.getTime() - CANCELLATION_DEADLINE_HOURS * 60 * 60 * 1000,
     );
 
     if (now > cancellationDeadline) {
@@ -162,7 +162,7 @@ export default defineEventHandler(async (h3Event) => {
         await logAuthError(
           h3Event,
           error as Error,
-          "ticket_delete_unauthorized"
+          "ticket_delete_unauthorized",
         );
       } else if (statusCode >= 500) {
         await logDatabaseError(h3Event, error as Error, "ticket_delete", {

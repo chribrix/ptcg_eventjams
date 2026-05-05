@@ -6,6 +6,7 @@ import {
   getProvisionPlayerInputFromAuthUser,
   normalizePreferredLoginMethod,
 } from "~/server/util/playerProvisioning";
+import { getServerSupabaseUserSafely } from "~/server/util/supabaseAuthCookies";
 
 // Ensures the logged-in auth user has a canonical local Player row.
 //
@@ -52,7 +53,7 @@ export const createEnsurePlayerHandler = (
 
     const supabaseAdmin = createSupabaseAdminClient(supabaseUrl, serviceKey);
 
-    let user = await getServerUser(event);
+    let user = await getServerSupabaseUserSafely(event, getServerUser);
 
     if (!user) {
       const authHeader = getHeader(event, "authorization");

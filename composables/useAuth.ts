@@ -4,7 +4,6 @@ export const useAuth = () => {
   const supabaseUser = useSupabaseUser();
   const supabaseClient = useSupabaseClient();
   const isRefreshing = ref(false);
-  const runtimeConfig = useRuntimeConfig();
   const { error: showErrorToast } = useToast();
 
   // Helper to log errors to database
@@ -67,46 +66,6 @@ export const useAuth = () => {
       // If no session, user is logged out
       if (!session) {
         return null;
-      }
-
-      // Check if session was created before current deployment
-      const deployTimestamp = runtimeConfig.public.deployTimestamp;
-      if (deployTimestamp && process.client) {
-        try {
-          const deployTime = parseInt(deployTimestamp);
-
-          // Get session start time from localStorage
-          const sessionStartKey = `session_start_${session.user.id}`;
-          const stored = localStorage.getItem(sessionStartKey);
-
-          if (stored) {
-            const sessionStartTime = parseInt(stored);
-
-            // If session started before this deployment, invalidate it
-            if (sessionStartTime < deployTime) {
-              await logError(
-                "session_deployment_invalidated",
-                "Session started before current deployment",
-                {
-                  sessionStartTime,
-                  deployTime,
-                  sessionAge: Date.now() - sessionStartTime,
-                },
-              );
-              await clearInvalidSession();
-              showErrorToast(
-                "New version deployed. Please log in again.",
-                7000,
-              );
-              return null;
-            }
-          } else {
-            // First time seeing this session, record it
-            localStorage.setItem(sessionStartKey, Date.now().toString());
-          }
-        } catch {
-          // Don't block on this - continue with normal session checks
-        }
       }
 
       // Check if token is expired or about to expire (within 5 minutes)

@@ -3,6 +3,7 @@ import { serverSupabaseUser } from "#supabase/server";
 import { createError } from "h3";
 import type { H3Event } from "h3";
 import { logError } from "~/server/util/errorLogger";
+import { clearSupabaseAuthCookies } from "~/server/util/supabaseAuthCookies";
 
 type PlayerLookupClient = {
   player: {
@@ -62,6 +63,7 @@ export const resolveAuthenticatedIdentityFactory = (
     try {
       supabaseUser = await getSupabaseUser(event);
     } catch {
+      clearSupabaseAuthCookies(event);
       supabaseUser = null;
     }
 

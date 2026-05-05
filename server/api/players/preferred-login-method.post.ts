@@ -29,5 +29,5 @@ export default defineEventHandler(async (event) => {
     data: { preferredLoginMethod: method },
   });
 
-  return { success: true, method };
+  return { success: true, method: rawMethod };
 });

@@ -6,6 +6,7 @@ import {
   logValidationError,
 } from "~/server/util/errorLogger";
 import { ensurePlayerForAuthUser } from "~/server/util/playerProvisioning";
+import { getServerSupabaseUserSafely } from "~/server/util/supabaseAuthCookies";
 
 const prisma = new PrismaClient();
 
@@ -22,7 +23,7 @@ const registerPlayerSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   try {
-    const user = await serverSupabaseUser(event);
+    const user = await getServerSupabaseUserSafely(event, serverSupabaseUser);
 
     if (!user?.id || !user.email) {
       throw createError({

@@ -31,10 +31,8 @@ export const normalizePreferredLoginMethod = (
 
 export const toStoredPreferredLoginMethod = (
   method?: "password" | "otp" | "magiclink" | null,
-): "password" | "magiclink" => {
-  return normalizePreferredLoginMethod(method) === "otp"
-    ? "magiclink"
-    : "password";
+): "password" | "otp" => {
+  return normalizePreferredLoginMethod(method);
 };
 
 export type AuthUserProvisioningSource = {

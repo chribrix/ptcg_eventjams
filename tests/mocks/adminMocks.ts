@@ -102,3 +102,13 @@ export const mockApiResponses = {
     statusMessage: "Internal server error",
   },
 };
+
+export const mockDatabaseResponses = {
+  adminUserFound: {
+    id: mockUsers.adminUser.id,
+    email: mockUsers.adminUser.email,
+    name: mockUsers.adminUser.user_metadata.name,
+    createdAt: new Date("2024-01-01T00:00:00.000Z"),
+    updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+  },
+};
