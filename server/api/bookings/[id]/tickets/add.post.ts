@@ -115,7 +115,7 @@ export default defineEventHandler(async (h3Event) => {
     const eventDate = new Date(eventDetails.eventDate);
     const now = new Date();
     const cancellationDeadline = new Date(
-      eventDate.getTime() - 2 * 60 * 60 * 1000
+      eventDate.getTime() - 2 * 60 * 60 * 1000,
     );
 
     if (now > cancellationDeadline) {
@@ -133,49 +133,57 @@ export default defineEventHandler(async (h3Event) => {
       });
     }
 
-    // Check event capacity
+    // Capacity check + ticket creation must be atomic to prevent oversubscription.
     const isExternalEvent = !!booking.externalEventId;
-    const currentTicketCount = await prisma.registrationTicket.count({
-      where: isExternalEvent
-        ? {
-            registration: {
-              externalEventId: eventDetails.id,
-            },
-            status: {
-              not: "cancelled",
-            },
-          }
-        : {
-            registration: {
-              customEventId: eventDetails.id,
-            },
-            status: {
-              not: "cancelled",
-            },
-          },
-    });
+    const newTicket = await prisma.$transaction(async (tx) => {
+      if (isExternalEvent) {
+        await tx.$queryRaw`SELECT id FROM public.external_event_overrides WHERE id = ${eventDetails.id} FOR UPDATE`;
+      } else {
+        await tx.$queryRaw`SELECT id FROM public.custom_events WHERE id = ${eventDetails.id} FOR UPDATE`;
+      }
 
-    if (currentTicketCount >= eventDetails.maxParticipants) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "Event is at full capacity",
+      const currentTicketCount = await tx.registrationTicket.count({
+        where: isExternalEvent
+          ? {
+              registration: {
+                externalEventId: eventDetails.id,
+              },
+              status: {
+                not: "cancelled",
+              },
+            }
+          : {
+              registration: {
+                customEventId: eventDetails.id,
+              },
+              status: {
+                not: "cancelled",
+              },
+            },
       });
-    }
 
-    // Create new ticket
-    const initialStatus = eventDetails.requiresDecklist
-      ? "reserved"
-      : "registered";
+      const maxParticipants = eventDetails.maxParticipants;
+      if (maxParticipants && currentTicketCount >= maxParticipants) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: "Event is at full capacity",
+        });
+      }
 
-    const newTicket = await prisma.registrationTicket.create({
-      data: {
-        registrationId: bookingId,
-        participantName: ticketData.participantName,
-        participantPlayerId: ticketData.participantPlayerId || null,
-        status: initialStatus,
-        isAnonymous: ticketData.isAnonymous || false,
-        bringingDecklistOnsite: false,
-      },
+      const initialStatus = eventDetails.requiresDecklist
+        ? "reserved"
+        : "registered";
+
+      return tx.registrationTicket.create({
+        data: {
+          registrationId: bookingId,
+          participantName: ticketData.participantName,
+          participantPlayerId: ticketData.participantPlayerId || null,
+          status: initialStatus,
+          isAnonymous: ticketData.isAnonymous || false,
+          bringingDecklistOnsite: false,
+        },
+      });
     });
 
     return {

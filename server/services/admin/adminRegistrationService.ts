@@ -17,7 +17,13 @@ export async function listAdminRegistrationsForEvent(eventId: string) {
     where: { customEventId: eventId },
     include: {
       player: true,
-      tickets: true,
+      tickets: {
+        where: {
+          status: {
+            not: "cancelled",
+          },
+        },
+      },
       customEvent: {
         select: { id: true, name: true, eventDate: true },
       },
@@ -40,70 +46,74 @@ export async function listAdminRegistrationsForEvent(eventId: string) {
 export async function createAdminRegistration(rawInput: unknown) {
   const input = createRegistrationSchema.parse(rawInput);
 
-  const customEvent = await prisma.customEvent.findUnique({
-    where: { id: input.customEventId },
-  });
+  return prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM public.custom_events WHERE id = ${input.customEventId} FOR UPDATE`;
 
-  if (!customEvent) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: "Event not found",
+    const customEvent = await tx.customEvent.findUnique({
+      where: { id: input.customEventId },
     });
-  }
 
-  const currentTicketCount = await prisma.registrationTicket.count({
-    where: {
-      registration: {
-        customEventId: input.customEventId,
-      },
-      status: {
-        not: "cancelled",
-      },
-    },
-  });
+    if (!customEvent) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Event not found",
+      });
+    }
 
-  if (currentTicketCount >= customEvent.maxParticipants) {
-    throw createError({
-      statusCode: 409,
-      statusMessage: "Event is full",
+    const currentTicketCount = await tx.registrationTicket.count({
+      where: {
+        registration: {
+          customEventId: input.customEventId,
+        },
+        status: {
+          not: "cancelled",
+        },
+      },
     });
-  }
 
-  const player = await prisma.player.findUnique({
-    where: { id: input.playerId },
-  });
+    if (currentTicketCount >= customEvent.maxParticipants) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: "Event is full",
+      });
+    }
 
-  if (!player) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: "Player not found",
+    const player = await tx.player.findUnique({
+      where: { id: input.playerId },
     });
-  }
 
-  const existingRegistration = await prisma.eventRegistration.findUnique({
-    where: {
-      customEventId_playerId: {
-        customEventId: input.customEventId,
-        playerId: input.playerId,
+    if (!player) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Player not found",
+      });
+    }
+
+    const existingRegistration = await tx.eventRegistration.findUnique({
+      where: {
+        customEventId_playerId: {
+          customEventId: input.customEventId,
+          playerId: input.playerId,
+        },
       },
-    },
-  });
-
-  if (existingRegistration) {
-    throw createError({
-      statusCode: 409,
-      statusMessage: "Player already registered for this event",
     });
-  }
 
-  return prisma.eventRegistration.create({
-    data: input,
-    include: {
-      player: true,
-      customEvent: {
-        select: { id: true, name: true, eventDate: true },
+    if (existingRegistration) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: "Player already registered for this event",
+      });
+    }
+
+    return tx.eventRegistration.create({
+      data: input,
+      include: {
+        player: true,
+        customEvent: {
+          select: { id: true, name: true, eventDate: true },
+        },
       },
-    },
+    });
   });
 }
 

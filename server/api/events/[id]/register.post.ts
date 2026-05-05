@@ -40,6 +40,8 @@ type RegistrationPrismaClient = Pick<
   | "registrationTicket"
   | "eventRegistration"
   | "errorLog"
+  | "$transaction"
+  | "$queryRaw"
 >;
 
 type RegistrationHandlerDependencies = {
@@ -163,106 +165,98 @@ export const createRegistrationHandler =
 
       // Note: Decklist validation is now handled on the dashboard after registration
 
-      // Check current ticket count (excluding cancelled tickets)
-      const currentTickets = await prismaClient.registrationTicket.count({
-        where: {
-          registration: isExternalEvent
-            ? { externalEventId: eventId }
-            : { customEventId: eventId },
-          status: {
-            not: "cancelled",
-          },
-        },
-      });
+      const runAtomic =
+        typeof prismaClient.$transaction === "function"
+          ? prismaClient.$transaction.bind(prismaClient)
+          : async (fn: (tx: RegistrationPrismaClient) => Promise<any>) =>
+              fn(prismaClient);
 
-      // Check if adding these tickets would exceed capacity
-      const requestedTickets = tickets.length;
-      if (
-        maxParticipants &&
-        currentTickets + requestedTickets > maxParticipants
-      ) {
-        const availableSpots = maxParticipants - currentTickets;
-        throw createError({
-          statusCode: 400,
-          statusMessage: "Not enough spots available",
-          data: {
-            message: `Only ${availableSpots} spot(s) remaining. You requested ${requestedTickets} ticket(s).`,
-          },
-        });
-      }
+      const { registration, createdTickets } = await runAtomic(
+        async (tx: RegistrationPrismaClient) => {
+          if (typeof tx.$queryRaw === "function") {
+            if (isExternalEvent) {
+              await tx.$queryRaw`SELECT id FROM public.external_event_overrides WHERE id = ${eventId} FOR UPDATE`;
+            } else {
+              await tx.$queryRaw`SELECT id FROM public.custom_events WHERE id = ${eventId} FOR UPDATE`;
+            }
+          }
 
-      // Registrations are always owned by the authenticated linked player.
-      const existingRegistration = isExternalEvent
-        ? await prismaClient.eventRegistration.findUnique({
+          const currentTickets = await tx.registrationTicket.count({
             where: {
-              externalEventId_playerId: {
-                externalEventId: eventId,
-                playerId: authenticatedBooker.id,
-              },
-            },
-            include: {
-              tickets: {
-                where: {
-                  status: {
-                    not: "cancelled",
-                  },
-                },
-              },
-            },
-          })
-        : await prismaClient.eventRegistration.findUnique({
-            where: {
-              customEventId_playerId: {
-                customEventId: eventId,
-                playerId: authenticatedBooker.id,
-              },
-            },
-            include: {
-              tickets: {
-                where: {
-                  status: {
-                    not: "cancelled",
-                  },
-                },
+              registration: isExternalEvent
+                ? { externalEventId: eventId }
+                : { customEventId: eventId },
+              status: {
+                not: "cancelled",
               },
             },
           });
 
-      let registration;
-      const initialStatus = requiresDecklist ? "reserved" : "registered";
-
-      if (existingRegistration) {
-        // Booker already has a registration - add new tickets to it
-        registration = existingRegistration;
-      } else {
-        // Create new registration
-        registration = await prismaClient.eventRegistration.create({
-          data: isExternalEvent
-            ? {
-                externalEventId: eventId,
-                playerId: authenticatedBooker.id,
-              }
-            : {
-                customEventId: eventId,
-                playerId: authenticatedBooker.id,
+          const requestedTickets = tickets.length;
+          if (
+            maxParticipants &&
+            currentTickets + requestedTickets > maxParticipants
+          ) {
+            const availableSpots = maxParticipants - currentTickets;
+            throw createError({
+              statusCode: 400,
+              statusMessage: "Not enough spots available",
+              data: {
+                message: `Only ${availableSpots} spot(s) remaining. You requested ${requestedTickets} ticket(s).`,
               },
-        });
-      }
+            });
+          }
 
-      // Create tickets for all participants
-      const createdTickets = await Promise.all(
-        tickets.map((ticket) =>
-          prismaClient.registrationTicket.create({
-            data: {
-              registrationId: registration.id,
-              participantName: ticket.name,
-              participantPlayerId: ticket.playerId || null,
-              status: initialStatus,
-              isAnonymous: allAnonymous || ticket.isAnonymous || false,
-              bringingDecklistOnsite: false,
-            },
-          }),
-        ),
+          const existingRegistration = isExternalEvent
+            ? await tx.eventRegistration.findUnique({
+                where: {
+                  externalEventId_playerId: {
+                    externalEventId: eventId,
+                    playerId: authenticatedBooker.id,
+                  },
+                },
+              })
+            : await tx.eventRegistration.findUnique({
+                where: {
+                  customEventId_playerId: {
+                    customEventId: eventId,
+                    playerId: authenticatedBooker.id,
+                  },
+                },
+              });
+
+          const registration = existingRegistration
+            ? existingRegistration
+            : await tx.eventRegistration.create({
+                data: isExternalEvent
+                  ? {
+                      externalEventId: eventId,
+                      playerId: authenticatedBooker.id,
+                    }
+                  : {
+                      customEventId: eventId,
+                      playerId: authenticatedBooker.id,
+                    },
+              });
+
+          const initialStatus = requiresDecklist ? "reserved" : "registered";
+          const createdTickets = await Promise.all(
+            tickets.map((ticket) =>
+              tx.registrationTicket.create({
+                data: {
+                  registrationId: registration.id,
+                  participantName: ticket.name,
+                  participantPlayerId: ticket.playerId || null,
+                  status: initialStatus,
+                  isAnonymous: allAnonymous || ticket.isAnonymous || false,
+                  bringingDecklistOnsite: false,
+                },
+              }),
+            ),
+          );
+
+          return { registration, createdTickets };
+        },
       );
 
       // Log successful registration
