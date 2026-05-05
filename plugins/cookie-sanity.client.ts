@@ -5,7 +5,12 @@ const expireCookie = (name: string) => {
   document.cookie = `${encodedName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
 
   const hostname = window.location.hostname;
-  if (hostname && hostname.includes(".")) {
+  if (
+    hostname &&
+    hostname.includes(".") &&
+    hostname !== "localhost" &&
+    !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname)
+  ) {
     document.cookie = `${encodedName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${hostname}; SameSite=Lax`;
   }
 };
@@ -22,6 +27,19 @@ export default defineNuxtPlugin(() => {
   if (!import.meta.client) return;
 
   try {
+    const config = useRuntimeConfig();
+    const supabaseUrl = config.public?.supabaseUrl;
+    let activeSupabaseRef = "";
+
+    if (typeof supabaseUrl === "string" && supabaseUrl) {
+      try {
+        const hostname = new URL(supabaseUrl).hostname;
+        activeSupabaseRef = hostname.split(".")[0] || "";
+      } catch {
+        activeSupabaseRef = "";
+      }
+    }
+
     const cookiePairs = document.cookie
       .split(";")
       .map((part) => part.trim())
@@ -47,7 +65,16 @@ export default defineNuxtPlugin(() => {
       }
     }
 
-    // Keep auth cookies untouched to avoid accidental session invalidation.
+    // Remove stale Supabase auth cookies from other project refs.
+    // These can accumulate and trigger oversized Cookie headers (often seen as 502/431).
+    if (activeSupabaseRef) {
+      for (const name of cookies.keys()) {
+        const match = /^sb-([a-z0-9_-]+)-auth-token(?:\.\d+)?$/i.exec(name);
+        if (match && match[1] !== activeSupabaseRef) {
+          expireCookie(name);
+        }
+      }
+    }
   } catch (error) {
     console.warn("Cookie sanity check failed", error);
   }
