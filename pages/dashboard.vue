@@ -405,7 +405,10 @@
                   <span>{{ t("dashboard.manageBooking") }}</span>
                 </NuxtLink>
                 <NuxtLink
-                  v-if="registration.customEventId"
+                  v-if="
+                    registration.customEventId &&
+                    registration.tournamentViewAvailable
+                  "
                   :to="`/tournaments/${registration.customEventId}`"
                   class="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg"
                 >
@@ -424,6 +427,29 @@
                   </svg>
                   <span>{{ t("dashboard.tournamentView") }}</span>
                 </NuxtLink>
+                <button
+                  v-else-if="registration.customEventId"
+                  type="button"
+                  disabled
+                  :title="t('dashboard.tournamentViewNotStarted')"
+                  class="w-full cursor-not-allowed rounded-lg bg-gray-700 px-4 py-3 font-medium text-gray-300 opacity-70 shadow-lg flex items-center justify-center gap-2"
+                  aria-disabled="true"
+                >
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 17v-6m4 6V7m4 10V4M5 20h14"
+                    />
+                  </svg>
+                  <span>{{ t("dashboard.tournamentView") }}</span>
+                </button>
               </div>
               <div v-else-if="registration.entryType === 'waitlist'" class="grid gap-3 sm:grid-cols-1">
                 <NuxtLink
@@ -607,6 +633,7 @@ interface EventRegistration {
   isExternalEvent?: boolean;
   eventType?: string;
   tournamentPlacement?: number | null;
+  tournamentViewAvailable?: boolean;
   externalRegistrationUrl?: string | null;
   ticketCount?: number;
   tickets?: Array<{

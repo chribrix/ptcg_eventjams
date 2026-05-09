@@ -85,6 +85,7 @@
     "registeredAt": "Registered:",
     "manageBooking": "Manage Booking",
     "tournamentView": "My Tournament View",
+    "tournamentViewNotStarted": "The tournament view becomes available once the first round has been started in tournament management.",
     "eventDetails": "Event Details",
     "remove": "Remove",
     "decklistStatus": "Decklist Status",

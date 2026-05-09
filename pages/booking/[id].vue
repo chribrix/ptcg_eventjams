@@ -264,11 +264,17 @@
                   </div>
                 </div>
                 <div
-                  v-if="booking.permissions.canModify"
+                  v-if="
+                    booking.permissions.canModify ||
+                    booking.permissions.canEditDecklist
+                  "
                   class="flex gap-2 flex-wrap"
                 >
                   <button
-                    v-if="booking.event.requiresDecklist"
+                    v-if="
+                      booking.event.requiresDecklist &&
+                      booking.permissions.canEditDecklist
+                    "
                     @click="editTicketDecklist(ticket)"
                     class="px-3 py-2 text-sm bg-[#36393f] text-gray-300 rounded hover:bg-[#2f3136] transition flex items-center gap-1"
                   >
@@ -288,12 +294,14 @@
                     Decklist
                   </button>
                   <button
+                    v-if="booking.permissions.canModify"
                     @click="editTicket(ticket)"
                     class="px-3 py-2 text-sm bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded hover:from-emerald-700 hover:to-green-700 transition"
                   >
                     Edit
                   </button>
                   <button
+                    v-if="booking.permissions.canModify"
                     @click="confirmCancelTicket(ticket)"
                     class="px-3 py-2 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition"
                   >
@@ -310,7 +318,7 @@
             class="mt-4 bg-[#40444b] border border-[#202225] rounded-lg p-4"
           >
             <p class="text-gray-300 text-sm">
-              <strong>Note:</strong> Modifications are no longer allowed
+              <strong>Note:</strong> Ticket changes are no longer allowed
               (deadline: 2 hours before event)
             </p>
           </div>
@@ -695,6 +703,7 @@ interface Booking {
     canModify: boolean;
     canAddTickets: boolean;
     canCancelTickets: boolean;
+    canEditDecklist: boolean;
   };
 }
 

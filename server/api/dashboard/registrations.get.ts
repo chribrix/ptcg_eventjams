@@ -3,6 +3,7 @@ import { parseEventTags, type TagType } from "~/types/eventTags";
 import { getExternalCalendarEventType } from "~/utils/calendarEventUtils";
 import { isUpcomingAdminEvent } from "~/utils/adminEventBuckets";
 import { buildTomStateView } from "~/server/services/events/tournamentTomStateService";
+import { isTournamentViewAvailable } from "~/utils/tournamentViewAvailability";
 import {
   logDatabaseError,
   logAuthError,
@@ -111,11 +112,20 @@ export default defineEventHandler(async (event) => {
           select: {
             customEventId: true,
             currentXml: true,
+            metadata: true,
           },
         })
       : [];
     const placementByEventId = new Map<string, number>();
+    const tournamentViewAvailableByEventId = new Map<string, boolean>();
     for (const tomState of tomStates) {
+      tournamentViewAvailableByEventId.set(
+        tomState.customEventId,
+        isTournamentViewAvailable(
+          tomState.metadata as { pairingsReleasedRound?: unknown } | null,
+        ),
+      );
+
       try {
         const view = buildTomStateView(tomState.currentXml);
         for (const division of view.divisions || []) {
@@ -299,6 +309,9 @@ export default defineEventHandler(async (event) => {
           reg.customEventId && placementByEventId.has(reg.customEventId)
             ? placementByEventId.get(reg.customEventId)
             : null,
+        tournamentViewAvailable:
+          !!reg.customEventId &&
+          tournamentViewAvailableByEventId.get(reg.customEventId) === true,
       };
     });
 

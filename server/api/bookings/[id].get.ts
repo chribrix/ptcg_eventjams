@@ -5,6 +5,7 @@ import {
   logAuthError,
 } from "~/server/util/errorLogger";
 import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
+import { getBookingPermissions } from "~/utils/bookingPermissions";
 
 const prisma = new PrismaClient();
 const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
@@ -106,13 +107,8 @@ export default defineEventHandler(async (h3Event) => {
       (t) => t.status === "cancelled"
     );
 
-    // Determine if event allows modifications
-    const eventDate = new Date(eventDetails.eventDate);
-    const now = new Date();
-    const cancellationDeadline = new Date(
-      eventDate.getTime() - 2 * 60 * 60 * 1000
-    );
-    const canModify = now < cancellationDeadline && eventDate > now;
+    // General booking changes close 2h before start; decklists stay editable until start.
+    const permissions = getBookingPermissions(eventDetails.eventDate);
 
     // Determine event name and venue
     const eventName =
@@ -164,11 +160,7 @@ export default defineEventHandler(async (h3Event) => {
           activeTickets: activeTickets.length,
           cancelledTickets: cancelledTickets.length,
         },
-        permissions: {
-          canModify,
-          canAddTickets: canModify,
-          canCancelTickets: canModify,
-        },
+        permissions,
       },
     };
   } catch (error: unknown) {

@@ -90,6 +90,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    if (new Date(registeredEvent.eventDate) <= new Date()) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Decklist edits are no longer allowed after event start",
+      });
+    }
+
     // Prepare update data for tickets
     const updateData: any = {};
 

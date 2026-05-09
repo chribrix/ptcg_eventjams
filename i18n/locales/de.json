@@ -84,6 +84,7 @@
     "registeredAt": "Registriert:",
     "manageBooking": "Buchung verwalten",
     "tournamentView": "Meine Turnieransicht",
+    "tournamentViewNotStarted": "Die Turnieransicht ist verfügbar, sobald die erste Runde in der Turnierverwaltung gestartet wurde.",
     "eventDetails": "Eventdetails",
     "remove": "Entfernen",
     "decklistStatus": "Decklisten-Status",
