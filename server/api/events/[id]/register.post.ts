@@ -244,6 +244,29 @@ export const createRegistrationHandler =
                 },
               });
 
+          if (existingRegistration) {
+            const existingActiveTicketCount = await tx.registrationTicket.count({
+              where: {
+                registrationId: existingRegistration.id,
+                status: {
+                  not: "cancelled",
+                },
+              },
+            });
+
+            if (existingActiveTicketCount > 0) {
+              throw createError({
+                statusCode: 409,
+                statusMessage: "Already registered for this event",
+                data: {
+                  message:
+                    "You are already registered for this event. Please manage your existing booking to add more tickets.",
+                  registrationId: existingRegistration.id,
+                },
+              });
+            }
+          }
+
           const registration = existingRegistration
             ? existingRegistration
             : await tx.eventRegistration.create({

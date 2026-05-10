@@ -340,7 +340,14 @@
     "playerProfileMissing": "Your login is active, but no linked player profile was found for this account. Please contact support before registering for events.",
     "playerProfileLoadFailed": "Your player profile could not be loaded. Please try again or contact support if the problem continues.",
     "sessionPrepareFailed": "Your account session could not be prepared for registration. Please sign in again.",
-    "noDirectSpotUseWaitlist": "No direct spot is available anymore. You can now join the waitlist."
+    "noDirectSpotUseWaitlist": "No direct spot is available anymore. You can now join the waitlist.",
+    "alreadyRegisteredTitle": "You are already registered",
+    "alreadyRegisteredText": "You already have an active booking for this event with {count} ticket(s).",
+    "registeredNames": "Active tickets: {names}",
+    "manageExistingBooking": "Open existing booking",
+    "addMoreTickets": "{count} open spot(s): add more tickets",
+    "noAdditionalTicketsAvailable": "No additional tickets can be booked right now. You can still open and manage your existing booking.",
+    "alreadyRegisteredFormBlocked": "You are already registered for this event. Please open your existing booking to add more tickets."
   },
   "bookingPage": {
     "loading": "Loading booking details...",

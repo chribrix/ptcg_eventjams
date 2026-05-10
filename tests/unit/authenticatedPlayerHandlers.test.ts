@@ -68,6 +68,9 @@ const setupHandlerTest = async <TPrisma extends Record<string, any>>(
   vi.doMock("@prisma/client", () => ({
     PrismaClient: vi.fn(() => mockPrisma),
   }));
+  vi.doMock("~/lib/prisma", () => ({
+    default: mockPrisma,
+  }));
   vi.doMock("#supabase/server", () => ({
     serverSupabaseUser,
   }));
@@ -496,6 +499,126 @@ describe("authenticated player handler integration", () => {
       include: expect.any(Object),
     });
     expect(result.ticket.id).toBe("ticket-2");
+  });
+
+  it("blocks adding booking tickets when reserved waitlist claims consume the last spots", async () => {
+    const mockPrisma = {
+      player: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "player-db-id",
+          playerId: "PLAYER-123",
+          supabaseId: "supabase-user-1",
+          name: "Linked Player",
+          email: "old-email@example.com",
+        }),
+      },
+      eventRegistration: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "booking-1",
+          externalEventId: null,
+          tickets: [],
+          customEvent: {
+            id: "event-1",
+            eventDate: new Date("2099-05-01T10:00:00.000Z"),
+            maxParticipants: 2,
+            requiresDecklist: false,
+          },
+          externalEvent: null,
+        }),
+      },
+      registrationTicket: {
+        count: vi.fn().mockResolvedValue(1),
+      },
+      waitlistEntry: {
+        count: vi.fn().mockResolvedValue(1),
+      },
+    };
+
+    const { handler } = await setupHandlerTest(
+      "../../server/api/bookings/[id]/tickets/add.post",
+      mockPrisma,
+      {
+        supabaseUser: {
+          id: "supabase-user-1",
+          email: "new-email@example.com",
+        },
+        routerParam: "booking-1",
+        readBodyResult: {
+          participantName: "Friend Player",
+          participantPlayerId: "2002",
+          isAnonymous: false,
+        },
+      },
+    );
+
+    await expect(handler(createEvent("POST"))).rejects.toMatchObject({
+      statusCode: 400,
+      statusMessage: "Not enough spots available",
+    });
+  });
+
+  it("returns the authenticated user's active registration for an event", async () => {
+    const mockPrisma = {
+      player: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "player-db-id",
+          playerId: "PLAYER-123",
+          supabaseId: "supabase-user-1",
+          name: "Linked Player",
+          email: "old-email@example.com",
+        }),
+      },
+      eventRegistration: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "booking-1",
+          externalEventId: null,
+          customEventId: "event-1",
+          tickets: [
+            {
+              id: "ticket-1",
+              participantName: "Linked Player",
+              createdAt: new Date("2099-01-01T10:00:00.000Z"),
+            },
+          ],
+          customEvent: {
+            id: "event-1",
+            eventDate: new Date("2099-05-01T10:00:00.000Z"),
+            maxParticipants: 64,
+          },
+          externalEvent: null,
+        }),
+      },
+      registrationTicket: {
+        count: vi.fn().mockResolvedValue(12),
+      },
+      waitlistEntry: {
+        count: vi.fn().mockResolvedValue(2),
+      },
+    };
+
+    const { handler } = await setupHandlerTest(
+      "../../server/api/events/[id]/my-registration.get",
+      mockPrisma,
+      {
+        supabaseUser: {
+          id: "supabase-user-1",
+          email: "new-email@example.com",
+        },
+        routerParam: "event-1",
+      },
+    );
+
+    await expect(handler(createEvent("GET"))).resolves.toEqual({
+      hasRegistration: true,
+      registration: {
+        bookingId: "booking-1",
+        activeTicketCount: 1,
+        ticketNames: ["Linked Player"],
+        canAddTickets: true,
+        remainingSpots: 50,
+        maxParticipants: 64,
+      },
+    });
   });
 
   it("updates booking tickets through the resolved player id instead of auth email", async () => {

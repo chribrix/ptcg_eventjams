@@ -171,10 +171,39 @@ export default defineEventHandler(async (h3Event) => {
       });
 
       const maxParticipants = eventDetails.maxParticipants;
-      if (maxParticipants && currentTicketCount >= maxParticipants) {
+      const waitlistDelegate = tx.waitlistEntry;
+      const now = new Date();
+      const activeClaimCount = waitlistDelegate
+        ? await waitlistDelegate.count({
+            where: isExternalEvent
+              ? {
+                  externalEventId: eventDetails.id,
+                  status: "pending_claim",
+                  OR: [{ claimExpiresAt: null }, { claimExpiresAt: { gt: now } }],
+                }
+              : {
+                  customEventId: eventDetails.id,
+                  status: "pending_claim",
+                  OR: [{ claimExpiresAt: null }, { claimExpiresAt: { gt: now } }],
+                },
+          })
+        : 0;
+
+      const effectiveOccupiedSpots = currentTicketCount + activeClaimCount;
+      if (maxParticipants && effectiveOccupiedSpots >= maxParticipants) {
+        const availableSpots = Math.max(
+          0,
+          maxParticipants - effectiveOccupiedSpots,
+        );
         throw createError({
           statusCode: 400,
-          statusMessage: "Event is at full capacity",
+          statusMessage: "Not enough spots available",
+          data: {
+            message:
+              activeClaimCount > 0
+                ? `Only ${availableSpots} spot(s) remaining after reserved waitlist claims (${activeClaimCount}).`
+                : "Event is at full capacity",
+          },
         });
       }
 

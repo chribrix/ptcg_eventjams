@@ -202,7 +202,67 @@
         <main>
           <!-- Status Messages -->
           <div
-            v-if="registrationFull && !eventPassed && !registrationSuccess"
+            v-if="
+              existingRegistration &&
+              !eventPassed &&
+              !registrationSuccess
+            "
+            class="bg-blue-900/20 border border-blue-700/50 rounded-2xl p-6 mb-6"
+          >
+            <h3 class="text-lg font-bold text-blue-300 mb-2">
+              {{ t("eventRegisterPage.alreadyRegisteredTitle") }}
+            </h3>
+            <p class="text-blue-100">
+              {{
+                t("eventRegisterPage.alreadyRegisteredText", {
+                  count: existingRegistration.activeTicketCount,
+                })
+              }}
+            </p>
+            <p
+              v-if="existingRegistration.ticketNames.length"
+              class="text-sm text-blue-200 mt-2"
+            >
+              {{
+                t("eventRegisterPage.registeredNames", {
+                  names: existingRegistration.ticketNames.join(", "),
+                })
+              }}
+            </p>
+            <div class="mt-4 flex flex-col sm:flex-row gap-3">
+              <NuxtLink
+                :to="`/booking/${existingRegistration.bookingId}`"
+                class="inline-flex items-center justify-center px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+              >
+                {{ t("eventRegisterPage.manageExistingBooking") }}
+              </NuxtLink>
+              <NuxtLink
+                v-if="existingRegistration.canAddTickets"
+                :to="`/booking/${existingRegistration.bookingId}?addTicket=1`"
+                class="inline-flex items-center justify-center px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition"
+              >
+                {{
+                  t("eventRegisterPage.addMoreTickets", {
+                    count: existingRegistration.remainingSpots,
+                  })
+                }}
+              </NuxtLink>
+            </div>
+            <p
+              v-if="!existingRegistration.canAddTickets"
+              class="text-sm text-blue-200 mt-3"
+            >
+              {{ t("eventRegisterPage.noAdditionalTicketsAvailable") }}
+            </p>
+          </div>
+
+          <div
+            v-if="
+              registrationFull &&
+              !eventPassed &&
+              !registrationSuccess &&
+              !existingRegistration
+            "
             class="bg-red-900/20 border border-red-700/50 rounded-2xl p-6 mb-6"
           >
             <h3 class="text-lg font-bold text-red-400 mb-2">
@@ -257,7 +317,12 @@
 
           <!-- Form Card -->
           <div
-            v-if="!eventPassed && !registrationSuccess && !registrationFull"
+            v-if="
+              !eventPassed &&
+              !registrationSuccess &&
+              !registrationFull &&
+              !existingRegistration
+            "
             class="bg-[#2f3136] rounded-2xl shadow-lg p-6 lg:p-8 border border-[#202225]"
           >
             <h2 class="text-2xl font-bold text-gray-100 mb-6">
@@ -470,7 +535,12 @@
           </div>
 
           <div
-            v-if="!eventPassed && !registrationSuccess && registrationFull"
+            v-if="
+              !eventPassed &&
+              !registrationSuccess &&
+              registrationFull &&
+              !existingRegistration
+            "
             class="bg-[#2f3136] rounded-2xl shadow-lg p-6 lg:p-8 border border-[#202225]"
           >
             <h2 class="text-2xl font-bold text-gray-100 mb-6">
@@ -607,6 +677,15 @@ interface RegistrationForm {
   allAnonymous: boolean;
 }
 
+interface ExistingRegistrationState {
+  bookingId: string;
+  activeTicketCount: number;
+  ticketNames: string[];
+  canAddTickets: boolean;
+  remainingSpots: number;
+  maxParticipants: number;
+}
+
 const route = useRoute();
 const eventId = route.params.id as string;
 
@@ -625,6 +704,7 @@ const waitlistMessage = ref<string>("");
 const waitlistStatus = ref<
   "none" | "waiting" | "pending_claim" | "confirmed" | "expired"
 >("none");
+const existingRegistration = ref<ExistingRegistrationState | null>(null);
 
 const form = reactive<RegistrationForm>({
   bookerPlayerId: "",
@@ -711,6 +791,21 @@ const fetchWaitlistStatus = async (): Promise<void> => {
   } catch {
     waitlistStatus.value = "none";
     waitlistMessage.value = "";
+  }
+};
+
+const fetchExistingRegistration = async (): Promise<void> => {
+  try {
+    const response = await $fetch<{
+      hasRegistration: boolean;
+      registration?: ExistingRegistrationState;
+    }>(`/api/events/${eventId}/my-registration`);
+
+    existingRegistration.value = response.hasRegistration
+      ? response.registration || null
+      : null;
+  } catch {
+    existingRegistration.value = null;
   }
 };
 
@@ -921,6 +1016,11 @@ const submitRegistration = async (): Promise<void> => {
     submitting.value = true;
     formError.value = "";
 
+    if (existingRegistration.value) {
+      formError.value = t("eventRegisterPage.alreadyRegisteredFormBlocked");
+      return;
+    }
+
     if (playerIntegrityError.value) {
       formError.value = playerIntegrityError.value;
       return;
@@ -953,9 +1053,16 @@ const submitRegistration = async (): Promise<void> => {
       t("registerForm.errorRegistrationFailed");
 
     if (message.toLowerCase().includes("not enough spots")) {
-      await Promise.all([fetchEventDetails(), fetchWaitlistStatus()]);
+      await Promise.all([
+        fetchEventDetails(),
+        fetchWaitlistStatus(),
+        fetchExistingRegistration(),
+      ]);
       formError.value =
         t("eventRegisterPage.noDirectSpotUseWaitlist");
+    } else if (message.toLowerCase().includes("already registered")) {
+      await fetchExistingRegistration();
+      formError.value = t("eventRegisterPage.alreadyRegisteredFormBlocked");
     } else {
       formError.value = message;
     }
@@ -974,7 +1081,12 @@ onMounted(async () => {
     return;
   }
 
-  await Promise.all([loadUserData(), fetchEventDetails(), fetchWaitlistStatus()]);
+  await Promise.all([
+    loadUserData(),
+    fetchEventDetails(),
+    fetchWaitlistStatus(),
+    fetchExistingRegistration(),
+  ]);
 
   if (route.query.waitlistConfirm === "1") {
     await confirmWaitlistSpot();

@@ -760,6 +760,12 @@ const fetchBookingDetails = async () => {
 
     if (response.success) {
       booking.value = response.booking;
+      if (
+        route.query.addTicket === "1" &&
+        response.booking.permissions.canAddTickets
+      ) {
+        showAddTicketModal.value = true;
+      }
     }
   } catch (err: any) {
     console.error("Failed to fetch booking:", err);

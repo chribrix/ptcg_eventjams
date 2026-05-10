@@ -211,4 +211,81 @@ describe("event registration endpoint", () => {
       statusMessage: "Player not found",
     });
   });
+
+  it("rejects duplicate active registrations and points users to the existing booking", async () => {
+    vi.resetModules();
+    vi.doMock("~/server/util/authenticatedPlayer", () => ({
+      resolveAuthenticatedPlayerFactory: vi.fn(() => vi.fn()),
+    }));
+    vi.doMock("~/lib/prisma", () => ({
+      default: {},
+    }));
+    vi.doMock("~/server/util/errorLogger", () => ({
+      logError: vi.fn().mockResolvedValue(undefined),
+      logValidationError: vi.fn().mockResolvedValue(undefined),
+      logDatabaseError: vi.fn().mockResolvedValue(undefined),
+    }));
+
+    const { createRegistrationHandler } =
+      await import("../../server/api/events/[id]/register.post");
+
+    vi.stubGlobal(
+      "readBody",
+      vi.fn().mockResolvedValue({
+        bookerPlayerId: "1001",
+        bookerName: "Parent User",
+        bookerEmail: "parent@example.com",
+        tickets: [{ name: "Parent User", playerId: "1001" }],
+        allAnonymous: false,
+      }),
+    );
+
+    const handler = createRegistrationHandler({
+      prismaClient: {
+        customEvent: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: "event-1",
+            name: "League Cup",
+            eventDate: new Date("2099-05-01T10:00:00.000Z"),
+            maxParticipants: 64,
+            requiresDecklist: false,
+          }),
+        },
+        externalEventOverride: {
+          findUnique: vi.fn().mockResolvedValue(null),
+        },
+        registrationTicket: {
+          count: vi
+            .fn()
+            .mockResolvedValueOnce(8)
+            .mockResolvedValueOnce(1),
+          create: vi.fn(),
+        },
+        eventRegistration: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: "reg-existing",
+          }),
+          create: vi.fn(),
+        },
+        errorLog: {
+          create: vi.fn().mockResolvedValue(undefined),
+        },
+      } as any,
+      resolvePlayer: vi.fn().mockResolvedValue({
+        id: "player-db-1",
+        playerId: "1001",
+        supabaseId: "supabase-user-1",
+        name: "Parent User",
+        email: "parent@example.com",
+      }),
+    });
+
+    await expect(handler(createEvent())).rejects.toMatchObject({
+      statusCode: 409,
+      statusMessage: "Already registered for this event",
+      data: expect.objectContaining({
+        registrationId: "reg-existing",
+      }),
+    });
+  });
 });

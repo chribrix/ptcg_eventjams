@@ -348,7 +348,14 @@
     "playerProfileMissing": "Dein Login ist aktiv, aber es wurde kein verknüpftes Spielerprofil gefunden. Bitte kontaktiere den Support, bevor du dich für Events registrierst.",
     "playerProfileLoadFailed": "Dein Spielerprofil konnte nicht geladen werden. Bitte versuche es erneut oder kontaktiere den Support, falls das Problem bestehen bleibt.",
     "sessionPrepareFailed": "Deine Kontositzung konnte für die Registrierung nicht vorbereitet werden. Bitte melde dich erneut an.",
-    "noDirectSpotUseWaitlist": "Kein direkter Platz mehr verfügbar. Du kannst dich jetzt auf die Warteliste setzen lassen."
+    "noDirectSpotUseWaitlist": "Kein direkter Platz mehr verfügbar. Du kannst dich jetzt auf die Warteliste setzen lassen.",
+    "alreadyRegisteredTitle": "Du bist bereits angemeldet",
+    "alreadyRegisteredText": "Für dieses Event besteht bereits eine aktive Buchung mit {count} Ticket(s).",
+    "registeredNames": "Aktive Tickets: {names}",
+    "manageExistingBooking": "Bestehende Buchung öffnen",
+    "addMoreTickets": "{count} freie Plätze: weitere Tickets hinzufügen",
+    "noAdditionalTicketsAvailable": "Aktuell sind keine weiteren Tickets buchbar. Deine bestehende Buchung kannst du trotzdem öffnen und verwalten.",
+    "alreadyRegisteredFormBlocked": "Du bist bereits für dieses Event angemeldet. Bitte öffne deine bestehende Buchung, um weitere Tickets hinzuzufügen."
   },
   "bookingPage": {
     "loading": "Buchungsdetails werden geladen...",

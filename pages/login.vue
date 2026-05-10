@@ -271,7 +271,7 @@
         </div>
 
         <p class="text-sm text-gray-300">
-          Wir senden dir einen achtstelligen Login-Code per E-Mail.
+          Wir senden dir einen 6-stelligen Login-Code per E-Mail.
         </p>
 
         <p v-if="passwordSetupRequested" class="text-sm text-amber-300">
