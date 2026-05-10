@@ -8,20 +8,20 @@
       >
         !
       </div>
-      <h1 class="text-2xl font-bold text-gray-900">Magic-link login removed</h1>
+      <h1 class="text-2xl font-bold text-gray-900">
+        {{ t("magicLogin.removedTitle") }}
+      </h1>
       <p class="text-sm text-gray-700">
-        Passwordless sign-in now works with an email code instead of a login
-        link. Return to the login page and request a fresh code.
+        {{ t("magicLogin.removedText") }}
       </p>
       <p v-if="isPasswordSetupFlow" class="text-sm text-gray-700">
-        If you were confirming a password setup, start that flow again from the
-        login page to receive a new email code.
+        {{ t("magicLogin.passwordSetupText") }}
       </p>
       <NuxtLink
         to="/login"
         class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
       >
-        Back to Login
+        {{ t("magicLogin.backToLogin") }}
       </NuxtLink>
     </div>
   </div>
@@ -29,6 +29,7 @@
 
 <script setup lang="ts">
 const route = useRoute();
+const { t } = useI18n();
 const isPasswordSetupFlow = computed(
   () => (route.query.flow as string) === "set-password",
 );

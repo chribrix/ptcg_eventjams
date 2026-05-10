@@ -61,6 +61,12 @@
     "forgotPassword": "Forgot Password?",
     "resetPassword": "Reset Password"
   },
+  "magicLogin": {
+    "removedTitle": "Magic-link login removed",
+    "removedText": "Passwordless sign-in now works with an email code instead of a login link. Return to the login page and request a fresh code.",
+    "passwordSetupText": "If you were confirming a password setup, start that flow again from the login page to receive a new email code.",
+    "backToLogin": "Back to Login"
+  },
   "dashboard": {
     "title": "My Dashboard",
     "subtitle": "Your registered events and decklists",
@@ -399,7 +405,162 @@
     "loadingActivity": "Loading recent activity...",
     "eventHistory": "Event History",
     "allPastEvents": "Complete history of all past events and their participants",
-    "backToDashboard": "Back to Dashboard"
+    "backToDashboard": "Back to Dashboard",
+    "venue": {
+      "title": "Venue Directory",
+      "subtitle": "Manage linked host organizations and venue names used during event creation.",
+      "addVenue": "Add Venue",
+      "searchPlaceholder": "Search by organization or venue",
+      "loading": "Loading venues...",
+      "empty": "No venue entries found.",
+      "confirmDelete": "Delete the venue mapping \"{organization}\" → \"{venue}\"?",
+      "columns": {
+        "organization": "Host Organization",
+        "venue": "Venue",
+        "updated": "Updated"
+      },
+      "modal": {
+        "editTitle": "Edit Venue",
+        "createTitle": "Add Venue",
+        "saving": "Saving...",
+        "update": "Update Venue",
+        "create": "Create Venue"
+      }
+    },
+    "externalEvents": {
+      "title": "External Event Overrides",
+      "subtitle": "Customize details for events from pokedata.ovh",
+      "loading": "Loading events...",
+      "modified": "Modified",
+      "hiddenFromCalendar": "Hidden from Calendar",
+      "showInCalendar": "Show in Calendar",
+      "hideFromCalendar": "Hide from Calendar",
+      "editOverride": "Edit Override",
+      "addOverride": "Add Override",
+      "pageInfo": "Page {current} of {total}",
+      "location": "Location",
+      "eventLabel": "Event",
+      "localRegistration": "Handle registration locally (in our system)",
+      "localRegistrationHelp": "Enable this to manage registrations through our platform instead of an external link.",
+      "deleteOverride": "Delete Override",
+      "saveOverride": "Save Override",
+      "saving": "Saving...",
+      "confirmDelete": "Are you sure you want to delete this override?",
+      "confirmToggleHide": "Are you sure you want to {action} this event in the calendar?",
+      "notAvailable": "N/A",
+      "actions": {
+        "show": "show",
+        "hide": "hide"
+      },
+      "fields": {
+        "venueOverride": "Venue Name Override",
+        "titleOverride": "Title Override",
+        "linkOverride": "Registration Link Override",
+        "costOverride": "Cost Override",
+        "streetAddressOverride": "Street Address Override",
+        "eventDescription": "Event Description (for registration page)",
+        "adminNotes": "Admin Notes (internal)"
+      },
+      "placeholders": {
+        "leaveEmptyOriginal": "Leave empty to use original",
+        "cost": "e.g., €10, Free",
+        "streetAddress": "Full street address",
+        "description": "Custom description for this event",
+        "maxParticipants": "e.g., 32",
+        "participationFee": "e.g., 10.00",
+        "eventDescription": "Additional details for players registering...",
+        "adminNotes": "Why this override exists..."
+      },
+      "modal": {
+        "editTitle": "Edit Override",
+        "addTitle": "Add Override"
+      },
+      "success": {
+        "updated": "Override updated successfully.",
+        "created": "Override created successfully.",
+        "deleted": "Override deleted successfully."
+      },
+      "errors": {
+        "load": "Failed to load events.",
+        "save": "Failed to save override.",
+        "delete": "Failed to delete override.",
+        "toggleHide": "Failed to change visibility."
+      }
+    },
+    "eventsManager": {
+      "title": "Events",
+      "searchPlaceholder": "Search events...",
+      "noUpcomingEvents": "No upcoming events",
+      "createNewEvent": "Create New Event",
+      "editEvent": "Edit Event",
+      "createEvent": "Create Event",
+      "updateEvent": "Update Event",
+      "saving": "Saving...",
+      "dateTime": "Date & Time",
+      "registered": "registered",
+      "decklistLabel": "Decklist",
+      "decklistRequiredAfterRegistration": "Required after registration",
+      "registrationLink": "Registration Link",
+      "copy": "Copy",
+      "copied": "✓ Copied!",
+      "openRegistration": "Open Registration",
+      "registrationsCount": "Registrations ({count})",
+      "manageInExternalEvents": "Manage in External Events",
+      "registrationsTitle": "{name} - Registrations",
+      "genericGame": "Generic",
+      "format": "Format",
+      "decklistTitle": "Decklist - {name}",
+      "eventName": "Event Name",
+      "gameCategory": "Game Category",
+      "game": "Game",
+      "eventType": "Event Type",
+      "shownInTimezone": "Shown in {timeZone}",
+      "registrationDeadlineHelp": "Automatically set to 15 minutes before event start",
+      "requiresDecklistHelp": "Participants must submit a decklist after registration",
+      "externalEventsManagedElsewhere": "External events must be managed in the External Events page.",
+      "confirmDeleteEvent": "Are you sure you want to delete \"{name}\"?",
+      "confirmRemoveRegistration": "Remove {name} from this event?",
+      "noRegistrationsYet": "No registrations yet for this event.",
+      "waitlistTitle": "Waitlist ({count})",
+      "noWaitlistEntries": "No waitlist entries.",
+      "stats": {
+        "totalRegistered": "Total Registered",
+        "maxCapacity": "Max Capacity",
+        "availableSpots": "Available Spots"
+      },
+      "columns": {
+        "participantId": "Participant ID",
+        "bookerEmail": "Booker Email",
+        "registeredAt": "Registered At",
+        "decklist": "Decklist",
+        "position": "Pos",
+        "priority": "Priority",
+        "claimExpires": "Claim Expires"
+      },
+      "decklistStates": {
+        "submitted": "✓ Submitted",
+        "onsite": "📋 Bringing On-site",
+        "notSubmitted": "✗ Not Submitted"
+      },
+      "viewDecklist": "View Decklist",
+      "placeholders": {
+        "eventName": "Enter event name",
+        "game": "Pokemon, Riftbound, etc.",
+        "hostOrganization": "League name, store name, etc.",
+        "venue": "Event venue",
+        "description": "Event description..."
+      },
+      "eventTypes": {
+        "custom": "Custom Event",
+        "leagueChallenge": "League Challenge",
+        "leagueCup": "League Cup",
+        "localTournament": "Local Tournament",
+        "prerelease": "Prerelease",
+        "regional": "Regional Championship",
+        "international": "International Championship",
+        "worlds": "World Championship"
+      }
+    }
   },
   "eventHistory": {
     "title": "Event History",

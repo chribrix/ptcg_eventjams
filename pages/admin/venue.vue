@@ -1,11 +1,11 @@
 <template>
   <AdminPageLayout
-    title="Venue Directory"
-    subtitle="Manage linked host organizations and venue names used during event creation."
+    :title="t('admin.venue.title')"
+    :subtitle="t('admin.venue.subtitle')"
   >
     <template #actions>
       <button class="btn btn-primary" @click="openCreateModal">
-        Add Venue
+        {{ t("admin.venue.addVenue") }}
       </button>
     </template>
 
@@ -16,7 +16,7 @@
             v-model="searchTerm"
             type="text"
             class="search-input"
-            placeholder="Search by organization or venue"
+            :placeholder="t('admin.venue.searchPlaceholder')"
           />
         </div>
       </div>
@@ -25,18 +25,22 @@
         <table class="admin-table">
           <thead>
             <tr>
-              <th>Host Organization</th>
-              <th>Venue</th>
-              <th>Updated</th>
-              <th>Actions</th>
+              <th>{{ t("admin.venue.columns.organization") }}</th>
+              <th>{{ t("admin.venue.columns.venue") }}</th>
+              <th>{{ t("admin.venue.columns.updated") }}</th>
+              <th>{{ t("common.actions") }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="loading">
-              <td colspan="4" class="empty-state">Loading venues...</td>
+              <td colspan="4" class="empty-state">
+                {{ t("admin.venue.loading") }}
+              </td>
             </tr>
             <tr v-else-if="filteredVenues.length === 0">
-              <td colspan="4" class="empty-state">No venue entries found.</td>
+              <td colspan="4" class="empty-state">
+                {{ t("admin.venue.empty") }}
+              </td>
             </tr>
             <tr v-for="venue in filteredVenues" :key="venue.id">
               <td>{{ venue.organizationName }}</td>
@@ -45,10 +49,10 @@
               <td>
                 <div class="action-row">
                   <button class="btn btn-secondary btn-sm" @click="openEditModal(venue)">
-                    Edit
+                    {{ t("common.edit") }}
                   </button>
                   <button class="btn btn-danger btn-sm" @click="deleteVenue(venue)">
-                    Delete
+                    {{ t("common.delete") }}
                   </button>
                 </div>
               </td>
@@ -61,14 +65,22 @@
     <div v-if="showModal" class="modal-overlay" @click="closeModal">
       <div class="modal-content venue-modal" @click.stop>
         <div class="modal-header">
-          <h2>{{ editingVenue ? "Edit Venue" : "Add Venue" }}</h2>
+          <h2>
+            {{
+              editingVenue
+                ? t("admin.venue.modal.editTitle")
+                : t("admin.venue.modal.createTitle")
+            }}
+          </h2>
           <button class="btn-close" @click="closeModal">×</button>
         </div>
 
         <form class="modal-body venue-form" @submit.prevent="saveVenue">
           <div class="form-row">
             <div class="form-group">
-              <label for="organizationName">Host Organization</label>
+              <label for="organizationName">
+                {{ t("admin.venue.columns.organization") }}
+              </label>
               <input
                 id="organizationName"
                 v-model="venueForm.organizationName"
@@ -79,7 +91,7 @@
             </div>
 
             <div class="form-group">
-              <label for="venueName">Venue</label>
+              <label for="venueName">{{ t("admin.venue.columns.venue") }}</label>
               <input
                 id="venueName"
                 v-model="venueForm.venueName"
@@ -92,10 +104,16 @@
 
           <div class="form-actions">
             <button type="button" class="btn btn-secondary" @click="closeModal">
-              Cancel
+              {{ t("common.cancel") }}
             </button>
             <button type="submit" class="btn btn-primary" :disabled="saving">
-              {{ saving ? "Saving..." : editingVenue ? "Update Venue" : "Create Venue" }}
+              {{
+                saving
+                  ? t("admin.venue.modal.saving")
+                  : editingVenue
+                    ? t("admin.venue.modal.update")
+                    : t("admin.venue.modal.create")
+              }}
             </button>
           </div>
         </form>
@@ -123,6 +141,7 @@ const searchTerm = ref("");
 const showModal = ref(false);
 const editingVenue = ref<VenueDirectoryEntry | null>(null);
 const userTimeZone = getUserTimeZone();
+const { t, locale } = useI18n();
 
 const venueForm = ref({
   organizationName: "",
@@ -203,7 +222,10 @@ const saveVenue = async () => {
 const deleteVenue = async (venue: VenueDirectoryEntry) => {
   if (
     !confirm(
-      `Delete the venue mapping "${venue.organizationName}" → "${venue.venueName}"?`,
+      t("admin.venue.confirmDelete", {
+        organization: venue.organizationName,
+        venue: venue.venueName,
+      }),
     )
   ) {
     return;
@@ -226,7 +248,7 @@ const formatDate = (value: string) =>
       hour: "2-digit",
       minute: "2-digit",
     },
-    "de-DE",
+    locale.value === "de" ? "de-DE" : "en-US",
     userTimeZone,
   );
 

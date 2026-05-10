@@ -1,11 +1,11 @@
 <template>
-  <AdminPageLayout title="Events">
+  <AdminPageLayout :title="t('admin.eventsManager.title')">
     <!-- Search bar -->
     <div class="px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-10">
       <input
         v-model="searchTerm"
         type="text"
-        placeholder="Search events..."
+        :placeholder="t('admin.eventsManager.searchPlaceholder')"
         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
     </div>
@@ -36,7 +36,7 @@
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            Upcoming Events
+            {{ t("admin.upcomingEvents") }}
             <span class="text-sm font-normal text-gray-500"
               >({{ upcomingEvents.length }})</span
             >
@@ -143,7 +143,7 @@
             </div>
           </div>
           <div v-else class="text-center py-8 text-gray-500">
-            No upcoming events
+            {{ t("admin.eventsManager.noUpcomingEvents") }}
           </div>
         </div>
 
@@ -167,7 +167,7 @@
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              Completed Events
+              {{ t("admin.completedEvents") }}
               <span class="text-sm font-normal text-gray-500"
                 >({{ completedEvents.length }})</span
               >
@@ -276,7 +276,7 @@
     <button
       @click="createNewEvent"
       class="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50"
-      title="Create New Event"
+      :title="t('admin.eventsManager.createNewEvent')"
     >
       <svg
         class="w-6 h-6"
@@ -388,7 +388,7 @@
                     </svg>
                     <div>
                       <p class="text-sm font-medium text-gray-700">
-                        Date & Time
+                        {{ t("admin.eventsManager.dateTime") }}
                       </p>
                       <p class="text-sm text-gray-900">
                         {{ formatDate(selectedEvent.eventDate) }}
@@ -418,7 +418,9 @@
                       />
                     </svg>
                     <div>
-                      <p class="text-sm font-medium text-gray-700">Venue</p>
+                      <p class="text-sm font-medium text-gray-700">
+                        {{ t("common.venue") }}
+                      </p>
                       <p class="text-sm text-gray-900">
                         {{ selectedEvent.venue }}
                       </p>
@@ -442,12 +444,14 @@
                     </svg>
                     <div>
                       <p class="text-sm font-medium text-gray-700">
-                        Participants
+                        {{ t("common.participants") }}
                       </p>
                       <p class="text-sm text-gray-900">
                         {{ selectedEvent._count?.registrations || 0 }} /
                         {{ selectedEvent.maxParticipants }}
-                        <span class="text-gray-500">registered</span>
+                        <span class="text-gray-500">
+                          {{ t("admin.eventsManager.registered") }}
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -472,7 +476,7 @@
                     </svg>
                     <div>
                       <p class="text-sm font-medium text-gray-700">
-                        Participation Fee
+                        {{ t("events.participationFee") }}
                       </p>
                       <p class="text-sm text-gray-900">
                         {{ selectedEvent.participationFee }}
@@ -499,9 +503,11 @@
                       />
                     </svg>
                     <div>
-                      <p class="text-sm font-medium text-gray-700">Decklist</p>
+                      <p class="text-sm font-medium text-gray-700">
+                        {{ t("admin.eventsManager.decklistLabel") }}
+                      </p>
                       <p class="text-sm text-gray-900">
-                        Required after registration
+                        {{ t("admin.eventsManager.decklistRequiredAfterRegistration") }}
                       </p>
                     </div>
                   </div>
@@ -526,7 +532,7 @@
                     </svg>
                     <div>
                       <p class="text-sm font-medium text-gray-700">
-                        Description
+                        {{ t("common.description") }}
                       </p>
                       <p class="text-sm text-gray-900">
                         {{ selectedEvent.description }}
@@ -551,7 +557,7 @@
                     </svg>
                     <div class="flex-1">
                       <p class="text-sm font-medium text-gray-700 mb-1">
-                        Registration Link
+                        {{ t("admin.eventsManager.registrationLink") }}
                       </p>
                       <div class="flex gap-2">
                         <input
@@ -570,8 +576,8 @@
                         >
                           {{
                             copiedEventId === selectedEvent.id
-                              ? "✓ Copied!"
-                              : "Copy"
+                              ? t("admin.eventsManager.copied")
+                              : t("admin.eventsManager.copy")
                           }}
                         </button>
                       </div>
@@ -602,7 +608,7 @@
                       d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                     />
                   </svg>
-                  Open Registration
+                  {{ t("admin.eventsManager.openRegistration") }}
                 </NuxtLink>
                 <button
                   @click="viewRegistrations(selectedEvent)"
@@ -621,20 +627,24 @@
                       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                     />
                   </svg>
-                  Registrations ({{ selectedEvent._count?.registrations || 0 }})
+                  {{
+                    t("admin.eventsManager.registrationsCount", {
+                      count: selectedEvent._count?.registrations || 0,
+                    })
+                  }}
                 </button>
                 <template v-if="!selectedEvent.isExternalEvent">
                   <button
                     @click="editEvent(selectedEvent)"
                     class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
                   >
-                    Edit
+                    {{ t("common.edit") }}
                   </button>
                   <button
                     @click="deleteEvent(selectedEvent)"
                     class="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
                   >
-                    Delete
+                    {{ t("common.delete") }}
                   </button>
                 </template>
                 <template v-else>
@@ -642,7 +652,7 @@
                     to="/admin/external-events"
                     class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors no-underline"
                   >
-                    Manage in External Events
+                    {{ t("admin.eventsManager.manageInExternalEvents") }}
                   </NuxtLink>
                 </template>
               </div>
@@ -660,7 +670,13 @@
     >
       <div class="modal-content modal-large" @click.stop>
         <div class="modal-header">
-          <h2>{{ selectedEvent?.name }} - Registrations</h2>
+          <h2>
+            {{
+              t("admin.eventsManager.registrationsTitle", {
+                name: selectedEvent?.name,
+              })
+            }}
+          </h2>
           <button @click="closeRegistrationsModal" class="close-btn">
             &times;
           </button>
@@ -670,13 +686,17 @@
           <div class="registrations-stats">
             <div class="stat-item">
               <span class="stat-number">{{ ticketRows.length }}</span>
-              <span class="stat-label">Total Registered</span>
+              <span class="stat-label">
+                {{ t("admin.eventsManager.stats.totalRegistered") }}
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-number">{{
                 selectedEvent?.maxParticipants || 0
               }}</span>
-              <span class="stat-label">Max Capacity</span>
+              <span class="stat-label">
+                {{ t("admin.eventsManager.stats.maxCapacity") }}
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-number">{{
@@ -685,7 +705,9 @@
                   (selectedEvent?.maxParticipants || 0) - ticketRows.length,
                 )
               }}</span>
-              <span class="stat-label">Available Spots</span>
+              <span class="stat-label">
+                {{ t("admin.eventsManager.stats.availableSpots") }}
+              </span>
             </div>
           </div>
 
@@ -693,20 +715,22 @@
             <table>
               <thead>
                 <tr>
-                  <th>Participant ID</th>
-                  <th>Name</th>
-                  <th>Booker Email</th>
-                  <th>Registered At</th>
-                  <th>Status</th>
-                  <th v-if="selectedEvent?.requiresDecklist">Decklist</th>
-                  <th>Actions</th>
+                  <th>{{ t("admin.eventsManager.columns.participantId") }}</th>
+                  <th>{{ t("common.name") }}</th>
+                  <th>{{ t("admin.eventsManager.columns.bookerEmail") }}</th>
+                  <th>{{ t("admin.eventsManager.columns.registeredAt") }}</th>
+                  <th>{{ t("common.status") }}</th>
+                  <th v-if="selectedEvent?.requiresDecklist">
+                    {{ t("admin.eventsManager.columns.decklist") }}
+                  </th>
+                  <th>{{ t("common.actions") }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="row in ticketRows" :key="row.ticketId">
                   <td>{{ row.participantPlayerId || "—" }}</td>
                   <td>{{ row.participantName }}</td>
-                  <td>{{ row.bookerEmail || "N/A" }}</td>
+                  <td>{{ row.bookerEmail || t("admin.externalEvents.notAvailable") }}</td>
                   <td>{{ formatDate(row.registeredAt) }}</td>
                   <td>
                     <span
@@ -721,16 +745,16 @@
                       v-if="row.decklist"
                       class="decklist-status status-success"
                     >
-                      ✓ Submitted
+                      {{ t("admin.eventsManager.decklistStates.submitted") }}
                     </span>
                     <span
                       v-else-if="row.bringingDecklistOnsite"
                       class="decklist-status status-warning"
                     >
-                      📋 Bringing On-site
+                      {{ t("admin.eventsManager.decklistStates.onsite") }}
                     </span>
                     <span v-else class="decklist-status status-danger">
-                      ✗ Not Submitted
+                      {{ t("admin.eventsManager.decklistStates.notSubmitted") }}
                     </span>
                   </td>
                   <td>
@@ -740,13 +764,13 @@
                         @click="viewDecklist(row)"
                         class="btn btn-small btn-info"
                       >
-                        View Decklist
+                        {{ t("admin.eventsManager.viewDecklist") }}
                       </button>
                       <button
                         @click="cancelRegistration(row.registration)"
                         class="btn btn-small btn-danger"
                       >
-                        Remove
+                        {{ t("dashboard.remove") }}
                       </button>
                     </div>
                   </td>
@@ -756,24 +780,28 @@
           </div>
 
           <div v-else class="no-registrations">
-            No registrations yet for this event.
+            {{ t("admin.eventsManager.noRegistrationsYet") }}
           </div>
 
           <div class="registrations-table mt-6">
             <h3 class="text-base font-semibold mb-2">
-              Waitlist ({{ waitlistEntries.length }})
+              {{
+                t("admin.eventsManager.waitlistTitle", {
+                  count: waitlistEntries.length,
+                })
+              }}
             </h3>
             <table v-if="waitlistEntries.length > 0">
               <thead>
                 <tr>
-                  <th>Pos</th>
-                  <th>Priority</th>
-                  <th>Player ID</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Status</th>
-                  <th>Claim Expires</th>
-                  <th>Actions</th>
+                  <th>{{ t("admin.eventsManager.columns.position") }}</th>
+                  <th>{{ t("admin.eventsManager.columns.priority") }}</th>
+                  <th>{{ t("registration.playerId") }}</th>
+                  <th>{{ t("common.name") }}</th>
+                  <th>{{ t("common.email") }}</th>
+                  <th>{{ t("common.status") }}</th>
+                  <th>{{ t("admin.eventsManager.columns.claimExpires") }}</th>
+                  <th>{{ t("common.actions") }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -782,7 +810,7 @@
                   <td>{{ entry.priority }}</td>
                   <td>{{ entry.player.playerId || "—" }}</td>
                   <td>{{ entry.player.name }}</td>
-                  <td>{{ entry.player.email || "N/A" }}</td>
+                  <td>{{ entry.player.email || t("admin.externalEvents.notAvailable") }}</td>
                   <td>{{ entry.status }}</td>
                   <td>
                     {{
@@ -810,7 +838,9 @@
                 </tr>
               </tbody>
             </table>
-            <div v-else class="no-registrations">No waitlist entries.</div>
+            <div v-else class="no-registrations">
+              {{ t("admin.eventsManager.noWaitlistEntries") }}
+            </div>
           </div>
         </div>
       </div>
@@ -825,7 +855,9 @@
     >
       <div class="modal-content modal-large" @click.stop>
         <div class="modal-header">
-          <h2>Decklist - {{ selectedDecklist.playerName }}</h2>
+          <h2>
+            {{ t("admin.eventsManager.decklistTitle", { name: selectedDecklist.playerName }) }}
+          </h2>
           <button @click="closeDecklistModal" class="close-btn">&times;</button>
         </div>
         <div class="modal-body">
@@ -837,7 +869,7 @@
         </div>
         <div class="modal-footer">
           <button @click="closeDecklistModal" class="btn btn-secondary">
-            ← Zurück
+            ← {{ t("common.back") }}
           </button>
         </div>
       </div>
@@ -851,26 +883,32 @@
     >
       <div class="modal-content event-form-modal" @click.stop>
         <div class="modal-header">
-          <h2>{{ editingEvent ? "Edit Event" : "Create New Event" }}</h2>
+          <h2>
+            {{
+              editingEvent
+                ? t("admin.eventsManager.editEvent")
+                : t("admin.eventsManager.createNewEvent")
+            }}
+          </h2>
           <button @click="closeModal" class="close-btn">&times;</button>
         </div>
 
         <form @submit.prevent="saveEvent" class="event-form">
           <div class="form-group">
-            <label for="name">Event Name *</label>
+            <label for="name">{{ t("admin.eventsManager.eventName") }} *</label>
             <input
               id="name"
               v-model="eventForm.name"
               type="text"
               required
               class="form-input"
-              placeholder="Enter event name"
+              :placeholder="t('admin.eventsManager.placeholders.eventName')"
             />
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="tagType">Game Category *</label>
+              <label for="tagType">{{ t("admin.eventsManager.gameCategory") }} *</label>
               <select
                 id="tagType"
                 v-model="eventForm.tagType"
@@ -879,25 +917,25 @@
               >
                 <option value="pokemon">Pokémon</option>
                 <option value="riftbound">Riftbound</option>
-                <option value="generic">Generic</option>
+                <option value="generic">{{ t("admin.eventsManager.genericGame") }}</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="gameTag">Game *</label>
+              <label for="gameTag">{{ t("admin.eventsManager.game") }} *</label>
               <input
                 id="gameTag"
                 v-model="eventForm.tags.game"
                 type="text"
                 required
                 class="form-input"
-                placeholder="Pokemon, Riftbound, etc."
+                :placeholder="t('admin.eventsManager.placeholders.game')"
               />
             </div>
           </div>
 
           <div class="form-group">
-            <label for="formatTag">Format</label>
+            <label for="formatTag">{{ t("admin.eventsManager.format") }}</label>
             <select
               id="formatTag"
               v-model="eventForm.tags.format"
@@ -914,34 +952,40 @@
           </div>
 
           <div class="form-group">
-            <label for="eventType">Event Type *</label>
+            <label for="eventType">{{ t("admin.eventsManager.eventType") }} *</label>
             <select
               id="eventType"
               v-model="eventForm.tags.type"
               required
               class="form-input"
             >
-              <option value="custom">Custom Event</option>
-              <option value="league_challenge">League Challenge</option>
-              <option value="league_cup">League Cup</option>
-              <option value="local_tournament">Local Tournament</option>
-              <option value="prerelease">Prerelease</option>
-              <option value="regional">Regional Championship</option>
-              <option value="international">International Championship</option>
-              <option value="worlds">World Championship</option>
+              <option value="custom">{{ t("admin.eventsManager.eventTypes.custom") }}</option>
+              <option value="league_challenge">
+                {{ t("admin.eventsManager.eventTypes.leagueChallenge") }}
+              </option>
+              <option value="league_cup">
+                {{ t("admin.eventsManager.eventTypes.leagueCup") }}
+              </option>
+              <option value="local_tournament">{{ t("admin.eventsManager.eventTypes.localTournament") }}</option>
+              <option value="prerelease">
+                {{ t("admin.eventsManager.eventTypes.prerelease") }}
+              </option>
+              <option value="regional">{{ t("admin.eventsManager.eventTypes.regional") }}</option>
+              <option value="international">{{ t("admin.eventsManager.eventTypes.international") }}</option>
+              <option value="worlds">{{ t("admin.eventsManager.eventTypes.worlds") }}</option>
             </select>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="hostTag">Host Organization</label>
+              <label for="hostTag">{{ t("admin.venue.columns.organization") }}</label>
               <input
                 id="hostTag"
                 v-model="eventForm.tags.host"
                 type="text"
                 class="form-input"
                 list="host-organization-options"
-                placeholder="League name, store name, etc."
+                :placeholder="t('admin.eventsManager.placeholders.hostOrganization')"
                 @change="syncVenueFromOrganization"
                 @blur="syncVenueFromOrganization"
               />
@@ -955,7 +999,7 @@
             </div>
 
             <div class="form-group">
-              <label for="venue">Venue *</label>
+              <label for="venue">{{ t("common.venue") }} *</label>
               <input
                 id="venue"
                 v-model="eventForm.venue"
@@ -963,7 +1007,7 @@
                 required
                 class="form-input"
                 list="venue-options"
-                placeholder="Event venue"
+                :placeholder="t('admin.eventsManager.placeholders.venue')"
                 @change="syncOrganizationFromVenue"
                 @blur="syncOrganizationFromVenue"
               />
@@ -979,7 +1023,7 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="maxParticipants">Max Participants *</label>
+              <label for="maxParticipants">{{ t("events.maxParticipants") }} *</label>
               <input
                 id="maxParticipants"
                 v-model.number="eventForm.maxParticipants"
@@ -991,7 +1035,7 @@
             </div>
 
             <div class="form-group">
-              <label for="participationFee">Participation Fee (€)</label>
+              <label for="participationFee">{{ t("events.participationFee") }} (€)</label>
               <input
                 id="participationFee"
                 v-model.number="eventForm.participationFee"
@@ -1007,11 +1051,13 @@
           <div class="form-row">
             <div class="form-group">
               <label for="eventDate">
-                Event Date *
+                {{ t("events.eventDate") }} *
                 <span v-if="eventForm.eventDate" class="field-help">
                   {{ formatDateWithWeekday(eventForm.eventDate) }}
                 </span>
-                <span class="field-help">Shown in {{ userTimeZone }}</span>
+                <span class="field-help">
+                  {{ t("admin.eventsManager.shownInTimezone", { timeZone: userTimeZone }) }}
+                </span>
               </label>
               <input
                 id="eventDate"
@@ -1027,9 +1073,9 @@
 
             <div class="form-group">
               <label for="registrationDeadline">
-                Registration Deadline
+                {{ t("events.registrationDeadline") }}
                 <span class="field-help">
-                  Automatically set to 15 minutes before event start
+                  {{ t("admin.eventsManager.registrationDeadlineHelp") }}
                 </span>
               </label>
               <input
@@ -1045,13 +1091,13 @@
           </div>
 
           <div class="form-group">
-            <label for="description">Description</label>
+            <label for="description">{{ t("common.description") }}</label>
             <textarea
               id="description"
               v-model="eventForm.description"
               class="form-textarea"
               rows="3"
-              placeholder="Event description..."
+              :placeholder="t('admin.eventsManager.placeholders.description')"
             ></textarea>
           </div>
 
@@ -1064,35 +1110,35 @@
                 class="form-checkbox"
               />
               <label for="requiresDecklist" class="checkbox-label">
-                Requires Decklist
+                {{ t("events.requiresDecklist") }}
                 <span class="checkbox-help">
-                  Participants must submit a decklist after registration
+                  {{ t("admin.eventsManager.requiresDecklistHelp") }}
                 </span>
               </label>
             </div>
           </div>
 
           <div v-if="editingEvent" class="form-group">
-            <label for="status">Status</label>
+            <label for="status">{{ t("common.status") }}</label>
             <select id="status" v-model="eventForm.status" class="form-select">
-              <option value="upcoming">Upcoming</option>
-              <option value="ongoing">Ongoing</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="upcoming">{{ t("events.eventStatus.upcoming") }}</option>
+              <option value="ongoing">{{ t("events.eventStatus.ongoing") }}</option>
+              <option value="completed">{{ t("events.eventStatus.completed") }}</option>
+              <option value="cancelled">{{ t("events.eventStatus.cancelled") }}</option>
             </select>
           </div>
 
           <div class="form-actions">
             <button type="button" @click="closeModal" class="btn btn-secondary">
-              Cancel
+              {{ t("common.cancel") }}
             </button>
             <button type="submit" :disabled="saving" class="btn btn-primary">
               {{
                 saving
-                  ? "Saving..."
+                  ? t("admin.eventsManager.saving")
                   : editingEvent
-                    ? "Update Event"
-                    : "Create Event"
+                    ? t("admin.eventsManager.updateEvent")
+                    : t("admin.eventsManager.createEvent")
               }}
             </button>
           </div>
@@ -1125,6 +1171,7 @@ import {
 } from "~/utils/eventDateTime";
 
 const { getDisplayTags } = useTagDisplay();
+const { t } = useI18n();
 
 interface CustomEvent {
   id: string;
@@ -1662,7 +1709,7 @@ const saveEvent = async () => {
 const editEvent = (event: CustomEvent) => {
   // Prevent editing external events from this page
   if ((event as any).isExternalEvent) {
-    alert("External events must be managed in the External Events page.");
+    alert(t("admin.eventsManager.externalEventsManagedElsewhere"));
     return;
   }
 
@@ -1696,11 +1743,12 @@ const editEvent = (event: CustomEvent) => {
 const deleteEvent = async (event: CustomEvent) => {
   // Prevent deleting external events from this page
   if ((event as any).isExternalEvent) {
-    alert("External events must be managed in the External Events page.");
+    alert(t("admin.eventsManager.externalEventsManagedElsewhere"));
     return;
   }
 
-  if (!confirm(`Are you sure you want to delete "${event.name}"?`)) return;
+  if (!confirm(t("admin.eventsManager.confirmDeleteEvent", { name: event.name })))
+    return;
 
   try {
     await $fetch(`/api/admin/custom-events?id=${event.id}`, {
@@ -1752,7 +1800,14 @@ const updateRegistrationStatus = async (registration: Registration) => {
 };
 
 const cancelRegistration = async (registration: Registration) => {
-  if (!confirm(`Remove ${registration.player.name} from this event?`)) return;
+  if (
+    !confirm(
+      t("admin.eventsManager.confirmRemoveRegistration", {
+        name: registration.player.name,
+      }),
+    )
+  )
+    return;
 
   try {
     await $fetch(`/api/admin/registrations?id=${registration.id}`, {

@@ -1,12 +1,16 @@
 <template>
   <AdminPageLayout
-    title="External Event Overrides"
-    subtitle="Customize details for events from pokedata.ovh"
+    :title="t('admin.externalEvents.title')"
+    :subtitle="t('admin.externalEvents.subtitle')"
   >
-    <div v-if="loading" class="loading">Loading events...</div>
+    <div v-if="loading" class="loading">
+      {{ t("admin.externalEvents.loading") }}
+    </div>
 
     <div v-else-if="error" class="admin-card">
-      <p class="error-message">Error: {{ error }}</p>
+      <p class="error-message">
+        {{ t("common.error") }}: {{ error }}
+      </p>
     </div>
 
     <div v-else class="admin-card">
@@ -35,10 +39,10 @@
             </div>
             <div class="event-actions">
               <span v-if="hasOverride(event)" class="override-badge">
-                Modified
+                {{ t("admin.externalEvents.modified") }}
               </span>
               <span v-if="isHiddenFromCalendar(event)" class="hidden-badge">
-                Hidden from Calendar
+                {{ t("admin.externalEvents.hiddenFromCalendar") }}
               </span>
               <button
                 @click="toggleHideFromCalendar(event)"
@@ -47,8 +51,8 @@
               >
                 {{
                   isHiddenFromCalendar(event)
-                    ? "Show in Calendar"
-                    : "Hide from Calendar"
+                    ? t("admin.externalEvents.showInCalendar")
+                    : t("admin.externalEvents.hideFromCalendar")
                 }}
               </button>
               <button
@@ -56,7 +60,11 @@
                 class="btn-edit"
                 :class="{ 'btn-edit-active': hasOverride(event) }"
               >
-                {{ hasOverride(event) ? "Edit Override" : "Add Override" }}
+                {{
+                  hasOverride(event)
+                    ? t("admin.externalEvents.editOverride")
+                    : t("admin.externalEvents.addOverride")
+                }}
               </button>
             </div>
           </div>
@@ -75,17 +83,22 @@
             :disabled="currentPage === 1"
             class="btn-page"
           >
-            Previous
+            {{ t("common.previous") }}
           </button>
           <span class="page-info">
-            Page {{ currentPage }} of {{ totalPages }}
+            {{
+              t("admin.externalEvents.pageInfo", {
+                current: currentPage,
+                total: totalPages,
+              })
+            }}
           </span>
           <button
             @click="currentPage++"
             :disabled="currentPage === totalPages"
             class="btn-page"
           >
-            Next
+            {{ t("common.next") }}
           </button>
         </div>
       </div>
@@ -95,74 +108,85 @@
     <div v-if="showModal" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>{{ editingOverride ? "Edit" : "Add" }} Override</h2>
+          <h2>
+            {{
+              editingOverride
+                ? t("admin.externalEvents.modal.editTitle")
+                : t("admin.externalEvents.modal.addTitle")
+            }}
+          </h2>
           <button @click="closeModal" class="btn-close">×</button>
         </div>
 
         <div class="modal-body">
           <div class="event-details">
-            <p><strong>Event:</strong> {{ selectedEvent?.venue }}</p>
             <p>
-              <strong>Date:</strong> {{ formatDate(selectedEvent?.dateTime) }}
+              <strong>{{ t("admin.externalEvents.eventLabel") }}:</strong>
+              {{ selectedEvent?.venue }}
             </p>
             <p>
-              <strong>Location:</strong> {{ selectedEvent?.location }},
+              <strong>{{ t("common.date") }}:</strong>
+              {{ formatDate(selectedEvent?.dateTime) }}
+            </p>
+            <p>
+              <strong>{{ t("admin.externalEvents.location") }}:</strong>
+              {{ selectedEvent?.location }},
               {{ selectedEvent?.country }}
             </p>
           </div>
 
           <form @submit.prevent="saveOverride">
             <div class="form-group">
-              <label>Venue Name Override</label>
+              <label>{{ t("admin.externalEvents.fields.venueOverride") }}</label>
               <input
                 v-model="overrideForm.venue"
                 type="text"
-                placeholder="Leave empty to use original"
+                :placeholder="t('admin.externalEvents.placeholders.leaveEmptyOriginal')"
               />
             </div>
 
             <div class="form-group">
-              <label>Title Override</label>
+              <label>{{ t("admin.externalEvents.fields.titleOverride") }}</label>
               <input
                 v-model="overrideForm.title"
                 type="text"
-                placeholder="Leave empty to use original"
+                :placeholder="t('admin.externalEvents.placeholders.leaveEmptyOriginal')"
               />
             </div>
 
             <div class="form-group">
-              <label>Registration Link Override</label>
+              <label>{{ t("admin.externalEvents.fields.linkOverride") }}</label>
               <input
                 v-model="overrideForm.link"
                 type="url"
-                placeholder="Leave empty to use original"
+                :placeholder="t('admin.externalEvents.placeholders.leaveEmptyOriginal')"
               />
             </div>
 
             <div class="form-group">
-              <label>Cost Override</label>
+              <label>{{ t("admin.externalEvents.fields.costOverride") }}</label>
               <input
                 v-model="overrideForm.cost"
                 type="text"
-                placeholder="e.g., €10, Free"
+                :placeholder="t('admin.externalEvents.placeholders.cost')"
               />
             </div>
 
             <div class="form-group">
-              <label>Street Address Override</label>
+              <label>{{ t("admin.externalEvents.fields.streetAddressOverride") }}</label>
               <input
                 v-model="overrideForm.streetAddress"
                 type="text"
-                placeholder="Full street address"
+                :placeholder="t('admin.externalEvents.placeholders.streetAddress')"
               />
             </div>
 
             <div class="form-group">
-              <label>Description Override</label>
+              <label>{{ t("common.description") }}</label>
               <textarea
                 v-model="overrideForm.description"
                 rows="4"
-                placeholder="Custom description for this event"
+                :placeholder="t('admin.externalEvents.placeholders.description')"
               />
             </div>
 
@@ -174,38 +198,37 @@
                     v-model="overrideForm.handleRegistrationLocally"
                     type="checkbox"
                   />
-                  <span>Handle registration locally (in our system)</span>
+                  <span>{{ t("admin.externalEvents.localRegistration") }}</span>
                 </label>
                 <p class="help-text">
-                  Enable this to manage registrations through our platform
-                  instead of external link
+                  {{ t("admin.externalEvents.localRegistrationHelp") }}
                 </p>
               </div>
 
               <template v-if="overrideForm.handleRegistrationLocally">
                 <div class="form-group">
-                  <label>Max Participants</label>
+                  <label>{{ t("events.maxParticipants") }}</label>
                   <input
                     v-model.number="overrideForm.maxParticipants"
                     type="number"
                     min="1"
-                    placeholder="e.g., 32"
+                    :placeholder="t('admin.externalEvents.placeholders.maxParticipants')"
                   />
                 </div>
 
                 <div class="form-group">
-                  <label>Participation Fee (€)</label>
+                  <label>{{ t("events.participationFee") }} (€)</label>
                   <input
                     v-model.number="overrideForm.participationFee"
                     type="number"
                     step="0.01"
                     min="0"
-                    placeholder="e.g., 10.00"
+                    :placeholder="t('admin.externalEvents.placeholders.participationFee')"
                   />
                 </div>
 
                 <div class="form-group">
-                  <label>Registration Deadline</label>
+                  <label>{{ t("events.registrationDeadline") }}</label>
                   <input
                     v-model="overrideForm.registrationDeadline"
                     type="datetime-local"
@@ -218,27 +241,27 @@
                       v-model="overrideForm.requiresDecklist"
                       type="checkbox"
                     />
-                    <span>Requires Decklist</span>
+                    <span>{{ t("events.requiresDecklist") }}</span>
                   </label>
                 </div>
 
                 <div class="form-group">
-                  <label>Event Description (for registration page)</label>
+                  <label>{{ t("admin.externalEvents.fields.eventDescription") }}</label>
                   <textarea
                     v-model="overrideForm.eventDescription"
                     rows="3"
-                    placeholder="Additional details for players registering..."
+                    :placeholder="t('admin.externalEvents.placeholders.eventDescription')"
                   />
                 </div>
               </template>
             </div>
 
             <div class="form-group">
-              <label>Admin Notes (internal)</label>
+              <label>{{ t("admin.externalEvents.fields.adminNotes") }}</label>
               <textarea
                 v-model="overrideForm.notes"
                 rows="2"
-                placeholder="Why this override exists..."
+                :placeholder="t('admin.externalEvents.placeholders.adminNotes')"
               />
             </div>
 
@@ -250,13 +273,17 @@
                 class="btn-delete"
                 :disabled="saving"
               >
-                Delete Override
+                {{ t("admin.externalEvents.deleteOverride") }}
               </button>
               <button type="button" @click="closeModal" class="btn-cancel">
-                Cancel
+                {{ t("common.cancel") }}
               </button>
               <button type="submit" class="btn-save" :disabled="saving">
-                {{ saving ? "Saving..." : "Save Override" }}
+                {{
+                  saving
+                    ? t("admin.externalEvents.saving")
+                    : t("admin.externalEvents.saveOverride")
+                }}
               </button>
             </div>
           </form>
@@ -278,6 +305,7 @@ import { isDefaultHiddenExternalEvent } from "~/utils/externalEventVisibility";
 // Admin route - protected by global admin middleware
 
 const eventStore = useEventStore();
+const { t, locale } = useI18n();
 
 interface ParsedEvent {
   id: string;
@@ -391,7 +419,15 @@ async function toggleHideFromCalendar(event: ParsedEvent) {
   const action = isCurrentlyHidden ? "show" : "hide";
 
   if (
-    !confirm(`Are you sure you want to ${action} this event from the calendar?`)
+    !confirm(
+      t("admin.externalEvents.confirmToggleHide", {
+        action: t(
+          isCurrentlyHidden
+            ? "admin.externalEvents.actions.show"
+            : "admin.externalEvents.actions.hide",
+        ),
+      }),
+    )
   ) {
     return;
   }
@@ -436,17 +472,24 @@ async function toggleHideFromCalendar(event: ParsedEvent) {
     }
   } catch (err: any) {
     console.error("Failed to toggle hide status:", err);
-    alert(err.data?.message || err.message || "Failed to toggle hide status");
+    alert(
+      err.data?.message ||
+        err.message ||
+        t("admin.externalEvents.errors.toggleHide"),
+    );
   }
 }
 
 function formatDate(dateString: string | undefined): string {
-  if (!dateString) return "N/A";
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  if (!dateString) return t("admin.externalEvents.notAvailable");
+  return new Date(dateString).toLocaleDateString(
+    locale.value === "de" ? "de-DE" : "en-US",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    },
+  );
 }
 
 function getEventTypeFromIcon(icon: string | undefined): string {
@@ -570,14 +613,14 @@ async function saveOverride() {
         method: "PUT",
         body: payload,
       });
-      modalSuccess.value = "Override updated successfully!";
+      modalSuccess.value = t("admin.externalEvents.success.updated");
     } else {
       // Create new override
       await $fetch("/api/admin/event-overrides", {
         method: "POST",
         body: payload,
       });
-      modalSuccess.value = "Override created successfully!";
+      modalSuccess.value = t("admin.externalEvents.success.created");
     }
 
     // Reload overrides and events
@@ -592,7 +635,7 @@ async function saveOverride() {
   } catch (err: any) {
     console.error("Failed to save override:", err);
     modalError.value =
-      err.data?.message || err.message || "Failed to save override";
+      err.data?.message || err.message || t("admin.externalEvents.errors.save");
   } finally {
     saving.value = false;
   }
@@ -601,7 +644,7 @@ async function saveOverride() {
 async function deleteOverride() {
   if (!editingOverride.value) return;
 
-  if (!confirm("Are you sure you want to delete this override?")) {
+  if (!confirm(t("admin.externalEvents.confirmDelete"))) {
     return;
   }
 
@@ -613,7 +656,7 @@ async function deleteOverride() {
       method: "DELETE",
     });
 
-    modalSuccess.value = "Override deleted successfully!";
+    modalSuccess.value = t("admin.externalEvents.success.deleted");
 
     // Reload overrides and events
     await Promise.all([loadOverrides(), loadEvents()]);
@@ -627,7 +670,9 @@ async function deleteOverride() {
   } catch (err: any) {
     console.error("Failed to delete override:", err);
     modalError.value =
-      err.data?.message || err.message || "Failed to delete override";
+      err.data?.message ||
+      err.message ||
+      t("admin.externalEvents.errors.delete");
   } finally {
     saving.value = false;
   }
@@ -662,7 +707,7 @@ onMounted(async () => {
   try {
     await Promise.all([loadEvents(), loadOverrides()]);
   } catch (err: any) {
-    error.value = err.message || "Failed to load events";
+    error.value = err.message || t("admin.externalEvents.errors.load");
   } finally {
     loading.value = false;
   }
