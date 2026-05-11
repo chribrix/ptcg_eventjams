@@ -13,6 +13,7 @@
  */
 import crypto from "crypto";
 import { PrismaClient } from "@prisma/client";
+import { getSupabaseAdminUserByEmail } from "~/server/util/supabaseAdminUserLookup";
 
 const prisma = new PrismaClient();
 
@@ -75,22 +76,26 @@ export default defineEventHandler(async (event) => {
       // Check whether the user exists but has no password (magic-link-only account)
       const serviceKey = config.supabaseServiceKey;
       if (serviceKey) {
-        const adminRes = await fetch(
-          `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
-          {
-            headers: {
-              apikey: serviceKey,
-              Authorization: `Bearer ${serviceKey}`,
+        try {
+          const { createSupabaseServerClient } = await import(
+            "~/server/util/createSupabaseServerClient"
+          );
+          const supabaseAdmin = createSupabaseServerClient(
+            supabaseUrl,
+            serviceKey,
+            {
+              auth: {
+                autoRefreshToken: false,
+                persistSession: false,
+              },
             },
-          },
-        );
-        if (adminRes.ok) {
-          const adminData = await adminRes.json();
-          const users = adminData?.users ?? [];
-          const matchedUser = users.find(
-            (u: any) => u.email?.toLowerCase() === email.toLowerCase(),
+          );
+          const matchedUser = await getSupabaseAdminUserByEmail<any>(
+            supabaseAdmin,
+            email,
           );
           const hasPassword = matchedUser?.app_metadata?.has_password === true;
+
           if (matchedUser && !hasPassword) {
             // User exists but has no password set
             throw createError({
@@ -98,7 +103,7 @@ export default defineEventHandler(async (event) => {
               statusMessage: "no_password_set",
             });
           }
-        }
+        } catch {}
       }
     }
     throw createError({ statusCode: 401, statusMessage: msg });
@@ -107,38 +112,34 @@ export default defineEventHandler(async (event) => {
   try {
     const serviceKey = config.supabaseServiceKey;
     if (serviceKey) {
-      const adminRes = await fetch(
-        `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
-        {
+      const { createSupabaseServerClient } = await import(
+        "~/server/util/createSupabaseServerClient"
+      );
+      const supabaseAdmin = createSupabaseServerClient(supabaseUrl, serviceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      });
+      const matchedUser = await getSupabaseAdminUserByEmail<any>(
+        supabaseAdmin,
+        email,
+      );
+
+      if (matchedUser?.id) {
+        const appMetadata = { ...(matchedUser.app_metadata || {}) };
+        appMetadata.has_password = true;
+        delete appMetadata.pending_password_setup;
+
+        await fetch(`${supabaseUrl}/auth/v1/admin/users/${matchedUser.id}`, {
+          method: "PUT",
           headers: {
+            "Content-Type": "application/json",
             apikey: serviceKey,
             Authorization: `Bearer ${serviceKey}`,
           },
-        },
-      );
-
-      if (adminRes.ok) {
-        const adminData = await adminRes.json();
-        const users = adminData?.users ?? [];
-        const matchedUser = users.find(
-          (u: any) => u.email?.toLowerCase() === email.toLowerCase(),
-        );
-
-        if (matchedUser?.id) {
-          const appMetadata = { ...(matchedUser.app_metadata || {}) };
-          appMetadata.has_password = true;
-          delete appMetadata.pending_password_setup;
-
-          await fetch(`${supabaseUrl}/auth/v1/admin/users/${matchedUser.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: serviceKey,
-              Authorization: `Bearer ${serviceKey}`,
-            },
-            body: JSON.stringify({ app_metadata: appMetadata }),
-          });
-        }
+          body: JSON.stringify({ app_metadata: appMetadata }),
+        });
       }
     }
   } catch {

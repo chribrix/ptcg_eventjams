@@ -9,6 +9,7 @@ import {
   clearAdminPasswordResetState,
   isAdminPasswordResetEnabled,
 } from "~/server/util/passwordSetupState";
+import { getSupabaseAdminUserByEmail } from "~/server/util/supabaseAdminUserLookup";
 
 // Handles the first password setup flow for existing auth users.
 //
@@ -41,52 +42,6 @@ const encryptValue = (value: string, secret: string) => {
     iv: iv.toString("base64"),
     tag: tag.toString("base64"),
   };
-};
-
-const getAuthUserByEmail = async (
-  supabaseAdmin: any,
-  supabaseUrl: string,
-  serviceKey: string,
-  email: string,
-) => {
-  const adminApi = supabaseAdmin.auth.admin as {
-    getUserByEmail?: (email: string) => Promise<{
-      data: { user: AdminUser | null };
-      error: { message?: string } | null;
-    }>;
-  };
-
-  if (typeof adminApi.getUserByEmail === "function") {
-    const { data, error } = await adminApi.getUserByEmail(email);
-    if (error) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: "Failed to load auth user",
-      });
-    }
-    return data.user;
-  }
-
-  const adminRes = await fetch(
-    `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
-    {
-      headers: {
-        apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
-      },
-    },
-  );
-
-  if (!adminRes.ok) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: "Failed to load auth user",
-    });
-  }
-
-  const adminData = await adminRes.json();
-  const users = (adminData?.users ?? []) as AdminUser[];
-  return users.find((user) => user.email?.toLowerCase() === email) || null;
 };
 
 type RequestPasswordSetupDependencies = {
@@ -166,12 +121,19 @@ export const createRequestPasswordSetupHandler = (
 
     const supabaseAdmin = createSupabaseAdminClient(supabaseUrl, serviceKey);
 
-    const authUser = await getAuthUserByEmail(
-      supabaseAdmin,
-      supabaseUrl,
-      serviceKey,
-      normalizedEmail,
-    );
+    let authUser: AdminUser | null = null;
+
+    try {
+      authUser = await getSupabaseAdminUserByEmail<AdminUser>(
+        supabaseAdmin,
+        normalizedEmail,
+      );
+    } catch {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Failed to load auth user",
+      });
+    }
 
     if (!authUser) {
       throw createError({

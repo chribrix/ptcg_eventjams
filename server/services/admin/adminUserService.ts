@@ -123,6 +123,38 @@ async function getSupabaseAdminUser(userId: string) {
   return data.user as SupabaseAdminUser;
 }
 
+async function listAllSupabaseAdminUsers() {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const users: SupabaseAdminUser[] = [];
+  const perPage = 1000;
+  let page = 1;
+
+  while (true) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (error) {
+      throw createError({
+        statusCode: 502,
+        statusMessage: "Failed to load auth users",
+      });
+    }
+
+    const currentUsers = (data?.users || []) as SupabaseAdminUser[];
+    users.push(...currentUsers);
+
+    if (currentUsers.length < perPage) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return users;
+}
+
 async function getLinkedPlayer(userId: string) {
   return prisma.player.findUnique({
     where: { supabaseId: userId },
@@ -140,17 +172,7 @@ async function getLinkedPlayer(userId: string) {
 
 export async function listAdminUsers(rawQuery: unknown) {
   const query = listAdminUsersQuerySchema.parse(rawQuery);
-  const supabaseAdmin = createSupabaseAdminClient();
-  const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-
-  if (error) {
-    throw createError({
-      statusCode: 502,
-      statusMessage: "Failed to load auth users",
-    });
-  }
-
-  const authUsers = ((data?.users || []) as SupabaseAdminUser[]).sort(
+  const authUsers = (await listAllSupabaseAdminUsers()).sort(
     (left, right) => {
       return (right.created_at || "").localeCompare(left.created_at || "");
     },

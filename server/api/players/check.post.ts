@@ -5,6 +5,7 @@ import {
   logValidationError,
   logDatabaseError,
 } from "~/server/util/errorLogger";
+import { getSupabaseAdminUserByEmail } from "~/server/util/supabaseAdminUserLookup";
 
 const checkPlayerSchema = z
   .object({
@@ -18,7 +19,6 @@ type CheckPlayerDependencies = {
   createPrismaClient?: () => PrismaClient;
   getRuntimeConfig?: typeof useRuntimeConfig;
   createSupabaseAdminClient?: (supabaseUrl: string, serviceKey: string) => any;
-  fetchImpl?: typeof fetch;
 };
 
 export const createCheckPlayerHandler = (
@@ -32,7 +32,6 @@ export const createCheckPlayerHandler = (
       createSupabaseServerClient(supabaseUrl, serviceKey, {
         auth: { autoRefreshToken: false, persistSession: false },
       }));
-  const fetchImpl = dependencies.fetchImpl || fetch;
 
   return defineEventHandler(async (event) => {
     try {
@@ -65,45 +64,15 @@ export const createCheckPlayerHandler = (
           serviceKey,
         );
 
-        const adminApi = supabaseAdmin.auth.admin as {
-          getUserByEmail?: (email: string) => Promise<{
-            data: {
-              user: {
-                id: string;
-                email?: string;
-                user_metadata?: unknown;
-              } | null;
-            };
-            error: { message?: string } | null;
-          }>;
-        };
-
-        if (typeof adminApi.getUserByEmail === "function") {
-          const { data, error } = await adminApi.getUserByEmail(targetEmail);
-          if (error || !data.user) return null;
-          return data.user;
+        try {
+          return await getSupabaseAdminUserByEmail<{
+            id: string;
+            email?: string;
+            user_metadata?: unknown;
+          }>(supabaseAdmin, targetEmail);
+        } catch {
+          return null;
         }
-
-        // Fallback: use filter param (works for smaller user bases)
-        const fallbackRes = await fetchImpl(
-          `${supabaseUrl}/auth/v1/admin/users?filter=${encodeURIComponent(targetEmail)}`,
-          {
-            headers: {
-              apikey: serviceKey,
-              Authorization: `Bearer ${serviceKey}`,
-            },
-          },
-        );
-
-        if (!fallbackRes.ok) return null;
-
-        const fallbackData = await fallbackRes.json();
-        const users = fallbackData?.users ?? [];
-        return (
-          users.find(
-            (user: any) => user.email?.toLowerCase() === targetEmail,
-          ) || null
-        );
       };
 
       let authUser: { id: string; user_metadata?: unknown } | null = null;

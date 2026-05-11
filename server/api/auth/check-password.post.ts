@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
+import { getSupabaseAdminUserByEmail } from "~/server/util/supabaseAdminUserLookup";
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
@@ -24,69 +25,16 @@ export default defineEventHandler(async (event) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const adminApi = supabaseAdmin.auth.admin as {
-    getUserByEmail?: (email: string) => Promise<{
-      data: {
-        user: {
-          app_metadata?: {
-            has_password?: boolean;
-            pending_password_setup?: unknown;
-          };
-        } | null;
-      };
-      error: { message?: string } | null;
-    }>;
-  };
-
   let passwordState: "has" | "missing" | "unknown" = "unknown";
 
-  if (typeof adminApi.getUserByEmail === "function") {
-    const { data, error } = await adminApi.getUserByEmail(normalizedEmail);
-
-    if (error) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: "Failed to check password status",
-      });
-    }
-
-    const metadata = data.user?.app_metadata;
-    if (metadata?.has_password === true) {
-      passwordState = "has";
-    } else if (metadata?.pending_password_setup) {
-      passwordState = "missing";
-    } else if (metadata?.has_password === false) {
-      passwordState = "missing";
-    }
-  } else {
-    const res = await fetch(
-      `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(normalizedEmail)}`,
-      {
-        headers: {
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
-        },
-      },
-    );
-
-    if (!res.ok) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: "Failed to check password status",
-      });
-    }
-
-    const data = await res.json();
-    const users = (data?.users ?? []) as Array<{
+  try {
+    const matched = await getSupabaseAdminUserByEmail<{
       email?: string;
       app_metadata?: {
         has_password?: boolean;
         pending_password_setup?: unknown;
       };
-    }>;
-    const matched = users.find(
-      (user) => user.email?.toLowerCase() === normalizedEmail,
-    );
+    }>(supabaseAdmin, normalizedEmail);
 
     if (matched?.app_metadata?.has_password === true) {
       passwordState = "has";
@@ -95,6 +43,11 @@ export default defineEventHandler(async (event) => {
     } else if (matched?.app_metadata?.has_password === false) {
       passwordState = "missing";
     }
+  } catch {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Failed to check password status",
+    });
   }
 
   return {
