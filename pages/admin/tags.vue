@@ -520,27 +520,28 @@ const getSchemaFields = (tagType: TagType) => {
 .page-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--app-text-primary);
   margin-bottom: 0.5rem;
 }
 
 .page-subtitle {
-  color: #6b7280;
+  color: var(--app-text-secondary);
   font-size: 1rem;
 }
 
 .admin-card {
-  background: white;
+  background: var(--app-surface-1);
+  border: 1px solid var(--app-border);
   border-radius: 0.5rem;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--app-shadow-sm);
   margin-bottom: 2rem;
 }
 
 .section-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--app-text-primary);
   margin-bottom: 1.5rem;
 }
 
@@ -553,56 +554,58 @@ const getSchemaFields = (tagType: TagType) => {
 
 .tag-type-card {
   padding: 1.5rem;
-  border: 2px solid #e5e7eb;
+  background: var(--app-surface-2);
+  border: 1px solid var(--app-border);
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .tag-type-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
+  border-color: var(--app-accent);
+  box-shadow: var(--app-shadow-md);
 }
 
 .tag-type-card.active {
-  border-color: #3b82f6;
-  background: #eff6ff;
+  border-color: var(--app-button-blue-border);
+  background: var(--app-feedback-info-bg);
 }
 
 .tag-type-name {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--app-text-primary);
   margin-bottom: 0.5rem;
 }
 
 .tag-type-description {
-  color: #6b7280;
+  color: var(--app-text-secondary);
   font-size: 0.875rem;
   margin-bottom: 1rem;
 }
 
 .tag-type-count {
   font-weight: 600;
-  color: #3b82f6;
+  color: var(--app-accent-soft);
 }
 
 /* Schema Info */
 .schema-info {
-  color: #4b5563;
+  color: var(--app-text-secondary);
 }
 
 .schema-description {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f9fafb;
+  background: var(--app-surface-2);
   border-radius: 0.375rem;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--app-button-blue);
 }
 
 .schema-fields h3 {
   font-size: 1.125rem;
   font-weight: 600;
+  color: var(--app-text-primary);
   margin-bottom: 1rem;
 }
 
@@ -614,9 +617,9 @@ const getSchemaFields = (tagType: TagType) => {
 
 .field-item {
   padding: 1rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--app-border);
   border-radius: 0.375rem;
-  background: #f9fafb;
+  background: var(--app-surface-2);
 }
 
 .field-header {
@@ -628,27 +631,27 @@ const getSchemaFields = (tagType: TagType) => {
 
 .field-name {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--app-text-primary);
   font-family: monospace;
 }
 
 .field-type {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--app-text-muted);
   font-family: monospace;
 }
 
 .field-required {
   font-size: 0.75rem;
   padding: 0.125rem 0.5rem;
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--app-button-amber-bg);
+  color: var(--app-button-amber-text);
   border-radius: 0.25rem;
   font-weight: 500;
 }
 
 .field-description {
-  color: #6b7280;
+  color: var(--app-text-secondary);
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
 }
@@ -663,8 +666,8 @@ const getSchemaFields = (tagType: TagType) => {
 
 .option-badge {
   padding: 0.25rem 0.625rem;
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--app-badge-info-bg);
+  color: var(--app-badge-info-text);
   border-radius: 0.25rem;
   font-family: monospace;
   font-size: 0.75rem;
@@ -672,12 +675,12 @@ const getSchemaFields = (tagType: TagType) => {
 
 /* Tag Display Configuration */
 .config-description {
-  color: #6b7280;
+  color: var(--app-text-secondary);
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f0f9ff;
+  background: var(--app-surface-2);
   border-radius: 0.375rem;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--app-button-blue);
 }
 
 .tag-config-section {
@@ -688,18 +691,18 @@ const getSchemaFields = (tagType: TagType) => {
 
 .config-group {
   padding: 1.5rem;
-  border: 2px solid #e5e7eb;
+  border: 1px solid var(--app-border);
   border-radius: 0.5rem;
-  background: #f9fafb;
+  background: var(--app-surface-2);
 }
 
 .config-group-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--app-text-primary);
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 1px solid var(--app-border);
 }
 
 .tag-checkboxes {
@@ -713,22 +716,22 @@ const getSchemaFields = (tagType: TagType) => {
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--app-surface-1);
+  border: 1px solid var(--app-border);
   border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .tag-checkbox-item:hover:not(.always-shown) {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  border-color: var(--app-accent);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .tag-checkbox-item.always-shown {
   opacity: 0.6;
   cursor: not-allowed;
-  background: #f9fafb;
+  background: var(--app-surface-2);
 }
 
 .tag-checkbox-item input[type="checkbox"] {
@@ -736,6 +739,7 @@ const getSchemaFields = (tagType: TagType) => {
   width: 1.125rem;
   height: 1.125rem;
   cursor: pointer;
+  accent-color: var(--app-button-blue);
 }
 
 .tag-checkbox-item.always-shown input[type="checkbox"] {
@@ -750,12 +754,12 @@ const getSchemaFields = (tagType: TagType) => {
 }
 
 .checkbox-label strong {
-  color: #1f2937;
+  color: var(--app-text-primary);
   font-size: 0.9375rem;
 }
 
 .checkbox-help {
-  color: #6b7280;
+  color: var(--app-text-secondary);
   font-size: 0.8125rem;
 }
 
@@ -768,9 +772,10 @@ const getSchemaFields = (tagType: TagType) => {
 
 .stat-card {
   padding: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--app-surface-2);
+  border: 1px solid var(--app-border);
   border-radius: 0.5rem;
-  color: white;
+  color: var(--app-text-primary);
   text-align: center;
 }
 
@@ -782,7 +787,7 @@ const getSchemaFields = (tagType: TagType) => {
 
 .stat-label {
   font-size: 0.875rem;
-  opacity: 0.9;
+  color: var(--app-text-secondary);
 }
 
 /* Tags Usage */
@@ -795,10 +800,10 @@ const getSchemaFields = (tagType: TagType) => {
 .tag-category h3 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--app-text-primary);
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 1px solid var(--app-border);
 }
 
 .tag-list {
@@ -812,19 +817,19 @@ const getSchemaFields = (tagType: TagType) => {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: #f9fafb;
+  background: var(--app-surface-2);
   border-radius: 0.375rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--app-border);
 }
 
 .tag-name {
   font-weight: 500;
-  color: #374151;
+  color: var(--app-text-primary);
 }
 
 .tag-count {
   font-weight: 600;
-  color: #3b82f6;
+  color: var(--app-accent-soft);
   font-size: 0.875rem;
 }
 </style>

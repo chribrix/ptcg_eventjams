@@ -1,30 +1,28 @@
 <template>
   <AdminPageLayout :title="t('admin.eventsManager.title')">
     <!-- Search bar -->
-    <div class="px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div class="events-manager-toolbar sticky top-0 z-10">
       <input
         v-model="searchTerm"
         type="text"
         :placeholder="t('admin.eventsManager.searchPlaceholder')"
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        class="app-input w-full px-4 py-2"
       />
     </div>
 
     <div class="p-4 pb-24">
       <div v-if="loading" class="flex justify-center items-center py-12">
         <div
-          class="w-8 h-8 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"
+          class="events-manager-spinner"
         ></div>
       </div>
 
       <div v-else>
         <!-- Upcoming Events -->
         <div class="mb-6">
-          <h2
-            class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2"
-          >
+          <h2 class="events-manager-section-title">
             <svg
-              class="w-5 h-5 text-blue-600"
+              class="w-5 h-5 app-icon-accent"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -37,7 +35,7 @@
               />
             </svg>
             {{ t("admin.upcomingEvents") }}
-            <span class="text-sm font-normal text-gray-500"
+            <span class="text-sm font-normal app-text-muted-soft"
               >({{ upcomingEvents.length }})</span
             >
           </h2>
@@ -46,15 +44,13 @@
             <div
               v-for="event in upcomingEvents"
               :key="event.id"
-              class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+              class="events-manager-card"
               @click="openEventDetails(event)"
             >
               <div class="p-4">
                 <div class="flex items-start justify-between gap-3">
                   <div class="flex-1 min-w-0">
-                    <h3
-                      class="font-semibold text-gray-900 mb-1 flex items-center gap-2 flex-wrap"
-                    >
+                    <h3 class="events-manager-card-title">
                       <span>{{ event.name }}</span>
                       <span
                         v-for="tag in getDisplayTags(event.tags, event.tagType)"
@@ -65,7 +61,7 @@
                         {{ tag.value }}
                       </span>
                     </h3>
-                    <div class="flex flex-col gap-1 text-sm text-gray-600">
+                    <div class="flex flex-col gap-1 text-sm app-text-secondary-soft">
                       <div class="flex items-center gap-2">
                         <svg
                           class="w-4 h-4 flex-shrink-0"
@@ -126,7 +122,7 @@
                     </div>
                   </div>
                   <svg
-                    class="w-5 h-5 flex-shrink-0 text-gray-400 mt-1"
+                    class="w-5 h-5 flex-shrink-0 app-icon-muted mt-1"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -142,7 +138,7 @@
               </div>
             </div>
           </div>
-          <div v-else class="text-center py-8 text-gray-500">
+          <div v-else class="text-center py-8 app-text-muted-soft">
             {{ t("admin.eventsManager.noUpcomingEvents") }}
           </div>
         </div>
@@ -153,9 +149,9 @@
             @click="showCompletedEvents = !showCompletedEvents"
             class="w-full text-left mb-3 flex items-center justify-between"
           >
-            <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <h2 class="events-manager-section-title mb-0">
               <svg
-                class="w-5 h-5 text-green-600"
+                class="w-5 h-5 text-[var(--app-button-green)]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -168,12 +164,12 @@
                 />
               </svg>
               {{ t("admin.completedEvents") }}
-              <span class="text-sm font-normal text-gray-500"
+              <span class="text-sm font-normal app-text-muted-soft"
                 >({{ completedEvents.length }})</span
               >
             </h2>
             <svg
-              class="w-5 h-5 text-gray-400 transition-transform duration-200"
+              class="w-5 h-5 app-icon-muted transition-transform duration-200"
               :class="{ 'rotate-180': showCompletedEvents }"
               fill="none"
               stroke="currentColor"
@@ -200,16 +196,16 @@
               <div
                 v-for="event in completedEvents"
                 :key="event.id"
-                class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer opacity-75"
+                class="events-manager-card app-card-interactive-muted"
                 @click="openEventDetails(event)"
               >
                 <div class="p-4">
                   <div class="flex items-start justify-between gap-3">
                     <div class="flex-1 min-w-0">
-                      <h3 class="font-semibold text-gray-700 mb-1">
+                      <h3 class="events-manager-card-title app-text-secondary-soft">
                         {{ event.name }}
                       </h3>
-                      <div class="flex flex-col gap-1 text-sm text-gray-500">
+                      <div class="flex flex-col gap-1 text-sm app-text-muted-soft">
                         <div class="flex items-center gap-2">
                           <svg
                             class="w-4 h-4 flex-shrink-0"
@@ -251,7 +247,7 @@
                       </div>
                     </div>
                     <svg
-                      class="w-5 h-5 flex-shrink-0 text-gray-400 mt-1"
+                      class="w-5 h-5 flex-shrink-0 app-icon-muted mt-1"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -275,7 +271,7 @@
     <!-- Floating Create Button -->
     <button
       @click="createNewEvent"
-      class="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50"
+      class="app-fab-primary fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full"
       :title="t('admin.eventsManager.createNewEvent')"
     >
       <svg
@@ -305,7 +301,7 @@
       >
         <div
           v-if="selectedEvent"
-          class="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4"
+          class="app-overlay fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-4"
           @click="closeEventDetails"
         >
           <Transition
@@ -317,15 +313,15 @@
             leave-to-class="translate-y-full sm:translate-y-0 sm:scale-95"
           >
             <div
-              class="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-xl"
+              class="app-modal-surface flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl sm:max-w-2xl sm:rounded-2xl"
               @click.stop
             >
               <!-- Modal Header -->
               <div
-                class="px-6 py-4 border-b border-gray-200 flex justify-between items-start"
+                class="flex items-start justify-between border-b app-border px-6 py-4"
               >
                 <div class="flex-1">
-                  <h3 class="text-xl font-bold text-gray-900 mb-2">
+                  <h3 class="mb-2 text-xl font-bold app-text-primary">
                     {{ selectedEvent.name }}
                   </h3>
                   <div class="flex items-center gap-2 flex-wrap">
@@ -350,7 +346,7 @@
                 </div>
                 <button
                   @click="closeEventDetails"
-                  class="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                  class="events-manager-close-button"
                 >
                   <svg
                     class="w-6 h-6"
@@ -369,12 +365,12 @@
               </div>
 
               <!-- Modal Body -->
-              <div class="px-6 py-4 overflow-y-auto flex-1">
+              <div class="flex-1 overflow-y-auto px-6 py-4">
                 <div class="space-y-4">
                   <!-- Date and Time -->
                   <div class="flex items-start gap-3">
                     <svg
-                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -387,10 +383,10 @@
                       />
                     </svg>
                     <div>
-                      <p class="text-sm font-medium text-gray-700">
+                      <p class="text-sm font-medium app-text-secondary-soft">
                         {{ t("admin.eventsManager.dateTime") }}
                       </p>
-                      <p class="text-sm text-gray-900">
+                      <p class="text-sm app-text-primary">
                         {{ formatDate(selectedEvent.eventDate) }}
                       </p>
                     </div>
@@ -399,7 +395,7 @@
                   <!-- Venue -->
                   <div class="flex items-start gap-3">
                     <svg
-                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -418,10 +414,10 @@
                       />
                     </svg>
                     <div>
-                      <p class="text-sm font-medium text-gray-700">
+                      <p class="text-sm font-medium app-text-secondary-soft">
                         {{ t("common.venue") }}
                       </p>
-                      <p class="text-sm text-gray-900">
+                      <p class="text-sm app-text-primary">
                         {{ selectedEvent.venue }}
                       </p>
                     </div>
@@ -430,7 +426,7 @@
                   <!-- Participants -->
                   <div class="flex items-start gap-3">
                     <svg
-                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -443,13 +439,13 @@
                       />
                     </svg>
                     <div>
-                      <p class="text-sm font-medium text-gray-700">
+                      <p class="text-sm font-medium app-text-secondary-soft">
                         {{ t("common.participants") }}
                       </p>
-                      <p class="text-sm text-gray-900">
+                      <p class="text-sm app-text-primary">
                         {{ selectedEvent._count?.registrations || 0 }} /
                         {{ selectedEvent.maxParticipants }}
-                        <span class="text-gray-500">
+                        <span class="app-text-muted-soft">
                           {{ t("admin.eventsManager.registered") }}
                         </span>
                       </p>
@@ -462,7 +458,7 @@
                     class="flex items-start gap-3"
                   >
                     <svg
-                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -475,10 +471,10 @@
                       />
                     </svg>
                     <div>
-                      <p class="text-sm font-medium text-gray-700">
+                      <p class="text-sm font-medium app-text-secondary-soft">
                         {{ t("events.participationFee") }}
                       </p>
-                      <p class="text-sm text-gray-900">
+                      <p class="text-sm app-text-primary">
                         {{ selectedEvent.participationFee }}
                       </p>
                     </div>
@@ -490,7 +486,7 @@
                     class="flex items-start gap-3"
                   >
                     <svg
-                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -503,10 +499,10 @@
                       />
                     </svg>
                     <div>
-                      <p class="text-sm font-medium text-gray-700">
+                      <p class="text-sm font-medium app-text-secondary-soft">
                         {{ t("admin.eventsManager.decklistLabel") }}
                       </p>
-                      <p class="text-sm text-gray-900">
+                      <p class="text-sm app-text-primary">
                         {{ t("admin.eventsManager.decklistRequiredAfterRegistration") }}
                       </p>
                     </div>
@@ -518,7 +514,7 @@
                     class="flex items-start gap-3"
                   >
                     <svg
-                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -531,10 +527,10 @@
                       />
                     </svg>
                     <div>
-                      <p class="text-sm font-medium text-gray-700">
+                      <p class="text-sm font-medium app-text-secondary-soft">
                         {{ t("common.description") }}
                       </p>
-                      <p class="text-sm text-gray-900">
+                      <p class="text-sm app-text-primary">
                         {{ selectedEvent.description }}
                       </p>
                     </div>
@@ -543,7 +539,7 @@
                   <!-- Registration Link -->
                   <div class="flex items-start gap-3">
                     <svg
-                      class="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0"
+                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -556,22 +552,24 @@
                       />
                     </svg>
                     <div class="flex-1">
-                      <p class="text-sm font-medium text-gray-700 mb-1">
+                      <p class="mb-1 text-sm font-medium app-text-secondary-soft">
                         {{ t("admin.eventsManager.registrationLink") }}
                       </p>
                       <div class="flex gap-2">
                         <input
                           :value="getRegistrationUrl(selectedEvent.id)"
                           readonly
-                          class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                          class="app-input app-input-readonly flex-1 px-3 py-2 text-sm"
                           @click="($event.target as HTMLInputElement)?.select()"
                         />
                         <button
                           @click="copyRegistrationLink(selectedEvent.id)"
-                          class="px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                          class="app-action-button px-3 py-2 text-sm"
                           :class="{
-                            'bg-green-600 hover:bg-green-700':
+                            'app-action-success':
                               copiedEventId === selectedEvent.id,
+                            'app-action-primary':
+                              copiedEventId !== selectedEvent.id,
                           }"
                         >
                           {{
@@ -588,11 +586,11 @@
 
               <!-- Modal Footer -->
               <div
-                class="px-6 py-4 border-t border-gray-200 flex flex-wrap gap-2"
+                class="flex flex-wrap gap-2 border-t app-border px-6 py-4"
               >
                 <NuxtLink
                   :to="`/events/register/${selectedEvent.id}`"
-                  class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors no-underline"
+                  class="app-action-button app-action-primary flex-1 px-4 py-2 text-sm no-underline"
                   target="_blank"
                 >
                   <svg
@@ -612,7 +610,7 @@
                 </NuxtLink>
                 <button
                   @click="viewRegistrations(selectedEvent)"
-                  class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
+                  class="app-action-button app-action-secondary flex-1 px-4 py-2 text-sm"
                 >
                   <svg
                     class="w-4 h-4"
@@ -636,13 +634,13 @@
                 <template v-if="!selectedEvent.isExternalEvent">
                   <button
                     @click="editEvent(selectedEvent)"
-                    class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors"
+                    class="app-action-button app-action-secondary px-4 py-2 text-sm"
                   >
                     {{ t("common.edit") }}
                   </button>
                   <button
                     @click="deleteEvent(selectedEvent)"
-                    class="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                    class="app-action-button app-action-danger px-4 py-2 text-sm"
                   >
                     {{ t("common.delete") }}
                   </button>
@@ -650,7 +648,7 @@
                 <template v-else>
                   <NuxtLink
                     to="/admin/external-events"
-                    class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors no-underline"
+                    class="app-action-button app-action-secondary px-4 py-2 text-sm no-underline"
                   >
                     {{ t("admin.eventsManager.manageInExternalEvents") }}
                   </NuxtLink>
@@ -1391,10 +1389,10 @@ const formatCompactDate = (dateString: string): string => {
 // Status badge classes
 const getStatusBadgeClass = (status: string): string => {
   const classes = {
-    upcoming: "bg-blue-100 text-blue-800",
-    ongoing: "bg-yellow-100 text-yellow-800",
-    completed: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
+    upcoming: "app-status-upcoming",
+    ongoing: "app-status-ongoing",
+    completed: "app-status-completed",
+    cancelled: "app-status-cancelled",
   };
   return classes[status as keyof typeof classes] || classes.upcoming;
 };
@@ -1933,33 +1931,111 @@ onMounted(() => {
   grid-template-columns: 1fr;
 }
 
+.events-manager-toolbar {
+  padding: 0.75rem 1rem;
+  background: var(--app-surface-0);
+  border: 1px solid var(--app-border);
+  border-radius: 1rem;
+  box-shadow: var(--app-shadow-soft);
+}
+
+.events-manager-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 4px solid var(--app-surface-3);
+  border-top-color: var(--app-accent);
+  border-radius: 9999px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.events-manager-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--app-text-primary);
+}
+
+.events-manager-card {
+  background: var(--app-surface-0);
+  border: 1px solid var(--app-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    border-color 0.2s,
+    opacity 0.2s;
+  box-shadow: var(--app-shadow-soft);
+}
+
+.events-manager-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--app-surface-3);
+  box-shadow: var(--app-shadow-strong);
+}
+
+.events-manager-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  color: var(--app-text-primary);
+}
+
+.events-manager-close-button {
+  padding: 0.25rem;
+  color: var(--app-text-muted);
+  transition: color 0.2s;
+}
+
+.events-manager-close-button:hover {
+  color: var(--app-text-primary);
+}
+
 .event-card {
-  background: white;
+  background: var(--app-surface-0);
   border-radius: 12px;
   padding: 1.5rem;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--app-border);
   transition: all 0.2s;
+  box-shadow: var(--app-shadow-soft);
 }
 
 .event-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-color: var(--app-accent);
+  box-shadow: var(--app-shadow-strong);
 }
 
 .event-card.upcoming {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--app-button-blue);
 }
 
 .event-card.ongoing {
-  border-left: 4px solid #10b981;
+  border-left: 4px solid var(--app-button-amber);
 }
 
 .event-card.completed {
-  border-left: 4px solid #6b7280;
+  border-left: 4px solid var(--app-button-green);
 }
 
 .event-card.cancelled {
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid var(--app-button-red);
   opacity: 0.7;
 }
 
@@ -1983,7 +2059,7 @@ onMounted(() => {
 .event-title-row h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--app-text-primary);
   margin: 0;
 }
 
@@ -1996,23 +2072,23 @@ onMounted(() => {
 }
 
 .status-badge.upcoming {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--app-badge-info-bg);
+  color: var(--app-badge-info-text);
 }
 
 .status-badge.ongoing {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--app-badge-warning-bg);
+  color: var(--app-badge-warning-text);
 }
 
 .status-badge.completed {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--app-badge-success-bg);
+  color: var(--app-badge-success-text);
 }
 
 .status-badge.cancelled {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--app-badge-error-bg);
+  color: var(--app-badge-error-text);
 }
 
 .event-details {
@@ -2022,32 +2098,32 @@ onMounted(() => {
 .event-details p {
   margin: 0.5rem 0;
   font-size: 0.95rem;
-  color: #475569;
+  color: var(--app-text-secondary);
 }
 
 .decklist-required {
-  color: #059669;
+  color: var(--app-button-green);
   font-weight: 500;
 }
 
 .description {
-  color: #64748b;
+  color: var(--app-text-muted);
   font-style: italic;
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--app-border);
 }
 
 .registration-link-section {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--app-border);
 }
 
 .registration-link-label {
   margin: 0 0 0.5rem 0;
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 
 .registration-link-container {
@@ -2058,25 +2134,25 @@ onMounted(() => {
 .registration-link-input {
   flex: 1;
   padding: 0.625rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--app-border);
   border-radius: 6px;
   font-size: 0.875rem;
-  background: #f8fafc;
+  background: var(--app-surface-1);
   font-family: monospace;
-  color: #475569;
+  color: var(--app-text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .registration-link-input:hover {
-  background-color: #eff6ff;
-  border-color: #3b82f6;
+  background-color: var(--app-surface-2);
+  border-color: var(--app-accent);
 }
 
 .registration-link-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  background-color: white;
+  border-color: var(--app-accent);
+  background-color: var(--app-surface-0);
 }
 
 .btn-copy {
@@ -2084,7 +2160,7 @@ onMounted(() => {
 }
 
 .btn-copy.copied {
-  background: #10b981;
+  background: var(--app-button-green);
 }
 
 .event-actions {
@@ -2092,7 +2168,7 @@ onMounted(() => {
   gap: 0.5rem;
   flex-wrap: wrap;
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--app-border);
 }
 
 .btn-small {
@@ -2101,21 +2177,23 @@ onMounted(() => {
 }
 
 .btn-info {
-  background: #0ea5e9;
-  color: white;
+  background: var(--app-button-blue);
+  color: var(--app-button-blue-text);
+  border-color: var(--app-button-blue-border);
 }
 
 .btn-info:hover:not(:disabled) {
-  background: #0284c7;
+  background: var(--app-button-blue-hover, #1d4ed8);
 }
 
 .btn-success {
-  background: #10b981;
-  color: white;
+  background: var(--app-button-green);
+  color: var(--app-button-green-text);
+  border-color: var(--app-button-green-border);
 }
 
 .btn-success:hover:not(:disabled) {
-  background: #059669;
+  background: var(--app-button-green-hover, #047857);
 }
 
 .modal-large {
@@ -2138,19 +2216,20 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 1rem;
-  background: #f8fafc;
+  background: var(--app-surface-1);
   border-radius: 8px;
+  border: 1px solid var(--app-border);
 }
 
 .stat-number {
   font-size: 2rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--app-text-primary);
 }
 
 .stat-label {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--app-text-muted);
   text-align: center;
 }
 
@@ -2167,17 +2246,17 @@ onMounted(() => {
 .registrations-table td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--app-border);
 }
 
 .registrations-table th {
-  background: #f8fafc;
+  background: var(--app-surface-1);
   font-weight: 600;
-  color: #475569;
+  color: var(--app-text-secondary);
 }
 
 .registrations-table tr:hover {
-  background: #f8fafc;
+  background: var(--app-surface-1);
 }
 
 .status-badge {
@@ -2190,23 +2269,23 @@ onMounted(() => {
 }
 
 .status-registered {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: var(--app-badge-info-bg);
+  color: var(--app-badge-info-text);
 }
 
 .status-attended {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: var(--app-badge-success-bg);
+  color: var(--app-badge-success-text);
 }
 
 .status-no-show {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: var(--app-badge-error-bg);
+  color: var(--app-badge-error-text);
 }
 
 .status-cancelled {
-  background-color: #f3f4f6;
-  color: #6b7280;
+  background-color: var(--app-surface-2);
+  color: var(--app-text-secondary);
 }
 
 .decklist-status {
@@ -2218,18 +2297,18 @@ onMounted(() => {
 }
 
 .status-success {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: var(--app-badge-success-bg);
+  color: var(--app-badge-success-text);
 }
 
 .status-warning {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--app-badge-warning-bg);
+  color: var(--app-badge-warning-text);
 }
 
 .status-danger {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: var(--app-badge-error-bg);
+  color: var(--app-badge-error-text);
 }
 
 .action-buttons {
@@ -2241,9 +2320,10 @@ onMounted(() => {
 .decklist-viewer {
   max-height: 60vh;
   overflow-y: auto;
-  background-color: #f9fafb;
+  background-color: var(--app-surface-1);
   border-radius: 0.5rem;
   padding: 1rem;
+  border: 1px solid var(--app-border);
 }
 
 .decklist-content-modal {
@@ -2252,7 +2332,7 @@ onMounted(() => {
   white-space: pre-wrap;
   word-wrap: break-word;
   margin: 0;
-  color: #1f2937;
+  color: var(--app-text-secondary);
 }
 
 .modal-body {
@@ -2261,7 +2341,7 @@ onMounted(() => {
 
 .modal-footer {
   padding: 1rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--app-border);
   display: flex;
   justify-content: flex-start;
   gap: 0.5rem;

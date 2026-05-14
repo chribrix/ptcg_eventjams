@@ -1,6 +1,6 @@
 .event-day-box {
   box-shadow: none !important;
-  border: 2px solid #6366f1 !important;
+  border: 2px solid var(--app-calendar-day-border) !important;
   border-radius: 0.75rem !important;
 }
 
@@ -10,9 +10,9 @@
 }
 
 .has-events .vc-highlight-bg-solid {
-  background-color: #dbeafe !important; /* blue-100 */
+  background-color: var(--app-calendar-highlight-default) !important;
 }
 
 .has-custom-events .vc-highlight-bg-solid {
-  background-color: #e9d5ff !important; /* purple-100 */
+  background-color: var(--app-calendar-highlight-custom) !important;
 }

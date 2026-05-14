@@ -4,7 +4,7 @@
   >
     <div class="text-center mb-8">
       <div
-        class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center"
+        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--app-button-blue-border)] bg-[var(--app-button-blue)]"
       >
         <UserPlusIcon class="w-8 h-8 text-white" />
       </div>
@@ -19,7 +19,7 @@
           :class="
             registerMethod === 'password'
               ? 'app-surface-0 text-white shadow-sm'
-              : 'text-gray-300 hover:text-gray-100'
+              : 'app-text-muted hover:text-white'
           "
           @click="registerMethod = 'password'"
         >
@@ -31,7 +31,7 @@
           :class="
             registerMethod === 'otp'
               ? 'app-surface-0 text-white shadow-sm'
-              : 'text-gray-300 hover:text-gray-100'
+              : 'app-text-muted hover:text-white'
           "
           @click="registerMethod = 'otp'"
         >
@@ -43,13 +43,13 @@
         <div
           class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
         >
-          <EnvelopeIcon class="w-5 h-5 text-gray-400" />
+          <EnvelopeIcon class="w-5 h-5 app-text-muted" />
         </div>
         <input
           v-model="email"
           type="email"
           :placeholder="t('auth.email')"
-          class="w-full pl-10 pr-4 py-3 border app-border app-surface-2 text-white placeholder:text-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+          class="app-input app-input-subtle w-full pl-10 pr-4 py-3"
           required
         />
       </div>
@@ -58,13 +58,13 @@
         <div
           class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
         >
-          <UserIcon class="w-5 h-5 text-gray-400" />
+          <UserIcon class="w-5 h-5 app-text-muted" />
         </div>
         <input
           v-model="name"
           type="text"
           :placeholder="t('auth.name')"
-          class="w-full pl-10 pr-4 py-3 border app-border app-surface-2 text-white placeholder:text-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+          class="app-input app-input-subtle w-full pl-10 pr-4 py-3"
           required
         />
       </div>
@@ -73,7 +73,7 @@
         <div
           class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
         >
-          <IdentificationIcon class="w-5 h-5 text-gray-400" />
+          <IdentificationIcon class="w-5 h-5 app-text-muted" />
         </div>
         <input
           v-model="playerId"
@@ -81,11 +81,11 @@
           inputmode="numeric"
           pattern="\d*"
           :placeholder="t('registration.playerId')"
-          class="w-full pl-10 pr-4 py-3 border app-border app-surface-2 text-white placeholder:text-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+          class="app-input app-input-subtle w-full pl-10 pr-4 py-3"
           @input="validatePlayerId"
         />
       </div>
-      <p class="mt-2 text-xs text-gray-400">
+      <p class="mt-2 text-xs app-text-muted">
         Spieler-ID ist optional. Wenn du noch keine hast, kannst du das Feld
         leer lassen - sie wird vor Ort ausgeteilt.
       </p>
@@ -96,13 +96,13 @@
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             :placeholder="t('registerForm.passwordPlaceholder')"
-            class="w-full px-4 py-3 pr-12 border app-border app-surface-2 text-white placeholder:text-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            class="app-input app-input-subtle w-full px-4 py-3 pr-12"
             required
             minlength="8"
           />
           <button
             type="button"
-            class="absolute inset-y-0 right-3 text-gray-400 hover:text-gray-200"
+            class="absolute inset-y-0 right-3 app-text-muted hover:text-white"
             @click="showPassword = !showPassword"
           >
             {{ showPassword ? "🙈" : "👁️" }}
@@ -114,13 +114,13 @@
             v-model="passwordConfirm"
             :type="showPasswordConfirm ? 'text' : 'password'"
             :placeholder="t('registerForm.passwordConfirmPlaceholder')"
-            class="w-full px-4 py-3 pr-12 border app-border app-surface-2 text-white placeholder:text-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            class="app-input app-input-subtle w-full px-4 py-3 pr-12"
             required
             minlength="8"
           />
           <button
             type="button"
-            class="absolute inset-y-0 right-3 text-gray-400 hover:text-gray-200"
+            class="absolute inset-y-0 right-3 app-text-muted hover:text-white"
             @click="showPasswordConfirm = !showPasswordConfirm"
           >
             {{ showPasswordConfirm ? "🙈" : "👁️" }}
@@ -130,7 +130,7 @@
 
       <template v-else-if="linkSent">
         <div>
-          <label class="block text-sm font-medium text-gray-200 mb-2">{{
+          <label class="mb-2 block text-sm font-medium app-text-secondary">{{
             t("registerForm.otpLabel")
           }}</label>
           <input
@@ -139,7 +139,7 @@
             inputmode="numeric"
             autocomplete="one-time-code"
             maxlength="8"
-            class="w-full px-4 py-3 border app-border app-surface-2 text-white placeholder:text-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+            class="app-input app-input-subtle w-full px-4 py-3"
             :placeholder="t('registerForm.otpPlaceholder')"
             required
           />
@@ -149,7 +149,7 @@
       <button
         type="submit"
         :disabled="isLoading"
-        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-blue-400 disabled:to-purple-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-sky-500/30"
+        class="app-action-button app-action-primary w-full px-6 py-3"
       >
         <div class="flex items-center justify-center space-x-2">
           <svg
@@ -188,7 +188,7 @@
     </form>
 
     <div class="mt-6 text-center">
-      <p class="text-sm text-gray-300">
+      <p class="text-sm app-text-secondary">
         {{ t("registerForm.alreadyHaveAccount") }}
         <NuxtLink
           :to="
@@ -196,7 +196,7 @@
               ? `/login?redirect=${route.query.redirect}`
               : '/login'
           "
-          class="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
+          class="font-semibold text-[var(--app-accent-soft)] transition-colors duration-200 hover:text-white hover:underline"
         >
           {{ t("auth.signIn") }}
         </NuxtLink>
@@ -205,7 +205,7 @@
 
     <div
       v-if="linkSent"
-      class="mt-6 bg-emerald-500/10 border border-emerald-400/40 text-emerald-200 px-4 py-3 rounded-lg relative"
+      class="relative mt-6 rounded-lg app-feedback-success px-4 py-3"
     >
       <div class="flex items-center space-x-2">
         <CheckCircleIcon class="w-5 h-5 text-emerald-300" />
@@ -216,7 +216,7 @@
 
     <div
       v-if="error"
-      class="mt-6 bg-red-500/10 border border-red-400/40 text-red-200 px-4 py-3 rounded-lg relative"
+      class="relative mt-6 rounded-lg app-feedback-danger px-4 py-3"
     >
       <p class="font-medium">{{ error }}</p>
     </div>

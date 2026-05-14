@@ -724,20 +724,20 @@ onMounted(async () => {
 }
 
 .event-card {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--app-surface-0);
+  border: 1px solid var(--app-border);
   border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.2s;
+  box-shadow: var(--app-shadow-soft);
 }
 
 .event-card:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--app-shadow-strong);
 }
 
 .event-card.has-override {
-  border-left: 4px solid #3b82f6;
-  background: #eff6ff;
+  border-left: 4px solid var(--app-button-blue);
 }
 
 .event-header {
@@ -752,7 +752,7 @@ onMounted(async () => {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #1e293b;
+  color: var(--app-text-primary);
 }
 
 .event-meta {
@@ -760,7 +760,7 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 0.75rem;
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 
 .event-date,
@@ -779,8 +779,8 @@ onMounted(async () => {
 
 .override-badge {
   padding: 0.25rem 0.75rem;
-  background: #3b82f6;
-  color: white;
+  background: var(--app-badge-info-bg);
+  color: var(--app-badge-info-text);
   border-radius: 9999px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -788,8 +788,8 @@ onMounted(async () => {
 
 .hidden-badge {
   padding: 0.25rem 0.75rem;
-  background: #ef4444;
-  color: white;
+  background: var(--app-badge-error-bg);
+  color: var(--app-badge-error-text);
   border-radius: 9999px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -797,66 +797,68 @@ onMounted(async () => {
 
 .btn-toggle-hide {
   padding: 0.5rem 1rem;
-  border: 1px solid #e2e8f0;
-  background: white;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-1);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #475569;
+  color: var(--app-text-secondary);
 }
 
 .btn-toggle-hide:hover {
-  border-color: #ef4444;
-  color: #ef4444;
+  border-color: var(--app-button-red-border);
+  color: var(--app-button-red-text);
+  background: var(--app-button-red);
 }
 
 .btn-toggle-hide.btn-hide-active {
-  background: #16a34a;
-  color: white;
-  border-color: #16a34a;
+  background: var(--app-button-green);
+  color: var(--app-button-green-text);
+  border-color: var(--app-button-green-border);
 }
 
 .btn-toggle-hide.btn-hide-active:hover {
-  background: #15803d;
+  background: var(--app-button-green-hover);
 }
 
 .btn-edit {
   padding: 0.5rem 1rem;
-  border: 1px solid #e2e8f0;
-  background: white;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-1);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #475569;
+  color: var(--app-text-secondary);
 }
 
 .btn-edit:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
+  border-color: var(--app-button-blue-border);
+  color: var(--app-button-blue-text);
+  background: var(--app-button-blue);
 }
 
 .btn-edit-active {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
+  background: var(--app-button-blue);
+  color: var(--app-button-blue-text);
+  border-color: var(--app-button-blue-border);
 }
 
 .btn-edit-active:hover {
-  background: #2563eb;
+  background: var(--app-button-blue-hover);
 }
 
 .event-link {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--app-border);
 }
 
 .event-link a {
-  color: #3b82f6;
+  color: var(--app-accent-soft);
   text-decoration: none;
   font-size: 0.875rem;
   word-break: break-all;
@@ -867,16 +869,17 @@ onMounted(async () => {
 }
 
 .event-details {
-  background: #f8fafc;
+  background: var(--app-surface-1);
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
+  border: 1px solid var(--app-border);
 }
 
 .event-details p {
   margin: 0.5rem 0;
   font-size: 0.95rem;
-  color: #475569;
+  color: var(--app-text-secondary);
 }
 
 .override-form {
@@ -884,43 +887,43 @@ onMounted(async () => {
 }
 
 .error-message {
-  color: #ef4444;
+  color: var(--app-feedback-error-text);
   text-align: center;
   padding: 1rem;
 }
 
 .success-message {
-  color: #16a34a;
+  color: var(--app-feedback-success-text);
   text-align: center;
   margin-top: 1rem;
   font-weight: 500;
 }
 
 .btn-save {
-  background: #3b82f6;
-  color: white;
+  background: var(--app-button-blue);
+  color: var(--app-button-blue-text);
 }
 
 .btn-save:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--app-button-blue-hover);
 }
 
 .btn-cancel {
-  background: #e2e8f0;
-  color: #475569;
+  background: var(--app-surface-2);
+  color: var(--app-text-secondary);
 }
 
 .btn-cancel:hover {
-  background: #cbd5e1;
+  background: var(--app-surface-3);
 }
 
 .btn-delete {
-  background: #ef4444;
-  color: white;
+  background: var(--app-button-red);
+  color: var(--app-button-red-text);
   margin-right: auto;
 }
 
 .btn-delete:hover:not(:disabled) {
-  background: #dc2626;
+  background: var(--app-button-red-hover);
 }
 </style>

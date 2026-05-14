@@ -1,21 +1,21 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8">
+  <div class="min-h-screen app-bg-page py-8">
     <div class="max-w-2xl mx-auto px-4">
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-12">
         <div
-          class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"
+          class="h-12 w-12 animate-spin rounded-full border-4 border-[var(--app-button-blue)] border-t-transparent"
         ></div>
       </div>
 
       <!-- Profile Form -->
       <div
         v-else
-        class="bg-white shadow-xl rounded-2xl p-8 border border-gray-100"
+        class="app-surface-0 shadow-xl rounded-2xl p-8 border app-border"
       >
         <div class="text-center mb-8">
           <div
-            class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center"
+            class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--app-button-blue-border)] bg-[var(--app-button-blue)]"
           >
             <svg
               class="w-8 h-8 text-white"
@@ -31,14 +31,14 @@
               />
             </svg>
           </div>
-          <h1 class="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
-          <p class="text-gray-600">Update your personal information</p>
+          <h1 class="mb-2 text-3xl font-bold app-text-primary">My Profile</h1>
+          <p class="app-text-secondary">Update your personal information</p>
         </div>
 
         <form @submit.prevent="updateProfile" class="space-y-6">
           <!-- Player ID -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="mb-2 block text-sm font-medium app-text-secondary">
               Player ID *
             </label>
             <input
@@ -46,48 +46,48 @@
               type="text"
               inputmode="numeric"
               pattern="\d*"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+              class="app-input w-full px-4 py-3"
               required
               @input="validatePlayerId"
             />
-            <p class="text-xs text-gray-500 mt-1">Your Pokemon TCG player ID</p>
+            <p class="mt-1 text-xs app-text-muted">Your Pokemon TCG player ID</p>
           </div>
 
           <!-- Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="mb-2 block text-sm font-medium app-text-secondary">
               Full Name *
             </label>
             <input
               v-model="form.name"
               type="text"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+              class="app-input w-full px-4 py-3"
               required
             />
           </div>
 
           <!-- Email -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="mb-2 block text-sm font-medium app-text-secondary">
               Email *
             </label>
             <input
               v-model="form.email"
               type="email"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+              class="app-input w-full px-4 py-3"
               required
             />
           </div>
 
           <!-- Birth Date -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
+            <label class="mb-2 block text-sm font-medium app-text-secondary">
               Birth Date
             </label>
             <input
               v-model="birthDateInput"
               type="date"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+              class="app-input w-full px-4 py-3"
             />
           </div>
 
@@ -96,24 +96,24 @@
             <button
               type="submit"
               :disabled="saving"
-              class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-blue-400 disabled:to-purple-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-blue-200"
+              class="app-action-button app-action-primary flex-1 px-6 py-3"
             >
               <span v-if="saving">Saving...</span>
               <span v-else>Save Changes</span>
             </button>
             <NuxtLink
               to="/"
-              class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-semibold"
+              class="app-action-button app-action-secondary px-6 py-3"
             >
               Cancel
             </NuxtLink>
           </div>
         </form>
 
-        <div class="mt-6 pt-6 border-t border-gray-100">
+        <div class="mt-6 border-t app-border pt-6">
           <NuxtLink
             to="/set-password?return=/profile"
-            class="inline-flex items-center justify-center px-4 py-3 border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 transition font-semibold"
+            class="app-action-button app-action-secondary px-4 py-3"
           >
             Change Password
           </NuxtLink>
@@ -122,11 +122,11 @@
         <!-- Success Message -->
         <div
           v-if="successMessage"
-          class="mt-6 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg"
+          class="mt-6 app-feedback-success rounded-lg px-4 py-3"
         >
           <div class="flex items-center space-x-2">
             <svg
-              class="w-5 h-5 text-emerald-600"
+              class="h-5 w-5 text-[var(--app-feedback-success-text)]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -145,7 +145,7 @@
         <!-- Error Message -->
         <div
           v-if="errorMessage"
-          class="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg"
+          class="mt-6 app-feedback-danger rounded-lg px-4 py-3"
         >
           <p class="font-medium">{{ errorMessage }}</p>
         </div>

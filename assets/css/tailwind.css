@@ -6,17 +6,93 @@
 
 @layer base {
   :root {
-    --app-bg-page: #36393f;
-    --app-surface-0: #2f3136;
-    --app-surface-1: #36393f;
-    --app-surface-2: #40444b;
-    --app-surface-3: #4f545c;
-    --app-border: #202225;
-    --app-accent: #5865f2;
-    --app-accent-soft: #c9cdfb;
+    --app-bg-page: #131313;
+    --app-surface-0: #181c22;
+    --app-surface-1: #1c2026;
+    --app-surface-2: #262a31;
+    --app-surface-3: #31353c;
+    --app-surface-elevated: #353941;
+    --app-surface-deep: #111317;
+    --app-border: #4d4635;
+    --app-accent: #d96d9b;
+    --app-accent-soft: #ffb0cd;
     --app-text-primary: #ffffff;
-    --app-text-secondary: #d1d5db;
-    --app-text-muted: #9ca3af;
+    --app-text-secondary: #dfe2ec;
+    --app-text-muted: #d1c5af;
+    --app-shadow-strong: 0 18px 40px rgba(0, 0, 0, 0.28);
+    --app-shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.2);
+    --app-button-blue: #b7527f;
+    --app-button-blue-hover: #993966;
+    --app-button-blue-border: #7e2350;
+    --app-button-blue-text: #fffbff;
+    --app-button-green: #00818c;
+    --app-button-green-hover: #00666f;
+    --app-button-green-border: #004f56;
+    --app-button-green-text: #f6feff;
+    --app-button-red: #d83737;
+    --app-button-red-hover: #b51b22;
+    --app-button-red-border: #73000b;
+    --app-button-red-text: #fffbff;
+    --app-button-amber: #7f7663;
+    --app-button-amber-hover: #595240;
+    --app-button-amber-border: #4d4635;
+    --app-button-amber-text: #fffbff;
+    --app-focus-ring: rgba(217, 109, 155, 0.24);
+    --app-feedback-success-bg: rgba(0, 129, 140, 0.16);
+    --app-feedback-success-border: rgba(115, 213, 225, 0.38);
+    --app-feedback-success-text: #b7f2f8;
+    --app-feedback-error-bg: rgba(216, 55, 55, 0.16);
+    --app-feedback-error-border: rgba(255, 84, 80, 0.38);
+    --app-feedback-error-text: #ffd2ce;
+    --app-feedback-info-bg: rgba(183, 82, 127, 0.16);
+    --app-feedback-info-border: rgba(255, 176, 205, 0.38);
+    --app-feedback-info-text: #ffd9e4;
+    --app-chip-info-bg: #359ea9;
+    --app-chip-info-text: #f6feff;
+    --app-focus-ring-strong: rgba(217, 109, 155, 0.5);
+    --app-focus-ring-soft: rgba(217, 109, 155, 0.16);
+    --app-divider-subtle: rgba(255, 255, 255, 0.06);
+    --app-overlay-strong: rgba(0, 0, 0, 0.58);
+    --app-badge-success-bg: rgba(0, 129, 140, 0.18);
+    --app-badge-success-text: #b7f2f8;
+    --app-badge-warning-bg: rgba(127, 118, 99, 0.24);
+    --app-badge-warning-text: #f3e8c8;
+    --app-badge-error-bg: rgba(216, 55, 55, 0.18);
+    --app-badge-error-text: #ffd2ce;
+    --app-badge-info-bg: rgba(183, 82, 127, 0.18);
+    --app-badge-info-text: #ffd9e4;
+    --app-calendar-highlight-default: #dbeafe;
+    --app-calendar-highlight-custom: #e9d5ff;
+    --app-calendar-day-border: #6366f1;
+    --app-scrollbar-track: #edf2f7;
+    --app-scrollbar-thumb: #9ca3af;
+    --app-scrollbar-thumb-hover: #6b7280;
+    --app-scrollbar-prominent-track: #ecfdf5;
+    --app-scrollbar-prominent-track-border: #d1fae5;
+    --app-scrollbar-prominent-thumb: #059669;
+    --app-scrollbar-prominent-thumb-border: #ecfdf5;
+    --app-scrollbar-prominent-thumb-hover: #047857;
+    --app-scrollbar-prominent-thumb-active: #0f766e;
+    --app-event-cup-bg: #bbf7d0;
+    --app-event-cup-text: #166534;
+    --app-event-challenge-bg: #bfdbfe;
+    --app-event-challenge-text: #1e40af;
+    --app-event-local-bg: #e0f2fe;
+    --app-event-local-text: #075985;
+    --app-event-custom-bg: #fed7aa;
+    --app-event-custom-text: #9a3412;
+    --app-event-prerelease-bg: #fef3c7;
+    --app-event-prerelease-text: #92400e;
+    --app-event-showdown-bg: #ddd6fe;
+    --app-event-showdown-text: #5b21b6;
+    --app-event-riftbound-bg: #fee2e2;
+    --app-event-riftbound-text: #991b1b;
+    --app-event-generic-bg: #e5e7eb;
+    --app-event-generic-text: #374151;
+    --app-event-format-bg: #cffafe;
+    --app-event-format-text: #155e75;
+    --app-event-host-bg: #f3e8ff;
+    --app-event-host-text: #6b21a8;
   }
 }
 
@@ -70,14 +146,319 @@ html {
     border: 1px solid var(--app-border);
     background: var(--app-surface-2);
     color: var(--app-text-secondary);
+    box-shadow: var(--app-shadow-soft);
   }
 
   .app-btn-neutral:hover {
     background: var(--app-surface-3);
+    color: var(--app-text-primary);
+  }
+
+  .app-btn-primary {
+    border: 1px solid var(--app-button-blue-border);
+    background: var(--app-button-blue);
+    color: var(--app-button-blue-text, var(--app-text-primary));
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-btn-primary:hover {
+    background: var(--app-button-blue-hover);
+  }
+
+  .app-btn-success {
+    border: 1px solid var(--app-button-green-border);
+    background: var(--app-button-green);
+    color: var(--app-button-green-text, var(--app-text-primary));
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-btn-success:hover {
+    background: var(--app-button-green-hover);
+  }
+
+  .app-btn-danger {
+    border: 1px solid var(--app-button-red-border);
+    background: var(--app-button-red);
+    color: var(--app-button-red-text, var(--app-text-primary));
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-btn-danger:hover {
+    background: var(--app-button-red-hover);
+  }
+
+  .app-btn-warning {
+    border: 1px solid var(--app-button-amber-border);
+    background: var(--app-button-amber);
+    color: var(--app-button-amber-text, var(--app-text-primary));
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-btn-warning:hover {
+    background: var(--app-button-amber-hover);
+  }
+
+  .app-panel {
+    background: var(--app-surface-0);
+    border: 1px solid var(--app-border);
+    color: var(--app-text-primary);
+    box-shadow: var(--app-shadow-strong);
+  }
+
+  .app-panel-muted {
+    background: var(--app-surface-1);
+    border: 1px solid var(--app-border);
+    color: var(--app-text-primary);
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-card-interactive {
+    background: var(--app-surface-0);
+    border: 1px solid var(--app-border);
+    color: var(--app-text-primary);
+    box-shadow: var(--app-shadow-soft);
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s,
+      border-color 0.2s,
+      opacity 0.2s;
+  }
+
+  .app-card-interactive:hover {
+    transform: translateY(-1px);
+    border-color: var(--app-surface-3);
+    box-shadow: var(--app-shadow-strong);
+  }
+
+  .app-card-interactive-muted {
+    opacity: 0.78;
+  }
+
+  .app-overlay {
+    background: var(--app-overlay-strong);
+    backdrop-filter: blur(4px);
+  }
+
+  .app-modal-surface {
+    background: var(--app-surface-0);
+    border: 1px solid var(--app-border);
+    color: var(--app-text-primary);
+    box-shadow: var(--app-shadow-strong);
+  }
+
+  .app-input {
+    width: 100%;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface-2);
+    color: var(--app-text-primary);
+    border-radius: 0.75rem;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s,
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .app-input::placeholder {
+    color: color-mix(in srgb, var(--app-text-muted) 78%, transparent);
+  }
+
+  .app-input:focus {
+    outline: none;
+    border-color: var(--app-accent);
+    box-shadow: 0 0 0 3px var(--app-focus-ring);
+  }
+
+  .app-input-subtle {
+    color: var(--app-text-secondary);
+  }
+
+  .app-input-readonly {
+    background: var(--app-surface-1);
+    color: var(--app-text-secondary);
+    font-family: monospace;
+    cursor: pointer;
+  }
+
+  .app-input-readonly:hover {
+    border-color: var(--app-accent);
+    background: var(--app-surface-2);
+  }
+
+  .app-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    transition:
+      background-color 0.2s,
+      border-color 0.2s,
+      color 0.2s,
+      transform 0.2s,
+      box-shadow 0.2s;
+  }
+
+  .app-action-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .app-action-button:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+
+  .app-action-primary {
+    border: 1px solid var(--app-button-blue-border);
+    background: var(--app-button-blue);
+    color: var(--app-button-blue-text, var(--app-text-primary));
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-action-primary:hover:not(:disabled) {
+    background: var(--app-button-blue-hover);
+  }
+
+  .app-action-secondary {
+    border: 1px solid var(--app-border);
+    background: var(--app-surface-2);
+    color: var(--app-text-secondary);
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-action-secondary:hover:not(:disabled) {
+    background: var(--app-surface-3);
+    color: var(--app-text-primary);
+  }
+
+  .app-action-success {
+    border: 1px solid var(--app-button-green-border);
+    background: var(--app-button-green);
+    color: var(--app-button-green-text, var(--app-text-primary));
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-action-success:hover:not(:disabled) {
+    background: var(--app-button-green-hover);
+  }
+
+  .app-action-danger {
+    border: 1px solid var(--app-button-red-border);
+    background: var(--app-button-red);
+    color: var(--app-button-red-text, var(--app-text-primary));
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-action-danger:hover:not(:disabled) {
+    background: var(--app-button-red-hover);
+  }
+
+  .app-feedback-info {
+    border: 1px solid var(--app-feedback-info-border);
+    background: var(--app-feedback-info-bg);
+    color: var(--app-feedback-info-text);
+  }
+
+  .app-feedback-success {
+    border: 1px solid var(--app-feedback-success-border);
+    background: var(--app-feedback-success-bg);
+    color: var(--app-feedback-success-text);
+  }
+
+  .app-feedback-danger {
+    border: 1px solid var(--app-feedback-error-border);
+    background: var(--app-feedback-error-bg);
+    color: var(--app-feedback-error-text);
+  }
+
+  .app-text-strong {
+    color: var(--app-text-primary);
+  }
+
+  .app-text-secondary-soft {
+    color: var(--app-text-secondary);
+  }
+
+  .app-text-muted-soft {
+    color: var(--app-text-muted);
+  }
+
+  .app-icon-muted {
+    color: var(--app-text-muted);
+  }
+
+  .app-icon-accent {
+    color: var(--app-accent-soft);
+  }
+
+  .app-status-upcoming {
+    background: var(--app-badge-info-bg);
+    color: var(--app-badge-info-text);
+  }
+
+  .app-status-ongoing {
+    background: var(--app-badge-warning-bg);
+    color: var(--app-badge-warning-text);
+  }
+
+  .app-status-completed {
+    background: var(--app-badge-success-bg);
+    color: var(--app-badge-success-text);
+  }
+
+  .app-status-cancelled {
+    background: var(--app-badge-error-bg);
+    color: var(--app-badge-error-text);
+  }
+
+  .app-status-neutral {
+    background: color-mix(in srgb, var(--app-surface-3) 65%, transparent);
+    color: var(--app-text-secondary);
+  }
+
+  .app-toolbar-surface {
+    background: var(--app-surface-0);
+    border: 1px solid var(--app-border);
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-fab-primary {
+    border: 1px solid var(--app-button-blue-border);
+    background: var(--app-button-blue);
+    color: var(--app-button-blue-text, var(--app-text-primary));
+    box-shadow: var(--app-shadow-strong);
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s,
+      background-color 0.2s;
+  }
+
+  .app-fab-primary:hover {
+    transform: translateY(-1px);
+    background: var(--app-button-blue-hover);
+    box-shadow: var(--app-shadow-strong);
+  }
+
+  .app-strength-weak {
+    background: var(--app-button-red);
+  }
+
+  .app-strength-medium {
+    background: var(--app-button-amber);
+  }
+
+  .app-strength-strong {
+    background: var(--app-button-blue);
+  }
+
+  .app-strength-very-strong {
+    background: var(--app-button-green);
   }
 
   .app-badge-accent {
-    background: rgb(88 101 242 / 20%);
+    background: var(--app-badge-info-bg);
     color: var(--app-accent-soft);
   }
 
@@ -95,69 +476,72 @@ html {
   }
 
   .event-type-badge.type-league_cup {
-    background-color: #bbf7d0;
-    color: #166534;
+    background-color: var(--app-event-cup-bg);
+    color: var(--app-event-cup-text);
   }
 
   .event-type-badge.type-league_challenge {
-    background-color: #bfdbfe;
-    color: #1e40af;
+    background-color: var(--app-event-challenge-bg);
+    color: var(--app-event-challenge-text);
   }
 
   .event-type-badge.type-local_tournament,
   .event-type-badge.type-store_tournament {
-    background-color: #e0f2fe;
-    color: #075985;
+    background-color: var(--app-event-local-bg);
+    color: var(--app-event-local-text);
   }
 
   .event-type-badge.type-premier_challenge,
   .event-type-badge.type-special_event,
   .event-type-badge.type-custom {
-    background-color: #fed7aa;
-    color: #9a3412;
+    background-color: var(--app-event-custom-bg);
+    color: var(--app-event-custom-text);
   }
 
   .event-type-badge.type-prerelease,
   .event-type-badge.type-pre_release {
-    background-color: #fef3c7;
-    color: #92400e;
+    background-color: var(--app-event-prerelease-bg);
+    color: var(--app-event-prerelease-text);
   }
 
   .event-type-badge.type-midseason_showdown,
   .event-type-badge.type-regional_championships {
-    background-color: #ddd6fe;
-    color: #5b21b6;
+    background-color: var(--app-event-showdown-bg);
+    color: var(--app-event-showdown-text);
   }
 
   .event-type-badge.game-pokemon {
-    background-color: #fef3c7;
-    color: #92400e;
+    background-color: var(--app-event-prerelease-bg);
+    color: var(--app-event-prerelease-text);
   }
 
   .event-type-badge.game-riftbound {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: var(--app-event-riftbound-bg);
+    color: var(--app-event-riftbound-text);
   }
 
   .event-type-badge.game-generic {
-    background-color: #e5e7eb;
-    color: #374151;
+    background-color: var(--app-event-generic-bg);
+    color: var(--app-event-generic-text);
   }
 
   .event-type-badge.format-standard,
   .event-type-badge.format-expanded,
   .event-type-badge.format-unlimited {
-    background-color: #cffafe;
-    color: #155e75;
+    background-color: var(--app-event-format-bg);
+    color: var(--app-event-format-text);
   }
 
   .event-type-badge.host {
-    background-color: #f3e8ff;
-    color: #6b21a8;
+    background-color: var(--app-event-host-bg);
+    color: var(--app-event-host-text);
   }
 
   .btn {
-    @apply px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600;
+    @apply px-4 py-2 rounded;
+    border: 1px solid var(--app-border);
+    background: var(--app-surface-2);
+    color: var(--app-text-primary);
   }
   
   /* Custom scrollbar styles */
@@ -170,23 +554,25 @@ html {
   }
   
   .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-gray-100 rounded-full;
+    background: var(--app-scrollbar-track);
+    border-radius: 9999px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full;
+    background: var(--app-scrollbar-thumb);
+    border-radius: 9999px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400;
+    background: var(--app-scrollbar-thumb-hover);
   }
   
   .scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
-    @apply bg-gray-300;
+    background: var(--app-scrollbar-thumb);
   }
   
   .scrollbar-track-gray-100::-webkit-scrollbar-track {
-    @apply bg-gray-100;
+    background: var(--app-scrollbar-track);
   }
   
   /* More prominent scrollbar for registration list */
@@ -199,18 +585,22 @@ html {
   }
   
   .scrollbar-prominent::-webkit-scrollbar-track {
-    @apply bg-emerald-50 rounded-lg border border-emerald-100;
+    background: var(--app-scrollbar-prominent-track);
+    border-radius: 0.5rem;
+    border: 1px solid var(--app-scrollbar-prominent-track-border);
   }
   
   .scrollbar-prominent::-webkit-scrollbar-thumb {
-    @apply bg-emerald-600 rounded-lg border-2 border-emerald-50;
+    background: var(--app-scrollbar-prominent-thumb);
+    border-radius: 0.5rem;
+    border: 2px solid var(--app-scrollbar-prominent-thumb-border);
   }
   
   .scrollbar-prominent::-webkit-scrollbar-thumb:hover {
-    @apply bg-emerald-700;
+    background: var(--app-scrollbar-prominent-thumb-hover);
   }
   
   .scrollbar-prominent::-webkit-scrollbar-thumb:active {
-    @apply bg-teal-700;
+    background: var(--app-scrollbar-prominent-thumb-active);
   }
 }

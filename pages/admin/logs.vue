@@ -4,13 +4,13 @@
     subtitle="Error logs, authentication events, and system information"
   >
     <template #actions>
-      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <div class="relative w-full sm:w-auto">
+      <div class="logs-toolbar">
+        <div class="logs-search-wrap">
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search errors, users, messages..."
-            class="px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-80"
+            class="form-input logs-search-input"
             @keyup.enter="refreshLogs"
           />
           <button
@@ -19,7 +19,7 @@
               searchQuery = '';
               refreshLogs();
             "
-            class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            class="logs-search-clear"
             title="Clear search"
           >
             <XMarkIcon class="w-5 h-5" />
@@ -27,7 +27,7 @@
         </div>
         <select
           v-model="selectedErrorType"
-          class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-full sm:w-auto sm:min-w-[200px]"
+          class="form-input logs-filter-select"
           @change="refreshLogs"
         >
           <option value="">All Logs</option>
@@ -60,7 +60,7 @@
         </select>
         <button
           @click="refreshLogs"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
+          class="btn btn-primary logs-toolbar-button"
           title="Refresh logs"
         >
           <svg
@@ -84,7 +84,7 @@
             selectedErrorType = '';
             refreshLogs();
           "
-          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors w-full sm:w-auto"
+          class="btn btn-secondary logs-toolbar-button"
           title="Clear all filters"
         >
           Clear Filters
@@ -92,30 +92,32 @@
       </div>
     </template>
 
-    <div v-if="loading" class="text-center py-12">
-      <div
-        class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
-      ></div>
-      <p class="mt-2 text-gray-600">Loading error logs...</p>
+    <div v-if="loading" class="admin-card">
+      <div class="text-center py-12">
+        <div
+          class="logs-loading-spinner inline-block h-8 w-8 animate-spin rounded-full border-b-2"
+        ></div>
+        <p class="mt-2 logs-muted-text">Loading error logs...</p>
+      </div>
     </div>
 
     <div
       v-else-if="error"
-      class="bg-red-50 border border-red-200 rounded-lg p-4"
+      class="admin-card logs-error-card"
     >
-      <p class="text-red-800">{{ error }}</p>
+      <p>{{ error }}</p>
     </div>
 
     <div v-else>
       <!-- Active Filters Display -->
       <div
         v-if="searchQuery || selectedErrorType"
-        class="mb-4 flex items-center gap-2 flex-wrap"
+        class="admin-card logs-active-filters"
       >
-        <span class="text-sm text-gray-600 font-medium">Active filters:</span>
+        <span class="logs-filter-label">Active filters:</span>
         <span
           v-if="searchQuery"
-          class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+          class="logs-filter-chip logs-filter-chip-search"
         >
           Search: "{{ searchQuery }}"
           <button
@@ -123,14 +125,14 @@
               searchQuery = '';
               refreshLogs();
             "
-            class="hover:text-blue-900"
+            class="logs-filter-chip-button"
           >
             <XMarkIcon class="w-4 h-4" />
           </button>
         </span>
         <span
           v-if="selectedErrorType"
-          class="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
+          class="logs-filter-chip logs-filter-chip-type"
         >
           Type: {{ getFilterLabel(selectedErrorType) }}
           <button
@@ -138,7 +140,7 @@
               selectedErrorType = '';
               refreshLogs();
             "
-            class="hover:text-purple-900"
+            class="logs-filter-chip-button"
           >
             <XMarkIcon class="w-4 h-4" />
           </button>
@@ -146,93 +148,93 @@
       </div>
 
       <!-- Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow p-4">
-          <div class="text-sm text-gray-600">Total Errors</div>
-          <div class="text-2xl font-bold text-gray-900">
+      <div class="stats-grid logs-stats-grid mb-6">
+        <div class="stat-card">
+          <div class="stat-content">
+          <div class="logs-stat-label">Total Errors</div>
+          <div class="text-2xl font-bold logs-stat-value">
             {{ pagination.total }}
           </div>
+          </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <div class="text-sm text-gray-600">Session Errors</div>
-          <div class="text-2xl font-bold text-orange-600">
+        <div class="stat-card">
+          <div class="stat-content">
+          <div class="logs-stat-label">Session Errors</div>
+          <div class="logs-stat-value logs-stat-value-warning text-2xl font-bold">
             {{
               errorLogs.filter((l) => l.errorType.includes("session")).length
             }}
           </div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <div class="text-sm text-gray-600">Token Errors</div>
-          <div class="text-2xl font-bold text-red-600">
-            {{ errorLogs.filter((l) => l.errorType.includes("token")).length }}
           </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <div class="text-sm text-gray-600">Today's Errors</div>
-          <div class="text-2xl font-bold text-blue-600">
+        <div class="stat-card">
+          <div class="stat-content">
+          <div class="logs-stat-label">Token Errors</div>
+          <div class="logs-stat-value logs-stat-value-error text-2xl font-bold">
+            {{ errorLogs.filter((l) => l.errorType.includes("token")).length }}
+          </div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-content">
+          <div class="logs-stat-label">Today's Errors</div>
+          <div class="logs-stat-value logs-stat-value-info text-2xl font-bold">
             {{ errorLogs.filter((l) => isToday(new Date(l.createdAt))).length }}
+          </div>
           </div>
         </div>
       </div>
 
       <!-- Error Logs Table - Desktop -->
-      <div class="hidden md:block bg-white rounded-lg shadow overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+      <div class="hidden md:block admin-card logs-table-card">
+        <div class="admin-table-wrapper">
+          <table class="admin-table">
+            <thead>
               <tr>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th>
                   Timestamp
                 </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th>
                   Log Type
                 </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th>
                   User
                 </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th>
                   Message
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody>
               <tr
                 v-for="log in errorLogs"
                 :key="log.id"
-                class="hover:bg-gray-50 cursor-pointer transition-colors"
+                class="logs-table-row"
                 @click="selectedLog = log"
               >
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="logs-cell-nowrap">
                   {{ formatDate(log.createdAt) }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="logs-cell-nowrap">
                   <span
                     :class="[
-                      'px-2 py-1 text-xs font-medium rounded-full',
+                      'logs-type-pill',
                       getErrorTypeColor(log.errorType),
                     ]"
                   >
                     {{ log.errorType }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                  <div v-if="log.userEmail" class="text-gray-900">
+                <td class="logs-cell-nowrap">
+                  <div v-if="log.userEmail" class="logs-primary-text">
                     {{ log.userEmail }}
                   </div>
-                  <div v-if="log.userId" class="text-gray-500 text-xs">
+                  <div v-if="log.userId" class="logs-secondary-text">
                     {{ log.userId.slice(0, 8) }}...
                   </div>
-                  <div v-else class="text-gray-400 italic">Anonymous</div>
+                  <div v-else class="logs-secondary-text italic">Anonymous</div>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-900 max-w-md truncate">
+                <td class="logs-message-cell">
                   {{ log.errorMessage }}
                 </td>
               </tr>
@@ -246,7 +248,7 @@
         <div
           v-for="log in errorLogs"
           :key="log.id"
-          class="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition-shadow"
+          class="admin-card log-mobile-card"
           @click="selectedLog = log"
         >
           <div class="flex items-start justify-between gap-2 mb-2">
@@ -258,17 +260,17 @@
             >
               {{ log.errorType }}
             </span>
-            <span class="text-xs text-gray-500 whitespace-nowrap">
+            <span class="logs-secondary-text whitespace-nowrap">
               {{ formatDate(log.createdAt).split(",")[0] }}
             </span>
           </div>
           <div class="mb-2">
-            <div v-if="log.userEmail" class="text-sm font-medium text-gray-900">
+            <div v-if="log.userEmail" class="logs-primary-text">
               {{ log.userEmail }}
             </div>
-            <div v-else class="text-sm text-gray-400 italic">Anonymous</div>
+            <div v-else class="logs-secondary-text italic">Anonymous</div>
           </div>
-          <p class="text-sm text-gray-700 line-clamp-2">
+          <p class="logs-card-message line-clamp-2">
             {{ log.errorMessage }}
           </p>
         </div>
@@ -284,10 +286,10 @@
           :key="page"
           @click="currentPage = page"
           :class="[
-            'px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm',
+            'logs-pagination-page',
             currentPage === page
-              ? 'bg-blue-600 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-100',
+              ? 'logs-pagination-page-active'
+              : 'logs-pagination-page-idle',
           ]"
         >
           {{ page }}
@@ -298,19 +300,19 @@
     <!-- Detail Modal -->
     <div
       v-if="selectedLog"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4"
+      class="modal-overlay"
       @click="selectedLog = null"
     >
       <div
-        class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        class="modal-content logs-detail-modal"
         @click.stop
       >
         <div class="p-4 sm:p-6">
           <div class="flex items-start justify-between mb-4">
-            <h2 class="text-xl font-bold text-gray-900">Error Details</h2>
+            <h2 class="text-xl font-bold logs-modal-title">Error Details</h2>
             <button
               @click="selectedLog = null"
-              class="text-gray-400 hover:text-gray-600"
+              class="logs-modal-close"
             >
               <XMarkIcon class="w-6 h-6" />
             </button>
@@ -318,20 +320,18 @@
 
           <div class="space-y-4">
             <div>
-              <label class="text-sm font-medium text-gray-700">Timestamp</label>
-              <p class="mt-1 text-gray-900">
+              <label class="logs-modal-label">Timestamp</label>
+              <p class="mt-1 logs-primary-text">
                 {{ formatDate(selectedLog.createdAt) }}
               </p>
             </div>
 
             <div>
-              <label class="text-sm font-medium text-gray-700"
-                >Error Type</label
-              >
+              <label class="logs-modal-label">Error Type</label>
               <p class="mt-1">
                 <span
                   :class="[
-                    'px-2 py-1 text-xs font-medium rounded-full',
+                    'logs-type-pill',
                     getErrorTypeColor(selectedLog.errorType),
                   ]"
                 >
@@ -341,76 +341,59 @@
             </div>
 
             <div>
-              <label class="text-sm font-medium text-gray-700">User</label>
-              <p class="mt-1 text-gray-900">
+              <label class="logs-modal-label">User</label>
+              <p class="mt-1 logs-primary-text">
                 {{ selectedLog.userEmail || "Anonymous" }}
               </p>
-              <p v-if="selectedLog.userId" class="text-sm text-gray-500">
+              <p v-if="selectedLog.userId" class="logs-secondary-text">
                 ID: {{ selectedLog.userId }}
               </p>
             </div>
 
             <div>
-              <label class="text-sm font-medium text-gray-700"
-                >Error Message</label
-              >
-              <p class="mt-1 text-gray-900">{{ selectedLog.errorMessage }}</p>
+              <label class="logs-modal-label">Error Message</label>
+              <p class="mt-1 logs-primary-text">{{ selectedLog.errorMessage }}</p>
             </div>
 
             <div v-if="selectedLog.url">
-              <label class="text-sm font-medium text-gray-700">URL</label>
-              <p class="mt-1 text-blue-600 text-sm break-all">
+              <label class="logs-modal-label">URL</label>
+              <p class="mt-1 logs-link-text break-all">
                 {{ selectedLog.url }}
               </p>
             </div>
 
             <div v-if="selectedLog.userAgent">
-              <label class="text-sm font-medium text-gray-700"
-                >User Agent</label
-              >
-              <p class="mt-1 text-gray-700 text-sm">
+              <label class="logs-modal-label">User Agent</label>
+              <p class="mt-1 logs-muted-text text-sm">
                 {{ selectedLog.userAgent }}
               </p>
             </div>
 
             <div v-if="selectedLog.ipAddress">
-              <label class="text-sm font-medium text-gray-700"
-                >IP Address</label
-              >
-              <p class="mt-1 text-gray-900">{{ selectedLog.ipAddress }}</p>
+              <label class="logs-modal-label">IP Address</label>
+              <p class="mt-1 logs-primary-text">{{ selectedLog.ipAddress }}</p>
             </div>
 
             <div v-if="selectedLog.cookies">
-              <label class="text-sm font-medium text-gray-700">Cookies</label>
-              <pre
-                class="mt-1 p-3 bg-gray-50 rounded text-xs overflow-x-auto"
-                >{{ JSON.stringify(selectedLog.cookies, null, 2) }}</pre
-              >
+              <label class="logs-modal-label">Cookies</label>
+              <pre class="logs-code-block">{{ JSON.stringify(selectedLog.cookies, null, 2) }}</pre>
             </div>
 
             <div v-if="selectedLog.metadata">
-              <label class="text-sm font-medium text-gray-700">Metadata</label>
-              <pre
-                class="mt-1 p-3 bg-gray-50 rounded text-xs overflow-x-auto"
-                >{{ JSON.stringify(selectedLog.metadata, null, 2) }}</pre
-              >
+              <label class="logs-modal-label">Metadata</label>
+              <pre class="logs-code-block">{{ JSON.stringify(selectedLog.metadata, null, 2) }}</pre>
             </div>
 
             <div v-if="selectedLog.stackTrace">
-              <label class="text-sm font-medium text-gray-700"
-                >Stack Trace</label
-              >
-              <pre
-                class="mt-1 p-3 bg-gray-50 rounded text-xs overflow-x-auto font-mono"
-                >{{ selectedLog.stackTrace }}</pre
-              >
+              <label class="logs-modal-label">Stack Trace</label>
+              <pre class="logs-code-block logs-code-block-mono">{{ selectedLog.stackTrace }}</pre>
             </div>
           </div>
 
           <div class="mt-6 flex justify-end">
             <button
               @click="selectedLog = null"
-              class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              class="btn btn-secondary"
             >
               Close
             </button>
@@ -498,30 +481,30 @@ const isToday = (date: Date) => {
 
 const getErrorTypeColor = (errorType: string) => {
   if (errorType.includes("account_mismatch")) {
-    return "bg-yellow-100 text-yellow-800 border border-yellow-300";
+    return "logs-type-warning";
   } else if (errorType.includes("session")) {
-    return "bg-orange-100 text-orange-800";
+    return "logs-type-warning";
   } else if (errorType.includes("token")) {
-    return "bg-red-100 text-red-800";
+    return "logs-type-error";
   } else if (errorType.includes("deployment")) {
-    return "bg-blue-100 text-blue-800";
+    return "logs-type-info";
   } else if (
     errorType.includes("magic_login") ||
     errorType.includes("registration")
   ) {
-    return "bg-purple-100 text-purple-800";
+    return "logs-type-accent";
   } else if (errorType.includes("webhook")) {
-    return "bg-indigo-100 text-indigo-800";
+    return "logs-type-accent";
   } else if (errorType.includes("database")) {
-    return "bg-red-100 text-red-800";
+    return "logs-type-error";
   } else if (errorType.includes("validation")) {
-    return "bg-yellow-100 text-yellow-800";
+    return "logs-type-warning";
   } else if (errorType.includes("auth")) {
-    return "bg-orange-100 text-orange-800";
+    return "logs-type-warning";
   } else if (errorType.startsWith("info_")) {
-    return "bg-green-100 text-green-800";
+    return "logs-type-success";
   }
-  return "bg-gray-100 text-gray-800";
+  return "logs-type-neutral";
 };
 
 const getFilterLabel = (filterValue: string) => {
@@ -552,3 +535,278 @@ onMounted(() => {
   fetchLogs();
 });
 </script>
+
+<style scoped>
+@import "~/assets/css/admin-shared.css";
+
+.logs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.logs-search-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.logs-search-input {
+  padding-right: 2.75rem;
+}
+
+.logs-search-clear {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--app-text-muted);
+}
+
+.logs-search-clear:hover,
+.logs-modal-close:hover {
+  color: var(--app-text-primary);
+}
+
+.logs-filter-select {
+  min-width: 220px;
+}
+
+.logs-toolbar-button {
+  justify-content: center;
+}
+
+.logs-muted-text {
+  color: var(--app-text-muted);
+}
+
+.logs-primary-text {
+  color: var(--app-text-primary);
+  font-weight: 500;
+}
+
+.logs-secondary-text {
+  color: var(--app-text-muted);
+  font-size: 0.8rem;
+}
+
+.logs-error-card {
+  border-color: var(--app-feedback-error-border);
+  background: var(--app-feedback-error-bg);
+  color: var(--app-feedback-error-text);
+}
+
+.logs-active-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.logs-filter-label {
+  color: var(--app-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.logs-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.logs-filter-chip-search {
+  background: var(--app-badge-info-bg);
+  color: var(--app-badge-info-text);
+}
+
+.logs-filter-chip-type {
+  background: var(--app-surface-2);
+  color: var(--app-text-secondary);
+}
+
+.logs-filter-chip-button {
+  color: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.logs-filter-chip-button:hover {
+  opacity: 0.8;
+}
+
+.logs-stats-grid {
+  gap: 1rem;
+}
+
+.logs-stat-label {
+  color: var(--app-text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+.logs-stat-value {
+  color: var(--app-text-primary);
+}
+
+.logs-stat-value-info {
+  color: var(--app-badge-info-text);
+}
+
+.logs-stat-value-warning {
+  color: var(--app-badge-warning-text);
+}
+
+.logs-stat-value-error {
+  color: var(--app-badge-error-text);
+}
+
+.logs-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.logs-table-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.logs-cell-nowrap {
+  white-space: nowrap;
+}
+
+.logs-message-cell {
+  max-width: 32rem;
+  color: var(--app-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logs-type-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.logs-type-info {
+  background: var(--app-badge-info-bg);
+  color: var(--app-badge-info-text);
+}
+
+.logs-type-success {
+  background: var(--app-badge-success-bg);
+  color: var(--app-badge-success-text);
+}
+
+.logs-type-warning {
+  background: var(--app-badge-warning-bg);
+  color: var(--app-badge-warning-text);
+}
+
+.logs-type-error {
+  background: var(--app-badge-error-bg);
+  color: var(--app-badge-error-text);
+}
+
+.logs-type-accent {
+  background: var(--app-surface-2);
+  color: var(--app-accent-soft);
+}
+
+.logs-type-neutral {
+  background: var(--app-surface-2);
+  color: var(--app-text-secondary);
+}
+
+.log-mobile-card {
+  cursor: pointer;
+}
+
+.logs-card-message {
+  color: var(--app-text-secondary);
+  font-size: 0.9rem;
+}
+
+.logs-pagination-page {
+  padding: 0.55rem 0.9rem;
+  border-radius: 10px;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  border: 1px solid var(--app-border);
+}
+
+.logs-pagination-page-active {
+  background: var(--app-surface-3);
+  color: var(--app-text-primary);
+  border-color: var(--app-accent);
+}
+
+.logs-pagination-page-idle {
+  background: var(--app-surface-1);
+  color: var(--app-text-secondary);
+}
+
+.logs-pagination-page-idle:hover {
+  background: var(--app-surface-2);
+}
+
+.logs-detail-modal {
+  max-width: 64rem;
+}
+
+.logs-modal-title {
+  color: var(--app-text-primary);
+}
+
+.logs-modal-close {
+  color: var(--app-text-muted);
+}
+
+.logs-modal-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--app-text-muted);
+}
+
+.logs-link-text {
+  color: var(--app-accent-soft);
+  font-size: 0.9rem;
+}
+
+.logs-code-block {
+  margin-top: 0.35rem;
+  padding: 0.9rem 1rem;
+  background: var(--app-surface-0);
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  color: var(--app-text-secondary);
+  font-size: 0.78rem;
+  overflow-x: auto;
+}
+
+.logs-loading-spinner {
+  border-color: var(--app-border);
+  border-bottom-color: var(--app-button-blue);
+}
+
+.logs-code-block-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@media (min-width: 640px) {
+  .logs-search-wrap {
+    width: auto;
+    min-width: 320px;
+  }
+}
+</style>

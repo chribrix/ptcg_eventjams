@@ -145,14 +145,14 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#36393f] overflow-x-hidden">
+  <div class="min-h-screen app-bg-page overflow-x-hidden">
     <!-- Impersonation Banner -->
     <ImpersonationBanner />
 
     <!-- Toast Container -->
     <ToastContainer />
 
-    <header class="bg-[#2f3136] shadow-lg border-b border-[#202225]">
+    <header class="app-surface-0 shadow-lg border-b app-border">
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16 md:h-20">
           <!-- Left side - Logo/Brand -->
@@ -175,7 +175,7 @@ const { t } = useI18n();
             <!-- Mobile Menu Button -->
             <button
               @click="mobileMenuOpen = !mobileMenuOpen"
-              class="md:hidden p-2 rounded-lg text-gray-300 hover:bg-[#40444b] focus:outline-none focus:ring-2 focus:ring-gray-500"
+              class="md:hidden p-2 rounded-lg text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               <div class="w-5 h-5 flex flex-col justify-center items-center">
                 <span
@@ -228,9 +228,7 @@ const { t } = useI18n();
               </NuxtLink>
 
               <!-- Language Switcher & Auth Actions -->
-              <div
-                class="flex items-center space-x-3 ml-4 pl-4 border-l border-[#202225]"
-              >
+              <div class="flex items-center space-x-3 ml-4 pl-4 border-l app-border">
                 <!-- Language Switcher -->
                 <LanguageSwitcher />
 
@@ -250,14 +248,14 @@ const { t } = useI18n();
         <!-- Mobile Navigation Panel -->
         <div
           v-if="mobileMenuOpen"
-          class="md:hidden border-t border-[#202225] bg-[#2f3136]"
+          class="md:hidden border-t app-border app-surface-0"
         >
           <div class="px-4 pt-2 pb-3 space-y-1">
             <!-- Mobile Navigation Links -->
             <NuxtLink
               to="/eventlist"
               @click="mobileMenuOpen = false"
-              class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
+              class="flex items-center space-x-3 px-3 py-2 text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] rounded-lg"
             >
               <CalendarDaysIcon class="w-5 h-5" />
               <span>{{ t("nav.events") }}</span>
@@ -267,7 +265,7 @@ const { t } = useI18n();
               v-if="myTournamentTarget"
               :to="myTournamentTarget"
               @click="mobileMenuOpen = false"
-              class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
+              class="flex items-center space-x-3 px-3 py-2 text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] rounded-lg"
             >
               <DocumentIcon class="w-5 h-5" />
               <span>{{ t("nav.myTournaments") }}</span>
@@ -278,7 +276,7 @@ const { t } = useI18n();
             <NuxtLink
               to="/dashboard"
               @click="mobileMenuOpen = false"
-              class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
+              class="flex items-center space-x-3 px-3 py-2 text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] rounded-lg"
             >
               <ChartBarIcon class="w-5 h-5" />
               <span>{{ t("nav.dashboard") }}</span>
@@ -289,7 +287,7 @@ const { t } = useI18n();
               <NuxtLink
                 to="/admin"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] rounded-lg"
               >
                 <CogIcon class="w-5 h-5" />
                 <span>{{ t("nav.admin") }}</span>
@@ -302,7 +300,7 @@ const { t } = useI18n();
             </div>
 
             <!-- Authentication buttons -->
-            <div class="border-t border-[#202225] pt-3 mt-3">
+            <div class="border-t app-border pt-3 mt-3">
               <NuxtLink
                 v-if="userName"
                 to="/profile"
@@ -317,7 +315,7 @@ const { t } = useI18n();
               <button
                 v-if="userName"
                 @click="handleMobileLogout"
-                class="flex items-center space-x-3 w-full px-3 py-2 text-red-400 hover:bg-[#40444b] rounded-lg"
+                class="flex items-center space-x-3 w-full px-3 py-2 text-red-300 hover:bg-[var(--app-surface-2)] rounded-lg"
               >
                 <ArrowRightOnRectangleIcon class="w-5 h-5" />
                 <span>{{ t("nav.logout") }}</span>
@@ -328,7 +326,7 @@ const { t } = useI18n();
                 v-else
                 to="/login"
                 @click="mobileMenuOpen = false"
-                class="flex items-center space-x-3 px-3 py-2 text-gray-300 hover:bg-[#40444b] rounded-lg"
+                class="flex items-center space-x-3 px-3 py-2 text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] rounded-lg"
               >
                 <UserPlusIcon class="w-5 h-5" />
                 <span>{{ t("nav.login") }}</span>
@@ -345,8 +343,8 @@ const { t } = useI18n();
       </div>
       <div
         v-else
-        class="container mx-auto px-4 sm:px-6 lg:px-8"
-        :class="route.path === '/' ? 'pt-1 pb-6' : 'py-6'"
+        class="container mx-auto"
+        :class="route.path === '/' ? 'px-2 pt-1 pb-6 sm:px-6 lg:px-8' : 'px-4 py-6 sm:px-6 lg:px-8'"
       >
         <slot />
       </div>
@@ -367,15 +365,15 @@ const { t } = useI18n();
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #d1d5db;
+  color: var(--app-text-secondary);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   text-decoration: none;
 }
 
 .nav-link:hover {
-  color: #ffffff;
-  background-color: #40444b;
+  color: var(--app-text-primary);
+  background-color: var(--app-surface-2);
 }
 
 .nav-link-primary {
@@ -385,25 +383,26 @@ const { t } = useI18n();
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: white;
-  background: linear-gradient(to right, #1f2937, #111827);
+  color: var(--app-text-primary);
+  background: var(--app-surface-elevated);
+  border: 1px solid var(--app-border);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   text-decoration: none;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: var(--app-shadow-soft);
 }
 
 .nav-link-primary:hover {
-  background: linear-gradient(to right, #111827, #000000);
+  background: var(--app-surface-deep);
 }
 
 .router-link-exact-active.nav-link {
-  color: #ffffff;
-  background-color: #40444b;
+  color: var(--app-text-primary);
+  background-color: var(--app-surface-2);
 }
 
 .router-link-exact-active.nav-link-primary {
-  background: linear-gradient(to right, #111827, #000000);
+  background: var(--app-surface-deep);
 }
 
 .admin-menu-button {
@@ -413,22 +412,22 @@ const { t } = useI18n();
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #d1d5db;
-  background-color: #40444b;
-  border: 1px solid #202225;
+  color: var(--app-text-secondary);
+  background-color: var(--app-surface-2);
+  border: 1px solid var(--app-border);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
 }
 
 .admin-link:hover {
-  background-color: #40444b;
-  color: #ffffff;
+  background-color: var(--app-surface-3);
+  color: var(--app-text-primary);
 }
 
 .admin-link:focus {
   outline: none;
-  background-color: #40444b;
+  background-color: var(--app-surface-3);
 }
 
 /* Auth button styles */
@@ -439,17 +438,17 @@ const { t } = useI18n();
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: white;
-  background-color: #ef4444;
+  color: var(--app-button-red-text);
+  background-color: var(--app-button-red);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: var(--app-shadow-soft);
   border: none;
   cursor: pointer;
 }
 
 .logout-button:hover {
-  background-color: #dc2626;
+  background-color: var(--app-button-red-hover);
 }
 
 .signin-button {
@@ -459,18 +458,19 @@ const { t } = useI18n();
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: white;
-  background: linear-gradient(to right, #1f2937, #111827);
+  color: var(--app-text-primary);
+  background: var(--app-surface-elevated);
+  border: 1px solid var(--app-border);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: var(--app-shadow-soft);
   text-decoration: none;
   transform: translateY(0);
 }
 
 .signin-button:hover {
-  background: linear-gradient(to right, #111827, #000000);
-  transform: translateY(-1px) scale(1.05);
+  background: var(--app-surface-deep);
+  transform: translateY(-1px);
 }
 
 .nav-count {
@@ -483,8 +483,8 @@ const { t } = useI18n();
   justify-content: center;
   font-size: 0.7rem;
   font-weight: 700;
-  background: #0ea5e9;
-  color: #ffffff;
+  background: var(--app-chip-info-bg);
+  color: var(--app-chip-info-text);
   padding: 0 0.3rem;
 }
 
@@ -552,6 +552,6 @@ const { t } = useI18n();
 .logout-button:focus,
 .signin-button:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 2px var(--app-focus-ring-strong);
 }
 </style>

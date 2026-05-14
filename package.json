@@ -8,6 +8,7 @@
     "dev:sync-prisma": "prisma generate && prisma migrate deploy",
     "dev:safe": "npm run dev:sync-prisma && nuxt dev",
     "generate": "nuxt generate",
+    "audit:colors": "node scripts/audit-color-centralization.js",
     "migrate:supabase-ids": "tsx scripts/migrate-supabase-ids.ts",
     "migrate:supabase-ids:dry-run": "tsx scripts/migrate-supabase-ids.ts --dry-run",
     "migrate:supabase-ids:once": "tsx scripts/migrate-supabase-ids.ts --once",

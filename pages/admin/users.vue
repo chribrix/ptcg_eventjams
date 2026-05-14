@@ -523,16 +523,16 @@ await loadUsers();
 
 .results-summary {
   margin: 0;
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 
 .primary-cell {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--app-text-primary);
 }
 
 .secondary-cell {
-  color: #64748b;
+  color: var(--app-text-muted);
   font-size: 0.875rem;
 }
 
@@ -547,18 +547,18 @@ await loadUsers();
 }
 
 .badge-admin {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--app-badge-info-bg);
+  color: var(--app-badge-info-text);
 }
 
 .badge-user {
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--app-surface-2);
+  color: var(--app-text-secondary);
 }
 
 .badge-muted {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--app-surface-1);
+  color: var(--app-text-muted);
 }
 
 .feedback {
@@ -568,13 +568,13 @@ await loadUsers();
 }
 
 .feedback.success {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--app-feedback-success-bg);
+  color: var(--app-feedback-success-text);
 }
 
 .feedback.error {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--app-feedback-error-bg);
+  color: var(--app-feedback-error-text);
 }
 
 .pagination {
@@ -586,14 +586,15 @@ await loadUsers();
 }
 
 .pagination-status {
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 
 .pagination-btn {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--app-border);
   border-radius: 9999px;
   padding: 0.5rem 1rem;
-  background: white;
+  background: var(--app-surface-1);
+  color: var(--app-text-secondary);
 }
 
 .pagination-btn:disabled {
@@ -625,24 +626,24 @@ await loadUsers();
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 
 .detail-list dd {
   margin: 0.15rem 0 0;
-  color: #0f172a;
+  color: var(--app-text-primary);
 }
 
 .detail-panel,
 .metadata-block {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--app-surface-0);
+  border: 1px solid var(--app-border);
   border-radius: 12px;
   padding: 1rem;
 }
 
 .detail-panel.empty {
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 
 .metadata-grid {

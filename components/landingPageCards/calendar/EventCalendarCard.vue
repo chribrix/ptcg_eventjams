@@ -13,9 +13,9 @@
         >
           <div class="flex flex-col items-center gap-3">
             <div
-              class="w-8 h-8 border-4 border-gray-300 border-t-gray-800 rounded-full animate-spin"
+              class="calendar-loading-spinner h-8 w-8 animate-spin rounded-full border-4"
             ></div>
-            <span class="text-sm text-gray-300 font-medium"
+            <span class="app-text-secondary-soft text-sm font-medium"
               >{{ t("calendarCard.loadingEvents") }}</span
             >
           </div>
@@ -37,7 +37,7 @@
           </template>
           <template #fallback>
             <div
-              class="w-full h-64 flex items-center justify-center text-gray-400"
+              class="app-text-muted-soft flex h-64 w-full items-center justify-center"
             >
               <div class="animate-pulse">
                 {{ t("calendarCard.loadingCalendar") }}
@@ -58,7 +58,7 @@
               >
                 <ChevronLeftIcon class="h-5 w-5" />
               </button>
-              <p class="text-sm font-semibold text-white lg:text-2xl">
+              <p class="app-text-strong text-sm font-semibold lg:text-2xl">
                 {{ customCalendarMonthLabel }}
               </p>
               <button
@@ -74,7 +74,7 @@
               <span
                 v-for="weekday in miniCalendarWeekdays"
                 :key="weekday"
-                class="text-center text-[10px] font-semibold text-gray-400 lg:text-base"
+                class="app-text-muted-soft text-center text-[10px] font-semibold lg:text-base"
               >
                 {{ weekday }}
               </span>
@@ -84,13 +84,19 @@
                 v-for="day in customCalendarDays"
                 :key="day.key"
                 type="button"
-                class="h-8 rounded-md border text-[11px] font-semibold lg:h-12 lg:rounded-lg lg:text-base"
+                class="flex h-8 flex-col items-center justify-center rounded-md border text-[11px] font-semibold leading-none lg:h-12 lg:rounded-lg lg:text-base"
                 :class="customCalendarDayClass(day)"
                 :style="customCalendarDayStyle(day)"
                 :disabled="!day.isInteractive"
                 @click="day.dateKey ? onCustomDayClick(day.dateKey) : null"
               >
-                {{ day.label }}
+                <span
+                  v-if="day.showMonthMarker"
+                  class="mb-0.5 text-[8px] font-bold uppercase tracking-[0.12em] opacity-75 lg:text-[10px]"
+                >
+                  {{ day.monthMarker }}
+                </span>
+                <span>{{ day.label }}</span>
               </button>
             </div>
           </div>
@@ -155,7 +161,7 @@
             class="fixed bottom-4 right-4 z-50 max-w-md"
           >
             <div
-              class="app-surface-2 text-white rounded-lg shadow-2xl p-4 flex items-start gap-3"
+              class="app-surface-2 app-text-strong rounded-lg p-4 shadow-2xl flex items-start gap-3"
             >
               <div class="flex-shrink-0">
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -170,11 +176,11 @@
                 <p class="font-semibold">
                   {{ t("calendarCard.noEventsTitle") }}
                 </p>
-                <p class="text-sm text-gray-200 mt-1">{{ noEventsMessage }}</p>
+                <p class="app-text-secondary-soft mt-1 text-sm">{{ noEventsMessage }}</p>
               </div>
               <button
                 @click="showNoEventsToast = false"
-                class="flex-shrink-0 text-gray-300 hover:text-white transition-colors"
+                class="calendar-toast-close app-text-secondary-soft flex-shrink-0 transition-colors"
               >
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path
@@ -384,7 +390,15 @@ type CustomCalendarDay = {
   isInteractive: boolean;
   dateKey: string | null;
   types: CalendarEventType[];
+  showMonthMarker: boolean;
+  monthMarker: string;
 };
+
+const formatMonthMarker = (date: Date) =>
+  date.toLocaleDateString(
+    locale.value.startsWith("de") ? "de-DE" : "en-US",
+    { month: "short" },
+  ).replace(".", "");
 
 const customCalendarDays = computed<CustomCalendarDay[]>(() => {
   const monthStart = customCalendarMonthStart.value;
@@ -416,6 +430,8 @@ const customCalendarDays = computed<CustomCalendarDay[]>(() => {
       isInteractive,
       dateKey: isInteractive && dayEvents.length ? dateKey : null,
       types: [...new Set(dayEvents.map((event) => event.type))],
+      showMonthMarker: date.getDate() === 1,
+      monthMarker: formatMonthMarker(date),
     });
   }
 
@@ -489,12 +505,12 @@ const onCustomDayClick = (dateKey: string) => {
 
 const customCalendarDayClass = (day: CustomCalendarDay) => {
   if (!day.isInteractive) {
-    return "border-transparent bg-transparent text-gray-600";
+    return "border-transparent bg-transparent app-text-muted-soft";
   }
   if (!day.types.length) {
-    return "app-border app-surface-0 text-gray-300";
+    return "app-border app-surface-0 app-text-secondary-soft";
   }
-  return "border-transparent text-white";
+  return "border-transparent app-text-strong";
 };
 
 const customCalendarDayStyle = (day: CustomCalendarDay) => {
@@ -642,23 +658,33 @@ function startOfMonth(date: Date): Date {
 }
 
 .calendar-mobile-register-cta {
-  color: #ffffff;
-  background: linear-gradient(to right, #2563eb, #7c3aed);
-  box-shadow: 0 6px 18px -8px rgba(37, 99, 235, 0.6);
+  color: var(--app-button-blue-text);
+  background: var(--app-button-blue);
+  border: 1px solid var(--app-button-blue-border);
+  box-shadow: var(--app-shadow-soft);
 }
 
 .calendar-mobile-register-cta:hover {
-  filter: brightness(1.06);
+  background: var(--app-button-blue-hover);
 }
 
 .calendar-mobile-login-cta {
-  color: #e5e7eb;
-  border: 1px solid #4b5563;
-  background: #374151;
+  color: var(--app-text-secondary);
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-1);
 }
 
 .calendar-mobile-login-cta:hover {
-  background: #4b5563;
+  background: var(--app-surface-2);
+}
+
+.calendar-loading-spinner {
+  border-color: var(--app-surface-3);
+  border-top-color: var(--app-button-blue);
+}
+
+.calendar-toast-close:hover {
+  color: var(--app-text-primary);
 }
 
 .calendar-wrapper :deep(.vc-container) {

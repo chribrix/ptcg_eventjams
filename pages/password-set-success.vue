@@ -1,13 +1,13 @@
 <template>
   <div class="min-h-screen flex items-center justify-center px-4">
     <div
-      class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md border border-gray-100 text-center"
+      class="app-surface-0 shadow-xl rounded-2xl p-8 w-full max-w-md border app-border text-center"
     >
       <div
-        class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--app-button-green-border)] bg-[var(--app-button-green)]"
       >
         <svg
-          class="w-8 h-8 text-green-600"
+          class="w-8 h-8 text-[var(--app-button-green-text)]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -21,16 +21,16 @@
         </svg>
       </div>
 
-      <h1 class="text-2xl font-bold text-gray-900 mb-2">
+      <h1 class="mb-2 text-2xl font-bold app-text-primary">
         Passwort erfolgreich gesetzt
       </h1>
-      <p class="text-gray-600 mb-6">
+      <p class="mb-6 app-text-secondary">
         Du kannst dich jetzt mit deinem neuen Passwort einloggen.
       </p>
 
       <NuxtLink
         to="/login"
-        class="inline-flex w-full justify-center py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+        class="app-action-button app-action-primary inline-flex w-full justify-center py-3"
       >
         Zum Login
       </NuxtLink>

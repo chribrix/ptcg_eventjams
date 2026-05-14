@@ -134,8 +134,20 @@ watch(
 
 <style scoped>
 .admin-page-layout {
+  --admin-surface: var(--app-surface-0);
+  --admin-surface-strong: var(--app-surface-elevated);
+  --admin-surface-soft: var(--app-surface-2);
+  --admin-border: var(--app-border);
+  --admin-border-strong: var(--app-surface-3);
+  --admin-text: var(--app-text-secondary);
+  --admin-text-strong: var(--app-text-primary);
+  --admin-muted: var(--app-text-muted);
+  --admin-muted-soft: var(--app-text-secondary);
+  --admin-accent: var(--app-accent);
+  --admin-hover: var(--app-surface-2);
+  --admin-input: var(--app-surface-1);
   min-height: 100vh;
-  background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+  background: var(--app-bg-page);
   padding: 0.75rem;
 }
 
@@ -178,16 +190,17 @@ watch(
 .mobile-nav-toggle {
   padding: 0.9rem 1rem;
   border-radius: 14px;
-  background: #0f172a;
-  color: #f8fafc;
+  background: var(--admin-surface-strong);
+  color: var(--admin-text-strong);
   font-weight: 600;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--app-shadow-soft);
 }
 
 .mobile-sidebar-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.48);
+  background: var(--app-overlay-strong);
   backdrop-filter: blur(2px);
   z-index: 40;
 }
@@ -198,11 +211,12 @@ watch(
   left: 0;
   bottom: 0;
   width: min(82vw, 320px);
-  background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
-  color: #e2e8f0;
+  background: var(--app-surface-0);
+  color: var(--app-text-secondary);
   padding: 1rem;
   z-index: 50;
-  box-shadow: 24px 0 60px rgba(15, 23, 42, 0.35);
+  box-shadow: var(--app-shadow-strong);
+  border-right: 1px solid var(--admin-border);
 }
 
 .mobile-sidebar-header {
@@ -216,8 +230,8 @@ watch(
 .mobile-sidebar-close {
   padding: 0.5rem;
   border-radius: 10px;
-  background: rgba(148, 163, 184, 0.12);
-  color: #e2e8f0;
+  background: var(--app-surface-2);
+  color: var(--app-text-secondary);
 }
 
 .admin-page-header {
@@ -226,10 +240,10 @@ watch(
   gap: 1rem;
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--admin-surface);
   border-radius: 24px;
-  box-shadow: 0 20px 45px rgba(148, 163, 184, 0.14);
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: var(--app-shadow-strong);
+  border: 1px solid var(--admin-border);
 }
 
 .header-content {
@@ -239,13 +253,13 @@ watch(
 .page-title {
   font-size: 1.875rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--admin-text-strong);
   margin: 0 0 0.5rem 0;
 }
 
 .page-subtitle {
   font-size: 0.95rem;
-  color: #64748b;
+  color: var(--admin-muted);
   margin: 0;
 }
 
@@ -271,14 +285,14 @@ watch(
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #38bdf8;
+  color: var(--admin-accent);
 }
 
 .sidebar-title {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #f8fafc;
+  color: var(--admin-text-strong);
 }
 
 .sidebar-nav {
@@ -294,7 +308,7 @@ watch(
   padding: 0.85rem 0.95rem;
   border-radius: 14px;
   text-decoration: none;
-  color: #cbd5e1;
+  color: var(--admin-muted-soft);
   font-weight: 600;
   transition:
     background-color 0.2s ease,
@@ -303,19 +317,15 @@ watch(
 }
 
 .sidebar-link:hover {
-  background: rgba(59, 130, 246, 0.12);
-  color: #ffffff;
+  background: var(--admin-hover);
+  color: var(--admin-text-strong);
   transform: translateX(2px);
 }
 
 .sidebar-link-active {
-  background: linear-gradient(
-    90deg,
-    rgba(56, 189, 248, 0.2),
-    rgba(59, 130, 246, 0.14)
-  );
-  color: #f8fafc;
-  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.2);
+  background: var(--app-surface-2);
+  color: var(--admin-text-strong);
+  box-shadow: inset 0 0 0 1px var(--admin-border-strong);
 }
 
 .sidebar-link-icon {
@@ -380,8 +390,9 @@ watch(
     min-height: calc(100vh - 4rem);
     padding: 1.5rem;
     border-radius: 0 28px 28px 0;
-    background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    background: var(--app-surface-0);
+    box-shadow: var(--app-shadow-strong);
+    border: 1px solid var(--admin-border);
   }
 
   .admin-mobile-toolbar {

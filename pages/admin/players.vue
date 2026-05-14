@@ -509,9 +509,9 @@ onMounted(loadPlayers);
 
 .pagination-btn {
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #374151;
+  border: 1px solid var(--admin-border, rgba(148, 163, 184, 0.18));
+  background: rgba(15, 23, 42, 0.88);
+  color: var(--admin-text, #e5eefb);
   border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -520,8 +520,8 @@ onMounted(loadPlayers);
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: rgba(30, 41, 59, 0.94);
+  border-color: var(--admin-accent, #38bdf8);
 }
 
 .pagination-btn.active {
@@ -537,13 +537,13 @@ onMounted(loadPlayers);
 
 .pagination-ellipsis {
   padding: 0.5rem;
-  color: #6b7280;
+  color: var(--admin-muted, #94a3b8);
 }
 
 .pagination-info {
   text-align: center;
   margin-top: 1rem;
-  color: #6b7280;
+  color: var(--admin-muted, #94a3b8);
   font-size: 0.875rem;
 }
 </style>

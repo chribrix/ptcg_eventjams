@@ -1,15 +1,15 @@
 <template>
   <div class="min-h-screen flex items-center justify-center px-4">
     <div
-      class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md border border-gray-100"
+      class="app-surface-0 shadow-xl rounded-2xl p-8 w-full max-w-md border app-border"
     >
       <!-- Success state -->
       <div v-if="success" class="text-center space-y-4">
         <div
-          class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto"
+          class="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[var(--app-button-green-border)] bg-[var(--app-button-green)]"
         >
           <svg
-            class="w-8 h-8 text-green-600"
+            class="w-8 h-8 text-[var(--app-button-green-text)]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -22,13 +22,13 @@
             />
           </svg>
         </div>
-        <h2 class="text-2xl font-bold text-gray-900">Passwort gesetzt!</h2>
-        <p class="text-gray-600">
+        <h2 class="text-2xl font-bold app-text-primary">Passwort gesetzt!</h2>
+        <p class="app-text-secondary">
           Du kannst dich ab jetzt mit deinem Passwort einloggen.
         </p>
         <button
           @click="navigateTo(returnPath)"
-          class="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+          class="app-action-button app-action-primary w-full py-3"
         >
           Weiter
         </button>
@@ -38,7 +38,7 @@
       <div v-else>
         <div class="text-center mb-8">
           <div
-            class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center"
+            class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--app-button-blue-border)] bg-[var(--app-button-blue)]"
           >
             <svg
               class="w-8 h-8 text-white"
@@ -54,10 +54,10 @@
               />
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">
+          <h2 class="mb-2 text-2xl font-bold app-text-primary">
             Passwort festlegen
           </h2>
-          <p class="text-gray-500 text-sm">
+          <p class="text-sm app-text-secondary">
             Lege ein Passwort fest, um dich künftig damit einloggen zu können.
           </p>
         </div>
@@ -65,7 +65,7 @@
         <form @submit.prevent="submit" class="space-y-5">
           <!-- Password -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1"
+            <label class="mb-1 block text-sm font-medium app-text-secondary"
               >Passwort</label
             >
             <div class="relative">
@@ -73,14 +73,14 @@
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="Mindestens 8 Zeichen"
-                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                class="app-input w-full px-4 py-3 pr-12"
                 required
                 minlength="8"
               />
               <button
                 type="button"
                 @click="showPassword = !showPassword"
-                class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                class="absolute inset-y-0 right-3 flex items-center app-text-muted hover:text-white"
               >
                 <svg
                   v-if="showPassword"
@@ -124,15 +124,15 @@
                 v-for="i in 4"
                 :key="i"
                 class="h-1 flex-1 rounded-full transition-colors"
-                :class="strength >= i ? strengthColor : 'bg-gray-200'"
+                :class="strength >= i ? strengthColor : 'bg-[var(--app-surface-3)]'"
               />
             </div>
-            <p class="text-xs text-gray-400 mt-1">{{ strengthLabel }}</p>
+            <p class="mt-1 text-xs app-text-muted">{{ strengthLabel }}</p>
           </div>
 
           <!-- Confirm password -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1"
+            <label class="mb-1 block text-sm font-medium app-text-secondary"
               >Passwort bestätigen</label
             >
             <div class="relative">
@@ -140,18 +140,18 @@
                 v-model="passwordConfirm"
                 :type="showConfirm ? 'text' : 'password'"
                 placeholder="Passwort wiederholen"
-                class="w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                class="app-input w-full px-4 py-3 pr-12"
                 :class="
                   passwordConfirm && password !== passwordConfirm
-                    ? 'border-red-400'
-                    : 'border-gray-300'
+                    ? 'border-[var(--app-button-red-border)]'
+                    : ''
                 "
                 required
               />
               <button
                 type="button"
                 @click="showConfirm = !showConfirm"
-                class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                class="absolute inset-y-0 right-3 flex items-center app-text-muted hover:text-white"
               >
                 <svg
                   v-if="showConfirm"
@@ -191,7 +191,7 @@
             </div>
             <p
               v-if="passwordConfirm && password !== passwordConfirm"
-              class="text-xs text-red-500 mt-1"
+              class="mt-1 text-xs text-[var(--app-feedback-error-text)]"
             >
               Passwörter stimmen nicht überein.
             </p>
@@ -199,7 +199,7 @@
 
           <div
             v-if="error"
-            class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm"
+            class="app-feedback-danger rounded-lg px-4 py-3 text-sm"
           >
             {{ error }}
           </div>
@@ -209,7 +209,7 @@
             :disabled="
               loading || password !== passwordConfirm || password.length < 8
             "
-            class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            class="app-action-button app-action-primary w-full py-3"
           >
             {{ loading ? "Wird gespeichert..." : "Passwort speichern" }}
           </button>
@@ -246,10 +246,10 @@ const strength = computed(() => {
   return score;
 });
 const strengthColor = computed(() => {
-  if (strength.value <= 1) return "bg-red-400";
-  if (strength.value === 2) return "bg-yellow-400";
-  if (strength.value === 3) return "bg-blue-400";
-  return "bg-green-500";
+  if (strength.value <= 1) return "app-strength-weak";
+  if (strength.value === 2) return "app-strength-medium";
+  if (strength.value === 3) return "app-strength-strong";
+  return "app-strength-very-strong";
 });
 const strengthLabel = computed(() => {
   if (!password.value) return "";

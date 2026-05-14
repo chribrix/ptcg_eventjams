@@ -78,7 +78,7 @@
     </div>
 
     <!-- Event History Section -->
-    <div class="admin-card">
+    <div class="admin-card history-card">
       <EventHistory :isAdmin="true" />
     </div>
   </AdminPageLayout>
@@ -173,19 +173,6 @@ onMounted(async () => {
 <style scoped>
 @import "~/assets/css/admin-shared.css";
 
-.action-card h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
-}
-
-.action-card p {
-  color: #64748b;
-  font-size: 0.875rem;
-  margin: 0;
-}
-
 .activity-list {
   display: flex;
   flex-direction: column;
@@ -197,7 +184,7 @@ onMounted(async () => {
   align-items: flex-start;
   gap: 1rem;
   padding: 1rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--app-border);
 }
 
 .activity-item:last-child {
@@ -212,7 +199,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8fafc;
+  background: var(--app-surface-1);
   border-radius: 10px;
 }
 
@@ -222,13 +209,21 @@ onMounted(async () => {
 
 .activity-text {
   font-size: 0.95rem;
-  color: #1e293b;
+  color: var(--app-text-primary);
   margin-bottom: 0.25rem;
 }
 
 .activity-time {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--app-text-muted);
   margin: 0;
+}
+
+.history-card {
+  background: var(--app-surface-1);
+}
+
+.history-card :deep(.event-history) {
+  background: var(--app-surface-2);
 }
 </style>
