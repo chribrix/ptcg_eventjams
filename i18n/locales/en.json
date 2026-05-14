@@ -36,6 +36,7 @@
     "admin": "Admin",
     "login": "Sign In",
     "logout": "Logout",
+    "profile": "Profile",
     "register": "Register",
     "manageEvents": "Manage Events",
     "manageUsers": "Manage Users",

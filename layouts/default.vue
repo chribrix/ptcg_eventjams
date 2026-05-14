@@ -6,6 +6,7 @@ import {
   Cog6ToothIcon as CogIcon,
   ArrowRightOnRectangleIcon,
   UserPlusIcon,
+  UserCircleIcon,
   ChartBarIcon,
 } from "@heroicons/vue/24/outline";
 import siteLogo from "~/assets/images/logo.png";
@@ -302,6 +303,16 @@ const { t } = useI18n();
 
             <!-- Authentication buttons -->
             <div class="border-t border-[#202225] pt-3 mt-3">
+              <NuxtLink
+                v-if="userName"
+                to="/profile"
+                @click="mobileMenuOpen = false"
+                class="flex items-center space-x-3 px-3 py-2 text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] rounded-lg"
+              >
+                <UserCircleIcon class="w-5 h-5" />
+                <span>{{ t("nav.profile") }}</span>
+              </NuxtLink>
+
               <!-- Logout button for authenticated users -->
               <button
                 v-if="userName"
