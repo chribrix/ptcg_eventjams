@@ -52,7 +52,7 @@
             <div class="mb-2 flex items-center justify-between">
               <button
                 type="button"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-lg app-btn-neutral lg:h-10 lg:w-10"
+                class="calendar-month-shift inline-flex h-9 w-9 items-center justify-center rounded-lg lg:h-10 lg:w-10"
                 @click="shiftCustomCalendarMonth(-1)"
                 aria-label="Previous month"
               >
@@ -63,7 +63,7 @@
               </p>
               <button
                 type="button"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-lg app-btn-neutral lg:h-10 lg:w-10"
+                class="calendar-month-shift inline-flex h-9 w-9 items-center justify-center rounded-lg lg:h-10 lg:w-10"
                 @click="shiftCustomCalendarMonth(1)"
                 aria-label="Next month"
               >
@@ -508,9 +508,9 @@ const customCalendarDayClass = (day: CustomCalendarDay) => {
     return "border-transparent bg-transparent app-text-muted-soft";
   }
   if (!day.types.length) {
-    return "app-border app-surface-0 app-text-secondary-soft";
+    return "calendar-empty-day app-text-secondary-soft";
   }
-  return "border-transparent app-text-strong";
+  return "calendar-event-day border-transparent app-text-strong";
 };
 
 const customCalendarDayStyle = (day: CustomCalendarDay) => {
@@ -650,6 +650,45 @@ function startOfMonth(date: Date): Date {
   box-shadow: var(--app-shadow-soft);
 }
 
+.calendar-month-shift {
+  color: var(--app-button-blue-text);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--app-button-blue) 92%, white),
+      color-mix(in srgb, var(--app-button-amber) 72%, var(--app-button-blue))
+    );
+  border: 1px solid color-mix(in srgb, var(--app-button-blue-border) 70%, white);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    var(--app-shadow-soft);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.calendar-month-shift:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.08) brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    var(--app-shadow-strong);
+}
+
+.calendar-empty-day {
+  background: color-mix(in srgb, var(--app-surface-0) 16%, transparent);
+  border-color: color-mix(in srgb, var(--app-border) 60%, transparent);
+  backdrop-filter: blur(16px) saturate(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.calendar-event-day {
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+}
+
 .calendar-mobile-register-cta,
 .calendar-mobile-login-cta {
   display: inline-flex;
@@ -776,6 +815,7 @@ function startOfMonth(date: Date): Date {
   transition: all 0.2s;
   background-color: color-mix(in srgb, var(--app-surface-2) 94%, var(--app-surface-0));
   color: var(--app-text-secondary);
+  backdrop-filter: blur(12px) saturate(1.04);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-border) 88%, transparent);
 }
 
