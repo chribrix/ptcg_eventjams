@@ -48,7 +48,7 @@
         -->
 
         <div class="mt-1 w-full lg:mt-1">
-          <div class="rounded-xl border app-border app-surface-1 p-3 lg:p-4">
+          <div class="calendar-shell rounded-xl border app-border p-3 lg:p-4">
             <div class="mb-2 flex items-center justify-between">
               <button
                 type="button"
@@ -644,6 +644,12 @@ function startOfMonth(date: Date): Date {
   display: block;
 }
 
+.calendar-shell {
+  background: color-mix(in srgb, var(--app-surface-1) 42%, transparent);
+  backdrop-filter: blur(18px) saturate(1.08);
+  box-shadow: var(--app-shadow-soft);
+}
+
 .calendar-mobile-register-cta,
 .calendar-mobile-login-cta {
   display: inline-flex;
@@ -768,8 +774,9 @@ function startOfMonth(date: Date): Date {
   cursor: pointer;
   border-radius: 0.75rem;
   transition: all 0.2s;
-  background-color: var(--app-surface-2);
+  background-color: color-mix(in srgb, var(--app-surface-2) 94%, var(--app-surface-0));
   color: var(--app-text-secondary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-border) 88%, transparent);
 }
 
 /* Override background for days with highlights (events) */
@@ -780,7 +787,7 @@ function startOfMonth(date: Date): Date {
 :deep(.vc-day-content:hover) {
   transform: scale(1.05);
   box-shadow: var(--app-shadow-soft);
-  background-color: var(--app-surface-3);
+  background-color: color-mix(in srgb, var(--app-surface-3) 96%, var(--app-surface-0));
 }
 
 :deep(.vc-highlight) {

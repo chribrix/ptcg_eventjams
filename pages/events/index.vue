@@ -1,59 +1,26 @@
 <template>
-  <div class="events-page">
-    <h1 class="page-title">Pokemon TCG Events</h1>
-    <div class="events-container">
+  <section class="mx-auto w-full max-w-6xl space-y-6">
+    <div class="app-hero-surface rounded-[2rem] px-6 py-8 sm:px-8">
+      <p class="app-hero-eyebrow text-xs font-semibold uppercase tracking-[0.32em]">
+        Public Events
+      </p>
+      <h1 class="mt-3 text-3xl font-semibold tracking-tight app-text-primary sm:text-4xl">
+        Pokemon TCG Events
+      </h1>
+      <p class="mt-3 max-w-2xl text-sm leading-6 app-text-secondary-soft sm:text-base">
+        Finde kommende Events, filtere nach Typ und springe direkt in die passende Registrierung.
+      </p>
+    </div>
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)]">
       <EventCalendarCard />
       <EventList />
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
 // Explicit component import due to nested folder structure
 import EventCalendarCard from "~/components/landingPageCards/calendar/EventCalendarCard.vue";
 
-definePageMeta({
-  layout: "products",
-});
+definePageMeta({});
 </script>
-
-<style scoped>
-.events-page {
-  padding: 2rem;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.page-title {
-  margin: 0 0 2rem 0;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  text-align: center;
-}
-
-.events-container {
-  display: flex;
-  gap: 2rem;
-  flex: 1;
-  min-height: 0; /* Allow flex children to shrink */
-}
-
-/* Responsive layout */
-@media (max-width: 1200px) {
-  .events-container {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .events-page {
-    padding: 1rem;
-  }
-
-  .page-title {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-}
-</style>

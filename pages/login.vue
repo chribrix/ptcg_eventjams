@@ -21,7 +21,7 @@
             />
           </svg>
         </div>
-        <h1 class="text-2xl font-bold text-white">Login</h1>
+        <h1 class="text-2xl font-bold app-text-primary">Login</h1>
         <p class="mt-1 text-sm app-text-secondary">
           Melde dich mit E-Mail + Passwort oder E-Mail-Code an
         </p>
@@ -64,7 +64,7 @@
             <span class="truncate text-sm app-text-primary">{{ email }}</span>
             <button
               type="button"
-              class="text-xs font-medium text-[var(--app-accent-soft)] hover:text-white"
+              class="app-link text-xs font-medium"
               @click="backToEmail"
             >
               ändern
@@ -106,7 +106,7 @@
             <span class="truncate text-sm app-text-primary">{{ email }}</span>
             <button
               type="button"
-              class="text-xs font-medium text-[var(--app-accent-soft)] hover:text-white"
+              class="app-link text-xs font-medium"
               @click="backToEmail"
             >
               ändern
@@ -129,7 +129,7 @@
             />
             <button
               type="button"
-              class="absolute right-3 top-1/2 -translate-y-1/2 app-text-muted hover:text-white"
+              class="absolute right-3 top-1/2 -translate-y-1/2 app-text-muted hover:text-[var(--app-accent-soft)]"
               @click="showPassword = !showPassword"
             >
               {{ showPassword ? "🙈" : "👁️" }}
@@ -170,7 +170,7 @@
             <span class="truncate text-sm app-text-primary">{{ email }}</span>
             <button
               type="button"
-              class="text-xs font-medium text-[var(--app-accent-soft)] hover:text-white"
+              class="app-link text-xs font-medium"
               @click="backToEmail"
             >
               ändern
@@ -199,7 +199,7 @@
             />
             <button
               type="button"
-              class="absolute right-3 top-1/2 -translate-y-1/2 app-text-muted hover:text-white"
+              class="absolute right-3 top-1/2 -translate-y-1/2 app-text-muted hover:text-[var(--app-accent-soft)]"
               @click="showNewPassword = !showNewPassword"
             >
               {{ showNewPassword ? "🙈" : "👁️" }}
@@ -223,7 +223,7 @@
             />
             <button
               type="button"
-              class="absolute right-3 top-1/2 -translate-y-1/2 app-text-muted hover:text-white"
+              class="absolute right-3 top-1/2 -translate-y-1/2 app-text-muted hover:text-[var(--app-accent-soft)]"
               @click="showNewPasswordConfirm = !showNewPasswordConfirm"
             >
               {{ showNewPasswordConfirm ? "🙈" : "👁️" }}
@@ -262,7 +262,7 @@
             <span class="truncate text-sm app-text-primary">{{ email }}</span>
             <button
               type="button"
-              class="text-xs font-medium text-[var(--app-accent-soft)] hover:text-white"
+              class="app-link text-xs font-medium"
               @click="backToEmail"
             >
               ändern
@@ -342,7 +342,7 @@
           Noch kein Account?
           <NuxtLink
             :to="registerLink"
-            class="font-semibold text-[var(--app-accent-soft)] hover:text-white hover:underline"
+            class="app-link font-semibold hover:underline"
           >
             Jetzt registrieren
           </NuxtLink>

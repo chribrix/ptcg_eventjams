@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen flex items-center justify-center px-4">
     <div
-      class="app-surface-0 max-w-lg w-full rounded-2xl border app-border p-8 text-center shadow-lg space-y-4"
+      class="app-panel max-w-lg w-full space-y-4 rounded-2xl p-8 text-center"
     >
       <div
         class="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[var(--app-button-amber-border)] bg-[var(--app-button-amber)] font-bold text-[var(--app-button-amber-text)]"

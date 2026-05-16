@@ -6,11 +6,11 @@
     <!-- Info message when redirected from failed login -->
     <div
       v-if="route.query.noAccount"
-      class="max-w-md mx-auto mb-4 app-surface-2 border app-border text-blue-200 px-4 py-3 rounded-lg"
+      class="app-info-card mx-auto mb-4 max-w-md rounded-lg border px-4 py-3"
     >
       <div class="flex items-start space-x-3">
         <svg
-          class="w-5 h-5 text-blue-300 mt-0.5 flex-shrink-0"
+          class="mt-0.5 h-5 w-5 flex-shrink-0"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
