@@ -8,7 +8,7 @@
       >
         <UserPlusIcon class="w-8 h-8 text-white" />
       </div>
-      <h2 class="text-3xl font-bold text-white mb-2">Create Account</h2>
+      <h2 class="mb-2 text-3xl font-bold app-text-primary">Create Account</h2>
     </div>
 
     <form @submit.prevent="submitForm" class="space-y-6">
@@ -18,8 +18,8 @@
           class="py-2 text-sm font-semibold rounded-md transition"
           :class="
             registerMethod === 'password'
-              ? 'app-surface-0 text-white shadow-sm'
-              : 'app-text-muted hover:text-white'
+              ? 'app-surface-0 app-text-primary shadow-sm'
+              : 'app-text-muted hover:text-[var(--app-accent-soft)]'
           "
           @click="registerMethod = 'password'"
         >
@@ -30,8 +30,8 @@
           class="py-2 text-sm font-semibold rounded-md transition"
           :class="
             registerMethod === 'otp'
-              ? 'app-surface-0 text-white shadow-sm'
-              : 'app-text-muted hover:text-white'
+              ? 'app-surface-0 app-text-primary shadow-sm'
+              : 'app-text-muted hover:text-[var(--app-accent-soft)]'
           "
           @click="registerMethod = 'otp'"
         >
@@ -102,7 +102,7 @@
           />
           <button
             type="button"
-            class="absolute inset-y-0 right-3 app-text-muted hover:text-white"
+            class="absolute inset-y-0 right-3 app-text-muted hover:text-[var(--app-accent-soft)]"
             @click="showPassword = !showPassword"
           >
             {{ showPassword ? "🙈" : "👁️" }}
@@ -120,7 +120,7 @@
           />
           <button
             type="button"
-            class="absolute inset-y-0 right-3 app-text-muted hover:text-white"
+            class="absolute inset-y-0 right-3 app-text-muted hover:text-[var(--app-accent-soft)]"
             @click="showPasswordConfirm = !showPasswordConfirm"
           >
             {{ showPasswordConfirm ? "🙈" : "👁️" }}
@@ -196,7 +196,7 @@
               ? `/login?redirect=${route.query.redirect}`
               : '/login'
           "
-          class="font-semibold text-[var(--app-accent-soft)] transition-colors duration-200 hover:text-white hover:underline"
+          class="app-link font-semibold transition-colors duration-200 hover:underline"
         >
           {{ t("auth.signIn") }}
         </NuxtLink>
@@ -208,7 +208,7 @@
       class="relative mt-6 rounded-lg app-feedback-success px-4 py-3"
     >
       <div class="flex items-center space-x-2">
-        <CheckCircleIcon class="w-5 h-5 text-emerald-300" />
+        <CheckCircleIcon class="w-5 h-5" />
         <span class="font-medium">{{ successTitle }}</span>
       </div>
       <p class="text-sm mt-1 ml-7">{{ successText }}</p>

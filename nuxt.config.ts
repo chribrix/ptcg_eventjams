@@ -98,6 +98,13 @@ export default defineNuxtConfig({
       meta: [
         { name: "description", content: "Register for PTCG events with ease" },
       ],
+      script: [
+        {
+          id: "app-color-theme-init",
+          children:
+            "(() => { try { const key = 'app-color-theme'; const theme = localStorage.getItem(key) || 'dark'; document.documentElement.dataset.theme = theme; document.documentElement.style.colorScheme = theme; } catch (_error) { document.documentElement.dataset.theme = 'dark'; document.documentElement.style.colorScheme = 'dark'; } })();",
+        },
+      ],
       link: [
         {
           rel: "icon",

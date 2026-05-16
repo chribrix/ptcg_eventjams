@@ -6,63 +6,64 @@
 
 @layer base {
   :root {
-    --app-bg-page: #131313;
-    --app-surface-0: #181c22;
-    --app-surface-1: #1c2026;
-    --app-surface-2: #262a31;
-    --app-surface-3: #31353c;
-    --app-surface-elevated: #353941;
-    --app-surface-deep: #111317;
-    --app-border: #4d4635;
-    --app-accent: #d96d9b;
-    --app-accent-soft: #ffb0cd;
-    --app-text-primary: #ffffff;
-    --app-text-secondary: #dfe2ec;
-    --app-text-muted: #d1c5af;
-    --app-shadow-strong: 0 18px 40px rgba(0, 0, 0, 0.28);
-    --app-shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.2);
-    --app-button-blue: #b7527f;
-    --app-button-blue-hover: #993966;
-    --app-button-blue-border: #7e2350;
-    --app-button-blue-text: #fffbff;
-    --app-button-green: #00818c;
-    --app-button-green-hover: #00666f;
-    --app-button-green-border: #004f56;
-    --app-button-green-text: #f6feff;
+    color-scheme: dark;
+    --app-bg-page: #f5fafb;
+    --app-surface-0: #ffffff;
+    --app-surface-1: #eff5f6;
+    --app-surface-2: #e9eff0;
+    --app-surface-3: #dee3e5;
+    --app-surface-elevated: #e3e9ea;
+    --app-surface-deep: #d5dbdc;
+    --app-border: #bfc8ca;
+    --app-accent: #006874;
+    --app-accent-soft: #004f58;
+    --app-text-primary: #171d1e;
+    --app-text-secondary: #334b4f;
+    --app-text-muted: #6f797a;
+    --app-shadow-strong: 0 22px 60px rgba(23, 29, 30, 0.14);
+    --app-shadow-soft: 0 10px 28px rgba(23, 29, 30, 0.08);
+    --app-button-blue: #006874;
+    --app-button-blue-hover: #005864;
+    --app-button-blue-border: #004f58;
+    --app-button-blue-text: #ffffff;
+    --app-button-green: #4a6267;
+    --app-button-green-hover: #334b4f;
+    --app-button-green-border: #334b4f;
+    --app-button-green-text: #ffffff;
     --app-button-red: #d83737;
     --app-button-red-hover: #b51b22;
     --app-button-red-border: #73000b;
-    --app-button-red-text: #fffbff;
-    --app-button-amber: #7f7663;
-    --app-button-amber-hover: #595240;
-    --app-button-amber-border: #4d4635;
-    --app-button-amber-text: #fffbff;
-    --app-focus-ring: rgba(217, 109, 155, 0.24);
-    --app-feedback-success-bg: rgba(0, 129, 140, 0.16);
-    --app-feedback-success-border: rgba(115, 213, 225, 0.38);
-    --app-feedback-success-text: #b7f2f8;
-    --app-feedback-error-bg: rgba(216, 55, 55, 0.16);
-    --app-feedback-error-border: rgba(255, 84, 80, 0.38);
-    --app-feedback-error-text: #ffd2ce;
-    --app-feedback-info-bg: rgba(183, 82, 127, 0.16);
-    --app-feedback-info-border: rgba(255, 176, 205, 0.38);
-    --app-feedback-info-text: #ffd9e4;
-    --app-chip-info-bg: #359ea9;
-    --app-chip-info-text: #f6feff;
-    --app-focus-ring-strong: rgba(217, 109, 155, 0.5);
-    --app-focus-ring-soft: rgba(217, 109, 155, 0.16);
-    --app-divider-subtle: rgba(255, 255, 255, 0.06);
-    --app-overlay-strong: rgba(0, 0, 0, 0.58);
-    --app-badge-success-bg: rgba(0, 129, 140, 0.18);
-    --app-badge-success-text: #b7f2f8;
-    --app-badge-warning-bg: rgba(127, 118, 99, 0.24);
-    --app-badge-warning-text: #f3e8c8;
-    --app-badge-error-bg: rgba(216, 55, 55, 0.18);
-    --app-badge-error-text: #ffd2ce;
-    --app-badge-info-bg: rgba(183, 82, 127, 0.18);
-    --app-badge-info-text: #ffd9e4;
-    --app-calendar-highlight-default: #dbeafe;
-    --app-calendar-highlight-custom: #e9d5ff;
+    --app-button-red-text: #ffffff;
+    --app-button-amber: #705289;
+    --app-button-amber-hover: #573a70;
+    --app-button-amber-border: #573a70;
+    --app-button-amber-text: #ffffff;
+    --app-focus-ring: rgba(0, 104, 116, 0.2);
+    --app-feedback-success-bg: #cde7ec;
+    --app-feedback-success-border: #b1cbd0;
+    --app-feedback-success-text: #334b4f;
+    --app-feedback-error-bg: #ffd6d1;
+    --app-feedback-error-border: #ffb4ab;
+    --app-feedback-error-text: #93000a;
+    --app-feedback-info-bg: #f1daff;
+    --app-feedback-info-border: #ddb9f8;
+    --app-feedback-info-text: #573a70;
+    --app-chip-info-bg: #9eeffd;
+    --app-chip-info-text: #004f58;
+    --app-focus-ring-strong: rgba(0, 104, 116, 0.35);
+    --app-focus-ring-soft: rgba(0, 104, 116, 0.12);
+    --app-divider-subtle: rgba(63, 72, 74, 0.08);
+    --app-overlay-strong: rgba(23, 29, 30, 0.24);
+    --app-badge-success-bg: #cde7ec;
+    --app-badge-success-text: #334b4f;
+    --app-badge-warning-bg: #f1daff;
+    --app-badge-warning-text: #573a70;
+    --app-badge-error-bg: #ffd6d1;
+    --app-badge-error-text: #93000a;
+    --app-badge-info-bg: #9eeffd;
+    --app-badge-info-text: #004f58;
+    --app-calendar-highlight-default: #d7f0f4;
+    --app-calendar-highlight-custom: #f1daff;
     --app-calendar-day-border: #6366f1;
     --app-scrollbar-track: #edf2f7;
     --app-scrollbar-thumb: #9ca3af;
@@ -93,11 +94,99 @@
     --app-event-format-text: #155e75;
     --app-event-host-bg: #f3e8ff;
     --app-event-host-text: #6b21a8;
+    --app-page-gradient: radial-gradient(circle at top, rgba(158, 239, 253, 0.72), transparent 42%), linear-gradient(180deg, #f5fafb 0%, #eff5f6 48%, #f5fafb 100%);
+    --app-hero-gradient: linear-gradient(135deg, rgba(158, 239, 253, 0.96), rgba(205, 231, 236, 0.94) 52%, rgba(241, 218, 255, 0.92));
+    --app-bookmark-surface: linear-gradient(135deg, #cde7ec 0%, #9eeffd 100%);
+    --app-bookmark-border: #82d3e0;
+    --app-bookmark-text: #00363d;
+    --app-pill-inactive-bg: #dbe4e6;
+    --app-pill-inactive-text: #3f484a;
+    --app-pill-inactive-border: #bfc8ca;
+    --app-modal-overlay: rgba(23, 29, 30, 0.42);
+  }
+
+  html[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"],
+  :root {
+    color-scheme: dark;
+  }
+
+  html[data-theme="dark"] {
+    --app-bg-page: #0e1415;
+    --app-surface-0: #161d1e;
+    --app-surface-1: #1b2324;
+    --app-surface-2: #243032;
+    --app-surface-3: #334043;
+    --app-surface-elevated: #2b383a;
+    --app-surface-deep: #101718;
+    --app-border: #3f484a;
+    --app-accent: #82d3e0;
+    --app-accent-soft: #9eeffd;
+    --app-text-primary: #dee3e5;
+    --app-text-secondary: #cde7ec;
+    --app-text-muted: #bfc8ca;
+    --app-shadow-strong: 0 22px 60px rgba(0, 0, 0, 0.34);
+    --app-shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.26);
+    --app-button-blue: #004f58;
+    --app-button-blue-hover: #006874;
+    --app-button-blue-border: #82d3e0;
+    --app-button-blue-text: #9eeffd;
+    --app-button-green: #334b4f;
+    --app-button-green-hover: #4a6267;
+    --app-button-green-border: #b1cbd0;
+    --app-button-green-text: #cde7ec;
+    --app-button-red: #93000a;
+    --app-button-red-hover: #ba1a1a;
+    --app-button-red-border: #ffb4ab;
+    --app-button-red-text: #ffd6d1;
+    --app-button-amber: #573a70;
+    --app-button-amber-hover: #705289;
+    --app-button-amber-border: #ddb9f8;
+    --app-button-amber-text: #f1daff;
+    --app-focus-ring: rgba(130, 211, 224, 0.26);
+    --app-feedback-success-bg: rgba(177, 203, 208, 0.16);
+    --app-feedback-success-border: rgba(177, 203, 208, 0.32);
+    --app-feedback-success-text: #cde7ec;
+    --app-feedback-error-bg: rgba(255, 180, 171, 0.12);
+    --app-feedback-error-border: rgba(255, 180, 171, 0.3);
+    --app-feedback-error-text: #ffd6d1;
+    --app-feedback-info-bg: rgba(221, 185, 248, 0.12);
+    --app-feedback-info-border: rgba(221, 185, 248, 0.28);
+    --app-feedback-info-text: #f1daff;
+    --app-chip-info-bg: #359ea9;
+    --app-chip-info-text: #0e1415;
+    --app-focus-ring-strong: rgba(130, 211, 224, 0.42);
+    --app-focus-ring-soft: rgba(130, 211, 224, 0.16);
+    --app-divider-subtle: rgba(255, 255, 255, 0.06);
+    --app-overlay-strong: rgba(0, 0, 0, 0.58);
+    --app-badge-success-bg: rgba(177, 203, 208, 0.18);
+    --app-badge-success-text: #cde7ec;
+    --app-badge-warning-bg: rgba(221, 185, 248, 0.18);
+    --app-badge-warning-text: #f1daff;
+    --app-badge-error-bg: rgba(255, 180, 171, 0.18);
+    --app-badge-error-text: #ffd6d1;
+    --app-badge-info-bg: rgba(130, 211, 224, 0.18);
+    --app-badge-info-text: #9eeffd;
+    --app-calendar-highlight-default: #21424a;
+    --app-calendar-highlight-custom: #573a70;
+    --app-page-gradient: radial-gradient(circle at top, rgba(130, 211, 224, 0.22), transparent 42%), linear-gradient(180deg, #0e1415 0%, #131b1d 45%, #0e1415 100%);
+    --app-hero-gradient: linear-gradient(135deg, rgba(0, 79, 88, 0.95), rgba(51, 75, 79, 0.93) 52%, rgba(87, 58, 112, 0.92));
+    --app-bookmark-surface: linear-gradient(135deg, rgba(0, 79, 88, 0.96) 0%, rgba(53, 158, 169, 0.88) 100%);
+    --app-bookmark-border: #82d3e0;
+    --app-bookmark-text: #ecf2f3;
+    --app-pill-inactive-bg: #243032;
+    --app-pill-inactive-text: #cde7ec;
+    --app-pill-inactive-border: #3f484a;
+    --app-modal-overlay: rgba(0, 0, 0, 0.56);
   }
 }
 
 body {
-  background: var(--app-bg-page);
+  background: var(--app-page-gradient);
+  color: var(--app-text-primary);
   overflow-x: hidden;
 }
 
@@ -144,13 +233,13 @@ html {
 
   .app-btn-neutral {
     border: 1px solid var(--app-border);
-    background: var(--app-surface-2);
+    background: var(--app-surface-0);
     color: var(--app-text-secondary);
     box-shadow: var(--app-shadow-soft);
   }
 
   .app-btn-neutral:hover {
-    background: var(--app-surface-3);
+    background: var(--app-surface-2);
     color: var(--app-text-primary);
   }
 
@@ -199,7 +288,7 @@ html {
   }
 
   .app-panel {
-    background: var(--app-surface-0);
+    background: color-mix(in srgb, var(--app-surface-0) 92%, white);
     border: 1px solid var(--app-border);
     color: var(--app-text-primary);
     box-shadow: var(--app-shadow-strong);
@@ -226,7 +315,7 @@ html {
 
   .app-card-interactive:hover {
     transform: translateY(-1px);
-    border-color: var(--app-surface-3);
+    border-color: var(--app-accent);
     box-shadow: var(--app-shadow-strong);
   }
 
@@ -235,7 +324,7 @@ html {
   }
 
   .app-overlay {
-    background: var(--app-overlay-strong);
+    background: var(--app-modal-overlay);
     backdrop-filter: blur(4px);
   }
 
@@ -323,13 +412,13 @@ html {
 
   .app-action-secondary {
     border: 1px solid var(--app-border);
-    background: var(--app-surface-2);
+    background: var(--app-surface-0);
     color: var(--app-text-secondary);
     box-shadow: var(--app-shadow-soft);
   }
 
   .app-action-secondary:hover:not(:disabled) {
-    background: var(--app-surface-3);
+    background: var(--app-surface-2);
     color: var(--app-text-primary);
   }
 
@@ -414,7 +503,7 @@ html {
   }
 
   .app-status-neutral {
-    background: color-mix(in srgb, var(--app-surface-3) 65%, transparent);
+    background: color-mix(in srgb, var(--app-surface-3) 85%, white);
     color: var(--app-text-secondary);
   }
 
@@ -459,7 +548,66 @@ html {
 
   .app-badge-accent {
     background: var(--app-badge-info-bg);
+    color: var(--app-badge-info-text);
+  }
+
+  .app-link {
     color: var(--app-accent-soft);
+    transition: color 0.2s ease;
+  }
+
+  .app-link:hover {
+    color: var(--app-accent);
+  }
+
+  .app-hero-surface {
+    background: var(--app-hero-gradient);
+    border: 1px solid color-mix(in srgb, var(--app-border) 68%, white);
+    box-shadow: var(--app-shadow-strong);
+  }
+
+  .app-hero-eyebrow {
+    color: var(--app-accent-soft);
+  }
+
+  .app-bookmark-card {
+    background: var(--app-bookmark-surface);
+    border-color: var(--app-bookmark-border);
+    color: var(--app-bookmark-text);
+  }
+
+  .app-chip-inactive {
+    background: var(--app-pill-inactive-bg);
+    border-color: var(--app-pill-inactive-border);
+    color: var(--app-pill-inactive-text);
+  }
+
+  .app-chip-active {
+    background: var(--app-button-blue);
+    border-color: var(--app-button-blue-border);
+    color: var(--app-button-blue-text);
+  }
+
+  .app-info-card {
+    background: var(--app-feedback-success-bg);
+    border-color: var(--app-feedback-success-border);
+    color: var(--app-feedback-success-text);
+  }
+
+  .app-warn-card {
+    background: var(--app-badge-warning-bg);
+    border-color: color-mix(in srgb, var(--app-badge-warning-text) 20%, white);
+    color: var(--app-badge-warning-text);
+  }
+
+  .app-stat-card {
+    background: color-mix(in srgb, var(--app-surface-0) 84%, white);
+    border: 1px solid var(--app-border);
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-muted-icon {
+    color: var(--app-text-muted);
   }
 
   .event-type-badge {

@@ -9,22 +9,22 @@
       leave-to-class="opacity-0 scale-95"
     >
       <div
-        class="fixed inset-0 bg-black/50 flex justify-center items-center z-[99999]"
+        class="app-overlay fixed inset-0 z-[99999] flex items-center justify-center"
         @click="emit('close')"
       >
         <div
-          class="app-surface-0 rounded-xl shadow-xl max-w-2xl max-h-[80vh] w-[90%] overflow-hidden flex flex-col transform transition-transform min-w-0"
+          class="app-panel max-h-[80vh] w-[90%] min-w-0 max-w-2xl overflow-hidden rounded-xl flex flex-col transform transition-transform"
           @click.stop
         >
           <div
-            class="px-6 py-4 border-b app-border flex justify-between items-center app-bg-page"
+            class="flex items-center justify-between border-b app-border px-6 py-4 app-surface-1"
           >
-            <h3 class="text-xl font-semibold text-white m-0">
+            <h3 class="m-0 text-xl font-semibold app-text-primary">
               {{ t("eventPopover.eventsOn", { date: formattedDate }) }}
             </h3>
             <button
               @click="emit('close')"
-              class="bg-none border-none text-2xl text-gray-400 hover:bg-[var(--app-surface-2)] hover:text-gray-300 cursor-pointer p-1 rounded transition-colors duration-200"
+              class="cursor-pointer rounded p-1 text-2xl app-text-muted transition-colors duration-200 hover:bg-[var(--app-surface-2)] hover:text-[var(--app-text-primary)]"
             >
               &times;
             </button>
@@ -33,7 +33,7 @@
             <div
               v-for="event in events"
               :key="event.id"
-              class="border app-border rounded-lg mb-2 transition-all duration-200 hover:shadow-md last:mb-0 min-w-0 border-l-4 cursor-pointer app-bg-page"
+              class="mb-2 min-w-0 cursor-pointer rounded-lg border border-l-4 app-border app-surface-1 transition-all duration-200 hover:shadow-md last:mb-0"
               :style="{
                 borderLeftColor: getEventBadgeStyles(event).backgroundColor,
               }"
@@ -42,19 +42,19 @@
               <!-- Compact View -->
               <div class="p-3 flex items-center justify-between gap-3">
                 <div class="flex-1 min-w-0">
-                  <h4 class="text-sm font-semibold text-white mb-1 truncate">
+                  <h4 class="mb-1 truncate text-sm font-semibold app-text-primary">
                     {{ getEventTitle(event) }}
                   </h4>
-                  <div class="flex items-center gap-2 text-xs text-gray-300">
+                  <div class="flex items-center gap-2 text-xs app-text-secondary-soft">
                     <MapPinIcon class="w-3 h-3 flex-shrink-0" />
                     <span class="truncate">{{ getCityFromEvent(event) }}</span>
-                    <span class="text-gray-400">•</span>
+                    <span class="app-text-muted-soft">•</span>
                     <CalendarIcon class="w-3 h-3 flex-shrink-0" />
                     <span>{{ getCompactDate(event) }}</span>
                   </div>
                 </div>
                 <svg
-                  class="w-5 h-5 flex-shrink-0 text-gray-400 transition-transform duration-200"
+                  class="h-5 w-5 flex-shrink-0 app-text-muted transition-transform duration-200"
                   :class="{ 'rotate-180': expandedEvents.has(event.id) }"
                   fill="none"
                   stroke="currentColor"
@@ -96,7 +96,7 @@
                       <!-- Time badge -->
                       <div
                         v-if="getEventTime(event)"
-                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-300 app-surface-2 border app-border"
+                        class="inline-flex items-center gap-1 rounded border app-border app-surface-2 px-2 py-1 text-xs font-medium app-text-secondary-soft"
                       >
                         <ClockIcon class="w-3 h-3 flex-shrink-0" />
                         <span>{{ getEventTime(event) }}</span>
@@ -104,7 +104,7 @@
                       <!-- Cost badge -->
                       <div
                         v-if="getEventCost(event) !== undefined"
-                        class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-gray-300 app-surface-2 border app-border"
+                        class="inline-flex items-center gap-1 rounded border app-border app-surface-2 px-2 py-1 text-xs font-medium app-text-secondary-soft"
                       >
                         <CurrencyDollarIcon class="w-3 h-3 flex-shrink-0" />
                         <span>{{ formatEventCost(event) }}</span>
@@ -115,7 +115,7 @@
                     <div class="flex flex-col gap-2 mb-3">
                       <div
                         v-if="event.venue"
-                        class="flex items-start gap-2 text-gray-300 text-sm"
+                        class="flex items-start gap-2 text-sm app-text-secondary-soft"
                       >
                         <BuildingOfficeIcon
                           class="w-4 h-4 flex-shrink-0 mt-0.5"
@@ -126,7 +126,7 @@
                       </div>
                       <div
                         v-if="event.streetAddress"
-                        class="flex items-start gap-2 text-gray-300 text-sm"
+                        class="flex items-start gap-2 text-sm app-text-secondary-soft"
                       >
                         <MapPinIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span class="flex-1 min-w-0">{{
@@ -135,7 +135,7 @@
                       </div>
                       <div
                         v-if="event.location"
-                        class="flex items-start gap-2 text-gray-300 text-sm"
+                        class="flex items-start gap-2 text-sm app-text-secondary-soft"
                       >
                         <GlobeAltIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span class="flex-1 min-w-0"
@@ -149,7 +149,7 @@
                       </div>
                       <div
                         v-if="isCustomEvent(event)"
-                        class="flex items-center gap-2 text-gray-300 text-sm"
+                        class="flex items-center gap-2 text-sm app-text-secondary-soft"
                       >
                         <UsersIcon class="w-4 h-4 flex-shrink-0" />
                         <span class="flex-1">{{
@@ -168,8 +168,8 @@
                         class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold shadow-sm transition-all duration-200"
                         :class="
                           isBookmarked(event.id)
-                            ? 'text-white bg-sky-600 hover:bg-sky-700'
-                            : 'text-gray-300 app-btn-neutral hover:border-gray-500'
+                            ? 'app-chip-active'
+                            : 'app-btn-neutral'
                         "
                         :disabled="bookmarkPendingId === event.id"
                         @click.stop="toggleBookmark(event)"
@@ -186,7 +186,7 @@
                         :href="getGoogleMapsUrl(event)"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-300 app-btn-neutral hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
+                        class="app-btn-neutral w-full min-w-0 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold no-underline shadow-sm transition-all duration-200 sm:w-auto"
                         @click.stop
                       >
                         <MapIcon class="w-3.5 h-3.5 flex-shrink-0" />
@@ -201,7 +201,7 @@
                             ? `/events/register/${event.id}`
                             : '/login'
                         "
-                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black shadow-sm transition-all duration-200 no-underline"
+                        class="app-action-button app-action-primary w-full min-w-0 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold no-underline shadow-sm transition-all duration-200 sm:w-auto"
                         @click.stop
                       >
                         <UserPlusIcon class="w-3.5 h-3.5 flex-shrink-0" />
@@ -212,7 +212,7 @@
                         :href="event.link"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="w-full sm:w-auto min-w-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-300 app-btn-neutral hover:border-gray-500 shadow-sm transition-all duration-200 no-underline"
+                        class="app-btn-neutral w-full min-w-0 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold no-underline shadow-sm transition-all duration-200 sm:w-auto"
                         @click.stop
                       >
                         <LinkIcon class="w-3.5 h-3.5 flex-shrink-0" />
@@ -221,7 +221,7 @@
                     </div>
                     <p
                       v-if="!isUserLoggedIn && canBookmarkEvent(event)"
-                      class="text-xs text-emerald-200"
+                      class="text-xs app-text-secondary-soft"
                     >
                       {{ t("eventList.guestBookmarkHint") }}
                       <NuxtLink to="/register" class="underline font-semibold">
@@ -239,7 +239,7 @@
           >
             <button
               @click="emit('close')"
-              class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl transition-all duration-200"
+              class="app-action-button app-action-primary rounded-lg px-4 py-2 text-sm font-semibold"
             >
               <span>{{ t("common.back") }}</span>
             </button>

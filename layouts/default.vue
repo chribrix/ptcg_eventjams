@@ -8,6 +8,8 @@ import {
   UserPlusIcon,
   UserCircleIcon,
   ChartBarIcon,
+  MoonIcon,
+  SunIcon,
 } from "@heroicons/vue/24/outline";
 import siteLogo from "~/assets/images/logo.png";
 
@@ -25,6 +27,7 @@ const {
 
 // Admin composable - now uses server-side verification
 const { isAdmin, user: adminUser, loading } = useAdmin();
+const { theme, initializeTheme, toggleTheme } = useColorTheme();
 
 type HeaderRegistration = {
   entryType?: "registration" | "bookmark";
@@ -94,6 +97,8 @@ const loadMyTournamentNav = async () => {
 };
 
 onMounted(async () => {
+  initializeTheme();
+
   // Ensure session is valid on mount and cleanup if expired
   if (authUser.value) {
     try {
@@ -159,7 +164,7 @@ const { t } = useI18n();
           <div class="flex items-center space-x-4">
             <NuxtLink
               to="/"
-              class="mobile-brand flex items-center space-x-3 text-white hover:text-gray-300 transition-colors duration-200"
+              class="mobile-brand flex items-center space-x-3 app-text-primary transition-colors duration-200 hover:opacity-90"
             >
               <img
                 :src="siteLogo"
@@ -175,7 +180,7 @@ const { t } = useI18n();
             <!-- Mobile Menu Button -->
             <button
               @click="mobileMenuOpen = !mobileMenuOpen"
-              class="md:hidden p-2 rounded-lg text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] focus:outline-none focus:ring-2 focus:ring-gray-500"
+              class="md:hidden p-2 rounded-lg text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]"
             >
               <div class="w-5 h-5 flex flex-col justify-center items-center">
                 <span
@@ -229,6 +234,20 @@ const { t } = useI18n();
 
               <!-- Language Switcher & Auth Actions -->
               <div class="flex items-center space-x-3 ml-4 pl-4 border-l app-border">
+                <button
+                  type="button"
+                  class="theme-toggle-button"
+                  :aria-label="
+                    theme === 'dark'
+                      ? 'Zum hellen Theme wechseln'
+                      : 'Zum dunklen Theme wechseln'
+                  "
+                  @click="toggleTheme"
+                >
+                  <SunIcon v-if="theme === 'dark'" class="w-4 h-4" />
+                  <MoonIcon v-else class="w-4 h-4" />
+                </button>
+
                 <!-- Language Switcher -->
                 <LanguageSwitcher />
 
@@ -295,7 +314,21 @@ const { t } = useI18n();
             </div>
 
             <!-- Language Switcher -->
-            <div class="px-3 py-2">
+            <div class="px-3 py-2 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                class="theme-toggle-button"
+                :aria-label="
+                  theme === 'dark'
+                    ? 'Zum hellen Theme wechseln'
+                    : 'Zum dunklen Theme wechseln'
+                "
+                @click="toggleTheme"
+              >
+                <SunIcon v-if="theme === 'dark'" class="w-4 h-4" />
+                <MoonIcon v-else class="w-4 h-4" />
+                <span>{{ theme === "dark" ? "Light" : "Dark" }}</span>
+              </button>
               <LanguageSwitcher />
             </div>
 
@@ -315,7 +348,8 @@ const { t } = useI18n();
               <button
                 v-if="userName"
                 @click="handleMobileLogout"
-                class="flex items-center space-x-3 w-full px-3 py-2 text-red-300 hover:bg-[var(--app-surface-2)] rounded-lg"
+                class="flex w-full items-center space-x-3 rounded-lg px-3 py-2 hover:bg-[var(--app-surface-2)]"
+                style="color: var(--app-button-red);"
               >
                 <ArrowRightOnRectangleIcon class="w-5 h-5" />
                 <span>{{ t("nav.logout") }}</span>
@@ -473,6 +507,34 @@ const { t } = useI18n();
   transform: translateY(-1px);
 }
 
+.theme-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--app-text-secondary);
+  background: var(--app-surface-0);
+  border: 1px solid var(--app-border);
+  border-radius: 9999px;
+  box-shadow: var(--app-shadow-soft);
+  transition:
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out,
+    border-color 0.2s ease-in-out,
+    transform 0.2s ease-in-out;
+}
+
+.theme-toggle-button:hover {
+  color: var(--app-text-primary);
+  background: var(--app-surface-2);
+  border-color: var(--app-accent);
+  transform: translateY(-1px);
+}
+
 .nav-count {
   margin-left: 0.25rem;
   min-width: 1.1rem;
@@ -550,7 +612,8 @@ const { t } = useI18n();
 .nav-link-primary:focus,
 .admin-menu-button:focus,
 .logout-button:focus,
-.signin-button:focus {
+.signin-button:focus,
+.theme-toggle-button:focus {
   outline: none;
   box-shadow: 0 0 0 2px var(--app-focus-ring-strong);
 }

@@ -93,13 +93,19 @@ defineEmits<{
 }>();
 
 const mainButtonStyle = computed(() => ({
-  backgroundColor: props.isActive ? props.backgroundColor : "#4b5563",
-  color: props.isActive ? props.textColor : "#e5e7eb",
+  backgroundColor: props.isActive
+    ? props.backgroundColor
+    : "var(--app-pill-inactive-bg)",
+  color: props.isActive ? props.textColor : "var(--app-pill-inactive-text)",
 }));
 
 const toggleButtonStyle = computed(() => ({
-  backgroundColor: props.isActive ? "rgba(0, 0, 0, 0.12)" : "#1f2937",
-  color: props.isActive ? props.textColor : "#f9fafb",
-  borderColor: props.isActive ? "rgba(0, 0, 0, 0.12)" : "#374151",
+  backgroundColor: props.isActive
+    ? "rgba(255, 255, 255, 0.38)"
+    : "var(--app-surface-0)",
+  color: props.isActive ? props.textColor : "var(--app-text-secondary)",
+  borderColor: props.isActive
+    ? "rgba(255, 255, 255, 0.42)"
+    : "var(--app-pill-inactive-border)",
 }));
 </script>

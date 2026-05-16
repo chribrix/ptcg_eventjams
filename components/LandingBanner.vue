@@ -46,32 +46,32 @@ const banner = computed(() => data.value?.banner || null);
   gap: 0.75rem;
   border-radius: 1rem;
   padding: 1rem 1.25rem;
-  border: 2px solid transparent;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  border: 1px solid transparent;
+  box-shadow: var(--app-shadow-soft);
 }
 
 .landing-banner--info {
-  background: #dbeafe;
-  border-color: #93c5fd;
-  color: #1e3a8a;
+  background: var(--app-feedback-info-bg);
+  border-color: var(--app-feedback-info-border);
+  color: var(--app-feedback-info-text);
 }
 
 .landing-banner--warning {
-  background: #fef3c7;
-  border-color: #fcd34d;
-  color: #92400e;
+  background: var(--app-badge-warning-bg);
+  border-color: color-mix(in srgb, var(--app-badge-warning-text) 22%, white);
+  color: var(--app-badge-warning-text);
 }
 
 .landing-banner--success {
-  background: #dcfce7;
-  border-color: #86efac;
-  color: #166534;
+  background: var(--app-feedback-success-bg);
+  border-color: var(--app-feedback-success-border);
+  color: var(--app-feedback-success-text);
 }
 
 .landing-banner--error {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #991b1b;
+  background: var(--app-feedback-error-bg);
+  border-color: var(--app-feedback-error-border);
+  color: var(--app-feedback-error-text);
 }
 
 .landing-banner__icon {
@@ -81,7 +81,7 @@ const banner = computed(() => data.value?.banner || null);
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.72);
   font-weight: 700;
   flex-shrink: 0;
 }

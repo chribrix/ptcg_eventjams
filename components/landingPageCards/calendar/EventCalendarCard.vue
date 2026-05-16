@@ -518,7 +518,7 @@ const customCalendarDayStyle = (day: CustomCalendarDay) => {
   return {
     background: getBackgroundForTypes(day.types),
     color: "#0f172a",
-    textShadow: "0 1px 0 rgba(255,255,255,0.3)",
+    textShadow: "0 1px 0 rgba(255,255,255,0.25)",
   };
 };
 
@@ -714,7 +714,7 @@ function startOfMonth(date: Date): Date {
 :deep(.vc-calendar) {
   font-size: 1.08rem;
   background: var(--app-surface-1);
-  box-shadow: 0 6px 32px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: var(--app-shadow-soft);
   border: none;
   padding: 1.5rem 1rem;
   border-radius: 1rem;
@@ -779,7 +779,7 @@ function startOfMonth(date: Date): Date {
 
 :deep(.vc-day-content:hover) {
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--app-shadow-soft);
   background-color: var(--app-surface-3);
 }
 

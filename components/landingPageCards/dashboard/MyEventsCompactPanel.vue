@@ -98,7 +98,7 @@
       >
         <div
           v-if="selectedEvent"
-          class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4"
+          class="app-overlay fixed inset-0 z-[9999] flex items-center justify-center p-4"
           @click="selectedEvent = null"
         >
           <div
