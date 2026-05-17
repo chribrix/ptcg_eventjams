@@ -1,6 +1,8 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-    <EventList />
+  <div class="min-h-screen app-bg-page px-4 py-8 sm:px-6">
+    <div class="mx-auto max-w-7xl">
+      <EventList />
+    </div>
   </div>
 </template>
 

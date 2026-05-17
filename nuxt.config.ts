@@ -102,7 +102,7 @@ export default defineNuxtConfig({
         {
           id: "app-color-theme-init",
           children:
-            "(() => { try { const key = 'app-color-theme'; const theme = localStorage.getItem(key) || 'dark'; document.documentElement.dataset.theme = theme; document.documentElement.style.colorScheme = theme; } catch (_error) { document.documentElement.dataset.theme = 'dark'; document.documentElement.style.colorScheme = 'dark'; } })();",
+            "(() => { try { const key = 'app-color-theme'; const savedTheme = localStorage.getItem(key); const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; const theme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : systemTheme; document.documentElement.dataset.theme = theme; document.documentElement.style.colorScheme = theme; } catch (_error) { const fallbackTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.dataset.theme = fallbackTheme; document.documentElement.style.colorScheme = fallbackTheme; } })();",
         },
       ],
       link: [

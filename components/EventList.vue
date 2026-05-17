@@ -64,7 +64,7 @@
         </div>
 
         <div
-          class="mt-0 hidden gap-4 rounded-[1.75rem] border app-border app-surface-0 p-4 shadow-sm sm:grid sm:p-5"
+          class="event-list-filter-panel mt-0 hidden gap-4 rounded-[1.75rem] border p-4 shadow-sm sm:grid sm:p-5"
           :class="error ? 'mt-4' : ''"
         >
           <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -133,8 +133,8 @@
                     class="ml-2 rounded-full px-2 py-0.5 text-xs"
                     :class="
                       selectedType === option.value
-                        ? 'bg-white/20 text-white'
-                        : 'bg-white/70 app-text-secondary-soft'
+                        ? 'event-list-chip-count-active'
+                        : 'event-list-chip-count'
                     "
                   >
                     {{ option.count }}
@@ -170,7 +170,7 @@
         >
           <div
             v-if="showMobileFilters"
-            class="fixed inset-x-3 bottom-20 z-50 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.5rem] border app-border app-surface-0 p-4 shadow-2xl sm:hidden"
+            class="event-list-mobile-panel fixed inset-x-3 bottom-20 z-50 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-[1.5rem] border p-4 shadow-2xl sm:hidden"
           >
             <div class="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -240,8 +240,8 @@
                       class="shrink-0 rounded-full px-2 py-0.5 text-xs"
                       :class="
                         selectedType === option.value
-                          ? 'bg-white/20 text-white'
-                          : 'bg-white/70 app-text-secondary-soft'
+                          ? 'event-list-chip-count-active'
+                          : 'event-list-chip-count'
                       "
                     >
                       {{ option.count }}
@@ -316,8 +316,9 @@
               <article
                 v-for="event in group.events"
                 :key="event.key"
-                class="group cursor-pointer rounded-[1.25rem] border p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/70 focus:ring-offset-2 focus:ring-offset-[var(--app-surface-0)] sm:rounded-[1.75rem] sm:p-5"
+                class="event-list-card group cursor-pointer rounded-[1.25rem] border p-3 transition focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/70 focus:ring-offset-2 focus:ring-offset-[var(--app-surface-0)] sm:rounded-[1.75rem] sm:p-5"
                 :class="getEventCardClass(event)"
+                :style="getEventCardStyle(event)"
                 role="button"
                 tabindex="0"
                 @click="openEventDetails(event)"
@@ -352,7 +353,7 @@
                         </span>
                         <span
                           v-if="event.gameLabel"
-                          class="rounded-full border app-border app-surface-2 px-2.5 py-1 text-[11px] font-medium app-text-secondary-soft sm:px-3 sm:text-xs"
+                          class="event-list-game-pill rounded-full border px-2.5 py-1 text-[11px] font-medium sm:px-3 sm:text-xs"
                         >
                           {{ event.gameLabel }}
                         </span>
@@ -518,7 +519,7 @@
           >
             <div class="space-y-5">
               <div
-                class="rounded-[1.5rem] border app-border app-bg-page p-4"
+                class="event-list-modal-section rounded-[1.5rem] border p-4"
               >
                 <div class="grid gap-4 sm:grid-cols-2">
                   <div class="flex gap-3">
@@ -589,7 +590,7 @@
 
               <div
                 v-if="selectedEvent.description"
-                class="rounded-[1.5rem] border app-border app-bg-page p-4"
+                class="event-list-modal-section rounded-[1.5rem] border p-4"
               >
                 <div
                   class="text-xs font-semibold uppercase tracking-[0.18em] app-text-muted-soft"
@@ -604,7 +605,7 @@
 
             <div class="space-y-4">
               <div
-                class="rounded-[1.5rem] border app-border app-bg-page p-4"
+                class="event-list-modal-section rounded-[1.5rem] border p-4"
               >
                 <div
                   class="text-xs font-semibold uppercase tracking-[0.18em] app-text-muted-soft"
@@ -701,7 +702,7 @@
               </div>
 
               <div
-                class="rounded-[1.5rem] border app-border app-bg-page p-4 text-sm app-text-secondary-soft"
+                class="event-list-modal-section rounded-[1.5rem] border p-4 text-sm app-text-secondary-soft"
               >
                 <div class="font-semibold">{{ t("eventList.quickTipTitle") }}</div>
                 <p class="mt-2 leading-6">
@@ -1058,11 +1059,33 @@ function isBookmarked(eventId: string): boolean {
   return bookmarkedEventIds.value.has(eventId);
 }
 
+function getEventCardAccent(event: UnifiedEvent): string {
+  if (event.waitlistStatus === "waitlist_claim") {
+    return "var(--app-button-blue-border)";
+  }
+  if (event.waitlistStatus === "waitlist") {
+    return "var(--app-button-amber-border)";
+  }
+  if (event.source === "custom") {
+    return "var(--app-accent)";
+  }
+  if (isBookmarked(event.id)) {
+    return "var(--app-bookmark-border)";
+  }
+  return "var(--app-border)";
+}
+
+function getEventCardStyle(event: UnifiedEvent) {
+  return {
+    "--event-list-card-accent": getEventCardAccent(event),
+  } as Record<string, string>;
+}
+
 function getEventCardClass(event: UnifiedEvent): string {
   if (event.source === "external" && isBookmarked(event.id)) {
-    return "app-bookmark-card hover:border-[var(--app-accent)]";
+    return "app-bookmark-card";
   }
-  return "app-border app-surface-0 hover:border-[var(--app-accent)]";
+  return "app-border app-surface-0";
 }
 
 async function toggleBookmark(event: UnifiedEvent): Promise<void> {
@@ -1349,3 +1372,98 @@ watch(user, async () => {
   await loadBookmarks();
 });
 </script>
+
+<style scoped>
+.event-list-filter-panel {
+  border-color: color-mix(in srgb, var(--app-accent) 18%, var(--app-border));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--app-accent) 7%, var(--app-surface-0)) 0%,
+      var(--app-surface-0) 58%,
+      color-mix(in srgb, var(--app-button-amber-border) 6%, var(--app-surface-0)) 100%
+    );
+  box-shadow: var(--app-shadow-soft);
+}
+
+.event-list-mobile-panel {
+  border-color: color-mix(in srgb, var(--app-accent) 18%, var(--app-border));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--app-accent) 8%, var(--app-surface-0)) 0%,
+      var(--app-surface-0) 100%
+    );
+  backdrop-filter: blur(18px);
+}
+
+.event-list-chip-count {
+  background: color-mix(in srgb, var(--app-surface-1) 88%, white);
+  color: var(--app-text-secondary);
+}
+
+.event-list-chip-count-active {
+  background: rgba(255, 255, 255, 0.18);
+  color: currentColor;
+}
+
+.event-list-card {
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--app-shadow-soft);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    border-color 0.2s,
+    background-color 0.2s;
+}
+
+.event-list-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--event-list-card-accent) 96%, white),
+    color-mix(in srgb, var(--event-list-card-accent) 60%, transparent)
+  );
+  opacity: 0.96;
+}
+
+.event-list-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--event-list-card-accent) 14%, transparent),
+      transparent 36%
+    );
+}
+
+.event-list-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--event-list-card-accent) 36%, var(--app-border));
+  box-shadow: var(--app-shadow-strong);
+}
+
+.event-list-game-pill {
+  border-color: color-mix(in srgb, var(--app-accent) 10%, var(--app-border));
+  background: color-mix(in srgb, var(--app-surface-2) 88%, var(--app-accent) 12%);
+  color: var(--app-text-secondary);
+}
+
+.event-list-modal-section {
+  border-color: color-mix(in srgb, var(--app-accent) 14%, var(--app-border));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--app-accent) 5%, var(--app-bg-page)) 0%,
+      var(--app-bg-page) 100%
+    );
+}
+</style>

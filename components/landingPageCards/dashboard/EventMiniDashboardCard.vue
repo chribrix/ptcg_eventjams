@@ -7,18 +7,18 @@
     >
       <div class="relative">
         <div
-          class="w-12 h-12 border-4 border-gray-600 border-t-gray-400 rounded-full animate-spin"
+          class="w-12 h-12 border-4 app-border border-t-[var(--app-accent)] rounded-full animate-spin"
         ></div>
         <div
-          class="absolute inset-0 w-12 h-12 border-4 border-transparent border-r-gray-500 rounded-full animate-spin"
+          class="absolute inset-0 w-12 h-12 border-4 border-transparent border-r-[var(--app-accent-soft)] rounded-full animate-spin"
           style="animation-delay: 0.1s"
         ></div>
       </div>
       <div class="text-center">
-        <p class="text-gray-300 font-medium">
+        <p class="app-text-secondary-soft font-medium">
           {{ t("miniDashboardCard.loadingTitle") }}
         </p>
-        <p class="text-gray-400 text-sm">
+        <p class="app-text-muted-soft text-sm">
           {{ t("miniDashboardCard.loadingText") }}
         </p>
       </div>
@@ -27,19 +27,19 @@
     <!-- Empty State -->
     <div v-else-if="!registrations.length" class="text-center py-16">
       <div
-        class="w-20 h-20 mx-auto mb-6 bg-[#40444b] rounded-2xl flex items-center justify-center"
+        class="w-20 h-20 mx-auto mb-6 app-surface-2 rounded-2xl flex items-center justify-center"
       >
-        <TicketIcon class="w-10 h-10 text-gray-400" />
+        <TicketIcon class="w-10 h-10 app-icon-muted" />
       </div>
-      <h3 class="text-xl font-semibold text-white mb-2">
+      <h3 class="text-xl font-semibold app-text-strong mb-2">
         {{ t("miniDashboardCard.emptyTitle") }}
       </h3>
-      <p class="text-gray-300 mb-8 max-w-md mx-auto">
+      <p class="app-text-secondary-soft mb-8 max-w-md mx-auto">
         {{ t("miniDashboardCard.emptyText") }}
       </p>
       <NuxtLink
         to="/events"
-        class="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-semibold rounded-xl hover:from-gray-900 hover:to-black transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+        class="group inline-flex items-center app-action-button app-action-primary px-6 py-3 rounded-xl font-semibold"
       >
         <MagnifyingGlassIcon
           class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"
@@ -56,16 +56,16 @@
       <!-- Scroll Indicator Header -->
       <div v-if="registrations.length > 2" class="mb-3 px-1">
         <div
-          class="flex items-center justify-between bg-[#40444b] border border-[#202225] rounded-lg px-3 py-2"
+          class="flex items-center justify-between app-toolbar-surface rounded-lg px-3 py-2"
         >
-          <div class="flex items-center text-sm text-gray-300 font-medium">
+          <div class="flex items-center text-sm app-text-secondary-soft font-medium">
             <span class="mr-2">{{
               t("miniDashboardCard.registrationCount", {
                 count: registrations.length,
               })
             }}</span>
           </div>
-          <div class="flex items-center space-x-1 text-gray-400">
+          <div class="flex items-center space-x-1 app-text-muted-soft">
             <ChevronUpIcon class="w-4 h-4" />
             <span class="text-xs font-semibold">{{
               t("miniDashboardCard.scrollHint")
@@ -79,7 +79,8 @@
       <div
         ref="scrollContainer"
         :class="[
-          'flex-1 overflow-y-auto max-h-[30rem] pr-1 space-y-4 relative border border-[#202225] rounded-lg p-2',
+          'flex-1 overflow-y-auto max-h-[30rem] pr-1 space-y-4 relative border rounded-lg p-2',
+          'app-surface-1 app-border',
           shouldShowScrollbar
             ? 'scrollbar-always-visible'
             : 'scrollbar-prominent',
@@ -102,7 +103,7 @@
       <div class="pt-4 flex-shrink-0">
         <NuxtLink
           to="/dashboard"
-          class="group flex items-center justify-center w-full px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-semibold rounded-xl hover:from-gray-900 hover:to-black transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
+          class="group flex items-center justify-center w-full app-action-button app-action-primary px-6 py-4 rounded-xl font-semibold"
         >
           <ChartBarSquareIcon
             class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform"
@@ -118,26 +119,26 @@
     <!-- Cancellation Modal -->
     <div
       v-if="showCancelModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 app-overlay"
       @click="closeCancelModal"
     >
       <div
-        class="bg-[#2f3136] rounded-xl shadow-2xl max-w-md w-full p-6"
+        class="app-modal-surface rounded-xl max-w-md w-full p-6"
         @click.stop
       >
         <div class="mb-4">
-          <h3 class="text-xl font-bold text-white mb-2">
+          <h3 class="text-xl font-bold app-text-strong mb-2">
             {{ t("miniDashboardCard.cancelTitle") }}
           </h3>
-          <p class="text-gray-300">
+          <p class="app-text-secondary-soft">
             {{ t("miniDashboardCard.cancelPrompt") }}
-            <span class="font-semibold text-white">{{
+            <span class="font-semibold app-text-strong">{{
               registrationToCancel?.customEvent.name
             }}</span
             >?
           </p>
-          <div class="mt-3 p-3 bg-[#40444b] border border-amber-500 rounded-lg">
-            <p class="text-sm text-amber-300">
+          <div class="mt-3 p-3 app-warn-card border rounded-lg">
+            <p class="text-sm">
               <strong>{{ t("miniDashboardCard.eventDateLabel") }}</strong>
               {{
                 registrationToCancel
@@ -146,16 +147,16 @@
               }}
             </p>
           </div>
-          <p class="text-sm text-red-400 mt-3">
+          <p class="text-sm mt-3 app-feedback-danger rounded-lg px-3 py-2">
             {{ t("miniDashboardCard.cancelWarning") }}
           </p>
 
           <!-- Error Message -->
           <div
             v-if="cancelError"
-            class="mt-3 p-3 bg-[#40444b] border border-red-500 rounded-lg"
+            class="mt-3 p-3 app-feedback-danger rounded-lg"
           >
-            <p class="text-sm text-red-300">
+            <p class="text-sm">
               <strong>{{ t("common.error") }}:</strong> {{ cancelError }}
             </p>
           </div>
@@ -165,18 +166,18 @@
           <button
             @click="closeCancelModal"
             :disabled="cancelling !== null"
-            class="flex-1 px-4 py-2 bg-[#40444b] text-gray-300 rounded-lg hover:bg-[#4f545c] transition-colors font-medium disabled:opacity-50"
+            class="flex-1 app-action-button app-action-secondary px-4 py-2 rounded-lg font-medium disabled:opacity-50"
           >
             {{ t("miniDashboardCard.keepRegistration") }}
           </button>
           <button
             @click="proceedWithCancellation"
             :disabled="cancelling !== null"
-            class="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-colors font-medium disabled:opacity-50 flex items-center justify-center shadow-lg"
+            class="flex-1 app-action-button app-action-danger px-4 py-2 rounded-lg font-medium disabled:opacity-50"
             >
             <div
               v-if="cancelling"
-              class="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"
+              class="w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin"
             ></div>
             {{
               cancelling
@@ -199,7 +200,7 @@
     >
       <div v-if="showSuccessToast" class="fixed bottom-4 right-4 z-50 max-w-md">
         <div
-          class="bg-green-600 text-white rounded-lg shadow-2xl p-4 flex items-start gap-3"
+          class="app-feedback-success rounded-lg shadow-2xl p-4 flex items-start gap-3"
         >
           <div class="flex-shrink-0">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -214,11 +215,11 @@
             <p class="font-semibold">
               {{ t("miniDashboardCard.toastTitle") }}
             </p>
-            <p class="text-sm text-green-100 mt-1">{{ successMessage }}</p>
+            <p class="text-sm mt-1">{{ successMessage }}</p>
           </div>
           <button
             @click="showSuccessToast = false"
-            class="flex-shrink-0 text-green-200 hover:text-white transition-colors"
+            class="flex-shrink-0 transition-opacity opacity-80 hover:opacity-100"
           >
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -505,7 +506,8 @@ watch(
 /* Scrollbar styling */
 .scrollbar-prominent {
   scrollbar-width: thin;
-  scrollbar-color: #10b981 #f3f4f6;
+  scrollbar-color: var(--app-scrollbar-prominent-thumb)
+    var(--app-scrollbar-prominent-track);
 }
 
 .scrollbar-prominent::-webkit-scrollbar {
@@ -513,23 +515,26 @@ watch(
 }
 
 .scrollbar-prominent::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: var(--app-scrollbar-prominent-track);
+  border: 1px solid var(--app-scrollbar-prominent-track-border);
   border-radius: 4px;
 }
 
 .scrollbar-prominent::-webkit-scrollbar-thumb {
-  background: #10b981;
+  background: var(--app-scrollbar-prominent-thumb);
+  border: 1px solid var(--app-scrollbar-prominent-thumb-border);
   border-radius: 4px;
 }
 
 .scrollbar-prominent::-webkit-scrollbar-thumb:hover {
-  background: #059669;
+  background: var(--app-scrollbar-prominent-thumb-hover);
 }
 
 /* Always visible scrollbar when multiple registrations */
 .scrollbar-always-visible {
   scrollbar-width: thin;
-  scrollbar-color: #10b981 #f3f4f6;
+  scrollbar-color: var(--app-scrollbar-prominent-thumb)
+    var(--app-scrollbar-prominent-track);
   overflow-y: scroll; /* Force scrollbar to always show */
 }
 
@@ -539,18 +544,20 @@ watch(
 }
 
 .scrollbar-always-visible::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: var(--app-scrollbar-prominent-track);
+  border: 1px solid var(--app-scrollbar-prominent-track-border);
   border-radius: 4px;
 }
 
 .scrollbar-always-visible::-webkit-scrollbar-thumb {
-  background: #10b981;
+  background: var(--app-scrollbar-prominent-thumb);
+  border: 1px solid var(--app-scrollbar-prominent-thumb-border);
   border-radius: 4px;
   min-height: 20px; /* Ensure thumb has minimum size */
 }
 
 .scrollbar-always-visible::-webkit-scrollbar-thumb:hover {
-  background: #059669;
+  background: var(--app-scrollbar-prominent-thumb-hover);
 }
 
 /* Registration transition animations */

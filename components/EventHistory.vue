@@ -1,5 +1,5 @@
 <template>
-  <div class="event-history rounded-xl border app-border app-surface-0 p-4 sm:p-6">
+  <div class="event-history app-panel rounded-[1.75rem] p-4 sm:p-6">
     <!-- Header -->
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
@@ -90,10 +90,11 @@
       <div
         v-for="event in sortedEvents"
         :key="event.id"
-        class="overflow-hidden rounded-xl border app-border app-bg-page transition-shadow duration-200 hover:shadow-md"
+        class="event-history-card overflow-hidden rounded-[1.6rem] border transition-all duration-300"
+        :style="getEventCardStyle(event)"
       >
         <!-- Event Header -->
-        <div class="p-6 pb-4">
+        <div class="event-history-card__hero p-6 pb-4">
           <div class="flex items-start justify-between mb-4">
             <div class="flex-1">
               <h3 class="app-text-strong mb-2 text-xl font-semibold">
@@ -123,7 +124,7 @@
             <!-- Event Status Badge -->
             <div class="flex items-center gap-2">
               <span
-                class="rounded-full px-3 py-1 text-xs font-medium"
+                class="event-history-status rounded-full px-3 py-1 text-xs font-medium"
                 :class="getEventStatusClass(event.status)"
               >
                 {{ formatStatus(event.status) }}
@@ -141,7 +142,7 @@
         </div>
 
         <!-- Participants Summary -->
-        <div class="border-t app-border app-surface-0 px-6 pb-4">
+        <div class="event-history-card__meta border-t px-6 pb-4">
           <div class="flex items-center justify-between py-3">
             <div class="flex items-center gap-6 text-sm">
               <!-- Total Participants -->
@@ -170,7 +171,7 @@
               <!-- Requires Decklist Indicator -->
               <div
                 v-if="event.requiresDecklist"
-                class="flex items-center gap-1 app-icon-accent"
+                class="event-history-decklist flex items-center gap-1"
               >
                 <DocumentTextIcon class="w-4 h-4" />
                 <span class="text-xs font-medium">Decklist Required</span>
@@ -196,7 +197,7 @@
         <!-- Expanded Participants List (Admin only) -->
         <div
           v-if="isAdmin && expandedEvents.has(event.id)"
-          class="border-t app-border app-bg-page"
+          class="event-history-card__expanded border-t"
         >
           <div class="p-4">
             <h4 class="app-text-strong mb-3 font-semibold">
@@ -209,7 +210,7 @@
               <div
                 v-for="participant in event.participants"
                 :key="participant.id"
-                class="flex items-center justify-between rounded-lg app-surface-0 px-3 py-2"
+                class="event-history-participant flex items-center justify-between rounded-xl px-3 py-2"
               >
                 <div class="flex items-center gap-3">
                   <UserIcon class="app-icon-muted h-4 w-4" />
@@ -455,6 +456,20 @@ const getUserStatusDotClass = (status: string) => {
   return "status-dot-info";
 };
 
+const getEventCardAccent = (event: EventHistoryItem) => {
+  if (event.status === "completed") return "var(--app-button-blue-border)";
+  if (event.status === "cancelled") return "var(--app-button-red-border)";
+  if (event.requiresDecklist) return "var(--app-button-amber-border)";
+  return "var(--app-accent)";
+};
+
+const getEventCardStyle = (event: EventHistoryItem) => {
+  const accent = getEventCardAccent(event);
+  return {
+    "--event-card-accent": accent,
+  } as Record<string, string>;
+};
+
 // Lifecycle
 onMounted(() => {
   fetchEvents();
@@ -468,6 +483,78 @@ onMounted(() => {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.event-history-card {
+  position: relative;
+  border-color: color-mix(in srgb, var(--event-card-accent) 28%, var(--app-border));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--event-card-accent) 14%, var(--app-surface-0)) 0%,
+      color-mix(in srgb, var(--event-card-accent) 4%, var(--app-surface-0)) 42%,
+      var(--app-surface-0) 100%
+    );
+  box-shadow: var(--app-shadow-soft);
+}
+
+.event-history-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--event-card-accent) 96%, white),
+    color-mix(in srgb, var(--event-card-accent) 62%, transparent)
+  );
+}
+
+.event-history-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--event-card-accent) 18%, white);
+}
+
+.event-history-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--app-shadow-strong);
+}
+
+.event-history-card__hero {
+  background:
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--event-card-accent) 18%, transparent),
+      transparent 42%
+    );
+}
+
+.event-history-card__meta {
+  border-color: color-mix(in srgb, var(--event-card-accent) 18%, var(--app-border));
+  background: color-mix(in srgb, var(--app-surface-1) 86%, var(--event-card-accent) 14%);
+}
+
+.event-history-card__expanded {
+  border-color: color-mix(in srgb, var(--event-card-accent) 18%, var(--app-border));
+  background: color-mix(in srgb, var(--app-surface-1) 92%, var(--event-card-accent) 8%);
+}
+
+.event-history-status {
+  border: 1px solid color-mix(in srgb, var(--event-card-accent) 24%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.event-history-decklist {
+  color: color-mix(in srgb, var(--app-button-amber-text) 78%, var(--app-text-secondary));
+}
+
+.event-history-participant {
+  border: 1px solid color-mix(in srgb, var(--event-card-accent) 14%, var(--app-border));
+  background: color-mix(in srgb, var(--app-surface-0) 86%, var(--event-card-accent) 14%);
 }
 
 .status-dot-success {

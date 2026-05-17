@@ -399,15 +399,24 @@ const { t } = useI18n();
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--app-text-secondary);
+  color: var(--app-button-blue-text);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--app-button-blue) 84%, white),
+      color-mix(in srgb, var(--app-button-green) 68%, var(--app-button-blue))
+    );
+  border: 1px solid color-mix(in srgb, var(--app-button-blue-border) 68%, white);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   text-decoration: none;
+  box-shadow: var(--app-shadow-soft);
 }
 
 .nav-link:hover {
-  color: var(--app-text-primary);
-  background-color: var(--app-surface-2);
+  color: var(--app-button-blue-text);
+  filter: brightness(1.05) saturate(1.04);
+  transform: translateY(-1px);
 }
 
 .nav-link-primary {
@@ -417,9 +426,14 @@ const { t } = useI18n();
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--app-text-primary);
-  background: var(--app-surface-elevated);
-  border: 1px solid var(--app-border);
+  color: var(--app-button-blue-text);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--app-button-blue) 90%, white),
+      color-mix(in srgb, var(--app-button-amber) 40%, var(--app-button-blue))
+    );
+  border: 1px solid color-mix(in srgb, var(--app-button-blue-border) 72%, white);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   text-decoration: none;
@@ -427,16 +441,24 @@ const { t } = useI18n();
 }
 
 .nav-link-primary:hover {
-  background: var(--app-surface-deep);
+  filter: brightness(1.06) saturate(1.06);
+  transform: translateY(-1px);
 }
 
 .router-link-exact-active.nav-link {
-  color: var(--app-text-primary);
-  background-color: var(--app-surface-2);
+  border-color: color-mix(in srgb, var(--app-accent) 72%, white);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 2px var(--app-focus-ring-soft),
+    var(--app-shadow-soft);
 }
 
 .router-link-exact-active.nav-link-primary {
-  background: var(--app-surface-deep);
+  border-color: color-mix(in srgb, var(--app-accent) 72%, white);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 2px var(--app-focus-ring-soft),
+    var(--app-shadow-soft);
 }
 
 .admin-menu-button {
@@ -446,22 +468,23 @@ const { t } = useI18n();
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--app-text-secondary);
-  background-color: var(--app-surface-2);
-  border: 1px solid var(--app-border);
+  color: var(--app-button-amber-text);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--app-button-amber) 88%, white),
+      color-mix(in srgb, var(--app-button-red) 24%, var(--app-button-amber))
+    );
+  border: 1px solid color-mix(in srgb, var(--app-button-amber-border) 72%, white);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
+  box-shadow: var(--app-shadow-soft);
 }
 
-.admin-link:hover {
-  background-color: var(--app-surface-3);
-  color: var(--app-text-primary);
-}
-
-.admin-link:focus {
-  outline: none;
-  background-color: var(--app-surface-3);
+.admin-menu-button:hover {
+  filter: brightness(1.06) saturate(1.05);
+  transform: translateY(-1px);
 }
 
 /* Auth button styles */
@@ -492,9 +515,14 @@ const { t } = useI18n();
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--app-text-primary);
-  background: var(--app-surface-elevated);
-  border: 1px solid var(--app-border);
+  color: var(--app-button-green-text);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--app-button-green) 88%, white),
+      color-mix(in srgb, var(--app-button-blue) 42%, var(--app-button-green))
+    );
+  border: 1px solid color-mix(in srgb, var(--app-button-green-border) 72%, white);
   border-radius: 0.5rem;
   transition: all 0.2s ease-in-out;
   box-shadow: var(--app-shadow-soft);
@@ -503,7 +531,7 @@ const { t } = useI18n();
 }
 
 .signin-button:hover {
-  background: var(--app-surface-deep);
+  filter: brightness(1.06) saturate(1.05);
   transform: translateY(-1px);
 }
 
@@ -516,9 +544,14 @@ const { t } = useI18n();
   padding: 0.5rem 0.8rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--app-text-secondary);
-  background: var(--app-surface-0);
-  border: 1px solid var(--app-border);
+  color: var(--app-feedback-info-text);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--app-feedback-info-bg) 88%, white),
+      color-mix(in srgb, var(--app-badge-info-bg) 56%, var(--app-feedback-info-bg))
+    );
+  border: 1px solid color-mix(in srgb, var(--app-feedback-info-border) 76%, white);
   border-radius: 9999px;
   box-shadow: var(--app-shadow-soft);
   transition:
@@ -529,9 +562,8 @@ const { t } = useI18n();
 }
 
 .theme-toggle-button:hover {
-  color: var(--app-text-primary);
-  background: var(--app-surface-2);
-  border-color: var(--app-accent);
+  color: var(--app-feedback-info-text);
+  filter: brightness(1.05) saturate(1.04);
   transform: translateY(-1px);
 }
 

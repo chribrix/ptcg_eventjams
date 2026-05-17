@@ -1,16 +1,16 @@
 <template>
   <aside
     v-if="eventDetails"
-    class="app-surface-0 border app-border rounded-2xl shadow-lg p-6 mb-6"
+    class="app-panel rounded-2xl p-6 mb-6"
   >
-    <h1 class="text-2xl font-bold text-white mb-4">
+    <h1 class="text-2xl font-bold app-text-strong mb-4">
       {{ eventDetails.name }}
     </h1>
 
     <div class="space-y-4">
       <div class="flex items-start gap-3">
         <svg
-          class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+          class="w-5 h-5 app-icon-accent mt-0.5 flex-shrink-0"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -23,10 +23,10 @@
           ></path>
         </svg>
         <div>
-          <div class="text-xs text-gray-400 font-medium uppercase">
+          <div class="text-xs app-text-muted-soft font-medium uppercase">
             Date & Time
           </div>
-          <div class="text-sm text-gray-100 font-medium">
+          <div class="text-sm app-text-strong font-medium">
             {{ formatEventDate(eventDetails.eventDate) }}
           </div>
         </div>
@@ -34,7 +34,7 @@
 
       <div class="flex items-start gap-3">
         <svg
-          class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+          class="w-5 h-5 app-icon-accent mt-0.5 flex-shrink-0"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -53,8 +53,8 @@
           ></path>
         </svg>
         <div>
-          <div class="text-xs text-gray-400 font-medium uppercase">Venue</div>
-          <div class="text-sm text-gray-100 font-medium">
+          <div class="text-xs app-text-muted-soft font-medium uppercase">Venue</div>
+          <div class="text-sm app-text-strong font-medium">
             {{ eventDetails.venue }}
           </div>
         </div>
@@ -62,7 +62,7 @@
 
       <div class="flex items-start gap-3">
         <svg
-          class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+          class="w-5 h-5 app-icon-accent mt-0.5 flex-shrink-0"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -75,14 +75,14 @@
           ></path>
         </svg>
         <div>
-          <div class="text-xs text-gray-400 font-medium uppercase">
+          <div class="text-xs app-text-muted-soft font-medium uppercase">
             Participants
           </div>
-          <div class="text-sm text-gray-100 font-medium">
-            <span class="text-green-600">
+          <div class="text-sm app-text-strong font-medium">
+            <span class="app-text-secondary-soft">
               {{ eventDetails.registrationCount }}
             </span>
-            <span class="text-gray-400"
+            <span class="app-text-muted-soft"
               >/{{ eventDetails.maxParticipants }}</span
             >
           </div>
@@ -92,9 +92,9 @@
 
     <div
       v-if="eventDetails.requiresDecklist"
-      class="mt-6 p-3 bg-amber-500/10 border border-amber-400/40 rounded-lg"
+      class="mt-6 p-3 app-warn-card border rounded-lg"
     >
-      <div class="flex items-center gap-2 text-amber-300">
+      <div class="flex items-center gap-2">
         <svg
           class="w-4 h-4 flex-shrink-0"
           fill="none"
@@ -112,8 +112,8 @@
       </div>
     </div>
 
-    <div class="mt-6 p-4 bg-blue-500/10 border border-blue-400/40 rounded-lg">
-      <p class="text-sm text-blue-200 font-medium text-center">
+    <div class="mt-6 p-4 app-feedback-info rounded-lg">
+      <p class="text-sm font-medium text-center">
         👉 Log in or create an account to reserve your spot
       </p>
     </div>

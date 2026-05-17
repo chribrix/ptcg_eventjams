@@ -3,16 +3,16 @@
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="mb-5 text-center">
-        <h1 class="text-3xl font-bold text-white sm:text-4xl">
+        <h1 class="text-3xl font-bold app-text-strong sm:text-4xl">
           {{ t("dashboard.title") }}
         </h1>
       </div>
 
       <!-- Loading State -->
       <div v-if="isLoading" class="flex items-center justify-center py-12">
-        <div class="flex items-center gap-3 text-gray-300">
+        <div class="flex items-center gap-3 app-text-secondary-soft">
           <div
-            class="w-5 h-5 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin"
+            class="w-5 h-5 border-2 app-border border-t-[var(--app-accent)] rounded-full animate-spin"
           ></div>
           <span class="text-lg">{{ t("dashboard.loadingRegistrations") }}</span>
         </div>
@@ -21,15 +21,15 @@
       <!-- Error State -->
       <div
         v-else-if="error"
-        class="app-surface-0 border border-red-600 rounded-lg p-6 text-center"
+        class="app-feedback-danger rounded-lg p-6 text-center"
       >
-        <h3 class="text-xl font-semibold text-red-400 mb-2">
+        <h3 class="text-xl font-semibold mb-2">
           {{ t("dashboard.errorLoading") }}
         </h3>
-        <p class="text-red-300 mb-4">{{ error }}</p>
+        <p class="mb-4">{{ error }}</p>
         <button
           @click="fetchRegistrations"
-          class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 shadow-lg"
+          class="app-action-button app-action-danger rounded-lg px-6 py-2 font-medium"
         >
           {{ t("dashboard.tryAgain") }}
         </button>
@@ -38,15 +38,15 @@
       <!-- Empty State -->
       <div
         v-else-if="registrations.length === 0"
-        class="app-surface-0 rounded-lg shadow-sm border app-border p-8 text-center"
+        class="app-panel rounded-lg p-8 text-center"
       >
-        <h3 class="text-2xl font-semibold text-white mb-2">{{ t("dashboard.emptyTitle") }}</h3>
-        <p class="text-gray-300 mb-6">
+        <h3 class="text-2xl font-semibold app-text-strong mb-2">{{ t("dashboard.emptyTitle") }}</h3>
+        <p class="app-text-secondary-soft mb-6">
           {{ t("dashboard.emptyText") }}
         </p>
         <NuxtLink
           to="/eventlist"
-          class="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg"
+          class="inline-flex app-action-button app-action-primary rounded-lg px-6 py-3 font-medium"
         >
           Browse Events
         </NuxtLink>
@@ -57,14 +57,14 @@
         <div class="mb-7 rounded-xl border app-border app-surface-0 p-3 sm:p-4">
           <div class="mb-3 flex items-start justify-between gap-3">
             <div>
-              <h2 class="text-lg font-bold text-white">{{ t("dashboard.timelinePlanningTitle") }}</h2>
-              <p class="text-xs text-gray-300">{{ timelineRangeLabel }}</p>
+              <h2 class="text-lg font-bold app-text-strong">{{ t("dashboard.timelinePlanningTitle") }}</h2>
+              <p class="text-xs app-text-secondary-soft">{{ timelineRangeLabel }}</p>
             </div>
           </div>
 
           <div class="mb-3 rounded-lg border app-border app-bg-page p-2.5">
             <div class="mb-2 flex items-center justify-between">
-              <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-300">
+              <h3 class="text-xs font-semibold uppercase tracking-wider app-text-secondary-soft">
                 {{ miniCalendarMonthLabel }}
               </h3>
             </div>
@@ -72,7 +72,7 @@
               <span
                 v-for="weekday in miniCalendarWeekdays"
                 :key="`wk-${weekday}`"
-                class="text-center text-[10px] font-semibold text-gray-500"
+                class="text-center text-[10px] font-semibold app-text-muted-soft"
               >
                 {{ weekday }}
               </span>
@@ -113,15 +113,15 @@
 
         <div
           v-if="selectedTimelineEntry"
-          class="fixed inset-0 z-50 flex items-end bg-black/60 p-0 sm:items-center sm:justify-center sm:p-4"
+          class="fixed inset-0 z-50 flex items-end app-overlay p-0 sm:items-center sm:justify-center sm:p-4"
           @click="closeTimelineModal"
         >
           <div
-            class="w-full rounded-t-2xl border app-border app-surface-0 p-4 sm:max-w-md sm:rounded-2xl"
+            class="w-full rounded-t-2xl app-modal-surface p-4 sm:max-w-md sm:rounded-2xl"
             @click.stop
           >
             <div class="mb-3 flex items-start justify-between gap-3">
-              <h3 class="text-lg font-bold text-white">{{ selectedTimelineEntry.customEvent.name }}</h3>
+              <h3 class="text-lg font-bold app-text-strong">{{ selectedTimelineEntry.customEvent.name }}</h3>
               <button
                 type="button"
                 class="rounded-md app-btn-neutral px-2 py-1 text-sm"
@@ -130,11 +130,11 @@
                 ×
               </button>
             </div>
-            <p class="text-sm text-gray-300">{{ formatEventDate(selectedTimelineEntry.customEvent.eventDate) }}</p>
-            <p class="mt-1 text-sm text-gray-300">{{ selectedTimelineEntry.customEvent.venue }}</p>
+            <p class="text-sm app-text-secondary-soft">{{ formatEventDate(selectedTimelineEntry.customEvent.eventDate) }}</p>
+            <p class="mt-1 text-sm app-text-secondary-soft">{{ selectedTimelineEntry.customEvent.venue }}</p>
             <p
               v-if="timelineActionError"
-              class="mt-3 rounded-md border border-red-600/60 bg-red-900/30 px-3 py-2 text-xs text-red-200"
+              class="mt-3 rounded-md app-feedback-danger px-3 py-2 text-xs"
             >
               {{ timelineActionError }}
             </p>
@@ -143,7 +143,7 @@
                 :href="routePlannerUrl(selectedTimelineEntry)"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+                class="inline-flex items-center justify-center rounded-lg app-action-button app-action-primary px-3 py-2 text-sm font-semibold"
               >
                 {{ t("dashboard.openRoutePlanner") }}
               </a>
@@ -169,7 +169,7 @@
               <template v-if="selectedTimelineEntry.entryType === 'bookmark'">
                 <button
                   type="button"
-                  class="inline-flex w-full items-center justify-center rounded-lg border border-red-600/70 bg-red-950/40 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  class="inline-flex w-full items-center justify-center rounded-lg app-action-button app-action-danger px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                   :disabled="timelineActionPending"
                   @click="removeTimelineBookmark"
                 >
@@ -182,12 +182,12 @@
                   class="mb-3 rounded-md border app-border app-bg-page p-3"
                 >
                   <div class="mb-2 flex items-center justify-between gap-2">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-300">
+                    <p class="text-xs font-semibold uppercase tracking-wide app-text-secondary-soft">
                       {{ t("dashboard.cancelTicketsTitle") }}
                     </p>
                     <button
                       type="button"
-                      class="text-xs font-semibold text-sky-300 hover:text-sky-200"
+                      class="text-xs font-semibold app-link"
                       @click="toggleAllTimelineTickets"
                     >
                       {{
@@ -201,19 +201,19 @@
                     <label
                       v-for="ticket in selectedTimelineActiveTickets"
                       :key="ticket.id"
-                      class="flex items-center gap-2 rounded-md border app-border app-surface-0 px-2 py-2 text-sm text-gray-200"
+                      class="flex items-center gap-2 rounded-md border app-border app-surface-0 px-2 py-2 text-sm app-text-secondary-soft"
                     >
                       <input
                         :checked="timelineSelectedTicketIds.includes(ticket.id)"
                         type="checkbox"
-                        class="h-4 w-4 rounded border-gray-500 bg-transparent"
+                        class="h-4 w-4 rounded app-border bg-transparent text-[var(--app-accent)]"
                         @change="toggleTimelineTicket(ticket.id)"
                       />
                       <span class="truncate">
                         {{ ticket.participantName || t("dashboard.unnamedTicket") }}
                         <span
                           v-if="ticket.participantPlayerId"
-                          class="text-xs text-gray-400"
+                          class="text-xs app-text-muted-soft"
                         >
                           (#{{ ticket.participantPlayerId }})
                         </span>
@@ -223,7 +223,7 @@
                 </div>
                 <button
                   type="button"
-                  class="inline-flex w-full items-center justify-center rounded-lg border border-red-600/70 bg-red-950/40 px-3 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  class="inline-flex w-full items-center justify-center rounded-lg app-action-button app-action-danger px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                   :disabled="timelineActionPending || timelineSelectedTicketIds.length === 0"
                   @click="cancelTimelineRegistrationSelection"
                 >
@@ -234,7 +234,7 @@
           </div>
         </div>
 
-        <h2 class="text-2xl font-bold text-white mb-6">
+        <h2 class="text-2xl font-bold app-text-strong mb-6">
           {{ t("dashboard.currentRegistrations") }}
         </h2>
         <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 mb-12">
@@ -270,7 +270,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap mb-2">
                   <h3
-                    class="text-lg sm:text-xl font-semibold text-white truncate"
+                    class="text-lg sm:text-xl font-semibold app-text-strong truncate"
                   >
                     {{ registration.customEvent.name }}
                   </h3>
@@ -289,7 +289,7 @@
                 <!-- Ticket Count Badge -->
                 <div
                   v-if="registration.ticketCount > 1"
-                  class="flex items-center gap-1 text-sm text-blue-600 font-medium"
+                  class="flex items-center gap-1 text-sm app-icon-accent font-medium"
                 >
                   <svg
                     class="w-4 h-4"
@@ -309,23 +309,7 @@
               </div>
               <span
                 class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap self-start flex-shrink-0"
-                :class="{
-                  'bg-green-100 text-green-800':
-                    registration.status === 'registered',
-                  'bg-yellow-100 text-yellow-800':
-                    registration.status === 'reserved',
-                  'bg-sky-100 text-sky-800':
-                    registration.status === 'bookmarked',
-                  'bg-amber-100 text-amber-800':
-                    registration.status === 'waitlist',
-                  'bg-emerald-100 text-emerald-800':
-                    registration.status === 'waitlist_claim',
-                  'bg-blue-100 text-blue-800':
-                    registration.status === 'attended',
-                  'bg-red-100 text-red-800': registration.status === 'no-show',
-                  'bg-gray-100 text-gray-800':
-                    registration.status === 'cancelled',
-                }"
+                :class="getRegistrationStatusClass(registration.status)"
               >
                 {{ formatStatus(registration.status) }}
               </span>
@@ -333,21 +317,21 @@
 
             <div
               v-if="registration.tournamentPlacement"
-              class="mb-3 text-sm font-semibold text-emerald-300"
+              class="mb-3 text-sm font-semibold app-text-secondary-soft"
             >
               Platzierung: #{{ registration.tournamentPlacement }}
             </div>
 
             <!-- Event Details -->
             <div class="space-y-2">
-              <div class="flex items-start gap-2 text-gray-300">
+              <div class="flex items-start gap-2 app-text-secondary-soft">
                 <CalendarIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span class="text-sm break-words">{{
                   formatEventDate(registration.customEvent.eventDate)
                 }}</span>
               </div>
 
-              <div class="flex items-start gap-2 text-gray-300">
+              <div class="flex items-start gap-2 app-text-secondary-soft">
                 <MapPinIcon class="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span class="text-sm break-words">{{
                   registration.customEvent.venue
@@ -356,7 +340,7 @@
 
               <div
                 v-if="registration.customEvent.participationFee"
-                class="flex items-center gap-2 text-gray-300"
+                class="flex items-center gap-2 app-text-secondary-soft"
               >
                 <CurrencyDollarIcon class="w-4 h-4 flex-shrink-0" />
                 <span class="text-sm">{{
@@ -364,7 +348,7 @@
                 }}</span>
               </div>
 
-              <div class="flex items-center gap-2 text-gray-300">
+              <div class="flex items-center gap-2 app-text-secondary-soft">
                 <ClockIcon class="w-4 h-4 flex-shrink-0" />
                 <span class="text-sm">
                   {{
@@ -387,7 +371,7 @@
               >
                 <NuxtLink
                   :to="`/booking/${registration.id}`"
-                  class="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg"
+                  class="w-full app-action-button app-action-primary py-3 px-4 rounded-lg font-medium"
                 >
                   <svg
                     class="w-5 h-5"
@@ -410,7 +394,7 @@
                     registration.tournamentViewAvailable
                   "
                   :to="`/tournaments/${registration.customEventId}`"
-                  class="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg"
+                  class="w-full app-action-button app-action-primary py-3 px-4 rounded-lg font-medium"
                 >
                   <svg
                     class="w-5 h-5"
@@ -432,7 +416,7 @@
                   type="button"
                   disabled
                   :title="t('dashboard.tournamentViewNotStarted')"
-                  class="w-full cursor-not-allowed rounded-lg bg-gray-700 px-4 py-3 font-medium text-gray-300 opacity-70 shadow-lg flex items-center justify-center gap-2"
+                  class="w-full cursor-not-allowed rounded-lg app-btn-neutral px-4 py-3 font-medium opacity-70 shadow-lg flex items-center justify-center gap-2"
                   aria-disabled="true"
                 >
                   <svg
@@ -464,7 +448,7 @@
                 </NuxtLink>
                 <button
                   type="button"
-                  class="w-full rounded-lg border border-red-600/70 bg-red-950/40 px-4 py-3 font-medium text-red-100 transition hover:bg-red-900/40"
+                  class="w-full app-action-button app-action-danger rounded-lg px-4 py-3 font-medium"
                   @click="dropFromWaitlist(registration)"
                 >
                   Von Warteliste entfernen
@@ -476,7 +460,7 @@
                   :href="registration.externalRegistrationUrl"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg"
+                  class="w-full app-action-button app-action-primary py-3 px-4 rounded-lg font-medium"
                 >
                   <svg
                     class="w-5 h-5"
@@ -523,9 +507,9 @@
                 registration.customEvent.requiresDecklist
               "
               class="mt-4 p-3 sm:p-4 rounded-lg border"
-              :class="{
-                'app-surface-2 border-yellow-500': needsAttention(registration),
-                'app-surface-2 border-green-500': !needsAttention(registration),
+                :class="{
+                'app-warn-card': needsAttention(registration),
+                'app-info-card': !needsAttention(registration),
               }"
               @click.prevent.stop
             >
@@ -533,29 +517,20 @@
                 <div class="flex items-center gap-2">
                   <ExclamationTriangleIcon
                     v-if="needsAttention(registration)"
-                    class="w-5 h-5 text-yellow-400 flex-shrink-0"
+                    class="w-5 h-5 flex-shrink-0"
                   />
                   <CheckCircleIcon
                     v-else
-                    class="w-5 h-5 text-green-400 flex-shrink-0"
+                    class="w-5 h-5 flex-shrink-0"
                   />
                   <div>
                     <h4
                       class="font-semibold text-sm sm:text-base"
-                      :class="{
-                        'text-yellow-300': needsAttention(registration),
-                        'text-green-300': !needsAttention(registration),
-                      }"
+                      :class="needsAttention(registration) ? 'app-game-header-text-pokemon' : 'app-text-secondary-soft'"
                     >
                       {{ t("dashboard.decklistStatus") }}
                     </h4>
-                    <p
-                      class="text-xs sm:text-sm"
-                      :class="{
-                        'text-yellow-200': needsAttention(registration),
-                        'text-green-200': !needsAttention(registration),
-                      }"
-                    >
+                    <p class="text-xs sm:text-sm app-text-secondary-soft">
                       <span v-if="needsAttention(registration)">
                         {{ t("dashboard.decklistNeeded", { count: getTicketsNeedingAttention(registration) }) }}
                       </span>
@@ -565,7 +540,7 @@
                 </div>
                 <span
                   v-if="needsAttention(registration)"
-                  class="px-2 py-1 text-xs font-medium bg-yellow-500 text-gray-900 rounded-full flex-shrink-0"
+                  class="px-2 py-1 text-xs font-medium app-badge-accent rounded-full flex-shrink-0"
                 >
                   {{ t("dashboard.actionRequired") }}
                 </span>
@@ -802,10 +777,32 @@ const getDashboardEntryCardClass = (
   registration: EventRegistration,
 ): string => {
   if (registration.entryType === "bookmark") {
-    return "bg-gradient-to-br from-sky-950 via-cyan-950 to-slate-900 border-sky-700/70";
+    return "app-registration-card-bookmark";
   }
 
   return getCardBackgroundClass(registration.customEvent.tagType || "pokemon");
+};
+
+const getRegistrationStatusClass = (status: string): string => {
+  switch (status) {
+    case "registered":
+    case "waitlist_claim":
+      return "app-feedback-success";
+    case "reserved":
+      return "app-status-ongoing";
+    case "bookmarked":
+      return "app-badge-accent";
+    case "waitlist":
+      return "app-warn-card";
+    case "attended":
+      return "app-status-upcoming";
+    case "no-show":
+      return "app-feedback-danger";
+    case "cancelled":
+      return "app-status-neutral";
+    default:
+      return "app-status-neutral";
+  }
 };
 
 // Helper functions for ticket status
@@ -1121,26 +1118,26 @@ const formatTimelineDate = (input: string | Date): string => {
 
 const miniCalendarDayClass = (day: MiniCalDay) => {
   if (!day.inMonth) {
-    return "border-transparent bg-transparent text-gray-600";
+    return "app-calendar-day-outside";
   }
 
   if (!day.event) {
-    return "app-border app-surface-0 text-gray-300";
+    return "app-calendar-day-idle";
   }
 
   if (day.event.isPast) {
-    return "border-gray-500 opacity-70";
+    return "app-calendar-day-past";
   }
 
   if (day.event.entryType === "bookmark") {
-    return "border-blue-500";
+    return "app-calendar-day-bookmark";
   }
 
   if (day.event.status === "reserved") {
-    return "border-amber-500";
+    return "app-calendar-day-reserved";
   }
 
-  return "border-emerald-500";
+  return "app-calendar-day-active";
 };
 
 function isoDayKey(input: string | Date): string {

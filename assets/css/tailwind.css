@@ -103,6 +103,26 @@
     --app-pill-inactive-text: #3f484a;
     --app-pill-inactive-border: #bfc8ca;
     --app-modal-overlay: rgba(23, 29, 30, 0.42);
+    --app-bookmark-chip-bg: rgba(158, 239, 253, 0.22);
+    --app-bookmark-chip-border: rgba(0, 79, 88, 0.18);
+    --app-bookmark-chip-text: #004f58;
+    --app-calendar-day-idle-bg: rgba(255, 255, 255, 0.2);
+    --app-calendar-day-idle-border: rgba(63, 72, 74, 0.18);
+    --app-calendar-day-idle-text: #334b4f;
+    --app-calendar-day-idle-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    --app-calendar-day-outside-text: #8b9799;
+    --app-calendar-day-past-border: rgba(63, 72, 74, 0.24);
+    --app-calendar-day-event-bookmark: #82d3e0;
+    --app-calendar-day-event-reserved: #705289;
+    --app-calendar-day-event-active: #4a6267;
+    --app-game-pokemon-border: #d97706;
+    --app-game-pokemon-text: #b45309;
+    --app-game-riftbound-border: #7c3aed;
+    --app-game-riftbound-text: #6d28d9;
+    --app-game-generic-border: #6b7280;
+    --app-game-generic-text: #4b5563;
+    --app-game-bookmark-border: var(--app-bookmark-border);
+    --app-game-bookmark-text: var(--app-bookmark-text);
   }
 
   html[data-theme="light"] {
@@ -181,6 +201,26 @@
     --app-pill-inactive-text: #cde7ec;
     --app-pill-inactive-border: #3f484a;
     --app-modal-overlay: rgba(0, 0, 0, 0.56);
+    --app-bookmark-chip-bg: rgba(130, 211, 224, 0.16);
+    --app-bookmark-chip-border: rgba(130, 211, 224, 0.28);
+    --app-bookmark-chip-text: #cde7ec;
+    --app-calendar-day-idle-bg: rgba(14, 20, 21, 0.42);
+    --app-calendar-day-idle-border: rgba(191, 200, 202, 0.18);
+    --app-calendar-day-idle-text: #cde7ec;
+    --app-calendar-day-idle-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    --app-calendar-day-outside-text: #6f797a;
+    --app-calendar-day-past-border: rgba(191, 200, 202, 0.24);
+    --app-calendar-day-event-bookmark: #82d3e0;
+    --app-calendar-day-event-reserved: #ddb9f8;
+    --app-calendar-day-event-active: #b1cbd0;
+    --app-game-pokemon-border: #f59e0b;
+    --app-game-pokemon-text: #fbbf24;
+    --app-game-riftbound-border: #a78bfa;
+    --app-game-riftbound-text: #c4b5fd;
+    --app-game-generic-border: #9ca3af;
+    --app-game-generic-text: #d1d5db;
+    --app-game-bookmark-border: #82d3e0;
+    --app-game-bookmark-text: #cde7ec;
   }
 }
 
@@ -604,6 +644,109 @@ html {
     background: color-mix(in srgb, var(--app-surface-0) 84%, white);
     border: 1px solid var(--app-border);
     box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-bookmark-chip {
+    background: var(--app-bookmark-chip-bg);
+    border: 1px solid var(--app-bookmark-chip-border);
+    color: var(--app-bookmark-chip-text);
+  }
+
+  .app-registration-card {
+    background: var(--app-surface-0);
+    border: 1px solid var(--app-border);
+    border-left-width: 4px;
+    color: var(--app-text-primary);
+    box-shadow: var(--app-shadow-soft);
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s,
+      border-color 0.2s;
+  }
+
+  .app-registration-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--app-shadow-strong);
+  }
+
+  .app-registration-card-bookmark {
+    background: var(--app-bookmark-surface);
+    border: 1px solid var(--app-bookmark-border);
+    border-left-width: 4px;
+    color: var(--app-bookmark-text);
+    box-shadow: var(--app-shadow-soft);
+  }
+
+  .app-registration-card-bookmark:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--app-shadow-strong);
+  }
+
+  .app-registration-card-game-pokemon {
+    border-left-color: var(--app-game-pokemon-border);
+  }
+
+  .app-registration-card-game-riftbound {
+    border-left-color: var(--app-game-riftbound-border);
+  }
+
+  .app-registration-card-game-generic {
+    border-left-color: var(--app-game-generic-border);
+  }
+
+  .app-game-header-pokemon {
+    border-color: var(--app-game-pokemon-border);
+  }
+
+  .app-game-header-riftbound {
+    border-color: var(--app-game-riftbound-border);
+  }
+
+  .app-game-header-generic {
+    border-color: var(--app-game-generic-border);
+  }
+
+  .app-game-header-text-pokemon {
+    color: var(--app-game-pokemon-text);
+  }
+
+  .app-game-header-text-riftbound {
+    color: var(--app-game-riftbound-text);
+  }
+
+  .app-game-header-text-generic {
+    color: var(--app-game-generic-text);
+  }
+
+  .app-calendar-day-idle {
+    background: var(--app-calendar-day-idle-bg);
+    border-color: var(--app-calendar-day-idle-border);
+    color: var(--app-calendar-day-idle-text);
+    box-shadow: var(--app-calendar-day-idle-shadow);
+    backdrop-filter: blur(10px);
+  }
+
+  .app-calendar-day-outside {
+    border-color: transparent;
+    background: transparent;
+    color: var(--app-calendar-day-outside-text);
+  }
+
+  .app-calendar-day-past {
+    border-color: var(--app-calendar-day-past-border);
+    opacity: 0.7;
+  }
+
+  .app-calendar-day-bookmark {
+    border-color: var(--app-calendar-day-event-bookmark);
+  }
+
+  .app-calendar-day-reserved {
+    border-color: var(--app-calendar-day-event-reserved);
+  }
+
+  .app-calendar-day-active {
+    border-color: var(--app-calendar-day-event-active);
   }
 
   .app-muted-icon {

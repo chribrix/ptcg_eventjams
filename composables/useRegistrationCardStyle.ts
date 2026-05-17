@@ -11,13 +11,13 @@ export const useRegistrationCardStyle = () => {
     const type = tagType || "pokemon";
     switch (type.toLowerCase()) {
       case "pokemon":
-        return "bg-[#2f3136] border-[#202225] border-l-4 border-l-orange-500 hover:border-l-orange-400 hover:shadow-lg";
+        return "app-registration-card app-registration-card-game-pokemon";
       case "riftbound":
-        return "bg-[#2f3136] border-[#202225] border-l-4 border-l-purple-500 hover:border-l-purple-400 hover:shadow-lg";
+        return "app-registration-card app-registration-card-game-riftbound";
       case "generic":
-        return "bg-[#2f3136] border-[#202225] border-l-4 border-l-gray-500 hover:border-l-gray-400 hover:shadow-lg";
+        return "app-registration-card app-registration-card-game-generic";
       default:
-        return "bg-[#2f3136] border-[#202225] border-l-4 border-l-gray-500 hover:border-l-gray-400 hover:shadow-lg";
+        return "app-registration-card app-registration-card-game-generic";
     }
   };
 
@@ -44,13 +44,13 @@ export const useRegistrationCardStyle = () => {
     const type = tagType || "pokemon";
     switch (type.toLowerCase()) {
       case "pokemon":
-        return "border-orange-500";
+        return "app-game-header-pokemon";
       case "riftbound":
-        return "border-purple-500";
+        return "app-game-header-riftbound";
       case "generic":
-        return "border-gray-500";
+        return "app-game-header-generic";
       default:
-        return "border-gray-500";
+        return "app-game-header-generic";
     }
   };
 
@@ -61,13 +61,13 @@ export const useRegistrationCardStyle = () => {
     const type = tagType || "pokemon";
     switch (type.toLowerCase()) {
       case "pokemon":
-        return "text-orange-400";
+        return "app-game-header-text-pokemon";
       case "riftbound":
-        return "text-purple-400";
+        return "app-game-header-text-riftbound";
       case "generic":
-        return "text-gray-400";
+        return "app-game-header-text-generic";
       default:
-        return "text-gray-400";
+        return "app-game-header-text-generic";
     }
   };
 

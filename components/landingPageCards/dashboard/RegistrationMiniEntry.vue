@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border rounded-xl p-4 hover:shadow-lg transition-all duration-300 group"
+    class="rounded-xl p-4 group"
     :class="getEntryCardClass(registration)"
   >
     <!-- Game Type Header -->
@@ -20,7 +20,7 @@
     <div class="flex items-start justify-between mb-3">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 mb-1 flex-wrap">
-          <h3 class="text-lg font-semibold text-white truncate">
+          <h3 class="text-lg font-semibold app-text-strong truncate">
             {{ registration.customEvent.name }}
           </h3>
           <span
@@ -36,12 +36,12 @@
           </span>
         </div>
 
-        <div class="flex items-center gap-2 text-sm text-gray-300 mb-2">
+        <div class="flex items-center gap-2 text-sm app-text-secondary-soft mb-2">
           <MapPinIcon class="w-4 h-4 flex-shrink-0" />
           <span class="truncate">{{ registration.customEvent.venue }}</span>
         </div>
 
-        <div class="flex items-center gap-2 text-sm text-gray-300">
+        <div class="flex items-center gap-2 text-sm app-text-secondary-soft">
           <CalendarIcon class="w-4 h-4 flex-shrink-0" />
           <span>{{ formatEventDate(registration.customEvent.eventDate) }}</span>
         </div>
@@ -63,7 +63,7 @@
     </div>
 
     <!-- Event Details Row -->
-    <div class="flex items-center justify-between text-sm text-gray-400 mb-4">
+    <div class="flex items-center justify-between text-sm app-text-muted-soft mb-4">
       <div class="flex items-center gap-4">
         <!-- Participation Fee -->
         <div
@@ -73,7 +73,7 @@
           <CurrencyEuroIcon class="w-4 h-4" />
           <span>{{ registration.customEvent.participationFee }}</span>
         </div>
-        <div v-else class="flex items-center gap-1 text-gray-300">
+        <div v-else class="flex items-center gap-1 app-text-secondary-soft">
           <CheckCircleIcon class="w-4 h-4" />
           <span>{{ t("registrationMiniEntry.free") }}</span>
         </div>
@@ -91,7 +91,7 @@
         <!-- Decklist Required -->
         <div
           v-if="registration.customEvent.requiresDecklist"
-          class="flex items-center gap-1 text-amber-400"
+          class="flex items-center gap-1 app-icon-accent"
         >
           <DocumentTextIcon class="w-4 h-4" />
           <span>{{ t("registrationMiniEntry.decklistRequired") }}</span>
@@ -147,7 +147,7 @@
           !registration.bringingDecklistOnsite
         "
         to="/dashboard"
-        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-semibold rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500 shadow-sm hover:shadow-md"
+        class="group flex-1 app-action-button app-action-secondary px-4 py-2 text-sm font-semibold"
       >
         {{ t("registrationMiniEntry.submitDecklist") }}
       </NuxtLink>
@@ -161,7 +161,7 @@
         :href="registration.externalRegistrationUrl"
         target="_blank"
         rel="noopener noreferrer"
-        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
+        class="group flex-1 app-action-button app-action-secondary px-4 py-2 text-sm font-medium"
       >
         {{ t("registrationMiniEntry.eventDetails") }}
       </a>
@@ -169,7 +169,7 @@
       <NuxtLink
         v-else
         :to="`/events/${registration.customEvent.id}`"
-        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
+        class="group flex-1 app-action-button app-action-secondary px-4 py-2 text-sm font-medium"
       >
         {{ t("registrationMiniEntry.viewEvent") }}
       </NuxtLink>
@@ -178,7 +178,7 @@
       <NuxtLink
         v-if="registration.status === 'cancelled'"
         :to="`/events/${registration.customEvent.id}`"
-        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
+        class="group flex-1 app-action-button app-action-secondary px-4 py-2 text-sm font-medium"
       >
         {{ t("registrationMiniEntry.reregister") }}
       </NuxtLink>
@@ -191,7 +191,7 @@
           registration.status !== 'cancelled'
         "
         :to="`/booking/${registration.id}`"
-        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
+        class="group flex-1 app-action-button app-action-secondary px-4 py-2 text-sm font-medium"
       >
         {{ t("registrationMiniEntry.editBooking") }}
       </NuxtLink>
@@ -199,7 +199,7 @@
       <button
         v-else-if="registration.entryType === 'bookmark'"
         type="button"
-        class="group flex-1 flex items-center justify-center px-4 py-2 bg-[#40444b] text-gray-300 text-sm font-medium rounded-lg hover:bg-[#4f545c] transition-all duration-200 border border-[#202225] hover:border-gray-500"
+        class="group flex-1 app-action-button app-action-secondary px-4 py-2 text-sm font-medium"
         @click="confirmRemoveBookmark(registration)"
       >
         Entfernen
@@ -271,7 +271,7 @@ const emit = defineEmits<{
 // Helper functions
 function getEntryCardClass(registration: EventRegistration): string {
   if (registration.entryType === "bookmark") {
-    return "bg-gradient-to-br from-sky-950 via-cyan-950 to-slate-900 border-sky-700/70";
+    return "app-registration-card-bookmark";
   }
 
   return getCardBackgroundClass(registration.customEvent.tagType || "pokemon");
@@ -296,39 +296,24 @@ function confirmRemoveBookmark(registration: EventRegistration) {
 function getStatusBadgeClass(status: string): string {
   switch (status) {
     case "registered":
-      return "bg-emerald-600 text-white border border-emerald-600";
+      return "app-feedback-success";
     case "reserved":
-      return "bg-[#40444b] text-gray-300 border border-gray-500";
+      return "app-status-ongoing";
     case "cancelled":
-      return "bg-gray-600 text-gray-200 border border-gray-600";
+      return "app-status-neutral";
     case "bookmarked":
-      return "bg-sky-600 text-white border border-sky-600";
+      return "app-badge-accent";
     case "waitlist":
-      return "bg-amber-700 text-white border border-amber-700";
+      return "app-warn-card";
     case "waitlist_claim":
-      return "bg-emerald-700 text-white border border-emerald-700";
+      return "app-feedback-success";
     default:
-      return "bg-[#40444b] text-gray-300 border border-gray-500";
+      return "app-status-neutral";
   }
 }
 
 function getStatusDotClass(status: string): string {
-  switch (status) {
-    case "registered":
-      return "bg-white";
-    case "reserved":
-      return "bg-gray-600";
-    case "cancelled":
-      return "bg-gray-900";
-    case "bookmarked":
-      return "bg-white";
-    case "waitlist":
-      return "bg-white";
-    case "waitlist_claim":
-      return "bg-white";
-    default:
-      return "bg-gray-500";
-  }
+  return "bg-current";
 }
 
 function getStatusLabel(status: string): string {
@@ -365,11 +350,11 @@ function hasNumericFee(value: number | string | null | undefined): boolean {
 
 function getDecklistStatusClasses(registration: EventRegistration): string {
   if (registration.decklist) {
-    return "bg-[#40444b] border-emerald-500 text-emerald-300";
+    return "app-feedback-success";
   } else if (registration.bringingDecklistOnsite) {
-    return "bg-[#40444b] border-blue-500 text-blue-300";
+    return "app-feedback-info";
   } else {
-    return "bg-[#40444b] border-amber-500 text-amber-300";
+    return "app-warn-card";
   }
 }
 
