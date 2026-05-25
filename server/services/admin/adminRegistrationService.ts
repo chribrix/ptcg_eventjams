@@ -9,7 +9,10 @@ const createRegistrationSchema = z.object({
 });
 
 const updateRegistrationSchema = z.object({
-  status: z.enum(["registered", "attended", "no-show", "cancelled"]).optional(),
+  ticketId: z.string().min(1).optional(),
+  status: z
+    .enum(["registered", "reserved", "attended", "no-show", "cancelled"])
+    .optional(),
   notes: z.string().optional(),
 });
 
@@ -156,7 +159,7 @@ export async function updateAdminRegistration(
 
   const registration = await prisma.eventRegistration.findUnique({
     where: { id: registrationId },
-    select: { id: true },
+    select: { id: true, customEventId: true, externalEventId: true },
   });
 
   if (!registration) {
@@ -179,10 +182,32 @@ export async function updateAdminRegistration(
   }
 
   if (input.status) {
-    await prisma.registrationTicket.updateMany({
-      where: { registrationId },
-      data: { status: input.status },
-    });
+    if (input.ticketId) {
+      const ticket = await prisma.registrationTicket.findFirst({
+        where: {
+          id: input.ticketId,
+          registrationId,
+        },
+        select: { id: true },
+      });
+
+      if (!ticket) {
+        throw createError({
+          statusCode: 404,
+          statusMessage: "Registration ticket not found",
+        });
+      }
+
+      await prisma.registrationTicket.update({
+        where: { id: input.ticketId },
+        data: { status: input.status },
+      });
+    } else {
+      await prisma.registrationTicket.updateMany({
+        where: { registrationId },
+        data: { status: input.status },
+      });
+    }
   }
 
   if (input.notes !== undefined) {

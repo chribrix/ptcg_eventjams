@@ -508,6 +508,8 @@
       "registrationsCount": "Registrations ({count})",
       "manageInExternalEvents": "Manage in External Events",
       "registrationsTitle": "{name} - Registrations",
+      "checkInLabel": "On-site Check-in",
+      "checkInHelp": "Use the checklist to mark players as arrived.",
       "genericGame": "Generic",
       "format": "Format",
       "decklistTitle": "Decklist - {name}",
@@ -527,10 +529,13 @@
       "stats": {
         "totalRegistered": "Total Registered",
         "maxCapacity": "Max Capacity",
+        "checkedIn": "Checked In",
         "availableSpots": "Available Spots"
       },
       "columns": {
+        "checkIn": "Present",
         "participantId": "Participant ID",
+        "birthYear": "Birth Year",
         "bookerEmail": "Booker Email",
         "registeredAt": "Registered At",
         "decklist": "Decklist",
@@ -542,6 +547,13 @@
         "submitted": "✓ Submitted",
         "onsite": "📋 Bringing On-site",
         "notSubmitted": "✗ Not Submitted"
+      },
+      "ticketStatuses": {
+        "registered": "Registered",
+        "reserved": "Reserved",
+        "attended": "Checked In",
+        "noShow": "No-show",
+        "cancelled": "Cancelled"
       },
       "viewDecklist": "View Decklist",
       "placeholders": {

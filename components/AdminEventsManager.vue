@@ -661,188 +661,287 @@
     </Teleport>
 
     <!-- Registration Management Modal -->
-    <div
-      v-if="showRegistrations"
-      class="modal-overlay"
-      @click="closeRegistrationsModal"
-    >
-      <div class="modal-content modal-large" @click.stop>
-        <div class="modal-header">
-          <h2>
-            {{
-              t("admin.eventsManager.registrationsTitle", {
-                name: selectedEvent?.name,
-              })
-            }}
-          </h2>
-          <button @click="closeRegistrationsModal" class="close-btn">
-            &times;
-          </button>
-        </div>
-
-        <div class="registrations-content">
-          <div class="registrations-stats">
-            <div class="stat-item">
-              <span class="stat-number">{{ ticketRows.length }}</span>
-              <span class="stat-label">
-                {{ t("admin.eventsManager.stats.totalRegistered") }}
-              </span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number">{{
-                selectedEvent?.maxParticipants || 0
-              }}</span>
-              <span class="stat-label">
-                {{ t("admin.eventsManager.stats.maxCapacity") }}
-              </span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number">{{
-                Math.max(
-                  0,
-                  (selectedEvent?.maxParticipants || 0) - ticketRows.length,
-                )
-              }}</span>
-              <span class="stat-label">
-                {{ t("admin.eventsManager.stats.availableSpots") }}
-              </span>
-            </div>
-          </div>
-
-          <div v-if="ticketRows.length > 0" class="registrations-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>{{ t("admin.eventsManager.columns.participantId") }}</th>
-                  <th>{{ t("common.name") }}</th>
-                  <th>{{ t("admin.eventsManager.columns.bookerEmail") }}</th>
-                  <th>{{ t("admin.eventsManager.columns.registeredAt") }}</th>
-                  <th>{{ t("common.status") }}</th>
-                  <th v-if="selectedEvent?.requiresDecklist">
-                    {{ t("admin.eventsManager.columns.decklist") }}
-                  </th>
-                  <th>{{ t("common.actions") }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in ticketRows" :key="row.ticketId">
-                  <td>{{ row.participantPlayerId || "—" }}</td>
-                  <td>{{ row.participantName }}</td>
-                  <td>{{ row.bookerEmail || t("admin.externalEvents.notAvailable") }}</td>
-                  <td>{{ formatDate(row.registeredAt) }}</td>
-                  <td>
-                    <span
-                      class="status-badge"
-                      :class="`status-${row.ticketStatus}`"
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showRegistrations"
+          class="app-overlay fixed inset-0 z-[110] flex items-end justify-center p-0 sm:items-center sm:p-4"
+          @click="closeRegistrationsModal"
+        >
+          <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="translate-y-full sm:translate-y-0 sm:scale-95"
+            enter-to-class="translate-y-0 sm:scale-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="translate-y-0 sm:scale-100"
+            leave-to-class="translate-y-full sm:translate-y-0 sm:scale-95"
+          >
+            <div
+              class="app-modal-surface flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl sm:max-w-6xl sm:rounded-2xl"
+              @click.stop
+            >
+              <div class="border-b app-border px-6 py-5">
+                <div class="flex items-start justify-between gap-4">
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-[var(--app-accent)]">
+                      {{ t("admin.eventsManager.checkInLabel") }}
+                    </p>
+                    <h2 class="text-2xl font-bold app-text-primary">
+                      {{
+                        t("admin.eventsManager.registrationsTitle", {
+                          name: selectedEvent?.name,
+                        })
+                      }}
+                    </h2>
+                    <p class="mt-1 text-sm app-text-muted-soft">
+                      {{ t("admin.eventsManager.checkInHelp") }}
+                    </p>
+                  </div>
+                  <button
+                    @click="closeRegistrationsModal"
+                    class="events-manager-close-button rounded-lg border app-border p-2"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      {{ row.ticketStatus }}
-                    </span>
-                  </td>
-                  <td v-if="selectedEvent?.requiresDecklist">
-                    <span
-                      v-if="row.decklist"
-                      class="decklist-status status-success"
-                    >
-                      {{ t("admin.eventsManager.decklistStates.submitted") }}
-                    </span>
-                    <span
-                      v-else-if="row.bringingDecklistOnsite"
-                      class="decklist-status status-warning"
-                    >
-                      {{ t("admin.eventsManager.decklistStates.onsite") }}
-                    </span>
-                    <span v-else class="decklist-status status-danger">
-                      {{ t("admin.eventsManager.decklistStates.notSubmitted") }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button
-                        v-if="selectedEvent?.requiresDecklist && row.decklist"
-                        @click="viewDecklist(row)"
-                        class="btn btn-small btn-info"
-                      >
-                        {{ t("admin.eventsManager.viewDecklist") }}
-                      </button>
-                      <button
-                        @click="cancelRegistration(row.registration)"
-                        class="btn btn-small btn-danger"
-                      >
-                        {{ t("dashboard.remove") }}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
 
-          <div v-else class="no-registrations">
-            {{ t("admin.eventsManager.noRegistrationsYet") }}
-          </div>
+                <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div class="registrations-stat-card">
+                    <span class="registrations-stat-number">{{ ticketRows.length }}</span>
+                    <span class="registrations-stat-label">
+                      {{ t("admin.eventsManager.stats.totalRegistered") }}
+                    </span>
+                  </div>
+                  <div class="registrations-stat-card">
+                    <span class="registrations-stat-number">{{
+                      checkedInCount
+                    }}</span>
+                    <span class="registrations-stat-label">
+                      {{ t("admin.eventsManager.stats.checkedIn") }}
+                    </span>
+                  </div>
+                  <div class="registrations-stat-card">
+                    <span class="registrations-stat-number">{{
+                      Math.max(
+                        0,
+                        (selectedEvent?.maxParticipants || 0) - ticketRows.length,
+                      )
+                    }}</span>
+                    <span class="registrations-stat-label">
+                      {{ t("admin.eventsManager.stats.availableSpots") }}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-          <div class="registrations-table mt-6">
-            <h3 class="text-base font-semibold mb-2">
-              {{
-                t("admin.eventsManager.waitlistTitle", {
-                  count: waitlistEntries.length,
-                })
-              }}
-            </h3>
-            <table v-if="waitlistEntries.length > 0">
-              <thead>
-                <tr>
-                  <th>{{ t("admin.eventsManager.columns.position") }}</th>
-                  <th>{{ t("admin.eventsManager.columns.priority") }}</th>
-                  <th>{{ t("registration.playerId") }}</th>
-                  <th>{{ t("common.name") }}</th>
-                  <th>{{ t("common.email") }}</th>
-                  <th>{{ t("common.status") }}</th>
-                  <th>{{ t("admin.eventsManager.columns.claimExpires") }}</th>
-                  <th>{{ t("common.actions") }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(entry, index) in waitlistEntries" :key="entry.id">
-                  <td>{{ index + 1 }}</td>
-                  <td>{{ entry.priority }}</td>
-                  <td>{{ entry.player.playerId || "—" }}</td>
-                  <td>{{ entry.player.name }}</td>
-                  <td>{{ entry.player.email || t("admin.externalEvents.notAvailable") }}</td>
-                  <td>{{ entry.status }}</td>
-                  <td>
+              <div class="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+                <div v-if="ticketRows.length > 0" class="registrations-table-shell">
+                  <div class="registrations-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>{{ t("admin.eventsManager.columns.checkIn") }}</th>
+                          <th>{{ t("admin.eventsManager.columns.participantId") }}</th>
+                          <th>{{ t("common.name") }}</th>
+                          <th>{{ t("admin.eventsManager.columns.birthYear") }}</th>
+                          <th>{{ t("admin.eventsManager.columns.bookerEmail") }}</th>
+                          <th>{{ t("admin.eventsManager.columns.registeredAt") }}</th>
+                          <th>{{ t("common.status") }}</th>
+                          <th v-if="selectedEvent?.requiresDecklist">
+                            {{ t("admin.eventsManager.columns.decklist") }}
+                          </th>
+                          <th>{{ t("common.actions") }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          v-for="row in ticketRows"
+                          :key="row.ticketId"
+                          :class="getRegistrationRowClass(row)"
+                          @click="toggleTicketCheckIn(row)"
+                        >
+                          <td>
+                            <label class="checkin-toggle">
+                              <input
+                                type="checkbox"
+                                :checked="isTicketCheckedIn(row)"
+                                :disabled="isTicketUpdating(row.ticketId)"
+                                @click.stop
+                                @change="toggleTicketCheckIn(row)"
+                              />
+                            </label>
+                          </td>
+                          <td>{{ row.participantPlayerId || "—" }}</td>
+                          <td class="font-medium app-text-primary">
+                            {{ row.participantName }}
+                          </td>
+                          <td>{{ getBirthYear(row.birthDate) }}</td>
+                          <td>
+                            {{
+                              row.bookerEmail ||
+                              t("admin.externalEvents.notAvailable")
+                            }}
+                          </td>
+                          <td>{{ formatDate(row.registeredAt) }}</td>
+                          <td>
+                            <span
+                              class="registrations-status-badge"
+                              :class="getTicketStatusClass(row.ticketStatus)"
+                            >
+                              {{ getTicketStatusLabel(row.ticketStatus) }}
+                            </span>
+                          </td>
+                          <td v-if="selectedEvent?.requiresDecklist">
+                            <span
+                              v-if="row.decklist"
+                              class="decklist-status status-success"
+                            >
+                              {{ t("admin.eventsManager.decklistStates.submitted") }}
+                            </span>
+                            <span
+                              v-else-if="row.bringingDecklistOnsite"
+                              class="decklist-status status-warning"
+                            >
+                              {{ t("admin.eventsManager.decklistStates.onsite") }}
+                            </span>
+                            <span v-else class="decklist-status status-danger">
+                              {{ t("admin.eventsManager.decklistStates.notSubmitted") }}
+                            </span>
+                          </td>
+                          <td>
+                            <div class="action-buttons">
+                              <button
+                                v-if="selectedEvent?.requiresDecklist && row.decklist"
+                                @click.stop="viewDecklist(row)"
+                                class="app-action-button app-action-secondary btn-small"
+                              >
+                                {{ t("admin.eventsManager.viewDecklist") }}
+                              </button>
+                              <button
+                                @click.stop="cancelRegistration(row.registration)"
+                                class="app-action-button app-action-danger btn-small"
+                              >
+                                {{ t("dashboard.remove") }}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div v-else class="registrations-empty-state">
+                  {{ t("admin.eventsManager.noRegistrationsYet") }}
+                </div>
+
+                <div class="space-y-3">
+                  <h3 class="text-base font-semibold app-text-primary">
                     {{
-                      entry.claimExpiresAt
-                        ? formatDate(entry.claimExpiresAt)
-                        : "—"
+                      t("admin.eventsManager.waitlistTitle", {
+                        count: waitlistEntries.length,
+                      })
                     }}
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button
-                        @click="updateWaitlistPriority(entry, entry.priority + 1)"
-                        class="btn btn-small btn-info"
-                      >
-                        +1
-                      </button>
-                      <button
-                        @click="updateWaitlistPriority(entry, entry.priority - 1)"
-                        class="btn btn-small"
-                      >
-                        -1
-                      </button>
+                  </h3>
+                  <div
+                    v-if="waitlistEntries.length > 0"
+                    class="registrations-table-shell"
+                  >
+                    <div class="registrations-table">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{{ t("admin.eventsManager.columns.position") }}</th>
+                            <th>{{ t("admin.eventsManager.columns.priority") }}</th>
+                            <th>{{ t("registration.playerId") }}</th>
+                            <th>{{ t("common.name") }}</th>
+                            <th>{{ t("common.email") }}</th>
+                            <th>{{ t("common.status") }}</th>
+                            <th>{{ t("admin.eventsManager.columns.claimExpires") }}</th>
+                            <th>{{ t("common.actions") }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            v-for="(entry, index) in waitlistEntries"
+                            :key="entry.id"
+                          >
+                            <td>{{ index + 1 }}</td>
+                            <td>{{ entry.priority }}</td>
+                            <td>{{ entry.player.playerId || "—" }}</td>
+                            <td class="font-medium app-text-primary">
+                              {{ entry.player.name }}
+                            </td>
+                            <td>
+                              {{
+                                entry.player.email ||
+                                t("admin.externalEvents.notAvailable")
+                              }}
+                            </td>
+                            <td>
+                              <span
+                                class="registrations-status-badge status-reserved"
+                              >
+                                {{ entry.status }}
+                              </span>
+                            </td>
+                            <td>
+                              {{
+                                entry.claimExpiresAt
+                                  ? formatDate(entry.claimExpiresAt)
+                                  : "—"
+                              }}
+                            </td>
+                            <td>
+                              <div class="action-buttons">
+                                <button
+                                  @click="updateWaitlistPriority(entry, entry.priority + 1)"
+                                  class="app-action-button app-action-secondary btn-small"
+                                >
+                                  +1
+                                </button>
+                                <button
+                                  @click="updateWaitlistPriority(entry, entry.priority - 1)"
+                                  class="app-action-button app-action-secondary btn-small"
+                                >
+                                  -1
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div v-else class="no-registrations">
-              {{ t("admin.eventsManager.noWaitlistEntries") }}
+                  </div>
+                  <div v-else class="registrations-empty-state">
+                    {{ t("admin.eventsManager.noWaitlistEntries") }}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </Transition>
         </div>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
 
     <!-- Decklist Viewer Modal -->
     <div
@@ -1293,11 +1392,19 @@ interface TicketRow {
   participantPlayerId?: string | null;
   bookerEmail?: string;
   registeredAt: string;
+  birthDate: string;
   ticketStatus: string;
   decklist?: string | null;
   bringingDecklistOnsite?: boolean | null;
   registration: Registration;
 }
+
+type TicketStatus =
+  | "registered"
+  | "reserved"
+  | "attended"
+  | "no-show"
+  | "cancelled";
 
 const ticketRows = computed<TicketRow[]>(() =>
   registrations.value.flatMap((reg) =>
@@ -1308,12 +1415,19 @@ const ticketRows = computed<TicketRow[]>(() =>
       participantPlayerId: t.participantPlayerId,
       bookerEmail: reg.player.email,
       registeredAt: reg.registeredAt,
+      birthDate: reg.player.birthDate,
       ticketStatus: t.status,
       decklist: t.decklist,
       bringingDecklistOnsite: t.bringingDecklistOnsite,
       registration: reg,
     })),
   ),
+);
+
+const updatingTicketIds = ref<string[]>([]);
+
+const checkedInCount = computed(
+  () => ticketRows.value.filter((row) => row.ticketStatus === "attended").length,
 );
 
 // Computed properties for upcoming and completed events
@@ -1395,6 +1509,70 @@ const getStatusBadgeClass = (status: string): string => {
     cancelled: "app-status-cancelled",
   };
   return classes[status as keyof typeof classes] || classes.upcoming;
+};
+
+const isTicketCheckedIn = (row: TicketRow): boolean =>
+  row.ticketStatus === "attended";
+
+const isTicketUpdating = (ticketId: string): boolean =>
+  updatingTicketIds.value.includes(ticketId);
+
+const setLocalTicketStatus = (ticketId: string, status: TicketStatus) => {
+  for (const registration of registrations.value) {
+    const ticket = registration.tickets.find((entry) => entry.id === ticketId);
+    if (ticket) {
+      ticket.status = status;
+      return;
+    }
+  }
+};
+
+const getFallbackTicketStatus = (row: TicketRow): TicketStatus => {
+  if (
+    selectedEvent.value?.requiresDecklist &&
+    !row.decklist &&
+    !row.bringingDecklistOnsite
+  ) {
+    return "reserved";
+  }
+
+  return "registered";
+};
+
+const getRegistrationRowClass = (row: TicketRow): string =>
+  isTicketCheckedIn(row) ? "registration-row-checked" : "";
+
+const getTicketStatusClass = (status: string): string => {
+  const classes: Record<string, string> = {
+    registered: "status-registered",
+    reserved: "status-reserved",
+    attended: "status-attended",
+    "no-show": "status-no-show",
+    cancelled: "status-cancelled",
+  };
+
+  return classes[status] || "status-registered";
+};
+
+const getTicketStatusLabel = (status: string): string => {
+  const labels: Record<string, string> = {
+    registered: t("admin.eventsManager.ticketStatuses.registered"),
+    reserved: t("admin.eventsManager.ticketStatuses.reserved"),
+    attended: t("admin.eventsManager.ticketStatuses.attended"),
+    "no-show": t("admin.eventsManager.ticketStatuses.noShow"),
+    cancelled: t("admin.eventsManager.ticketStatuses.cancelled"),
+  };
+
+  return labels[status] || status;
+};
+
+const getBirthYear = (birthDate: string): string => {
+  const date = new Date(birthDate);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return String(date.getFullYear());
 };
 
 // Open event details modal
@@ -1784,6 +1962,37 @@ const viewRegistrations = async (event: CustomEvent) => {
   }
 };
 
+const toggleTicketCheckIn = async (row: TicketRow) => {
+  if (isTicketUpdating(row.ticketId)) {
+    return;
+  }
+
+  const nextStatus: TicketStatus = isTicketCheckedIn(row)
+    ? getFallbackTicketStatus(row)
+    : "attended";
+  const previousStatus = row.ticketStatus as TicketStatus;
+
+  setLocalTicketStatus(row.ticketId, nextStatus);
+  updatingTicketIds.value = [...updatingTicketIds.value, row.ticketId];
+
+  try {
+    await $fetch(`/api/admin/registrations?id=${row.registrationId}`, {
+      method: "PUT",
+      body: {
+        ticketId: row.ticketId,
+        status: nextStatus,
+      },
+    });
+  } catch (error) {
+    setLocalTicketStatus(row.ticketId, previousStatus);
+    console.error("Error updating ticket check-in status:", error);
+  } finally {
+    updatingTicketIds.value = updatingTicketIds.value.filter(
+      (ticketId) => ticketId !== row.ticketId,
+    );
+  }
+};
+
 const updateRegistrationStatus = async (registration: Registration) => {
   try {
     await $fetch(`/api/admin/registrations?id=${registration.id}`, {
@@ -1833,6 +2042,7 @@ const closeRegistrationsModal = () => {
   selectedEvent.value = null;
   registrations.value = [];
   waitlistEntries.value = [];
+  updatingTicketIds.value = [];
 };
 
 const updateWaitlistPriority = async (
@@ -2200,37 +2410,34 @@ onMounted(() => {
   max-width: 900px;
 }
 
-.registrations-content {
-  padding: 1.5rem;
-}
-
-.registrations-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.stat-item {
+.registrations-stat-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 1rem;
-  background: var(--app-surface-1);
-  border-radius: 8px;
-  border: 1px solid var(--app-border);
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  background: color-mix(in srgb, var(--app-surface-1) 92%, var(--app-accent));
+  border: 1px solid color-mix(in srgb, var(--app-border) 82%, var(--app-accent));
+  border-radius: 1rem;
 }
 
-.stat-number {
+.registrations-stat-number {
   font-size: 2rem;
+  line-height: 1;
   font-weight: 700;
   color: var(--app-text-primary);
 }
 
-.stat-label {
+.registrations-stat-label {
   font-size: 0.875rem;
   color: var(--app-text-muted);
-  text-align: center;
+}
+
+.registrations-table-shell {
+  border: 1px solid var(--app-border);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--app-surface-0);
+  box-shadow: var(--app-shadow-soft);
 }
 
 .registrations-table {
@@ -2250,13 +2457,84 @@ onMounted(() => {
 }
 
 .registrations-table th {
-  background: var(--app-surface-1);
+  background: color-mix(in srgb, var(--app-surface-1) 90%, var(--app-accent));
   font-weight: 600;
   color: var(--app-text-secondary);
 }
 
 .registrations-table tr:hover {
   background: var(--app-surface-1);
+}
+
+.registrations-status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  text-transform: capitalize;
+}
+
+.status-registered {
+  background: var(--app-badge-info-bg);
+  border-color: color-mix(in srgb, var(--app-button-blue-border) 65%, transparent);
+  color: var(--app-badge-info-text);
+}
+
+.status-reserved {
+  background: var(--app-badge-warning-bg);
+  border-color: color-mix(in srgb, var(--app-button-amber-border) 65%, transparent);
+  color: var(--app-badge-warning-text);
+}
+
+.status-attended {
+  background: var(--app-badge-success-bg);
+  border-color: color-mix(in srgb, var(--app-button-green-border) 65%, transparent);
+  color: var(--app-badge-success-text);
+}
+
+.status-no-show,
+.status-cancelled {
+  background: var(--app-badge-error-bg);
+  border-color: color-mix(in srgb, var(--app-button-red-border) 65%, transparent);
+  color: var(--app-badge-error-text);
+}
+
+.registration-row-checked td {
+  background: color-mix(in srgb, var(--app-button-green) 42%, var(--app-surface-0));
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--app-button-green-border) 58%,
+    var(--app-border)
+  );
+}
+
+.checkin-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkin-toggle input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--app-button-blue);
+  cursor: pointer;
+}
+
+.checkin-toggle input:disabled {
+  cursor: wait;
+}
+
+.registrations-empty-state {
+  border: 1px dashed var(--app-border);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--app-text-muted);
+  background: var(--app-surface-0);
 }
 
 .status-badge {

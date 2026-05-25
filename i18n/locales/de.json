@@ -516,6 +516,8 @@
       "registrationsCount": "Registrierungen ({count})",
       "manageInExternalEvents": "Bei externen Events verwalten",
       "registrationsTitle": "{name} - Registrierungen",
+      "checkInLabel": "Anmeldung vor Ort",
+      "checkInHelp": "Spieler können hier beim Eintreffen abgehakt werden.",
       "genericGame": "Allgemein",
       "format": "Format",
       "decklistTitle": "Deckliste - {name}",
@@ -535,10 +537,13 @@
       "stats": {
         "totalRegistered": "Insgesamt registriert",
         "maxCapacity": "Maximale Kapazität",
+        "checkedIn": "Bereits eingecheckt",
         "availableSpots": "Verfügbare Plätze"
       },
       "columns": {
+        "checkIn": "Anwesend",
         "participantId": "Teilnehmer-ID",
+        "birthYear": "Jahrgang",
         "bookerEmail": "Bucher-E-Mail",
         "registeredAt": "Registriert am",
         "decklist": "Deckliste",
@@ -550,6 +555,13 @@
         "submitted": "✓ Eingereicht",
         "onsite": "📋 Vor Ort dabei",
         "notSubmitted": "✗ Nicht eingereicht"
+      },
+      "ticketStatuses": {
+        "registered": "Registriert",
+        "reserved": "Reserviert",
+        "attended": "Eingecheckt",
+        "noShow": "Nicht erschienen",
+        "cancelled": "Storniert"
       },
       "viewDecklist": "Deckliste ansehen",
       "placeholders": {
