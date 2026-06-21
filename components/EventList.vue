@@ -733,6 +733,10 @@ import {
   XMarkIcon,
 } from "@heroicons/vue/24/outline";
 import {
+  formatDateInTimeZone,
+  getUserTimeZone,
+} from "~/utils/eventDateTime";
+import {
   parseEventTags,
   type TagType,
 } from "~/types/eventTags";
@@ -828,6 +832,7 @@ const user = useSupabaseUser();
 const { loadBookmarkedEventIds, toggleBookmark: toggleUnifiedBookmark } =
   useEventBookmarks();
 const { t, locale } = useI18n();
+const userTimeZone = getUserTimeZone();
 
 onMounted(async () => {
   await fetchEvents();
@@ -980,8 +985,15 @@ const groupedEvents = computed(() => {
   >();
 
   for (const event of filteredEvents.value) {
-    const groupDate = new Date(event.date);
-    const key = `${groupDate.getFullYear()}-${groupDate.getMonth()}`;
+    const key = formatDateInTimeZone(
+      event.date,
+      {
+        year: "numeric",
+        month: "2-digit",
+      },
+      "en-CA",
+      userTimeZone,
+    );
     const existing = groups.get(key);
 
     if (existing) {
@@ -991,10 +1003,15 @@ const groupedEvents = computed(() => {
 
     groups.set(key, {
       key,
-      label: groupDate.toLocaleDateString(locale.value, {
-        month: "long",
-        year: "numeric",
-      }),
+      label: formatDateInTimeZone(
+        event.date,
+        {
+          month: "long",
+          year: "numeric",
+        },
+        locale.value,
+        userTimeZone,
+      ),
       events: [event],
     });
   }
@@ -1288,7 +1305,7 @@ function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
 }
 
 function normalizeDateValue(value: string): string {
-  return new Date(value).toISOString();
+  return value;
 }
 
 function stripHtmlTags(value: string): string {
@@ -1299,30 +1316,50 @@ function stripHtmlTags(value: string): string {
 }
 
 function formatDay(dateString: string): string {
-  return new Date(dateString).toLocaleDateString(locale.value, { day: "2-digit" });
+  return formatDateInTimeZone(
+    dateString,
+    { day: "2-digit" },
+    locale.value,
+    userTimeZone,
+  );
 }
 
 function formatMonth(dateString: string): string {
-  return new Date(dateString).toLocaleDateString(locale.value, { month: "short" });
+  return formatDateInTimeZone(
+    dateString,
+    { month: "short" },
+    locale.value,
+    userTimeZone,
+  );
 }
 
 function formatEventDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString(locale.value, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatDateInTimeZone(
+    dateString,
+    {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+    locale.value,
+    userTimeZone,
+  );
 }
 
 function formatCompactDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString(locale.value, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatDateInTimeZone(
+    dateString,
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    },
+    locale.value,
+    userTimeZone,
+  );
 }
 
 function formatGameLabel(tagType?: string): string | undefined {
