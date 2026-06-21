@@ -497,6 +497,7 @@
       "createEvent": "Create Event",
       "updateEvent": "Update Event",
       "saving": "Saving...",
+      "saveError": "Failed to save event.",
       "dateTime": "Date & Time",
       "registered": "registered",
       "decklistLabel": "Decklist",

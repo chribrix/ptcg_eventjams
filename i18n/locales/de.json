@@ -505,6 +505,7 @@
       "createEvent": "Event erstellen",
       "updateEvent": "Event aktualisieren",
       "saving": "Speichert...",
+      "saveError": "Event konnte nicht gespeichert werden.",
       "dateTime": "Datum und Uhrzeit",
       "registered": "registriert",
       "decklistLabel": "Deckliste",

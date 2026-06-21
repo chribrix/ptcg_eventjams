@@ -177,7 +177,7 @@ describe("Admin controller routes", () => {
     expect(result).toEqual({ id: "event-1", name: "League Cup" });
   });
 
-  it("creates a custom event with the authenticated actor id", async () => {
+  it("creates a custom event with the authenticated actor context", async () => {
     const createEvent = vi.fn().mockResolvedValue({ ok: true });
     const { createAdminCustomEventsHandler } =
       await import("~/server/api/admin/custom-events");
@@ -188,11 +188,22 @@ describe("Admin controller routes", () => {
       createEvent,
     });
 
-    await handler({ event: {} as never, adminUser: { id: "actor-user-id" } });
+    await handler({
+      event: {} as never,
+      adminUser: {
+        id: "actor-user-id",
+        email: "admin@example.com",
+        user_metadata: { name: "Admin User" },
+      },
+    });
 
     expect(createEvent).toHaveBeenCalledWith(
       { name: "Friday Challenge" },
-      "actor-user-id",
+      {
+        id: "actor-user-id",
+        email: "admin@example.com",
+        user_metadata: { name: "Admin User" },
+      },
     );
   });
 

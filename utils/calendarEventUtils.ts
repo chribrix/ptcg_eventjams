@@ -1,5 +1,8 @@
 import { parseEventTags, type TagType } from "~/types/eventTags";
-import { getDateKeyInTimeZone } from "~/utils/eventDateTime";
+import {
+  DEFAULT_EVENT_TIME_ZONE,
+  getDateKeyInTimeZone,
+} from "~/utils/eventDateTime";
 import { EVENT_COLORS } from "~/utils/eventColors";
 
 export type CalendarEventType =
@@ -111,6 +114,18 @@ export function extractDateKey(dateTime: string): string {
   return dateTime.includes(" ") ? dateTime.split(" ")[0] : dateTime;
 }
 
+export function getCalendarDateKey(
+  dateTime: string,
+  timeZone: string = DEFAULT_EVENT_TIME_ZONE,
+): string {
+  const isoLikeDateMatch = dateTime.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoLikeDateMatch) {
+    return isoLikeDateMatch[1];
+  }
+
+  return getDateKeyInTimeZone(dateTime, timeZone);
+}
+
 export function getExternalCalendarEventType(
   event: Pick<ExternalCalendarEvent, "icon" | "type">
 ): CalendarEventType {
@@ -197,14 +212,15 @@ export function getCustomCalendarEventType(
 }
 
 export function normalizeExternalCalendarEvent(
-  event: ExternalCalendarEvent
+  event: ExternalCalendarEvent,
+  timeZone: string = DEFAULT_EVENT_TIME_ZONE,
 ): UnifiedCalendarEvent {
   const isLocalRegistration = event.link?.startsWith("/events/register/") || false;
   return {
     id: String(event.id),
     title: event.title,
     dateTime: event.dateTime,
-    start: extractDateKey(event.dateTime),
+    start: getCalendarDateKey(event.dateTime, timeZone),
     type: getExternalCalendarEventType(event),
     venue: event.venue,
     location: event.location,

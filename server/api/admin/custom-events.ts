@@ -67,7 +67,7 @@ export function createAdminCustomEventsHandler(
         const body = await readRequestBody(
           event as Parameters<typeof readBody>[0],
         );
-        return createEvent(body, adminUser.id);
+        return createEvent(body, adminUser);
       }
 
       case "PUT": {

@@ -312,7 +312,7 @@ const allCalendarEvents = computed<UnifiedCalendarEvent[]>(() => {
 
   return sortCalendarEvents([
     ...storeEvents.map((event: ExternalCalendarEvent) =>
-      normalizeExternalCalendarEvent(event)
+      normalizeExternalCalendarEvent(event, userTimeZone)
     ),
     ...customEvents.value.map((event) =>
       normalizeCustomCalendarEvent(event, userTimeZone)
@@ -388,6 +388,7 @@ type CustomCalendarDay = {
   label: string;
   inMonth: boolean;
   isInteractive: boolean;
+  hasEvents: boolean;
   dateKey: string | null;
   types: CalendarEventType[];
   showMonthMarker: boolean;
@@ -418,17 +419,20 @@ const customCalendarDays = computed<CustomCalendarDay[]>(() => {
     const date = addDays(gridStart, i);
     const dateKey = getDateKeyInTimeZone(date.toISOString(), userTimeZone);
     const dayEvents = visibleEventsByDate.value.get(dateKey) || [];
-    const isInteractive =
+    const hasEvents = dayEvents.length > 0;
+    const isInActiveRange =
       customCalendarMode.value === "month"
         ? date.getMonth() === monthStart.getMonth()
         : startOfDay(date) >= rollingStart && startOfDay(date) <= rollingEnd;
+    const isInteractive = isInActiveRange || hasEvents;
 
     days.push({
       key: `${dateKey}-${i}`,
       label: String(date.getDate()),
       inMonth: date.getMonth() === monthStart.getMonth(),
       isInteractive,
-      dateKey: isInteractive && dayEvents.length ? dateKey : null,
+      hasEvents,
+      dateKey: hasEvents ? dateKey : null,
       types: [...new Set(dayEvents.map((event) => event.type))],
       showMonthMarker: date.getDate() === 1,
       monthMarker: formatMonthMarker(date),

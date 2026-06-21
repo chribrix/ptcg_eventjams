@@ -10,6 +10,12 @@ import {
   parseDateTimeLocalInput,
 } from "~/utils/eventDateTime";
 
+type AdminActor = {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+};
+
 const validateDatetimeLocal = (value: string) => {
   if (!value || value.trim() === "") {
     return true;
@@ -207,10 +213,29 @@ export async function listAdminCustomEvents(input: {
 
 export async function createAdminCustomEvent(
   rawInput: unknown,
-  createdBy: string,
+  createdBy: AdminActor,
 ) {
   const input = createCustomEventInputSchema.parse(rawInput);
   const { timeZone = DEFAULT_EVENT_TIME_ZONE, ...eventInput } = input;
+
+  await prisma.adminUser.upsert({
+    where: { id: createdBy.id },
+    update: {
+      email: createdBy.email || `${createdBy.id}@admin.local`,
+      name:
+        typeof createdBy.user_metadata?.name === "string"
+          ? createdBy.user_metadata.name
+          : null,
+    },
+    create: {
+      id: createdBy.id,
+      email: createdBy.email || `${createdBy.id}@admin.local`,
+      name:
+        typeof createdBy.user_metadata?.name === "string"
+          ? createdBy.user_metadata.name
+          : null,
+    },
+  });
 
   const createdEvent = await prisma.customEvent.create({
     data: {
@@ -221,7 +246,7 @@ export async function createAdminCustomEvent(
         eventInput.registrationDeadline.trim() !== ""
           ? parseDateTimeLocalInput(eventInput.registrationDeadline, timeZone)
           : null,
-      createdBy,
+      createdBy: createdBy.id,
     },
     include: {
       creator: {

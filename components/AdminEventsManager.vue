@@ -991,6 +991,10 @@
         </div>
 
         <form @submit.prevent="saveEvent" class="event-form">
+          <div v-if="formError" class="form-error-banner" role="alert">
+            {{ formError }}
+          </div>
+
           <div class="form-group">
             <label for="name">{{ t("admin.eventsManager.eventName") }} *</label>
             <input
@@ -1371,6 +1375,7 @@ const registrations = ref<Registration[]>([]);
 const waitlistEntries = ref<WaitlistEntry[]>([]);
 const loading = ref(true);
 const saving = ref(false);
+const formError = ref("");
 const showCreateForm = ref(false);
 const showRegistrations = ref(false);
 const showCompletedEvents = ref(false);
@@ -1787,7 +1792,37 @@ const filteredEvents = computed(() => {
 // Methods
 const createNewEvent = () => {
   initializeEventForm();
+  formError.value = "";
   showCreateForm.value = true;
+};
+
+const getRequestErrorMessage = (error: unknown, fallback: string): string => {
+  if (!error || typeof error !== "object") {
+    return fallback;
+  }
+
+  if ("data" in error) {
+    const data = (error as { data?: { statusMessage?: unknown } }).data;
+    if (typeof data?.statusMessage === "string" && data.statusMessage.trim()) {
+      return data.statusMessage;
+    }
+  }
+
+  if ("statusMessage" in error) {
+    const statusMessage = (error as { statusMessage?: unknown }).statusMessage;
+    if (typeof statusMessage === "string" && statusMessage.trim()) {
+      return statusMessage;
+    }
+  }
+
+  if ("message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+  }
+
+  return fallback;
 };
 
 const onEventDateChange = () => {
@@ -1839,6 +1874,7 @@ const loadEvents = async () => {
 const saveEvent = async () => {
   try {
     saving.value = true;
+    formError.value = "";
     normalizeEventDateInput();
     normalizeRegistrationDeadlineInput();
     syncVenueFromOrganization();
@@ -1876,7 +1912,10 @@ const saveEvent = async () => {
     // TODO: Show success message
   } catch (error) {
     console.error("Error saving event:", error);
-    // TODO: Show error message
+    formError.value = getRequestErrorMessage(
+      error,
+      t("admin.eventsManager.saveError"),
+    );
   } finally {
     saving.value = false;
   }
@@ -1890,6 +1929,7 @@ const editEvent = (event: CustomEvent) => {
   }
 
   editingEvent.value = event;
+  formError.value = "";
 
   eventForm.value = {
     name: event.name,
@@ -2034,6 +2074,7 @@ const cancelRegistration = async (registration: Registration) => {
 const closeModal = () => {
   showCreateForm.value = false;
   editingEvent.value = null;
+  formError.value = "";
   initializeEventForm();
 };
 
@@ -2638,6 +2679,16 @@ onMounted(() => {
   display: grid;
   gap: 0.75rem;
   padding: 1.25rem;
+}
+
+.form-error-banner {
+  border: 1px solid color-mix(in srgb, var(--app-danger, #dc2626) 28%, transparent);
+  background: color-mix(in srgb, var(--app-danger, #dc2626) 10%, white);
+  color: var(--app-danger, #b91c1c);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 .event-form :deep(.form-row) {

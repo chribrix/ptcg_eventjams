@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   eventMatchesCategory,
+  getCalendarDateKey,
   getCustomCalendarEventType,
   getExternalCalendarEventType,
   isUpcomingCalendarEvent,
   normalizeCustomCalendarEvent,
+  normalizeExternalCalendarEvent,
 } from "~/utils/calendarEventUtils";
 
 describe("calendarEventUtils", () => {
@@ -52,5 +54,26 @@ describe("calendarEventUtils", () => {
     expect(isUpcomingCalendarEvent({ start: "2026-04-30" }, "2026-05-01")).toBe(
       false
     );
+  });
+
+  it("normalizes external event date keys consistently for visible calendar days", () => {
+    expect(getCalendarDateKey("2026-07-11 00:00:00")).toBe("2026-07-11");
+    expect(getCalendarDateKey("2026-07-11T18:00:00.000Z")).toBe("2026-07-11");
+
+    const normalizedEvent = normalizeExternalCalendarEvent(
+      {
+        id: "ext-1",
+        title: "League Cup",
+        dateTime: "2026-07-11T18:00:00.000Z",
+        type: "League Cup",
+        venue: "Test Store",
+        location: "Munich",
+        country: "DE",
+        link: "/events/register/ext-1",
+      },
+      "Europe/Berlin"
+    );
+
+    expect(normalizedEvent.start).toBe("2026-07-11");
   });
 });
