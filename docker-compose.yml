@@ -4,8 +4,10 @@ services:
     container_name: ptcg_postgres
     env_file:
       - .env
-    # Keep PostgreSQL private to the internal Docker network in the base config.
-    # Local host access for Nuxt/Prisma development is defined in docker-compose.dev.yml.
+    # Bind only to loopback so local Prisma/Nuxt can use localhost without exposing
+    # Postgres to the public network on production hosts.
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:

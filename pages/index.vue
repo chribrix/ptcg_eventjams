@@ -3,6 +3,8 @@
     <LandingBanner />
 
     <section class="mx-auto w-full max-w-6xl px-1 pt-2 pb-6 sm:px-4 lg:px-6 lg:pt-3">
+      <AdminEventQuickCreate class="mb-4" @created="onEventCreated" />
+
       <div class="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <!-- Unified Calendar Card Template (from Mock B) -->
         <article class="app-hero-surface min-w-0 overflow-hidden rounded-[1.8rem]">
@@ -20,7 +22,7 @@
             </p>
           </div>
           <div class="px-1.5 pb-2.5 sm:px-3 sm:pb-3">
-            <EventCalendarCard :show-mobile-auth-cta="false" />
+            <EventCalendarCard ref="calendarCardRef" :show-mobile-auth-cta="false" />
           </div>
         </article>
 
@@ -66,7 +68,14 @@ import {
 } from "@heroicons/vue/24/outline";
 import EventCalendarCard from "~/components/landingPageCards/calendar/EventCalendarCard.vue";
 import MyEventsCompactPanel from "~/components/landingPageCards/dashboard/MyEventsCompactPanel.vue";
+import AdminEventQuickCreate from "~/components/AdminEventQuickCreate.vue";
 
 const { userName } = useAuth();
 const { t } = useI18n();
+
+const calendarCardRef = ref<InstanceType<typeof EventCalendarCard> | null>(null);
+
+function onEventCreated() {
+  calendarCardRef.value?.refresh();
+}
 </script>

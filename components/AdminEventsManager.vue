@@ -2166,10 +2166,18 @@ const copyRegistrationLink = async (eventId: string) => {
 };
 
 // Load events on mount
-onMounted(() => {
+onMounted(async () => {
   userTimeZone.value = getUserTimeZone();
   loadVenueDirectory();
-  loadEvents();
+  await loadEvents();
+
+  const editEventId = useRoute().query.edit as string | undefined;
+  if (editEventId) {
+    const match = events.value.find((candidate) => candidate.id === editEventId);
+    if (match) {
+      editEvent(match);
+    }
+  }
 });
 </script>
 

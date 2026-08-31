@@ -70,7 +70,12 @@ export default defineNuxtConfig({
   vite: {
     server: {
       hmr: {
-        clientPort: process.env.GITPOD_WORKSPACE_ID ? 443 : 3000,
+        // Let the HMR client infer its port from the page's own URL (works for
+        // both plain localhost and a tunnel like ngrok, which only exposes 443).
+        // Hardcoding clientPort=3000 broke HMR over ngrok: the client tried to
+        // open a websocket straight to :3000 (unreachable through the tunnel)
+        // and reconnected in a tight loop, flooding the dev server.
+        clientPort: process.env.GITPOD_WORKSPACE_ID ? 443 : undefined,
       },
       allowedHosts: [
         "localhost",

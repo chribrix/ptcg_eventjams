@@ -102,39 +102,49 @@
           @click="selectedEvent = null"
         >
           <div
-            class="w-full max-w-md rounded-2xl border app-border app-surface-0 p-4 shadow-[var(--app-shadow-strong)]"
+            class="w-full max-w-2xl rounded-2xl border app-border app-surface-0 p-6 sm:p-8 shadow-[var(--app-shadow-strong)]"
             @click.stop
           >
-            <div class="mb-3 flex items-start justify-between gap-3">
-              <h4 class="app-text-strong text-base font-bold">
+            <div class="mb-4 flex items-start justify-between gap-3">
+              <h4 class="app-text-strong text-2xl font-bold">
                 {{ selectedEvent.customEvent.name }}
               </h4>
               <button
                 type="button"
-                class="app-btn-neutral rounded-md px-2 py-1 text-sm font-semibold"
+                class="app-btn-neutral rounded-md px-3 py-1.5 text-base font-semibold"
                 @click="selectedEvent = null"
               >
                 ×
               </button>
             </div>
 
-            <div class="app-text-secondary-soft space-y-2 text-sm">
-              <div class="grid grid-cols-[7rem_1fr] gap-2">
+            <div class="app-text-secondary-soft space-y-3 text-base">
+              <div class="grid grid-cols-[9rem_1fr] gap-2">
                 <p class="app-text-muted-soft">{{ tr("eventList.dateTime", "Datum & Uhrzeit") }}</p>
                 <p class="app-text-strong">{{ formatLongDate(selectedEvent.customEvent.eventDate) }}</p>
               </div>
-              <div class="grid grid-cols-[7rem_1fr] gap-2">
+              <div class="grid grid-cols-[9rem_1fr] gap-2">
                 <p class="app-text-muted-soft">{{ tr("eventList.location", "Ort") }}</p>
                 <p class="app-text-strong">{{ selectedEvent.customEvent.venue }}</p>
               </div>
+              <div class="grid grid-cols-[9rem_1fr] gap-2">
+                <p class="app-text-muted-soft">Teilnehmer</p>
+                <p class="app-text-strong">
+                  <span v-if="selectedEventStatsLoading">Lädt...</span>
+                  <span v-else-if="selectedEventStats">
+                    {{ selectedEventStats.registrationCount }}/{{ selectedEventStats.maxParticipants }} registriert
+                  </span>
+                  <span v-else>—</span>
+                </p>
+              </div>
               <div
                 v-if="selectedEvent.customEvent.participationFee"
-                class="grid grid-cols-[7rem_1fr] gap-2"
+                class="grid grid-cols-[9rem_1fr] gap-2"
               >
                 <p class="app-text-muted-soft">{{ tr("eventList.entryFee", "Startgeld") }}</p>
                 <p class="app-text-strong">{{ selectedEvent.customEvent.participationFee }}</p>
               </div>
-              <div class="grid grid-cols-[7rem_1fr] gap-2">
+              <div class="grid grid-cols-[9rem_1fr] gap-2">
                 <p class="app-text-muted-soft">{{ tr("dashboard.statusLabel", "Status") }}</p>
                 <p class="app-text-strong">
                   {{ getEntryBadgeText(selectedEvent) }}
@@ -145,14 +155,14 @@
                   selectedEvent.status === 'waitlist_claim' &&
                   selectedEvent.claimExpiresAt
                 "
-                class="grid grid-cols-[7rem_1fr] gap-2"
+                class="grid grid-cols-[9rem_1fr] gap-2"
               >
                 <p class="app-text-muted-soft">{{ tr("common.claim", "Claim") }}</p>
                 <p class="app-text-strong">{{ formatClaimRemaining(selectedEvent.claimExpiresAt) }}</p>
               </div>
               <div
                 v-if="selectedEvent.customEvent.description"
-                class="border-t app-border pt-2"
+                class="border-t app-border pt-3"
               >
                 <p class="app-text-muted-soft">{{ tr("eventList.aboutEvent", "Infos zum Event") }}</p>
                 <p class="app-text-strong mt-1 whitespace-pre-line">
@@ -166,17 +176,17 @@
                 selectedEvent.entryType === 'registration' &&
                 getActiveTickets(selectedEvent).length > 1
               "
-              class="mt-3 rounded-lg border app-border app-surface-1 p-3"
+              class="mt-4 rounded-lg border app-border app-surface-1 p-4"
             >
               <div class="mb-2 flex items-center justify-between">
                 <p
-                  class="app-text-secondary-soft text-xs font-semibold uppercase tracking-wide"
+                  class="app-text-secondary-soft text-sm font-semibold uppercase tracking-wide"
                 >
                   Tickets absagen
                 </p>
                 <button
                   type="button"
-                  class="app-icon-accent text-xs font-semibold hover:opacity-80"
+                  class="app-icon-accent text-sm font-semibold hover:opacity-80"
                   @click="toggleAllTickets"
                 >
                   {{
@@ -190,7 +200,7 @@
                 <label
                   v-for="ticket in getActiveTickets(selectedEvent)"
                   :key="ticket.id"
-                  class="flex items-center gap-2 rounded-md border app-border app-surface-0 px-2 py-2 text-xs app-text-secondary-soft"
+                  class="flex items-center gap-2 rounded-md border app-border app-surface-0 px-3 py-2.5 text-sm app-text-secondary-soft"
                 >
                   <input
                     type="checkbox"
@@ -210,7 +220,7 @@
                   </span>
                 </label>
               </div>
-              <p class="app-text-muted-soft mt-2 text-[11px]">
+              <p class="app-text-muted-soft mt-2 text-xs">
                 Hinweis: Das letzte verbleibende Ticket kann nicht einzeln
                 abgesagt werden.
               </p>
@@ -218,19 +228,19 @@
 
             <p
               v-if="actionError"
-              class="app-feedback-error mt-3 rounded-md px-3 py-2 text-xs"
+              class="app-feedback-error mt-4 rounded-md px-3 py-2 text-sm"
             >
               {{ actionError }}
             </p>
 
-            <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <a
                 :href="routePlannerUrl(selectedEvent)"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="app-btn-neutral inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold"
+                class="app-btn-neutral inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold"
               >
-                <MapIcon class="h-4 w-4" />
+                <MapIcon class="h-5 w-5" />
                 Maps
               </a>
               <button
@@ -239,7 +249,7 @@
                   selectedEvent.externalEventId
                 "
                 type="button"
-                class="app-btn-danger inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-60"
+                class="app-btn-danger inline-flex items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-60"
                 :disabled="actionPending"
                 @click="removeBookmark(selectedEvent)"
               >
@@ -249,25 +259,16 @@
                     : t("dashboard.removeBookmarkAction")
                 }}
               </button>
-              <NuxtLink
-                v-if="selectedEvent.entryType === 'registration'"
-                :to="`/booking/${selectedEvent.id}`"
-                class="app-btn-neutral inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold"
-                @click="selectedEvent = null"
-              >
-                <PencilSquareIcon class="h-4 w-4" />
-                Buchung verwalten
-              </NuxtLink>
               <button
                 v-if="selectedEvent.entryType === 'registration'"
                 type="button"
-                class="app-btn-danger inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-60"
+                class="app-btn-danger inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-60"
                 :disabled="
                   actionPending || getActiveTickets(selectedEvent).length === 0
                 "
                 @click="cancelSelectedTickets"
               >
-                <XCircleIcon class="h-4 w-4" />
+                <XCircleIcon class="h-5 w-5" />
                 {{ actionPending ? "Bitte warten..." : "Absagen" }}
               </button>
               <button
@@ -276,30 +277,30 @@
                   selectedEvent.status === 'waitlist_claim'
                 "
                 type="button"
-                class="app-btn-success inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-bold disabled:opacity-60"
+                class="app-btn-success inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-bold disabled:opacity-60"
                 :disabled="actionPending"
                 @click="confirmWaitlistSpot"
               >
-                <CheckCircleIcon class="h-4 w-4" />
+                <CheckCircleIcon class="h-5 w-5" />
                 {{ actionPending ? "Bitte warten..." : "Teilnehmen" }}
               </button>
               <button
                 v-if="selectedEvent.entryType === 'waitlist'"
                 type="button"
-                class="app-btn-danger inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-60"
+                class="app-btn-danger inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-60"
                 :disabled="actionPending"
                 @click="dropFromWaitlist"
               >
-                <ExclamationCircleIcon class="h-4 w-4" />
+                <ExclamationCircleIcon class="h-5 w-5" />
                 {{ actionPending ? "Bitte warten..." : "Absagen" }}
               </button>
               <NuxtLink
                 v-if="selectedEvent.customEvent.id"
                 :to="`/events/${selectedEvent.customEvent.id}`"
-                class="app-btn-primary inline-flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-bold"
+                class="app-btn-primary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-bold"
                 @click="selectedEvent = null"
               >
-                <TicketIcon class="h-4 w-4" />
+                <TicketIcon class="h-5 w-5" />
                 {{ tr("events.eventDetails", "Eventdetails") }}
               </NuxtLink>
             </div>
@@ -313,7 +314,6 @@
 <script setup lang="ts">
 import { getEventColor } from "~/utils/eventColors";
 import {
-  PencilSquareIcon,
   XCircleIcon,
   CheckCircleIcon,
   TicketIcon,
@@ -365,6 +365,8 @@ type CompactEventEntry = {
 const entries = ref<CompactEventEntry[]>([]);
 const loading = ref(false);
 const selectedEvent = ref<CompactEventEntry | null>(null);
+const selectedEventStats = ref<{ registrationCount: number; maxParticipants: number } | null>(null);
+const selectedEventStatsLoading = ref(false);
 const actionPending = ref(false);
 const actionError = ref<string>("");
 const selectedTicketIds = ref<string[]>([]);
@@ -426,10 +428,34 @@ const getEntryDateStyles = (entry: CompactEventEntry) => {
   };
 };
 
-const openEventModal = (entry: CompactEventEntry) => {
+const openEventModal = async (entry: CompactEventEntry) => {
   actionError.value = "";
   selectedTicketIds.value = getActiveTickets(entry).map((ticket) => ticket.id);
   selectedEvent.value = entry;
+  await loadSelectedEventStats(entry);
+};
+
+const loadSelectedEventStats = async (entry: CompactEventEntry) => {
+  selectedEventStats.value = null;
+  const eventId = entry.customEvent.id;
+  if (!eventId) return;
+
+  try {
+    selectedEventStatsLoading.value = true;
+    const response = await $fetch<{
+      event: { maxParticipants: number };
+      registrationCount: number;
+    }>(`/api/events/${eventId}`);
+    selectedEventStats.value = {
+      registrationCount: response.registrationCount,
+      maxParticipants: response.event.maxParticipants,
+    };
+  } catch (err) {
+    console.error("Failed to load event participant stats:", err);
+    selectedEventStats.value = null;
+  } finally {
+    selectedEventStatsLoading.value = false;
+  }
 };
 
 const getEntryBadgeClass = (entry: CompactEventEntry) => {

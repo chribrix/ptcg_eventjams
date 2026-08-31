@@ -3,33 +3,32 @@
     :class="
       compact
         ? ''
-        : 'bg-[#2f3136] rounded-xl border border-[#202225] shadow-sm overflow-hidden'
+        : 'app-panel rounded-2xl overflow-hidden'
     "
   >
     <!-- Header (only in non-compact mode) -->
     <div
       v-if="!compact"
-      class="bg-gradient-to-r from-indigo-600 to-purple-700 px-6 py-4"
+      class="border-b app-border app-surface-1 px-6 py-4"
     >
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <div
-            class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center"
+            class="w-8 h-8 rounded-lg flex items-center justify-center app-surface-2"
           >
-            <UsersIcon class="w-5 h-5 text-white" />
+            <UsersIcon class="w-5 h-5 app-icon-accent" />
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-white">Participants</h3>
-            <p class="text-indigo-200 text-sm">
-              {{ participants.length }}
-              {{ participants.length === 1 ? "player" : "players" }} registered
+            <h3 class="app-heading-2">{{ t("participants.title") }}</h3>
+            <p class="app-meta-text">
+              {{ t("participants.countLabel", { count: participants.length }) }}
             </p>
           </div>
         </div>
         <button
           @click="refreshParticipants"
-          class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
-          title="Refresh participants"
+          class="app-btn-neutral p-2 rounded-lg"
+          :title="t('participants.refreshTooltip')"
         >
           <ArrowPathIcon class="w-5 h-5" />
         </button>
@@ -38,18 +37,18 @@
 
     <!-- Loading State -->
     <div v-if="isLoading" :class="compact ? 'p-2' : 'p-4'">
-      <div class="flex items-center gap-2 text-gray-400">
+      <div class="flex items-center gap-2 app-text-secondary-soft">
         <div
-          class="w-4 h-4 border-2 border-gray-600 border-t-indigo-400 rounded-full animate-spin"
+          class="w-4 h-4 border-2 app-border border-t-[var(--app-accent)] rounded-full animate-spin"
         ></div>
-        <span>Loading participants...</span>
+        <span>{{ t("participants.loading") }}</span>
       </div>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" :class="compact ? 'p-2' : 'p-4'">
-      <div class="text-red-400 text-sm">
-        Failed to load participants: {{ error }}
+      <div class="app-feedback-danger rounded-lg p-3 text-sm">
+        {{ t("participants.errorLoading", { error }) }}
       </div>
     </div>
 
@@ -60,24 +59,24 @@
       "
       :class="
         compact
-          ? 'p-2 text-center text-gray-500'
-          : 'p-4 text-center text-gray-500'
+          ? 'p-2 text-center app-text-muted-soft'
+          : 'p-4 text-center app-text-muted-soft'
       "
     >
-      <p>No participants registered yet.</p>
+      <p>{{ t("participants.empty") }}</p>
     </div>
 
     <!-- Participants List -->
-    <div v-else :class="compact ? '' : 'p-6'">
+    <div v-else :class="compact ? '' : 'p-5'">
       <!-- Active Participants -->
-      <div v-if="participants.length > 0" class="grid gap-3">
+      <div v-if="participants.length > 0" :class="compact ? 'grid gap-2' : 'divide-y app-border'">
         <div
           v-for="participant in participants"
           :key="participant.id"
           :class="
             compact
-              ? 'group bg-[#36393f] rounded-lg border border-[#202225] p-3 hover:bg-[#40444b] transition-all duration-200'
-              : 'group bg-[#36393f] rounded-xl border border-[#202225] p-4 hover:border-indigo-500/40 hover:bg-[#40444b] transition-all duration-200'
+              ? 'group app-surface-1 rounded-lg border app-border p-3 transition-colors duration-200 hover:border-[var(--app-accent)]'
+              : 'group py-3 first:pt-0 last:pb-0'
           "
         >
           <div
@@ -125,12 +124,12 @@
                   <UserIcon
                     v-if="!participant.isAnonymous"
                     :class="compact ? 'w-3 h-3' : 'w-4 h-4'"
-                    class="text-gray-500 flex-shrink-0"
+                    class="app-icon-muted flex-shrink-0"
                   />
                   <p
                     :class="[
-                      compact ? 'font-medium' : 'font-semibold',
-                      participant.isAnonymous ? 'text-gray-500' : 'text-white',
+                      compact ? 'font-medium' : 'app-heading-3',
+                      participant.isAnonymous ? 'app-text-muted-soft' : '',
                     ]"
                   >
                     {{ participant.playerName }}
@@ -140,10 +139,9 @@
                   v-if="!compact && !participant.isAnonymous"
                   class="flex items-center space-x-2 mt-1"
                 >
-                  <ClockIcon class="w-3 h-3 text-gray-500 flex-shrink-0" />
-                  <p class="text-xs text-gray-400">
-                    Registered
-                    {{ formatRegistrationDate(participant.registeredAt) }}
+                  <ClockIcon class="w-3 h-3 app-icon-muted flex-shrink-0" />
+                  <p class="app-meta-text">
+                    {{ t("participants.registeredOn", { date: formatRegistrationDate(participant.registeredAt) }) }}
                   </p>
                 </div>
               </div>
@@ -157,11 +155,11 @@
               <!-- Registration Status -->
               <span
                 :class="getParticipantStatusBadgeClass(participant)"
-                class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap"
+                class="app-badge"
               >
                 <div
                   :class="getParticipantStatusDotClass(participant)"
-                  class="w-2 h-2 rounded-full mr-2"
+                  class="w-2 h-2 rounded-full"
                 ></div>
                 {{ getParticipantStatusLabel(participant) }}
               </span>
@@ -173,13 +171,13 @@
       <!-- Cancelled Participants Section (Admin Only) -->
       <div v-if="cancelledParticipants.length > 0 && isAdmin" class="mt-6">
         <div class="flex items-center space-x-2 mb-3">
-          <div class="h-px flex-1 bg-[#202225]"></div>
+          <div class="h-px flex-1 app-border border-t"></div>
           <h4
-            class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
+            class="text-xs font-semibold app-text-muted-soft uppercase tracking-wide"
           >
-            Cancelled
+            {{ t("participants.cancelledSectionTitle") }}
           </h4>
-          <div class="h-px flex-1 bg-[#202225]"></div>
+          <div class="h-px flex-1 app-border border-t"></div>
         </div>
         <div class="grid gap-3">
           <div
@@ -187,8 +185,8 @@
             :key="participant.id"
             :class="
               compact
-                ? 'group bg-[#2f3136] rounded-lg border border-[#202225] p-3 opacity-50'
-                : 'group bg-[#2f3136] rounded-xl border border-[#202225] p-4 opacity-50'
+                ? 'group app-surface-1 rounded-lg border app-border p-3 opacity-60'
+                : 'group app-surface-1 rounded-xl border app-border p-4 opacity-60'
             "
           >
             <div
@@ -216,23 +214,22 @@
                   <div class="flex items-center space-x-2">
                     <UserIcon
                       :class="compact ? 'w-3 h-3' : 'w-4 h-4'"
-                      class="text-gray-400 flex-shrink-0"
+                      class="app-icon-muted flex-shrink-0"
                     />
                     <p
                       :class="
                         compact
-                          ? 'font-medium text-gray-500 truncate line-through'
-                          : 'font-semibold text-gray-500 truncate line-through'
+                          ? 'font-medium app-text-muted-soft truncate line-through'
+                          : 'app-heading-3 app-text-muted-soft truncate line-through'
                       "
                     >
                       {{ participant.playerName }}
                     </p>
                   </div>
                   <div v-if="!compact" class="flex items-center space-x-2 mt-1">
-                    <ClockIcon class="w-3 h-3 text-gray-500 flex-shrink-0" />
-                    <p class="text-xs text-gray-500">
-                      Registered
-                      {{ formatRegistrationDate(participant.registeredAt) }}
+                    <ClockIcon class="w-3 h-3 app-icon-muted flex-shrink-0" />
+                    <p class="app-meta-text">
+                      {{ t("participants.registeredOn", { date: formatRegistrationDate(participant.registeredAt) }) }}
                     </p>
                   </div>
                 </div>
@@ -241,10 +238,9 @@
               <!-- Cancelled Badge -->
               <div class="flex items-center flex-shrink-0">
                 <span
-                  class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300 ring-1 ring-red-500/30 whitespace-nowrap"
+                  class="app-badge app-status-cancelled"
                 >
-                  <div class="w-2 h-2 rounded-full bg-red-400 mr-2"></div>
-                  Cancelled
+                  {{ t("participants.cancelledBadge") }}
                 </span>
               </div>
             </div>
@@ -301,6 +297,7 @@ const participants = ref<Participant[]>([]);
 const cancelledParticipants = ref<Participant[]>([]);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+const { t, locale } = useI18n();
 
 // Check if user is admin
 const { checkAdminStatus } = useAdmin();
@@ -327,13 +324,13 @@ function formatRegistrationDate(dateString: string): string {
   );
 
   if (diffInDays === 0) {
-    return "today";
+    return t("participants.today");
   } else if (diffInDays === 1) {
-    return "yesterday";
+    return t("participants.yesterday");
   } else if (diffInDays < 7) {
-    return `${diffInDays} days ago`;
+    return t("participants.daysAgo", { count: diffInDays });
   } else {
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(locale.value.startsWith("de") ? "de-DE" : "en-US", {
       month: "short",
       day: "numeric",
       year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
@@ -371,7 +368,9 @@ async function refreshParticipants(): Promise<void> {
 function getParticipantStatusLabel(participant: Participant): string {
   // If event doesn't require decklist, just show registration status
   if (!props.showDecklistStatus) {
-    return participant.status === "registered" ? "Registered" : "Reserved";
+    return participant.status === "registered"
+      ? t("participants.statusRegistered")
+      : t("participants.statusReserved");
   }
 
   // If event requires decklist, check decklist submission regardless of registration status
@@ -379,19 +378,19 @@ function getParticipantStatusLabel(participant: Participant): string {
     participant.hasDecklistSubmitted ||
     participant.isBringingDecklistOnsite
   ) {
-    return "Registered";
+    return t("participants.statusRegistered");
   }
 
   // If event requires decklist but user hasn't submitted it
-  return "No deck submitted";
+  return t("participants.statusNoDeckSubmitted");
 }
 
 function getParticipantStatusBadgeClass(participant: Participant): string {
   // If event doesn't require decklist, just show registration status
   if (!props.showDecklistStatus) {
     return participant.status === "registered"
-      ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40"
-      : "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40";
+      ? "app-status-completed"
+      : "app-status-ongoing";
   }
 
   // If event requires decklist, check decklist submission regardless of registration status
@@ -399,19 +398,19 @@ function getParticipantStatusBadgeClass(participant: Participant): string {
     participant.hasDecklistSubmitted ||
     participant.isBringingDecklistOnsite
   ) {
-    return "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40";
+    return "app-status-completed";
   }
 
   // If event requires decklist but user hasn't submitted it
-  return "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40";
+  return "app-status-ongoing";
 }
 
 function getParticipantStatusDotClass(participant: Participant): string {
   // If event doesn't require decklist, just show registration status
   if (!props.showDecklistStatus) {
     return participant.status === "registered"
-      ? "bg-emerald-500"
-      : "bg-amber-500";
+      ? "bg-[var(--app-button-green)]"
+      : "bg-[var(--app-button-amber)]";
   }
 
   // If event requires decklist, check decklist submission regardless of registration status
@@ -419,26 +418,26 @@ function getParticipantStatusDotClass(participant: Participant): string {
     participant.hasDecklistSubmitted ||
     participant.isBringingDecklistOnsite
   ) {
-    return "bg-emerald-500";
+    return "bg-[var(--app-button-green)]";
   }
 
   // If event requires decklist but user hasn't submitted it
-  return "bg-amber-500";
+  return "bg-[var(--app-button-amber)]";
 }
 
 function getRegistrationBadgeClass(status: string): string {
-  return status === "registered"
-    ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40"
-    : "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40";
+  return status === "registered" ? "app-status-completed" : "app-status-ongoing";
 }
 
 function getStatusDotClass(status: string): string {
-  return status === "registered" ? "bg-emerald-500" : "bg-amber-500";
+  return status === "registered"
+    ? "bg-[var(--app-button-green)]"
+    : "bg-[var(--app-button-amber)]";
 }
 
 function getStatusIndicatorClass(status: string): string {
   return status === "registered"
-    ? "bg-emerald-500 shadow-emerald-500/50"
+    ? "bg-[var(--app-button-green)] shadow-[var(--app-button-green)]/50"
     : "bg-amber-500 shadow-amber-500/50";
 }
 

@@ -640,6 +640,10 @@ function startOfMonth(date: Date): Date {
   next.setDate(1);
   return startOfDay(next);
 }
+
+defineExpose({
+  refresh: fetchCustomEvents,
+});
 </script>
 
 <style scoped>
