@@ -8,6 +8,7 @@ import {
   UserPlusIcon,
   UserCircleIcon,
   ChartBarIcon,
+  TrophyIcon,
   MoonIcon,
   SunIcon,
 } from "@heroicons/vue/24/outline";
@@ -225,6 +226,11 @@ const { t } = useI18n();
                   <ChartBarIcon class="w-4 h-4" />
                   <span>{{ t("nav.dashboard") }}</span>
                 </NuxtLink>
+
+                <NuxtLink v-if="userName" to="/league" class="nav-link">
+                  <TrophyIcon class="w-4 h-4" />
+                  <span>Liga</span>
+                </NuxtLink>
               </div>
 
               <NuxtLink v-if="isAdmin" to="/admin" class="admin-menu-button">
@@ -299,6 +305,16 @@ const { t } = useI18n();
             >
               <ChartBarIcon class="w-5 h-5" />
               <span>{{ t("nav.dashboard") }}</span>
+            </NuxtLink>
+
+            <NuxtLink
+              v-if="userName"
+              to="/league"
+              @click="mobileMenuOpen = false"
+              class="flex items-center space-x-3 px-3 py-2 text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] rounded-lg"
+            >
+              <TrophyIcon class="w-5 h-5" />
+              <span>Liga</span>
             </NuxtLink>
 
             <!-- Admin menu items for mobile -->

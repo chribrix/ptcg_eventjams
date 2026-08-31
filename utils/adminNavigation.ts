@@ -8,6 +8,7 @@ import {
   TagIcon,
   ExclamationTriangleIcon,
   BuildingStorefrontIcon,
+  TrophyIcon,
 } from "@heroicons/vue/24/outline";
 
 export type AdminNavItem = {
@@ -35,6 +36,12 @@ export const adminNavigationItems: AdminNavItem[] = [
     to: "/admin/tournament-management",
     icon: PlayCircleIcon,
     match: (path) => path.startsWith("/admin/tournament-management"),
+  },
+  {
+    label: "League Manager",
+    to: "/admin/league",
+    icon: TrophyIcon,
+    match: (path) => path.startsWith("/admin/league"),
   },
   {
     label: "Users",

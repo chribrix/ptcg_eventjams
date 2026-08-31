@@ -110,6 +110,7 @@ model AdminUser {
   // Relations to admin-created content
   CustomEvents           CustomEvent[]
   ExternalEventOverrides ExternalEventOverride[]
+  EventTemplates         EventTemplate[]
 
   @@map("admin_users")
   @@schema("users")
@@ -172,6 +173,29 @@ model TournamentTomState {
   @@schema("public")
 }
 
+model EventTemplate {
+  id                            String    @id @default(cuid())
+  name                          String
+  venue                         String
+  maxParticipants               Int       @map("max_participants")
+  participationFee              Decimal?  @map("participation_fee") @db.Decimal(10, 2)
+  description                   String?
+  requiresDecklist              Boolean   @default(false) @map("requires_decklist")
+  tagType                       String    @default("pokemon") @map("tag_type")
+  tags                          Json?     @db.JsonB
+  weekday                       Int       @map("weekday") // 0 = Sunday .. 6 = Saturday
+  eventTime                     String    @map("event_time") // "HH:mm" in the creator's timezone
+  registrationDeadlineMinutesBefore Int?  @map("registration_deadline_minutes_before")
+  timeZone                      String    @default("Europe/Vienna") @map("time_zone")
+  createdBy                     String    @map("created_by")
+  createdAt                     DateTime  @default(now()) @map("created_at")
+  updatedAt                     DateTime  @updatedAt @map("updated_at")
+  creator                       AdminUser @relation(fields: [createdBy], references: [id])
+
+  @@map("event_templates")
+  @@schema("public")
+}
+
 model VenueDirectoryEntry {
   id               String   @id @default(cuid())
   organizationName String   @map("organization_name")
@@ -202,6 +226,146 @@ model Player {
   bookmarks            EventBookmark[]
 
   @@map("players")
+  @@schema("public")
+}
+
+model LeagueSeason {
+  id            String            @id @default(cuid())
+  name          String
+  slug          String            @unique
+  startsOn      DateTime          @map("starts_on") @db.Date
+  endsOn        DateTime          @map("ends_on") @db.Date
+  isActive      Boolean           @default(false) @map("is_active")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  players       LeaguePlayer[]
+  pointRules    LeaguePointRule[]
+  events        LeagueEvent[]
+  changeLog     LeagueChangeLog[]
+
+  @@index([isActive])
+  @@map("league_seasons")
+  @@schema("public")
+}
+
+model LeaguePlayer {
+  id              String                   @id @default(cuid())
+  seasonId        String                   @map("season_id")
+  legacyId        Int?                     @map("legacy_id")
+  canonicalId     String?                  @map("canonical_player_id")
+  displayName     String                   @map("display_name")
+  status          String                   @default("active")
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  updatedAt       DateTime                 @updatedAt @map("updated_at")
+  season          LeagueSeason             @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  aliases         LeaguePlayerAlias[]
+  externalIds     LeaguePlayerExternalId[]
+  participations  LeagueParticipation[]
+
+  @@unique([seasonId, legacyId])
+  @@unique([seasonId, canonicalId])
+  @@index([seasonId, status])
+  @@map("league_players")
+  @@schema("public")
+}
+
+model LeaguePlayerAlias {
+  id              String       @id @default(cuid())
+  leaguePlayerId  String       @map("league_player_id")
+  alias           String
+  leaguePlayer    LeaguePlayer @relation(fields: [leaguePlayerId], references: [id], onDelete: Cascade)
+
+  @@unique([leaguePlayerId, alias])
+  @@map("league_player_aliases")
+  @@schema("public")
+}
+
+model LeaguePlayerExternalId {
+  id               String       @id @default(cuid())
+  seasonId         String       @map("season_id")
+  leaguePlayerId   String       @map("league_player_id")
+  pokemonPlayerId  String       @map("pokemon_player_id")
+  leaguePlayer     LeaguePlayer @relation(fields: [leaguePlayerId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, pokemonPlayerId])
+  @@index([leaguePlayerId])
+  @@map("league_player_external_ids")
+  @@schema("public")
+}
+
+model LeaguePointRule {
+  id            String       @id @default(cuid())
+  seasonId      String       @map("season_id")
+  positionFrom  Int          @map("position_from")
+  positionTo    Int?         @map("position_to")
+  points        Int
+  season        LeagueSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([seasonId, positionFrom])
+  @@map("league_point_rules")
+  @@schema("public")
+}
+
+model LeagueEvent {
+  id                          String                @id @default(cuid())
+  seasonId                    String                @map("season_id")
+  legacyId                    Int?                  @map("legacy_id")
+  officialTournamentId        String?               @map("official_tournament_id")
+  importContentHash           String?               @map("import_content_hash")
+  name                        String
+  eventDate                   DateTime              @map("event_date") @db.Date
+  participantCount            Int                   @default(0) @map("participant_count")
+  prizePoolContributionCents  Int                   @default(100) @map("prize_pool_contribution_cents")
+  status                      String                @default("draft")
+  sourceXml                   String?               @map("source_xml") @db.Text
+  notes                       String?
+  importedByAdminId           String?               @map("imported_by_admin_id")
+  createdAt                   DateTime              @default(now()) @map("created_at")
+  updatedAt                   DateTime              @updatedAt @map("updated_at")
+  season                      LeagueSeason          @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  participations              LeagueParticipation[]
+
+  @@unique([seasonId, legacyId])
+  @@unique([seasonId, officialTournamentId])
+  @@unique([seasonId, importContentHash])
+  @@index([seasonId, eventDate])
+  @@map("league_events")
+  @@schema("public")
+}
+
+model LeagueParticipation {
+  id                String       @id @default(cuid())
+  legacyId          Int?         @map("legacy_id")
+  eventId           String       @map("event_id")
+  leaguePlayerId    String       @map("league_player_id")
+  placement         Int?
+  points            Int          @default(0)
+  status            String       @default("pending_review")
+  correctionReason  String?      @map("correction_reason")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  event             LeagueEvent  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  leaguePlayer      LeaguePlayer @relation(fields: [leaguePlayerId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, leaguePlayerId])
+  @@index([leaguePlayerId])
+  @@map("league_participations")
+  @@schema("public")
+}
+
+model LeagueChangeLog {
+  id          String       @id @default(cuid())
+  seasonId    String       @map("season_id")
+  occurredAt  DateTime     @default(now()) @map("occurred_at")
+  action      String
+  entityType  String       @map("entity_type")
+  entityId    String?      @map("entity_id")
+  reason      String?
+  details     Json         @default("{}") @db.JsonB
+  season      LeagueSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@index([seasonId, occurredAt])
+  @@map("league_change_log")
   @@schema("public")
 }
 

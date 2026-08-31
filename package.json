@@ -12,6 +12,8 @@
     "migrate:supabase-ids": "tsx scripts/migrate-supabase-ids.ts",
     "migrate:supabase-ids:dry-run": "tsx scripts/migrate-supabase-ids.ts --dry-run",
     "migrate:supabase-ids:once": "tsx scripts/migrate-supabase-ids.ts --once",
+    "migrate:league-sqlite": "tsx scripts/import-league-sqlite.ts",
+    "migrate:league-sqlite:dry-run": "tsx scripts/import-league-sqlite.ts --dry-run",
     "check:pokedata-hidden": "ts-node --esm scripts/check-pokedata-hidden.ts",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -52,6 +54,7 @@
     "playwright-core": "^1.54.2",
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
     "vitest": "^3.2.4"
   }
 }
