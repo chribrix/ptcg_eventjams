@@ -431,7 +431,13 @@
     "eventTime": "Time",
     "registrationDeadlineMinutesBefore": "Registration deadline (minutes before)",
     "templateUpdated": "Template updated",
-    "templateUpdateError": "Failed to update template"
+    "templateUpdateError": "Failed to update template",
+    "eventCreated": "Event created",
+    "registrationLinkReady": "The registration link is ready to share.",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "openEvent": "Open event",
+    "done": "Done"
   },
   "waitlist": {
     "spotAvailable": "A spot has opened up!",

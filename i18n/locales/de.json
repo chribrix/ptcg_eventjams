@@ -439,7 +439,13 @@
     "eventTime": "Uhrzeit",
     "registrationDeadlineMinutesBefore": "Anmeldeschluss (Minuten vorher)",
     "templateUpdated": "Vorlage aktualisiert",
-    "templateUpdateError": "Vorlage konnte nicht aktualisiert werden"
+    "templateUpdateError": "Vorlage konnte nicht aktualisiert werden",
+    "eventCreated": "Event wurde erstellt",
+    "registrationLinkReady": "Der Registrierungslink kann jetzt geteilt werden.",
+    "copyLink": "Link kopieren",
+    "linkCopied": "Link kopiert",
+    "openEvent": "Event öffnen",
+    "done": "Fertig"
   },
   "waitlist": {
     "spotAvailable": "Ein Platz ist frei geworden!",

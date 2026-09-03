@@ -171,23 +171,25 @@ This re-prioritizes the user-facing consolidation ahead of admin-facing work. Ad
 
 **Goal:** "Set event → check/edit if necessary → go" for recurring local events, beyond one-off duplication.
 
-> **Delivered out of sequence** at explicit user request ("NUR FÜR ADMINS: Event anlegen button... Prefab Möglichkeit") before Phases 2–5 were authorized. Implemented on the landing page rather than under `/admin/events` — see implementation notes below.
+> **Delivered out of sequence** at explicit user request ("NUR FÜR ADMINS: Event anlegen button... Prefab Möglichkeit") before Phases 2–5 were authorized. Template management now lives inside the shared create-event modal used from both the landing page and `/admin/events`.
 
 - [x] Design confirmed with user before coding: new `EventTemplate` Prisma model (not a `CustomEvent` flag) storing `weekday` + `eventTime` + full event field set; "next occurrence" computed as the next date matching `weekday`/`eventTime`, rolling to next week if that weekday/time has already passed today
 - [x] Backend: template CRUD (create/list/update/delete) following the existing admin service pattern (`server/services/admin/eventTemplateAdminService.ts` → `server/api/admin/event-templates.ts` controller using `defineAdminRoute`, no business logic in the route)
 - [x] Frontend: "Save as template" action from the create/edit form (`components/EventEditModal.vue`)
 - [x] Frontend: "Create from template" action pre-fills the form with the next computed date; still opens the modal for explicit review/submit (never auto-creates silently)
-- [x] Templates list/management surface (chips with create-next-occurrence + edit + delete) — placed on the landing page (`components/AdminEventQuickCreate.vue`), admin-gated, instead of under `/admin/events`, per the user's explicit request to surface it "über Eventkalender" on the main view; the list is always visible with an empty-state message when no templates exist yet
+- [x] Templates list/management surface (create-next-occurrence + edit + delete) — placed inside `components/EventEditModal.vue`; templates are no longer exposed directly on the landing page
 - [x] Update: dedicated "edit template" action (`components/EventTemplateEditModal.vue`, `PUT /api/admin/event-templates?id=`) lets admins change any template field in place
+- [x] Update: landing page and admin event manager use the same `EventEditModal` create/edit view; successful creation keeps the modal open with a copyable registration link
 
 **Files changed:** `prisma/schema.prisma` (new `EventTemplate` model, deployed through migration `20260831120000_add_event_templates`), `server/services/admin/eventTemplateAdminService.ts` (create/list/update/delete), `server/api/admin/event-templates.ts` (GET/POST/PUT/DELETE), `components/EventEditModal.vue` (now supports create mode via optional `eventId` + `prefill` prop, plus "Save as template"), `components/EventTemplateEditModal.vue` (new — edit an existing template), `components/AdminEventQuickCreate.vue` (new — landing page admin panel), `components/landingPageCards/calendar/EventCalendarCard.vue` (exposes `refresh()`), `pages/index.vue` (renders the new panel, refreshes the calendar on creation), `i18n/locales/de.json` / `en.json` (new `eventWorkspace.*` keys, `common.weekdays`)
 
 **GATE 6 — STOP for review**
 - [ ] User has tested: click "Neues Event", fill the form, submit — new event appears in the calendar without a page reload
 - [ ] User has tested: fill the create form, click "Als Vorlage speichern", confirm a success toast and the template chip appears
-- [ ] User has tested: click the lightning-bolt icon on a template chip, confirm the modal opens pre-filled with the correct next occurrence date/time (test both "weekday still upcoming this week" and "weekday already passed this week" cases)
-- [ ] User has tested: delete a template chip, confirm it disappears and doesn't affect existing events
-- [ ] User has tested: edit a template (pencil icon), change a field, save, confirm the chip reflects the change and future "create next occurrence" uses the updated values
+- [ ] User has tested: select a template inside the create modal, confirm the form is pre-filled with the correct next occurrence date/time (test both "weekday still upcoming this week" and "weekday already passed this week" cases)
+- [ ] User has tested: delete a template in the create modal, confirm it disappears and doesn't affect existing events
+- [ ] User has tested: edit a template in the create modal, change a field, save, and confirm future creation uses the updated values
+- [ ] User has tested: create an event from landing page and admin menu, confirm both use the same view and show a copyable registration link after creation
 - [ ] User has tested: the panel is invisible to non-admin users
 - [ ] User has authorized this checklist as complete for Phase 6
 

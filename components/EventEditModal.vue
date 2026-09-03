@@ -4,7 +4,7 @@
     @click.self="$emit('close')"
   >
     <div
-      class="app-modal-surface rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+      class="app-modal-surface rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
       @click.stop
     >
       <div class="flex items-center justify-between mb-4">
@@ -27,10 +27,83 @@
         {{ loadError }}
       </div>
 
+      <div v-else-if="createdEvent" class="space-y-5">
+        <div class="app-feedback-success rounded-lg p-4">
+          <h4 class="app-heading-3">{{ t("eventWorkspace.eventCreated") }}</h4>
+          <p class="app-meta-text mt-1">
+            {{ t("eventWorkspace.registrationLinkReady") }}
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold app-text-secondary-soft mb-2">
+            {{ t("admin.eventsManager.registrationLink") }}
+          </label>
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <input :value="registrationUrl" readonly class="app-input px-4 py-3 flex-1" />
+            <button type="button" @click="copyRegistrationLink" class="app-btn-neutral app-btn-md">
+              <CheckIcon v-if="linkCopied" class="w-4 h-4" />
+              <ClipboardDocumentIcon v-else class="w-4 h-4" />
+              {{ linkCopied ? t("eventWorkspace.linkCopied") : t("eventWorkspace.copyLink") }}
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-3">
+          <NuxtLink :to="`/events/${createdEvent.id}`" class="app-btn-neutral app-btn-md no-underline">
+            <ArrowTopRightOnSquareIcon class="w-4 h-4" />
+            {{ t("eventWorkspace.openEvent") }}
+          </NuxtLink>
+          <button type="button" @click="$emit('close')" class="app-btn-primary app-btn-md">
+            {{ t("eventWorkspace.done") }}
+          </button>
+        </div>
+      </div>
+
       <form v-else @submit.prevent="saveEvent" class="space-y-4">
         <div v-if="formError" class="app-feedback-danger rounded-lg p-3 text-sm">
           {{ formError }}
         </div>
+
+        <section v-if="!eventId" class="rounded-lg border app-border app-surface-1 p-4">
+          <div class="flex items-center justify-between gap-3">
+            <h4 class="app-heading-3">{{ t("eventWorkspace.savedTemplatesTitle") }}</h4>
+            <span v-if="loadingTemplates" class="app-meta-text">{{ t("common.loading") }}</span>
+          </div>
+          <p v-if="!loadingTemplates && !templates.length" class="app-meta-text mt-2">
+            {{ t("eventWorkspace.noTemplates") }}
+          </p>
+          <div v-else class="mt-3 grid gap-2 sm:grid-cols-2">
+            <div
+              v-for="template in templates"
+              :key="template.id"
+              class="flex min-w-0 items-center gap-2 rounded-lg border app-border px-3 py-2"
+            >
+              <button type="button" @click="applyTemplate(template)" class="min-w-0 flex-1 text-left">
+                <span class="app-text-strong block truncate">{{ template.name }}</span>
+                <span class="app-meta-text block truncate">
+                  {{ weekdayLabel(template.weekday) }} · {{ template.eventTime }} · {{ template.venue }}
+                </span>
+              </button>
+              <button
+                type="button"
+                @click="editingTemplate = template"
+                class="app-btn-neutral app-btn-sm"
+                :title="t('eventWorkspace.editTemplate')"
+              >
+                <PencilSquareIcon class="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                @click="deleteTemplate(template)"
+                class="app-btn-danger app-btn-sm"
+                :title="t('common.delete')"
+              >
+                <TrashIcon class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </section>
 
         <div>
           <label class="block text-sm font-semibold app-text-secondary-soft mb-2">
@@ -260,11 +333,26 @@
       </form>
     </div>
   </div>
+
+  <EventTemplateEditModal
+    v-if="editingTemplate"
+    :template="editingTemplate"
+    @close="editingTemplate = null"
+    @saved="onTemplateUpdated"
+  />
 </template>
 
 <script setup lang="ts">
 import { parseEventTags, FORMAT_OPTIONS, type TagType } from "~/types/eventTags";
-import { BookmarkIcon } from "@heroicons/vue/24/outline";
+import {
+  ArrowTopRightOnSquareIcon,
+  BookmarkIcon,
+  CheckIcon,
+  ClipboardDocumentIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from "@heroicons/vue/24/outline";
+import type { EventTemplateData } from "~/components/EventTemplateEditModal.vue";
 import {
   formatDateInTimeZone,
   formatDateTimeLocalInput,
@@ -297,9 +385,19 @@ interface EventPrefill {
 }
 
 const props = defineProps<{ eventId?: string; prefill?: EventPrefill }>();
-const emit = defineEmits<{ close: []; saved: []; templateSaved: [] }>();
 
-const { t } = useI18n();
+interface SavedEvent {
+  id: string;
+  name: string;
+}
+
+const emit = defineEmits<{
+  close: [];
+  saved: [event?: SavedEvent];
+  templateSaved: [];
+}>();
+
+const { t, locale } = useI18n();
 const { showToast } = useToast();
 
 interface EventFormState {
@@ -327,8 +425,19 @@ const saving = ref(false);
 const savingTemplate = ref(false);
 const formError = ref("");
 const loadError = ref("");
+const loadingTemplates = ref(false);
+const templates = ref<EventTemplateData[]>([]);
+const editingTemplate = ref<EventTemplateData | null>(null);
+const createdEvent = ref<SavedEvent | null>(null);
+const linkCopied = ref(false);
 const userTimeZone = ref(getUserTimeZone());
 const venueDirectory = ref<VenueDirectoryEntry[]>([]);
+
+const registrationUrl = computed(() => {
+  if (!createdEvent.value) return "";
+  const path = `/events/register/${createdEvent.value.id}`;
+  return import.meta.client ? `${window.location.origin}${path}` : path;
+});
 
 const createEmptyEventTags = (): EventFormTags => ({
   type: "custom",
@@ -533,6 +642,120 @@ function applyPrefill() {
   };
 }
 
+function weekdayLabel(weekday: number): string {
+  const referenceSunday = new Date(Date.UTC(2023, 0, 1 + weekday));
+  return referenceSunday.toLocaleDateString(
+    locale.value.startsWith("de") ? "de-DE" : "en-US",
+    { weekday: "long" },
+  );
+}
+
+function computeNextOccurrence(weekday: number, time: string): Date {
+  const [hours, minutes] = time.split(":").map(Number);
+  const now = new Date();
+  const result = new Date(now);
+  result.setHours(hours, minutes, 0, 0);
+
+  let daysUntil = (weekday - now.getDay() + 7) % 7;
+  if (daysUntil === 0 && result.getTime() <= now.getTime()) {
+    daysUntil = 7;
+  }
+  result.setDate(now.getDate() + daysUntil);
+  return result;
+}
+
+async function loadTemplates() {
+  if (props.eventId) return;
+
+  try {
+    loadingTemplates.value = true;
+    const response = await $fetch<{ templates: EventTemplateData[] }>(
+      "/api/admin/event-templates",
+    );
+    templates.value = response.templates || [];
+  } catch (err) {
+    console.error("Failed to load event templates:", err);
+  } finally {
+    loadingTemplates.value = false;
+  }
+}
+
+function applyTemplate(template: EventTemplateData) {
+  const nextDate = computeNextOccurrence(template.weekday, template.eventTime);
+  const eventDate = formatDateTimeLocalInput(nextDate, userTimeZone.value);
+  let registrationDeadline = "";
+
+  if (template.registrationDeadlineMinutesBefore != null) {
+    registrationDeadline = formatDateTimeLocalInput(
+      new Date(
+        nextDate.getTime() -
+          template.registrationDeadlineMinutesBefore * 60 * 1000,
+      ),
+      userTimeZone.value,
+    );
+  }
+
+  eventForm.value = {
+    name: template.name,
+    venue: template.venue,
+    tagType: (template.tagType as TagType) || "pokemon",
+    tags: {
+      ...createEmptyEventTags(),
+      ...(template.tags as Partial<EventFormTags> | null),
+    },
+    maxParticipants: template.maxParticipants,
+    participationFee: template.participationFee
+      ? Number(template.participationFee)
+      : 0,
+    description: template.description || "",
+    eventDate,
+    registrationDeadline,
+    requiresDecklist: template.requiresDecklist,
+    status: "upcoming",
+  };
+}
+
+async function deleteTemplate(template: EventTemplateData) {
+  if (!confirm(t("eventWorkspace.confirmDeleteTemplate", { name: template.name }))) {
+    return;
+  }
+
+  try {
+    await $fetch(`/api/admin/event-templates?id=${template.id}`, {
+      method: "DELETE",
+    });
+    await loadTemplates();
+  } catch (err) {
+    console.error("Failed to delete template:", err);
+  }
+}
+
+async function onTemplateUpdated() {
+  editingTemplate.value = null;
+  showToast(t("eventWorkspace.templateUpdated"), "success");
+  await loadTemplates();
+}
+
+async function copyRegistrationLink() {
+  if (!registrationUrl.value) return;
+
+  try {
+    await navigator.clipboard.writeText(registrationUrl.value);
+  } catch {
+    const input = document.createElement("input");
+    input.value = registrationUrl.value;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand("copy");
+    document.body.removeChild(input);
+  }
+
+  linkCopied.value = true;
+  window.setTimeout(() => {
+    linkCopied.value = false;
+  }, 2000);
+}
+
 async function saveEvent() {
   try {
     saving.value = true;
@@ -559,14 +782,15 @@ async function saveEvent() {
         method: "PUT",
         body: eventData,
       });
+      emit("saved");
     } else {
-      await $fetch("/api/admin/custom-events", {
+      const event = await $fetch<SavedEvent>("/api/admin/custom-events", {
         method: "POST",
         body: eventData,
       });
+      createdEvent.value = event;
+      emit("saved", event);
     }
-
-    emit("saved");
   } catch (err) {
     console.error("Error saving event:", err);
     formError.value = getRequestErrorMessage(err, t("admin.eventsManager.saveError"));
@@ -621,6 +845,7 @@ async function saveAsTemplate() {
     });
 
     showToast(t("eventWorkspace.templateSaved"), "success");
+  await loadTemplates();
     emit("templateSaved");
   } catch (err) {
     console.error("Error saving template:", err);
@@ -636,6 +861,7 @@ onMounted(async () => {
     await loadEvent();
   } else {
     applyPrefill();
+    await loadTemplates();
     loading.value = false;
   }
 });
