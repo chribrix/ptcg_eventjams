@@ -1,4 +1,5 @@
 import { clearClientAuthState as clearSharedClientAuthState } from "~/utils/clientAuthState";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 
 export const useAuth = () => {
   const supabaseUser = useSupabaseUser();
@@ -58,6 +59,10 @@ export const useAuth = () => {
 
       if (error) {
         await logError("session_check_failed", error.message, { error });
+        if (isAuthRetryableFetchError(error)) {
+          return supabaseUser.value;
+        }
+
         await clearInvalidSession();
         showErrorToast("Your session has expired. Please log in again.", 7000);
         return null;
@@ -85,6 +90,10 @@ export const useAuth = () => {
             await logError("token_refresh_failed", refreshError.message, {
               refreshError,
             });
+            if (isAuthRetryableFetchError(refreshError)) {
+              return supabaseUser.value;
+            }
+
             await clearInvalidSession();
             showErrorToast("Session expired. Please log in again.", 7000);
             return null;
@@ -99,6 +108,10 @@ export const useAuth = () => {
           await logError("token_refresh_exception", errorMessage, {
             refreshError,
           });
+          if (isAuthRetryableFetchError(refreshError)) {
+            return supabaseUser.value;
+          }
+
           await clearInvalidSession();
           showErrorToast("Authentication error. Please log in again.", 7000);
           return null;
@@ -112,6 +125,10 @@ export const useAuth = () => {
           ? error.message
           : "Unknown session validation error";
       await logError("session_validation_exception", errorMessage, { error });
+      if (isAuthRetryableFetchError(error)) {
+        return supabaseUser.value;
+      }
+
       await clearInvalidSession();
       showErrorToast("Session validation failed. Please log in again.", 7000);
       return null;

@@ -1,5 +1,3 @@
-import { clearClientAuthState } from "~/utils/clientAuthState";
-
 export default defineNuxtPlugin(async () => {
   const supabaseClient = useSupabaseClient();
   const isDev = import.meta.dev;
@@ -24,9 +22,16 @@ export default defineNuxtPlugin(async () => {
         const now = Math.floor(Date.now() / 1000);
 
         if (expiresAt && expiresAt < now) {
-          if (isDev) console.log("Detected expired session on app init, cleaning up");
-          clearClientAuthState({ clearAllStorage: true });
-          await supabaseClient.auth.signOut();
+          const { data, error: refreshError } =
+            await supabaseClient.auth.refreshSession();
+
+          if (refreshError || !data.session) {
+            if (isDev)
+              console.log(
+                "Expired access token could not be refreshed; keeping the persisted session for a later retry",
+                refreshError,
+              );
+          }
         }
       }
     } catch (error) {

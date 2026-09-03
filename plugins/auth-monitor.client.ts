@@ -45,12 +45,6 @@ export default defineNuxtPlugin((nuxtApp) => {
           if (isDev) console.log("Password recovery initiated");
           break;
       }
-
-      // Check for session expiration
-      if (!session && event !== "SIGNED_OUT" && event !== "SIGNED_IN") {
-        if (isDev) console.log("Session expired or invalid, cleaning up");
-        clearClientAuthState({ clearAllStorage: true });
-      }
     },
   );
 
