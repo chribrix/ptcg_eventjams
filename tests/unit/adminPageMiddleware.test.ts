@@ -29,6 +29,21 @@ describe("admin page guard", () => {
     expect(result).toBe("/login?redirect=%2Fadmin");
   });
 
+  it("protects locale-prefixed admin routes", async () => {
+    const fetchAdminCheck = vi.fn().mockRejectedValue({ statusCode: 401 });
+
+    const { createAdminPageGuard } = await import("../../utils/adminPageGuard");
+    const middleware = createAdminPageGuard({ fetchAdminCheck });
+
+    const result = await middleware({
+      path: "/en/admin",
+      fullPath: "/en/admin?tab=events",
+    });
+
+    expect(fetchAdminCheck).toHaveBeenCalledWith("/api/admin/check");
+    expect(result).toBe("/login?redirect=%2Fen%2Fadmin%3Ftab%3Devents");
+  });
+
   it("redirects unexpected admin auth failures to login with the requested path", async () => {
     const fetchAdminCheck = vi.fn().mockRejectedValue({ statusCode: 500 });
 

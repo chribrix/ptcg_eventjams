@@ -1,3 +1,4 @@
+import { getApplicationRoutePath } from "~/utils/applicationRoutePath";
 import { buildLoginRedirectPath } from "~/utils/loginRedirect";
 
 type AdminPageGuardDependencies = {
@@ -11,7 +12,7 @@ export const createAdminPageGuard = (
     const fetchAdminCheck =
       dependencies.fetchAdminCheck || ((url: string) => $fetch(url));
 
-    if (!to.path.startsWith("/admin")) {
+    if (!getApplicationRoutePath(to.path).startsWith("/admin")) {
       return;
     }
 

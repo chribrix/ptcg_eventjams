@@ -18,6 +18,57 @@ describe("auth route middleware", () => {
     ).toBe("/login?redirect=%2Fbooking%2Fabc%3Ftab%3Dtickets");
   });
 
+  it.each(["/", "/en", "/en/events", "/en/events/event-1"])(
+    "keeps the public route %s accessible without authentication",
+    async (path) => {
+      const navigate = vi.fn();
+      const delay = vi.fn().mockResolvedValue(undefined);
+
+      const { createAuthRouteGuard } =
+        await import("../../middleware/auth.global");
+
+      const guard = createAuthRouteGuard({
+        getAuth: () => ({
+          user: { value: null },
+          ensureValidSession: vi.fn(),
+        }),
+        getSupabaseClient: () => ({ auth: { signOut: vi.fn() } }),
+        navigate,
+        delay,
+        isClient: true,
+      } as any);
+
+      await guard({ path, fullPath: path });
+
+      expect(delay).not.toHaveBeenCalled();
+      expect(navigate).not.toHaveBeenCalled();
+    },
+  );
+
+  it("still redirects a localized protected route to login", async () => {
+    const navigate = vi.fn();
+
+    const { createAuthRouteGuard } =
+      await import("../../middleware/auth.global");
+
+    const guard = createAuthRouteGuard({
+      getAuth: () => ({
+        user: { value: null },
+        ensureValidSession: vi.fn(),
+      }),
+      getSupabaseClient: () => ({ auth: { signOut: vi.fn() } }),
+      navigate,
+      delay: vi.fn().mockResolvedValue(undefined),
+      isClient: true,
+    } as any);
+
+    await guard({ path: "/en/dashboard", fullPath: "/en/dashboard" });
+
+    expect(navigate).toHaveBeenCalledWith(
+      "/login?redirect=%2Fen%2Fdashboard",
+    );
+  });
+
   it("redirects unauthenticated client users to login with the requested path", async () => {
     const navigate = vi.fn();
     const delay = vi.fn().mockResolvedValue(undefined);

@@ -1,5 +1,6 @@
 import { clearClientAuthState } from "~/utils/clientAuthState";
 
+import { getApplicationRoutePath } from "~/utils/applicationRoutePath";
 import { buildLoginRedirectPath } from "~/utils/loginRedirect";
 
 type AuthMiddlewareDependencies = {
@@ -25,6 +26,7 @@ export const createAuthRouteGuard = (
     const { user, ensureValidSession } = getAuth();
     const supabase = getSupabaseClient();
     const loginRedirect = buildLoginRedirectPath(to);
+    const applicationPath = getApplicationRoutePath(to.path);
 
     const publicPages = [
       "/",
@@ -40,7 +42,8 @@ export const createAuthRouteGuard = (
 
     // Check if path starts with public patterns
     const isPublicPath =
-      publicPages.includes(to.path) || to.path.startsWith("/events/");
+      publicPages.includes(applicationPath) ||
+      applicationPath.startsWith("/events/");
 
     // Public pages should remain accessible without password-enforcement redirects.
     // This covers login, password setup, and legacy compatibility screens.

@@ -206,6 +206,9 @@ Implementation notes (2026-08-09):
 - `pages/booking/[id].vue` is now a thin redirect: it looks up the booking's event id via `/api/bookings/[id]` and forwards to `/events/[eventId]`, so old links/bookmarks still resolve.
 - Not yet done (deferred to Phase 2): `MyEventsCompactPanel.vue` and the dashboard timeline modal still have their own cancel/waitlist logic and their own "Buchung verwalten" links to `/booking/[id]` — those still work (redirect chain), but haven't been repointed at the canonical page directly yet.
 
+Implementation note (2026-09-03):
+- Locale-prefixed public routes such as `/en` and `/en/events/...` remain accessible without authentication; protected routes still redirect to login. Mobile verification at 390 px confirmed the localized landing calendar remains visible, while `/en/events/register/...` requires login.
+
 ### Design system hardening (done inside Phase 1, before GATE 1 sign-off)
 
 While building the canonical workspace, the page revealed that it (and much of the surrounding UI) had drifted from the app's actual shared design system — hardcoded Discord-dark colors, inconsistent button padding/sizes, and hardcoded English strings mixed into an otherwise German UI ("Denglisch"). Rather than let GATE 1 pass on a visually broken page, this was fixed as part of Phase 1:
