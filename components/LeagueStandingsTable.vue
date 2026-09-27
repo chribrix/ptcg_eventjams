@@ -2,18 +2,19 @@
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>Rang</th><th>Spieler</th><th>Punkte</th><th>Top 2</th><th>Punkte-Events</th><th>Serie</th></tr>
+        <tr><th>Rang</th><th>Spieler</th><th>Division</th><th>Punkte</th><th>Top 2</th><th>Punkte-Events</th><th>Serie</th></tr>
       </thead>
       <tbody>
         <tr v-for="standing in standings" :key="standing.playerId" :class="{ viewer: standing.playerId === viewerPlayerId }">
           <td><strong>#{{ standing.rank }}</strong></td>
           <td>{{ standing.displayName }}</td>
+          <td>{{ divisionLabel(standing.division) }}</td>
           <td><strong>{{ standing.points }}</strong></td>
           <td>{{ standing.topTwoFinishes }}</td>
           <td>{{ standing.scoringParticipations }}</td>
           <td>{{ standing.longestStreak }}</td>
         </tr>
-        <tr v-if="standings.length === 0"><td colspan="6" class="empty">Noch keine punktenden Teilnahmen.</td></tr>
+        <tr v-if="standings.length === 0"><td colspan="7" class="empty">Noch keine punktenden Teilnahmen.</td></tr>
       </tbody>
     </table>
   </div>
@@ -25,6 +26,7 @@ defineProps<{
     rank: number;
     playerId: string;
     displayName: string;
+    division: string | null;
     points: number;
     topTwoFinishes: number;
     scoringParticipations: number;
@@ -32,6 +34,8 @@ defineProps<{
   }>;
   viewerPlayerId?: string;
 }>();
+
+const divisionLabel = (division: string | null) => ({ junior: "Junior", senior: "Senior", master: "Master" }[division || ""] || "–");
 </script>
 
 <style scoped>

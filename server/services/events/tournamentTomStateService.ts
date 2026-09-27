@@ -1,6 +1,7 @@
 import prisma from "~/lib/prisma";
 import {
   applyTomResultUpdates,
+  buildTomStandings,
   parseTomTdf,
   tomOutcomeLabel,
   type TomResultUpdate,
@@ -222,208 +223,6 @@ const finalizePendingReports = (input: {
   };
 };
 
-type DivisionStandingEntry = {
-  userId: string;
-  displayName: string;
-  matchPoints: number;
-  matchesPlayed: number;
-  wins: number;
-  losses: number;
-  ties: number;
-  opponentWinPercent: number;
-  opponentOpponentWinPercent: number;
-};
-
-const toPercent = (value: number): number => {
-  return Math.round(value * 10000) / 100;
-};
-
-const buildDivisionStandings = (input: {
-  playerUserIds: string[];
-  matches: Array<{
-    outcome: number;
-    player1UserId?: string;
-    player2UserId?: string;
-  }>;
-  playerById: Map<string, { displayName: string; droppedRound?: number }>;
-}): DivisionStandingEntry[] => {
-  const stats = new Map<
-    string,
-    {
-      matchPoints: number;
-      matchesPlayed: number;
-      wins: number;
-      losses: number;
-      ties: number;
-      winsForWinPct: number;
-      tiesForWinPct: number;
-      roundsForWinPct: number;
-      opponents: Set<string>;
-    }
-  >();
-
-  for (const userId of input.playerUserIds) {
-    stats.set(userId, {
-      matchPoints: 0,
-      matchesPlayed: 0,
-      wins: 0,
-      losses: 0,
-      ties: 0,
-      winsForWinPct: 0,
-      tiesForWinPct: 0,
-      roundsForWinPct: 0,
-      opponents: new Set<string>(),
-    });
-  }
-
-  const ensure = (userId?: string) => {
-    if (!userId) return null;
-    const existing = stats.get(userId);
-    if (existing) return existing;
-    const next = {
-      matchPoints: 0,
-      matchesPlayed: 0,
-      wins: 0,
-      losses: 0,
-      ties: 0,
-      winsForWinPct: 0,
-      tiesForWinPct: 0,
-      roundsForWinPct: 0,
-      opponents: new Set<string>(),
-    };
-    stats.set(userId, next);
-    return next;
-  };
-
-  for (const match of input.matches) {
-    const p1 = ensure(match.player1UserId);
-    const p2 = ensure(match.player2UserId);
-    if (!p1 && !p2) continue;
-
-    if (match.player1UserId && match.player2UserId) {
-      p1?.opponents.add(match.player2UserId);
-      p2?.opponents.add(match.player1UserId);
-    }
-
-    if (match.outcome === 0) continue;
-
-    if (match.outcome === 5) {
-      if (p1) {
-        p1.matchesPlayed += 1;
-        p1.matchPoints += 3;
-        p1.wins += 1;
-      } else if (p2) {
-        p2.matchesPlayed += 1;
-        p2.matchPoints += 3;
-        p2.wins += 1;
-      }
-      continue;
-    }
-
-    if (match.outcome === 3) {
-      if (p1) {
-        p1.matchesPlayed += 1;
-        p1.matchPoints += 1;
-        p1.ties += 1;
-        p1.tiesForWinPct += 1;
-        p1.roundsForWinPct += 1;
-      }
-      if (p2) {
-        p2.matchesPlayed += 1;
-        p2.matchPoints += 1;
-        p2.ties += 1;
-        p2.tiesForWinPct += 1;
-        p2.roundsForWinPct += 1;
-      }
-      continue;
-    }
-
-    if (p1) {
-      p1.matchesPlayed += 1;
-      p1.roundsForWinPct += 1;
-    }
-    if (p2) {
-      p2.matchesPlayed += 1;
-      p2.roundsForWinPct += 1;
-    }
-
-    if (match.outcome === 1) {
-      if (p1) {
-        p1.matchPoints += 3;
-        p1.wins += 1;
-        p1.winsForWinPct += 1;
-      }
-      if (p2) p2.losses += 1;
-      continue;
-    }
-
-    if (match.outcome === 2) {
-      if (p2) {
-        p2.matchPoints += 3;
-        p2.wins += 1;
-        p2.winsForWinPct += 1;
-      }
-      if (p1) p1.losses += 1;
-    }
-  }
-
-  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
-  const winRatioByPlayer = new Map<string, number>();
-  for (const [userId, stat] of stats) {
-    const baseRatio =
-      stat.roundsForWinPct > 0
-        ? (stat.winsForWinPct + stat.tiesForWinPct / 2) / stat.roundsForWinPct
-        : 0;
-    const playerMeta = input.playerById.get(userId);
-    const dropped = typeof playerMeta?.droppedRound === "number";
-    const ratio = clamp(baseRatio, 0.25, dropped ? 0.75 : 1);
-    winRatioByPlayer.set(userId, ratio);
-  }
-
-  const entries: DivisionStandingEntry[] = Array.from(stats.entries()).map(([userId, stat]) => {
-    const opponents = Array.from(stat.opponents);
-    const omwRaw =
-      opponents.length > 0
-        ? opponents.reduce((sum, opponentUserId) => sum + (winRatioByPlayer.get(opponentUserId) || 0), 0) /
-          opponents.length
-        : 0;
-
-    const oowRaw = opponents.length > 0
-      ? opponents.reduce((sum, opponentUserId) => {
-          const oppStat = stats.get(opponentUserId);
-          if (!oppStat) return sum;
-          const oppOpponents = Array.from(oppStat.opponents).filter((id) => id !== userId);
-          if (oppOpponents.length === 0) return sum;
-          const oppOppAvg =
-            oppOpponents.reduce((inner, oppOppId) => inner + (winRatioByPlayer.get(oppOppId) || 0), 0) /
-            oppOpponents.length;
-          return sum + oppOppAvg;
-        }, 0) / opponents.length
-      : 0;
-
-    return {
-      userId,
-      displayName: input.playerById.get(userId)?.displayName || userId,
-      matchPoints: stat.matchPoints,
-      matchesPlayed: stat.matchesPlayed,
-      wins: stat.wins,
-      losses: stat.losses,
-      ties: stat.ties,
-      opponentWinPercent: toPercent(omwRaw),
-      opponentOpponentWinPercent: toPercent(oowRaw),
-    };
-  });
-
-  entries.sort((a, b) => {
-    if (b.matchPoints !== a.matchPoints) return b.matchPoints - a.matchPoints;
-    if (b.opponentWinPercent !== a.opponentWinPercent) return b.opponentWinPercent - a.opponentWinPercent;
-    if (b.opponentOpponentWinPercent !== a.opponentOpponentWinPercent) return b.opponentOpponentWinPercent - a.opponentOpponentWinPercent;
-    return a.displayName.localeCompare(b.displayName);
-  });
-
-  return entries;
-};
-
 export const buildTomStateView = (xml: string) => {
   const snapshot = parseTomTdf(xml);
   const playerById = new Map(
@@ -473,7 +272,7 @@ export const buildTomStateView = (xml: string) => {
     return {
       category: division.category,
       stage: division.stage,
-      standings: buildDivisionStandings({
+      standings: buildTomStandings({
         playerUserIds: division.playerUserIds,
         matches: division.rounds.flatMap((round) => round.matches),
         playerById,

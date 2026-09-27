@@ -18,7 +18,7 @@ PostgreSQL ist hier die bessere Zielarchitektur: Berechtigungsprüfung und Rangl
 - [x] Ligaspieler, unveränderbare externe Spieler-IDs und Aliase.
 - [x] Saisonabhängige Punktregeln.
 - [x] Liga-Events, Roh-TDF/XML und Duplikatschutz über normalisierten SHA-256-Hash.
-- [x] Teilnahmen mit Platzierung, Punkten, Status und Korrekturbegründung.
+- [x] Teilnahmen mit historischer Division, Platzierung, Punkten, Status und Korrekturbegründung.
 - [x] Änderungsprotokoll für Importe und Adminmutationen.
 - [x] PostgreSQL-Migration `20260829120000_add_league_manager` angewandt.
 - [x] Saison 26/27 aus `saison-2027-27.sqlite3` importiert und aktiviert.
@@ -26,12 +26,14 @@ PostgreSQL ist hier die bessere Zielarchitektur: Berechtigungsprüfung und Rangl
 
 Der wiederholbare Import steht über `npm run migrate:league-sqlite:dry-run` und `npm run migrate:league-sqlite` bereit. Eine vorhandene Saison wird nur mit dem expliziten Argument `--replace` ersetzt.
 
+
 ## Admin-Funktionalität
 
 - [x] Saison anlegen, auswählen, aktivieren und löschen.
 - [x] TDF/XML bis 5 MB analysieren.
 - [x] Mehrere TDF/XML-Dateien als Batch analysieren, einzeln prüfen, überspringen oder importieren.
-- [x] Hauptwertung Kategorie 2, DNF und Nebenwertungen auswerten.
+- [x] Altersklassenübergreifende Gesamtwertung aus Swiss-Runden berechnen; DNF separat behandeln.
+- [x] Division pro Turnierteilnahme aus dem TDF speichern; spätere Altersklassenwechsel verändern frühere Einträge nicht.
 - [x] Importwarnungen vor Übernahme bestätigen.
 - [x] Namen, Datum, Teilnehmer, Spieler, Status, Platzierung und Punkte vor Import korrigieren.
 - [x] Doppelte Turnierdateien abweisen.
@@ -40,6 +42,7 @@ Der wiederholbare Import steht über `npm run migrate:league-sqlite:dry-run` und
 - [x] Ligaspieler umbenennen, aktiv/inaktiv setzen, Aliase anlegen und zusammenführen.
 - [x] Überschneidungsfreie Punktregeln verwalten.
 - [x] Rangliste, Punktematrix, Preispool und Änderungsprotokoll anzeigen.
+- [x] Rangliste und Punktematrix optional nach Junior, Senior oder Master filtern; Standard bleibt divisionsübergreifend.
 - [x] CSV-Export für Rangliste, Events und Matrix.
 - [x] Saisonbezogenes JSON-Backup inklusive Roh-TDF und Änderungsprotokoll herunterladen.
 
@@ -64,6 +67,7 @@ Admin-Einstieg: `/admin/league`
 - [x] Danach längste Serie aufeinanderfolgender Events mit Punkten.
 - [x] Bei Gleichheit aller vier Werte gleicher Rang.
 - [x] Fehlende Eventteilnahme unterbricht die Serie.
+- [x] Divisionsfilter zählt nur Punkte aus Teilnahmen der gewählten historischen Division.
 
 ## Validierung
 

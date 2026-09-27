@@ -63,7 +63,12 @@
       <section v-if="tab === 'standings'" class="panel">
         <div class="section-heading">
           <h2>Rangliste</h2>
-          <a class="button secondary" :href="exportUrl('leaderboard')"><ArrowDownTrayIcon class="icon" /> CSV</a>
+          <div class="button-row">
+            <div class="division-filter" aria-label="Division filtern">
+              <button v-for="option in divisionOptions" :key="option.value" type="button" :class="{ active: selectedDivision === option.value }" @click="selectDivision(option.value)">{{ option.label }}</button>
+            </div>
+            <a class="button secondary" :href="exportUrl('leaderboard')"><ArrowDownTrayIcon class="icon" /> CSV</a>
+          </div>
         </div>
         <LeagueStandingsTable :standings="view.standings" />
         <div class="section-heading matrix-heading">
@@ -108,12 +113,13 @@
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Übernehmen</th><th>Spieler-ID</th><th>Name</th><th>Status</th><th>Platz</th><th>Punkte</th></tr></thead>
+              <thead><tr><th>Übernehmen</th><th>Spieler-ID</th><th>Name</th><th>Division</th><th>Status</th><th>Platz</th><th>Punkte</th></tr></thead>
               <tbody>
                 <tr v-for="player in importReview.players" :key="player.pokemonPlayerId">
                   <td><input v-model="player.include" type="checkbox" /></td>
                   <td class="mono">{{ player.pokemonPlayerId }}</td>
                   <td><input v-model="player.displayName" class="control compact" /></td>
+                  <td><select v-model="player.division" class="control compact" required><option disabled :value="null">Division wählen</option><option value="junior">Junior</option><option value="senior">Senior</option><option value="master">Master</option></select></td>
                   <td><select v-model="player.status" class="control compact"><option value="confirmed">Bestätigt</option><option value="dnf">DNF</option><option value="unranked">Ohne Wertung</option></select></td>
                   <td><input v-model.number="player.placement" class="control number" type="number" min="1" /></td>
                   <td><input v-model.number="player.points" class="control number" type="number" min="0" placeholder="auto" /></td>
@@ -148,6 +154,7 @@
           <template v-if="eventForm.id">
             <div class="section-heading sub"><h3>Teilnahme erfassen oder korrigieren</h3></div>
             <select v-model="participationForm.leaguePlayerId" class="control"><option value="">Spieler wählen</option><option v-for="player in view.players" :key="player.id" :value="player.id">{{ player.displayName }}</option></select>
+            <select v-model="participationForm.division" class="control"><option value="">Division wählen</option><option value="junior">Junior</option><option value="senior">Senior</option><option value="master">Master</option></select>
             <div class="form-grid two"><label>Platz<input v-model.number="participationForm.placement" class="control" type="number" min="1" /></label><label>Punkte<input v-model.number="participationForm.points" class="control" type="number" min="0" placeholder="auto" /></label></div>
             <select v-model="participationForm.status" class="control"><option value="confirmed">Bestätigt</option><option value="dnf">DNF</option><option value="disqualified">Disqualifiziert</option></select>
             <input v-model="participationForm.correctionReason" class="control" placeholder="Begründung bei Punkteabweichung" />
@@ -220,6 +227,13 @@ const loading = ref(false);
 const saving = ref(false);
 const showSeasonForm = ref(false);
 const tab = ref("overview");
+const selectedDivision = ref("all");
+const divisionOptions = [
+  { value: "all", label: "Gesamt" },
+  { value: "junior", label: "Junior" },
+  { value: "senior", label: "Senior" },
+  { value: "master", label: "Master" },
+];
 const message = ref("");
 const messageType = ref("success");
 const seasonForm = ref({ name: "", slug: "", startsOn: "", endsOn: "", isActive: false });
@@ -233,7 +247,7 @@ const activeImportIndex = ref(-1);
 const selectedEventId = ref("");
 const emptyEvent = () => ({ id: "", name: "", eventDate: "", participantCount: 0, prizePoolContributionCents: 100, notes: "" });
 const eventForm = ref(emptyEvent());
-const participationForm = ref<any>({ leaguePlayerId: "", placement: null, points: undefined, status: "confirmed", correctionReason: "" });
+const participationForm = ref<any>({ leaguePlayerId: "", division: "", placement: null, points: undefined, status: "confirmed", correctionReason: "" });
 const mergeForm = ref({ sourceId: "", targetId: "", reason: "" });
 const participationCount = computed(() => view.value?.events.reduce((sum: number, event: any) => sum + event.participations.length, 0) || 0);
 
@@ -243,7 +257,7 @@ const date = (value: string) => new Intl.DateTimeFormat("de-AT").format(new Date
 const shortDate = (value: string) => new Intl.DateTimeFormat("de-AT", { day: "2-digit", month: "2-digit" }).format(new Date(value));
 const dateTime = (value: string) => new Intl.DateTimeFormat("de-AT", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 const money = (cents: number) => new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR" }).format(cents / 100);
-const exportUrl = (type: string) => `/api/admin/league/seasons/${selectedSeasonId.value}/export/${type}`;
+const exportUrl = (type: string) => `/api/admin/league/seasons/${selectedSeasonId.value}/export/${type}${selectedDivision.value === "all" ? "" : `?division=${selectedDivision.value}`}`;
 
 async function loadSeasons() {
   seasons.value = await $fetch<any[]>("/api/admin/league/seasons");
@@ -254,7 +268,9 @@ async function loadSeason() {
   if (!selectedSeasonId.value) { view.value = null; return; }
   loading.value = true;
   try {
-    view.value = await $fetch(`/api/admin/league/seasons/${selectedSeasonId.value}`);
+    view.value = await $fetch(`/api/admin/league/seasons/${selectedSeasonId.value}`, {
+      query: selectedDivision.value === "all" ? undefined : { division: selectedDivision.value },
+    });
     editableRules.value = view.value.pointRules.map((rule: any) => ({ positionFrom: rule.positionFrom, positionTo: rule.positionTo, points: rule.points }));
   } catch (error) { notify(errorMessage(error), "error"); } finally { loading.value = false; }
 }
@@ -332,6 +348,10 @@ async function saveRules() {
   try { await action({ action: "replace-point-rules", rules: editableRules.value.map((rule) => ({ ...rule, positionTo: rule.positionTo || null })) }); await loadSeason(); notify("Punktetabelle gespeichert."); }
   catch (error) { notify(errorMessage(error), "error"); }
 }
+async function selectDivision(division: string) {
+  selectedDivision.value = division;
+  await loadSeason();
+}
 async function savePlayer(player: any) {
   try { await action({ action: "update-player", playerId: player.id, player: { displayName: player.displayName, status: player.status } }); await loadSeason(); notify("Spieler gespeichert."); }
   catch (error) { notify(errorMessage(error), "error"); }
@@ -372,6 +392,8 @@ onMounted(loadSeasons);
 .tabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--app-border); gap: .25rem; }
 .tabs button { border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--app-text-secondary); padding: .8rem 1rem; white-space: nowrap; cursor: pointer; }
 .tabs button.active { border-color: var(--app-accent); color: var(--app-text-primary); font-weight: 700; }
+.division-filter { display: inline-flex; border: 1px solid var(--app-border); border-radius: 6px; overflow: hidden; }
+.division-filter button { border: 0; border-right: 1px solid var(--app-border); padding: .5rem .7rem; background: var(--app-surface-1); color: var(--app-text-secondary); cursor: pointer; }.division-filter button:last-child { border-right: 0; }.division-filter button.active { background: var(--app-accent); color: var(--app-button-blue-text); }
 .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
 .metrics div { border-left: 3px solid var(--app-accent); background: var(--app-surface-1); padding: 1rem; }
 .metrics span { color: var(--app-text-muted); display: block; font-size: .8rem; }.metrics strong { color: var(--app-text-primary); font-size: 1.5rem; }

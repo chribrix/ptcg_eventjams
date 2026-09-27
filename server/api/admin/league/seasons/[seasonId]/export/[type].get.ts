@@ -1,5 +1,5 @@
 import { defineAdminRoute } from "~/server/services/admin/adminRoute";
-import { getLeagueSeasonView } from "~/server/services/league/leagueService";
+import { getLeagueSeasonView, parseLeagueDivision } from "~/server/services/league/leagueService";
 
 const csvCell = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
 const csv = (rows: unknown[][]) => rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
@@ -10,7 +10,8 @@ export default defineAdminRoute(async ({ event }) => {
   if (!seasonId || !["leaderboard", "events", "matrix", "backup"].includes(type || "")) {
     throw createError({ statusCode: 404, statusMessage: "Export nicht gefunden" });
   }
-  const view = await getLeagueSeasonView(seasonId);
+  const division = parseLeagueDivision(getQuery(event).division);
+  const view = await getLeagueSeasonView(seasonId, division);
   if (type === "backup") {
     setHeader(event, "Content-Type", "application/json; charset=utf-8");
     setHeader(event, "Content-Disposition", `attachment; filename="league-backup-${view.slug}.json"`);
@@ -34,6 +35,6 @@ export default defineAdminRoute(async ({ event }) => {
     ];
   }
   setHeader(event, "Content-Type", "text/csv; charset=utf-8");
-  setHeader(event, "Content-Disposition", `attachment; filename="${type}-${view.slug}.csv"`);
+  setHeader(event, "Content-Disposition", `attachment; filename="${type}-${view.slug}${division ? `-${division}` : ""}.csv"`);
   return `\uFEFF${csv(rows)}`;
 });

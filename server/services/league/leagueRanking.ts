@@ -1,6 +1,7 @@
 export type LeagueRankingEvent = { id: string; eventDate: Date | string };
 export type LeagueRankingParticipation = {
   eventId: string;
+  division: string;
   placement: number | null;
   points: number;
 };
@@ -21,11 +22,13 @@ export type LeagueStanding = {
   scoringParticipations: number;
   totalParticipations: number;
   longestStreak: number;
+  division: string | null;
 };
 
 export const calculateLeagueStandings = (
   events: LeagueRankingEvent[],
   players: LeagueRankingPlayer[],
+  division?: string,
 ): LeagueStanding[] => {
   const eventIds = [...events]
     .sort((left, right) => {
@@ -36,7 +39,10 @@ export const calculateLeagueStandings = (
 
   const standings = players
     .map((player) => {
-      const pointsByEvent = new Map(player.participations.map((entry) => [entry.eventId, entry.points]));
+      const participations = division
+        ? player.participations.filter((entry) => entry.division === division)
+        : player.participations;
+      const pointsByEvent = new Map(participations.map((entry) => [entry.eventId, entry.points]));
       let currentStreak = 0;
       let longestStreak = 0;
       for (const eventId of eventIds) {
@@ -52,11 +58,13 @@ export const calculateLeagueStandings = (
         playerId: player.id,
         displayName: player.displayName,
         pokemonPlayerId: player.canonicalId,
-        points: player.participations.reduce((sum, entry) => sum + entry.points, 0),
-        topTwoFinishes: player.participations.filter((entry) => entry.placement === 1 || entry.placement === 2).length,
-        scoringParticipations: player.participations.filter((entry) => entry.points > 0).length,
-        totalParticipations: player.participations.length,
+        points: participations.reduce((sum, entry) => sum + entry.points, 0),
+        topTwoFinishes: participations.filter((entry) => entry.placement === 1 || entry.placement === 2).length,
+        scoringParticipations: participations.filter((entry) => entry.points > 0).length,
+        totalParticipations: participations.length,
         longestStreak,
+        division: division || [...participations]
+          .sort((left, right) => eventIds.indexOf(right.eventId) - eventIds.indexOf(left.eventId))[0]?.division || null,
       };
     })
     .filter((player) => player.points > 0)

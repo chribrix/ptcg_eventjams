@@ -1,8 +1,12 @@
 import { createHash } from "node:crypto";
+import { buildTomStandings, parseTomTdf } from "../events/tomTdfService";
+
+export type LeagueDivision = "junior" | "senior" | "master";
 
 export type LeagueImportPlayer = {
   pokemonPlayerId: string;
   displayName: string;
+  division: LeagueDivision | null;
   placement: number | null;
   status: "confirmed" | "dnf" | "unranked";
 };
@@ -63,6 +67,26 @@ const playersInPod = (xml: string, predicate: (attributes: Record<string, string
   return result;
 };
 
+const DIVISION_BY_CATEGORY: Record<string, LeagueDivision> = {
+  "0": "junior",
+  "1": "senior",
+  "2": "master",
+};
+
+const divisionsByPlayer = (xml: string) => {
+  const result = new Map<string, LeagueDivision>();
+  for (const podMatch of xml.matchAll(/<pod\b([^>]*)>([\s\S]*?)<\/pod>/gi)) {
+    const podAttributes = parseAttributes(podMatch[1]);
+    const division = DIVISION_BY_CATEGORY[podAttributes.category];
+    if (!division || !["finished", "dnf"].includes(podAttributes.type)) continue;
+    for (const playerMatch of podMatch[2].matchAll(/<player\b([^>]*)\/?\s*>/gi)) {
+      const playerId = parseAttributes(playerMatch[1]).id?.trim();
+      if (playerId) result.set(playerId, division);
+    }
+  }
+  return result;
+};
+
 export const parseLeagueTdf = (xml: string): LeagueTournamentImport => {
   if (Buffer.byteLength(xml, "utf8") > 5 * 1024 * 1024) {
     throw new Error("Die XML-Datei ist größer als 5 MB.");
@@ -95,28 +119,55 @@ export const parseLeagueTdf = (xml: string): LeagueTournamentImport => {
     throw new Error("In der XML-Datei wurden keine Spieler mit ID und Name gefunden.");
   }
 
-  const placements = playersInPod(
-    xml,
-    (attributes) => attributes.category === "2" && attributes.type === "finished",
-  );
-  if (placements.size === 0) {
-    throw new Error("Die Turnierdatei enthält keine abgeschlossene Hauptwertung (Kategorie 2).");
-  }
   const dnf = playersInPod(xml, (attributes) => attributes.type === "dnf");
-  const sideCategory = playersInPod(
+  const allFinished = playersInPod(
     xml,
-    (attributes) => attributes.type === "finished" && attributes.category !== "2",
+    (attributes) => attributes.type === "finished",
   );
+  let placements = allFinished;
+  const playerDivisions = divisionsByPlayer(xml);
+  const finishedCategories = new Set<string>();
+  for (const podMatch of xml.matchAll(/<pod\b([^>]*)>[\s\S]*?<\/pod>/gi)) {
+    const attributes = parseAttributes(podMatch[1]);
+    if (attributes.type === "finished" && attributes.category !== undefined) {
+      finishedCategories.add(attributes.category);
+    }
+  }
+  if (finishedCategories.size > 1) {
+    const snapshot = parseTomTdf(xml);
+    const playerById = new Map(
+      snapshot.players.map((player) => [
+        player.userId,
+        {
+          displayName: `${player.firstName} ${player.lastName}`.trim(),
+          droppedRound: player.droppedRound,
+        },
+      ]),
+    );
+    const rankedPlayerIds = new Set(allFinished.keys());
+    const overallStandings = buildTomStandings({
+      playerUserIds: [...rankedPlayerIds],
+      matches: snapshot.rounds.flatMap((round) => round.matches),
+      playerById,
+    }).filter((standing) => rankedPlayerIds.has(standing.userId));
+    if (!overallStandings.some((standing) => standing.matchesPlayed > 0)) {
+      throw new Error(
+        "Die Altersklassen können ohne abgeschlossene Runden nicht gemeinsam gewertet werden.",
+      );
+    }
+    placements = new Map(
+      overallStandings.map((standing, index) => [standing.userId, index + 1]),
+    );
+  }
+  if (placements.size === 0) {
+    throw new Error("Die Turnierdatei enthält keine abgeschlossene Wertung.");
+  }
   const warnings: string[] = [];
   if (dnf.size > 0) {
     warnings.push(`${dnf.size} Spieler sind als DNF gemeldet; sie werden mit 0 Punkten gespeichert.`);
   }
-  const sideOnly = [...sideCategory.keys()].filter((id) => !placements.has(id) && !dnf.has(id));
-  if (sideOnly.length > 0) {
-    warnings.push(`${sideOnly.length} Spieler erscheinen nur in einer Nebenwertung und erhalten keine Punkte.`);
-  }
   const unrankedStarters = [...roster.entries()].filter(
-    ([id, player]) => player.starter && !placements.has(id) && !dnf.has(id) && !sideCategory.has(id),
+    ([id, player]) => player.starter && !placements.has(id) && !dnf.has(id) && !allFinished.has(id),
   );
   if (unrankedStarters.length > 0) {
     warnings.push(`${unrankedStarters.length} gestartete Spieler haben keine erkennbare Endplatzierung.`);
@@ -129,6 +180,7 @@ export const parseLeagueTdf = (xml: string): LeagueTournamentImport => {
   const players: LeagueImportPlayer[] = [...roster.entries()].map(([pokemonPlayerId, player]) => ({
     pokemonPlayerId,
     displayName: player.displayName,
+    division: playerDivisions.get(pokemonPlayerId) ?? null,
     placement: placements.get(pokemonPlayerId) ?? null,
     status: placements.has(pokemonPlayerId)
       ? "confirmed"

@@ -14,6 +14,7 @@
     "migrate:supabase-ids:once": "tsx scripts/migrate-supabase-ids.ts --once",
     "migrate:league-sqlite": "tsx scripts/import-league-sqlite.ts",
     "migrate:league-sqlite:dry-run": "tsx scripts/import-league-sqlite.ts --dry-run",
+    "repair:league-history": "tsx scripts/repair-league-history.ts",
     "check:pokedata-hidden": "ts-node --esm scripts/check-pokedata-hidden.ts",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

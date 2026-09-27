@@ -113,6 +113,7 @@ async function main() {
         id: cuid(), legacyId: participation.id,
         eventId: eventIds.get(participation.event_id)!,
         leaguePlayerId: playerIds.get(participation.player_id)!,
+        division: participation.division || "unknown",
         placement: participation.placement ?? null, points: participation.points,
         status: participation.status, correctionReason: participation.correction_reason || null,
         createdAt: asTimestamp(participation.created_at), updatedAt: asTimestamp(participation.updated_at),

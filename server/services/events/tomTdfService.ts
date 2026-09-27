@@ -54,6 +54,18 @@ export type TomResultUpdate = {
   divisionCategory?: string;
 };
 
+export type TomStandingEntry = {
+  userId: string;
+  displayName: string;
+  matchPoints: number;
+  matchesPlayed: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  opponentWinPercent: number;
+  opponentOpponentWinPercent: number;
+};
+
 const getTagValue = (content: string, tag: string): string | undefined => {
   const match = content.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, "i"));
   return match?.[1]?.trim();
@@ -81,6 +93,178 @@ const parseNumber = (value?: string): number | undefined => {
   }
   const parsed = Number.parseInt(value, 10);
   return Number.isNaN(parsed) ? undefined : parsed;
+};
+
+const toPercent = (value: number): number => {
+  return Math.round(value * 10000) / 100;
+};
+
+export const buildTomStandings = (input: {
+  playerUserIds: string[];
+  matches: Array<{
+    outcome: number;
+    player1UserId?: string;
+    player2UserId?: string;
+  }>;
+  playerById: Map<string, { displayName: string; droppedRound?: number }>;
+}): TomStandingEntry[] => {
+  const stats = new Map<
+    string,
+    {
+      matchPoints: number;
+      matchesPlayed: number;
+      wins: number;
+      losses: number;
+      ties: number;
+      winsForWinPct: number;
+      tiesForWinPct: number;
+      roundsForWinPct: number;
+      opponents: Set<string>;
+    }
+  >();
+
+  const emptyStats = () => ({
+    matchPoints: 0,
+    matchesPlayed: 0,
+    wins: 0,
+    losses: 0,
+    ties: 0,
+    winsForWinPct: 0,
+    tiesForWinPct: 0,
+    roundsForWinPct: 0,
+    opponents: new Set<string>(),
+  });
+
+  for (const userId of input.playerUserIds) {
+    stats.set(userId, emptyStats());
+  }
+
+  const ensure = (userId?: string) => {
+    if (!userId) return null;
+    const existing = stats.get(userId);
+    if (existing) return existing;
+    const next = emptyStats();
+    stats.set(userId, next);
+    return next;
+  };
+
+  for (const match of input.matches) {
+    const player1 = ensure(match.player1UserId);
+    const player2 = ensure(match.player2UserId);
+    if (!player1 && !player2) continue;
+
+    if (match.player1UserId && match.player2UserId) {
+      player1?.opponents.add(match.player2UserId);
+      player2?.opponents.add(match.player1UserId);
+    }
+
+    if (match.outcome === 0) continue;
+
+    if (match.outcome === 5) {
+      const byePlayer = player1 || player2;
+      if (byePlayer) {
+        byePlayer.matchesPlayed += 1;
+        byePlayer.matchPoints += 3;
+        byePlayer.wins += 1;
+      }
+      continue;
+    }
+
+    if (match.outcome === 3) {
+      for (const player of [player1, player2]) {
+        if (!player) continue;
+        player.matchesPlayed += 1;
+        player.matchPoints += 1;
+        player.ties += 1;
+        player.tiesForWinPct += 1;
+        player.roundsForWinPct += 1;
+      }
+      continue;
+    }
+
+    for (const player of [player1, player2]) {
+      if (!player) continue;
+      player.matchesPlayed += 1;
+      player.roundsForWinPct += 1;
+    }
+
+    if (match.outcome === 1) {
+      if (player1) {
+        player1.matchPoints += 3;
+        player1.wins += 1;
+        player1.winsForWinPct += 1;
+      }
+      if (player2) player2.losses += 1;
+      continue;
+    }
+
+    if (match.outcome === 2) {
+      if (player2) {
+        player2.matchPoints += 3;
+        player2.wins += 1;
+        player2.winsForWinPct += 1;
+      }
+      if (player1) player1.losses += 1;
+    }
+  }
+
+  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+  const winRatioByPlayer = new Map<string, number>();
+  for (const [userId, stat] of stats) {
+    const baseRatio =
+      stat.roundsForWinPct > 0
+        ? (stat.winsForWinPct + stat.tiesForWinPct / 2) / stat.roundsForWinPct
+        : 0;
+    const dropped = typeof input.playerById.get(userId)?.droppedRound === "number";
+    winRatioByPlayer.set(userId, clamp(baseRatio, 0.25, dropped ? 0.75 : 1));
+  }
+
+  const entries: TomStandingEntry[] = Array.from(stats.entries()).map(([userId, stat]) => {
+    const opponents = Array.from(stat.opponents);
+    const opponentWinRatio =
+      opponents.length > 0
+        ? opponents.reduce((sum, opponentId) => sum + (winRatioByPlayer.get(opponentId) || 0), 0) /
+          opponents.length
+        : 0;
+    const opponentOpponentWinRatio =
+      opponents.length > 0
+        ? opponents.reduce((sum, opponentId) => {
+            const opponentStats = stats.get(opponentId);
+            if (!opponentStats) return sum;
+            const otherOpponents = Array.from(opponentStats.opponents).filter((id) => id !== userId);
+            if (otherOpponents.length === 0) return sum;
+            return sum + otherOpponents.reduce(
+              (inner, otherOpponentId) => inner + (winRatioByPlayer.get(otherOpponentId) || 0),
+              0,
+            ) / otherOpponents.length;
+          }, 0) / opponents.length
+        : 0;
+
+    return {
+      userId,
+      displayName: input.playerById.get(userId)?.displayName || userId,
+      matchPoints: stat.matchPoints,
+      matchesPlayed: stat.matchesPlayed,
+      wins: stat.wins,
+      losses: stat.losses,
+      ties: stat.ties,
+      opponentWinPercent: toPercent(opponentWinRatio),
+      opponentOpponentWinPercent: toPercent(opponentOpponentWinRatio),
+    };
+  });
+
+  entries.sort((left, right) => {
+    if (right.matchPoints !== left.matchPoints) return right.matchPoints - left.matchPoints;
+    if (right.opponentWinPercent !== left.opponentWinPercent) {
+      return right.opponentWinPercent - left.opponentWinPercent;
+    }
+    if (right.opponentOpponentWinPercent !== left.opponentOpponentWinPercent) {
+      return right.opponentOpponentWinPercent - left.opponentOpponentWinPercent;
+    }
+    return left.displayName.localeCompare(right.displayName);
+  });
+
+  return entries;
 };
 
 export const parseTomTdf = (xml: string): TomTournamentSnapshot => {

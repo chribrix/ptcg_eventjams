@@ -1,6 +1,12 @@
 import prisma from "~/lib/prisma";
 import { calculateLeagueStandings } from "./leagueRanking";
-import type { LeagueTournamentImport } from "./leagueTdfService";
+import type { LeagueDivision, LeagueTournamentImport } from "./leagueTdfService";
+
+export const parseLeagueDivision = (value: unknown): LeagueDivision | undefined => {
+  if (value === undefined || value === null || value === "" || value === "all") return undefined;
+  if (["junior", "senior", "master"].includes(String(value))) return value as LeagueDivision;
+  throw createError({ statusCode: 400, statusMessage: "Ungültige Division" });
+};
 
 export const DEFAULT_LEAGUE_POINT_RULES = [
   { positionFrom: 1, positionTo: 1, points: 10 },
@@ -130,22 +136,27 @@ const seasonGraph = (seasonId: string) => prisma.leagueSeason.findUnique({
   },
 });
 
-export const getLeagueSeasonView = async (seasonId: string) => {
+export const getLeagueSeasonView = async (seasonId: string, division?: LeagueDivision) => {
   const season = await seasonGraph(seasonId);
   if (!season) throw createError({ statusCode: 404, statusMessage: "Saison nicht gefunden" });
-  const standings = calculateLeagueStandings(season.events, season.players);
-  const cells = new Map(season.events.flatMap((event) => event.participations.map((entry) => [`${entry.leaguePlayerId}:${event.id}`, entry])));
+  const standings = calculateLeagueStandings(season.events, season.players, division);
+  const relevantParticipations = season.events.flatMap((event) => event.participations)
+    .filter((entry) => !division || entry.division === division);
+  const cells = new Map(relevantParticipations.map((entry) => [`${entry.leaguePlayerId}:${entry.eventId}`, entry]));
   return {
     ...season,
+    division: division || null,
     prizePoolCents: season.events.reduce((sum, event) => sum + event.participantCount * event.prizePoolContributionCents, 0),
     standings,
-    matrix: season.players.filter((player) => player.participations.length > 0).map((player) => ({
+    matrix: season.players.map((player) => ({
       playerId: player.id,
       displayName: player.displayName,
       pokemonPlayerId: player.canonicalId,
-      totalPoints: player.participations.reduce((sum, entry) => sum + entry.points, 0),
+      totalPoints: relevantParticipations
+        .filter((entry) => entry.leaguePlayerId === player.id)
+        .reduce((sum, entry) => sum + entry.points, 0),
       points: season.events.map((event) => cells.get(`${player.id}:${event.id}`)?.points ?? null),
-    })),
+    })).filter((player) => player.points.some((points) => points !== null)),
   };
 };
 
@@ -165,6 +176,7 @@ export const replaceLeaguePointRules = async (
 type ReviewedImportPlayer = {
   pokemonPlayerId: string;
   displayName: string;
+  division: LeagueDivision | null;
   include: boolean;
   placement: number | null;
   points?: number;
@@ -204,8 +216,11 @@ export const importLeagueTournament = async (input: {
       },
     });
     let createdPlayers = 0;
-    const reviewedPlayers = input.review?.players || input.tournament.players.map((player) => ({ ...player, include: player.status !== "unranked" }));
+    const reviewedPlayers: ReviewedImportPlayer[] = input.review?.players || input.tournament.players.map((player) => ({ ...player, include: player.status !== "unranked" }));
     for (const importedPlayer of reviewedPlayers.filter((player) => player.include)) {
+      if (!importedPlayer.division) {
+        throw createError({ statusCode: 400, statusMessage: `Division für ${importedPlayer.displayName} fehlt.` });
+      }
       const identity = canonicalIdentity(importedPlayer.pokemonPlayerId, importedPlayer.displayName);
       let leaguePlayer = await transaction.leaguePlayer.findFirst({
         where: { seasonId: input.seasonId, OR: [{ canonicalId: identity.canonicalId }, { externalIds: { some: { pokemonPlayerId: { in: identity.externalIds } } } }] },
@@ -232,6 +247,7 @@ export const importLeagueTournament = async (input: {
         data: {
           eventId: event.id,
           leaguePlayerId: leaguePlayer.id,
+          division: importedPlayer.division,
           placement: importedPlayer.placement,
           points,
           status: importedPlayer.status,
@@ -307,7 +323,10 @@ export const deleteLeagueEvent = async (seasonId: string, eventId: string, reaso
   });
 };
 
-export const saveLeagueParticipation = async (seasonId: string, input: { eventId: string; leaguePlayerId: string; placement: number | null; points?: number; status: "confirmed" | "dnf" | "disqualified"; correctionReason?: string }) => {
+export const saveLeagueParticipation = async (seasonId: string, input: { eventId: string; leaguePlayerId: string; division: LeagueDivision; placement: number | null; points?: number; status: "confirmed" | "dnf" | "disqualified"; correctionReason?: string }) => {
+  if (!(["junior", "senior", "master"] as const).includes(input.division)) {
+    throw createError({ statusCode: 400, statusMessage: "Junior, Senior oder Master muss ausgewählt werden." });
+  }
   const [event, player] = await Promise.all([
     prisma.leagueEvent.findFirst({ where: { id: input.eventId, seasonId } }),
     prisma.leaguePlayer.findFirst({ where: { id: input.leaguePlayerId, seasonId } }),
@@ -319,20 +338,20 @@ export const saveLeagueParticipation = async (seasonId: string, input: { eventId
   if (points !== expected && !input.correctionReason?.trim()) throw createError({ statusCode: 400, statusMessage: "Abweichende Punkte benötigen eine Begründung." });
   const participation = await prisma.leagueParticipation.upsert({
     where: { eventId_leaguePlayerId: { eventId: input.eventId, leaguePlayerId: input.leaguePlayerId } },
-    update: { placement: input.placement, points, status: input.status, correctionReason: input.correctionReason?.trim() || null },
-    create: { eventId: input.eventId, leaguePlayerId: input.leaguePlayerId, placement: input.placement, points, status: input.status, correctionReason: input.correctionReason?.trim() || null },
+    update: { division: input.division, placement: input.placement, points, status: input.status, correctionReason: input.correctionReason?.trim() || null },
+    create: { eventId: input.eventId, leaguePlayerId: input.leaguePlayerId, division: input.division, placement: input.placement, points, status: input.status, correctionReason: input.correctionReason?.trim() || null },
   });
   await prisma.leagueChangeLog.create({ data: { seasonId, action: "updated", entityType: "participation", entityId: participation.id, reason: input.correctionReason?.trim() || "Teilnahme gespeichert" } });
   return participation;
 };
 
-export const getActiveLeagueViewForPlayer = async (pokemonPlayerId: string | null) => {
+export const getActiveLeagueViewForPlayer = async (pokemonPlayerId: string | null, division?: LeagueDivision) => {
   if (!pokemonPlayerId) throw createError({ statusCode: 403, statusMessage: "Für Liga-Standings ist eine Spieler-ID erforderlich." });
   const membership = await prisma.leaguePlayerExternalId.findFirst({
     where: { pokemonPlayerId, leaguePlayer: { status: "active", season: { isActive: true } } },
     include: { leaguePlayer: { include: { season: true } } },
   });
   if (!membership) throw createError({ statusCode: 403, statusMessage: "Du bist in der aktiven Liga-Saison nicht freigeschaltet." });
-  const view = await getLeagueSeasonView(membership.leaguePlayer.seasonId);
+  const view = await getLeagueSeasonView(membership.leaguePlayer.seasonId, division);
   return { ...view, viewerLeaguePlayerId: membership.leaguePlayerId };
 };
