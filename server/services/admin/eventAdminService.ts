@@ -5,6 +5,7 @@ import {
   projectAdminExternalOverrideEvent,
 } from "~/server/services/events/eventProjectionService";
 import { rememberVenueDirectoryEntry } from "~/server/services/admin/venueAdminService";
+import { registerWaitlistForIncreasedCapacity } from "~/server/services/events/waitlistService";
 import {
   DEFAULT_EVENT_TIME_ZONE,
   parseDateTimeLocalInput,
@@ -270,6 +271,14 @@ export async function updateAdminCustomEvent(
   const input = updateCustomEventInputSchema.parse(rawInput);
   const { timeZone = DEFAULT_EVENT_TIME_ZONE, ...eventInput } = input;
 
+  const existingEvent =
+    eventInput.maxParticipants === undefined
+      ? null
+      : await prisma.customEvent.findUnique({
+          where: { id: eventId },
+          select: { maxParticipants: true },
+        });
+
   const updatedEvent = await prisma.customEvent.update({
     where: { id: eventId },
     data: {
@@ -304,6 +313,13 @@ export async function updateAdminCustomEvent(
         : null;
 
   await rememberVenueDirectoryEntry(organizationName, updatedEvent.venue);
+
+  if (
+    existingEvent &&
+    eventInput.maxParticipants! > existingEvent.maxParticipants
+  ) {
+    await registerWaitlistForIncreasedCapacity({ customEventId: eventId });
+  }
 
   return updatedEvent;
 }

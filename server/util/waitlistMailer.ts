@@ -34,6 +34,13 @@ type WaitlistMailInput = {
   claimWindowHours: number;
 };
 
+type WaitlistRegistrationConfirmedMailInput = {
+  to: string;
+  playerName: string;
+  eventName: string;
+  eventId: string;
+};
+
 export async function sendWaitlistSpotAvailableEmail(input: WaitlistMailInput) {
   const baseUrl = getBaseUrl();
   if (!baseUrl) {
@@ -69,5 +76,43 @@ export async function sendWaitlistSpotAvailableEmail(input: WaitlistMailInput) {
   } catch (error) {
     // Mail transport issues must not block booking/waitlist state changes.
     console.error("[waitlist_mail_send_failed]", error);
+  }
+}
+
+/** Sent when an administrator expands capacity and a waitlisted player is registered directly. */
+export async function sendWaitlistRegistrationConfirmedEmail(
+  input: WaitlistRegistrationConfirmedMailInput,
+) {
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) {
+    console.warn("APP_BASE_URL is missing. Skipping waitlist confirmation email send.");
+    return;
+  }
+
+  const transporter = createTransporter();
+  if (!transporter) {
+    console.warn("SMTP config missing. Skipping waitlist confirmation email send.");
+    return;
+  }
+
+  const eventUrl = `${baseUrl}/events/${input.eventId}`;
+
+  try {
+    await transporter.sendMail({
+      from: fromAddress,
+      to: input.to,
+      subject: `Registration confirmed: ${input.eventName}`,
+      text:
+        `Hi ${input.playerName},\n\n` +
+        `the capacity for ${input.eventName} was increased and you have been moved from the waitlist to a confirmed registration. Your slot is fixed.\n\n` +
+        `Event details: ${eventUrl}\n`,
+      html:
+        `<p>Hi ${input.playerName},</p>` +
+        `<p>The capacity for <strong>${input.eventName}</strong> was increased and you have been moved from the waitlist to a confirmed registration. Your slot is fixed.</p>` +
+        `<p><a href=\"${eventUrl}\">View event details</a></p>`,
+    });
+  } catch (error) {
+    // Mail transport issues must not block booking/waitlist state changes.
+    console.error("[waitlist_registration_confirmation_mail_send_failed]", error);
   }
 }

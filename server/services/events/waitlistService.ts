@@ -1,7 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "~/lib/prisma";
 import type { AuthenticatedPlayer } from "~/server/util/authenticatedPlayer";
-import { sendWaitlistSpotAvailableEmail } from "~/server/util/waitlistMailer";
+import {
+  sendWaitlistRegistrationConfirmedEmail,
+  sendWaitlistSpotAvailableEmail,
+} from "~/server/util/waitlistMailer";
 
 const WAITLIST_CLAIM_HOURS = Number(process.env.WAITLIST_CLAIM_HOURS || "12");
 const WAITLIST_CUTOFF_HOURS_BEFORE_EVENT = 1;
@@ -590,5 +593,115 @@ export async function promoteWaitlistForEvent(
         claimWindowHours: WAITLIST_CLAIM_HOURS,
       });
     }),
+  );
+}
+
+/**
+ * Converts queued players into registrations after an administrator increases
+ * an event's capacity. Unlike a normal cancellation promotion, this grants a
+ * fixed slot immediately and therefore does not require a claim action.
+ */
+export async function registerWaitlistForIncreasedCapacity(
+  eventRef: { customEventId?: string | null; externalEventId?: string | null },
+): Promise<void> {
+  const eventId = eventRef.customEventId || eventRef.externalEventId;
+  if (!eventId) return;
+
+  const recipients: Array<{
+    to: string;
+    playerName: string;
+    eventName: string;
+    eventId: string;
+  }> = [];
+
+  await prisma.$transaction(async (tx) => {
+    const waitlist = getWaitlistDelegate(tx);
+    if (!waitlist) return;
+
+    const context = await resolveEventContextById(tx, eventId);
+    if (context.maxParticipants <= 0) return;
+
+    await lockEventRow(tx, context);
+
+    const now = new Date();
+    if (
+      !context.isSanctioned ||
+      now.getTime() >= context.eventDate.getTime() ||
+      now.getTime() >= context.claimCutoffAt.getTime()
+    ) {
+      return;
+    }
+
+    const activeTickets = await countActiveTicketsForEvent(tx, context);
+    const availableSlots = Math.max(0, context.maxParticipants - activeTickets);
+    if (availableSlots === 0) return;
+
+    const candidates = await waitlist.findMany({
+      where: {
+        eventKey: context.eventKey,
+        status: { in: ["waiting", "pending_claim"] },
+      },
+      include: { player: { select: { email: true, name: true, playerId: true } } },
+      orderBy: [{ priority: "desc" }, { queuePositionAt: "asc" }],
+      take: availableSlots,
+    });
+
+    for (const candidate of candidates) {
+      const registration = context.isExternalEvent
+        ? await tx.eventRegistration.upsert({
+            where: {
+              externalEventId_playerId: {
+                externalEventId: context.eventId,
+                playerId: candidate.playerId,
+              },
+            },
+            update: {},
+            create: { externalEventId: context.eventId, playerId: candidate.playerId },
+          })
+        : await tx.eventRegistration.upsert({
+            where: {
+              customEventId_playerId: {
+                customEventId: context.eventId,
+                playerId: candidate.playerId,
+              },
+            },
+            update: {},
+            create: { customEventId: context.eventId, playerId: candidate.playerId },
+          });
+
+      await tx.registrationTicket.create({
+        data: {
+          registrationId: registration.id,
+          participantName: candidate.player.name,
+          participantPlayerId: candidate.player.playerId || null,
+          status: context.requiresDecklist ? "reserved" : "registered",
+          isAnonymous: false,
+          bringingDecklistOnsite: false,
+        },
+      });
+
+      await waitlist.update({
+        where: { id: candidate.id },
+        data: {
+          status: "confirmed",
+          confirmedAt: now,
+          notifiedAt: now,
+          claimExpiresAt: null,
+        },
+      });
+
+      if (candidate.player.email) {
+        recipients.push({
+          to: candidate.player.email,
+          playerName: candidate.player.name,
+          eventName: context.eventName,
+          eventId: context.eventId,
+        });
+      }
+    }
+  });
+
+  await Promise.all(
+    recipients.map((recipient) => sendWaitlistRegistrationConfirmedEmail(recipient)),
   );
 }

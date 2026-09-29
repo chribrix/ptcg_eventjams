@@ -1,5 +1,6 @@
 import prisma from "~/lib/prisma";
 import { z } from "zod";
+import { registerWaitlistForIncreasedCapacity } from "~/server/services/events/waitlistService";
 
 const overrideWriteSchema = z.object({
   eventName: z.string().min(1, "Event name is required"),
@@ -111,6 +112,13 @@ export async function updateExternalEventOverride(
     .partial()
     .parse(rawInput) as Partial<OverrideWriteInput>;
   const updateData: Record<string, unknown> = {};
+  const existingOverride =
+    input.maxParticipants === undefined
+      ? null
+      : await prisma.externalEventOverride.findUnique({
+          where: { id: overrideId },
+          select: { maxParticipants: true },
+        });
 
   if (input.eventName !== undefined) updateData.eventName = input.eventName;
   if (input.eventDate !== undefined)
@@ -153,6 +161,16 @@ export async function updateExternalEventOverride(
     where: { id: overrideId },
     data: updateData,
   });
+
+  if (
+    existingOverride &&
+    input.maxParticipants !== null &&
+    input.maxParticipants !== undefined &&
+    input.maxParticipants > (existingOverride.maxParticipants || 0) &&
+    override.handleRegistrationLocally
+  ) {
+    await registerWaitlistForIncreasedCapacity({ externalEventId: overrideId });
+  }
 
   await invalidateDetailedEventsCache();
 
