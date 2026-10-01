@@ -1,6 +1,7 @@
 import prisma from "~/lib/prisma";
 import { z } from "zod";
 import {
+  countRegistrationTickets,
   projectAdminCustomEvent,
   projectAdminExternalOverrideEvent,
 } from "~/server/services/events/eventProjectionService";
@@ -168,6 +169,7 @@ export async function getAdminEventDetail(eventId: string) {
     success: true,
     event: {
       ...eventData,
+      registrationCount: countRegistrationTickets(customEvent.registrations),
       eventDate: eventData.eventDate.toISOString(),
       registrationDeadline:
         eventData.registrationDeadline?.toISOString() || null,
@@ -192,8 +194,12 @@ export async function listAdminCustomEvents(input: {
         creator: {
           select: { id: true, name: true, email: true },
         },
-        _count: {
-          select: { registrations: true },
+        registrations: {
+          select: {
+            _count: {
+              select: { tickets: { where: { status: { not: "cancelled" } } } },
+            },
+          },
         },
       },
       orderBy: { eventDate: "asc" },
@@ -202,7 +208,7 @@ export async function listAdminCustomEvents(input: {
   ]);
 
   return {
-    events,
+    events: events.map(projectAdminCustomEvent),
     pagination: {
       page: input.page,
       limit: input.limit,

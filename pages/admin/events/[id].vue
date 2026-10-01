@@ -28,7 +28,7 @@
           <div class="info-item">
             <span class="info-label">Participants:</span>
             <span class="info-value">
-              {{ registrations.length }} / {{ event.maxParticipants }}
+              {{ event.registrationCount ?? activeTicketCount }} / {{ event.maxParticipants }}
             </span>
           </div>
           <div class="info-item">
@@ -77,7 +77,7 @@
       <div class="admin-card">
         <div class="section-header mb-4">
           <h2 class="section-title">
-            Registered Players ({{ registrations.length }})
+            Registered Players ({{ event.registrationCount ?? activeTicketCount }})
           </h2>
           <button
             @click="exportRegistrations"
@@ -239,6 +239,7 @@ interface CustomEvent {
   requiresDecklist: boolean;
   tagType: string;
   tags: any;
+  registrationCount?: number;
 }
 
 const route = useRoute();
@@ -246,6 +247,16 @@ const eventId = route.params.id as string;
 
 const event = ref<CustomEvent | null>(null);
 const registrations = ref<Registration[]>([]);
+const activeTicketCount = computed(() =>
+  registrations.value.reduce(
+    (count, registration) =>
+      count +
+      (registration.tickets || []).filter(
+        (ticket) => ticket.status !== "cancelled",
+      ).length,
+    0,
+  ),
+);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const showDecklistModal = ref(false);

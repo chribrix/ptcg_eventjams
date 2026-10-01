@@ -17,6 +17,20 @@ describe("eventProjectionService", () => {
     ).toBe(5);
   });
 
+  it("excludes cancelled tickets when a view supplies ticket rows directly", () => {
+    expect(
+      countRegistrationTickets([
+        {
+          tickets: [
+            { status: "registered" },
+            { status: "attended" },
+            { status: "cancelled" },
+          ],
+        },
+      ]),
+    ).toBe(2);
+  });
+
   it("applies matching external overrides, rewrites local registration links, and filters hidden events", () => {
     const events = [
       {

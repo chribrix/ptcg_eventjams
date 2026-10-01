@@ -735,6 +735,7 @@ import {
 import {
   formatDateInTimeZone,
   getUserTimeZone,
+  parseDateTimeLocalInput,
 } from "~/utils/eventDateTime";
 import {
   parseEventTags,
@@ -1170,7 +1171,7 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
     key: `external-${event.id}`,
     id: event.id,
     title: stripHtmlTags(event.title) || t("eventList.externalEventFallback"),
-    date: normalizeDateValue(event.dateTime),
+    date: normalizeExternalDateTime(event.dateTime, event.time),
     source: "external",
     sourceLabel: hasLocalRegistration
       ? t("eventList.sourceLocalSignup")
@@ -1306,6 +1307,22 @@ function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
 
 function normalizeDateValue(value: string): string {
   return value;
+}
+
+/** Pokedata returns the day and local start time separately. Treat that time as
+ * Europe/Berlin time before rendering it in the viewer's time zone. */
+function normalizeExternalDateTime(dateTime: string, time?: string): string {
+  const dateMatch = dateTime.match(/^\d{4}-\d{2}-\d{2}/);
+  const timeMatch = time?.match(/^(\d{2}:\d{2})/);
+
+  if (!dateMatch || !timeMatch) {
+    return normalizeDateValue(dateTime);
+  }
+
+  return parseDateTimeLocalInput(
+    `${dateMatch[0]}T${timeMatch[1]}`,
+    "Europe/Berlin",
+  ).toISOString();
 }
 
 function stripHtmlTags(value: string): string {

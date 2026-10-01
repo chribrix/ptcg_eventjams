@@ -7,7 +7,7 @@ type TicketCountRegistration = {
   _count?: {
     tickets?: number;
   };
-  tickets?: unknown[];
+  tickets?: Array<{ status?: string }>;
 };
 
 type ExternalEventLike = {
@@ -72,7 +72,11 @@ export function countRegistrationTickets(
     }
 
     if (Array.isArray(registration.tickets)) {
-      return sum + registration.tickets.length;
+      return (
+        sum +
+        registration.tickets.filter((ticket) => ticket.status !== "cancelled")
+          .length
+      );
     }
 
     return sum;

@@ -5,6 +5,7 @@ import {
   logAuthError,
 } from "~/server/util/errorLogger";
 import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
+import { countRegistrationTickets } from "~/server/services/events/eventProjectionService";
 
 const prisma = new PrismaClient();
 const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
@@ -42,9 +43,12 @@ export default defineEventHandler(async (event) => {
       include: {
         customEvent: {
           include: {
-            _count: {
+            registrations: {
               select: {
-                registrations: true,
+                tickets: {
+                  where: { status: { not: "cancelled" } },
+                  select: { id: true },
+                },
               },
             },
           },
@@ -67,7 +71,9 @@ export default defineEventHandler(async (event) => {
       description: registration.customEvent.description,
       status: registration.customEvent.status,
       requiresDecklist: registration.customEvent.requiresDecklist,
-      totalParticipants: registration.customEvent._count.registrations,
+      totalParticipants: countRegistrationTickets(
+        registration.customEvent.registrations,
+      ),
       userRegistration: {
         id: registration.id,
         status: registration.status,
