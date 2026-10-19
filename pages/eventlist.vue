@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen app-bg-page px-4 py-8 sm:px-6">
+  <div class="min-h-screen app-bg-page px-2 py-4 sm:px-6 sm:py-8">
     <div class="mx-auto max-w-7xl">
       <EventList />
     </div>

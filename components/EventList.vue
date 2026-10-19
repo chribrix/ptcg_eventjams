@@ -1,7 +1,7 @@
 <template>
   <section class="w-full max-w-6xl mx-auto">
-    <div class="app-panel overflow-hidden rounded-[2rem]">
-      <div class="border-b app-border px-4 py-5 sm:px-6 lg:px-8">
+    <div class="app-panel overflow-hidden rounded-[1.25rem] sm:rounded-[2rem]">
+      <div class="border-b app-border px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
         <div
           class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
         >
@@ -55,7 +55,7 @@
         </div>
       </div>
 
-      <div class="px-4 py-5 sm:px-6 lg:px-8">
+      <div class="px-2.5 py-3 sm:px-6 sm:py-5 lg:px-8">
         <div
           v-if="error"
           class="app-feedback-danger rounded-2xl px-4 py-3 text-sm"
@@ -268,7 +268,7 @@
         </Transition>
       </div>
 
-      <div class="border-t app-border px-4 py-5 sm:px-6 lg:px-8">
+      <div class="border-t app-border px-2.5 py-3 sm:px-6 sm:py-5 lg:px-8">
         <div
           v-if="isLoading"
           class="flex min-h-[18rem] items-center justify-center"
@@ -295,11 +295,11 @@
           </p>
         </div>
 
-        <div v-else class="space-y-8">
+        <div v-else class="space-y-5 sm:space-y-8">
           <section
             v-for="group in groupedEvents"
             :key="group.key"
-            class="space-y-4"
+            class="space-y-3 sm:space-y-4"
           >
             <div class="flex items-end justify-between gap-3">
               <div>
@@ -312,11 +312,11 @@
               </div>
             </div>
 
-            <div class="grid gap-4 lg:grid-cols-2">
+            <div class="grid gap-3 sm:gap-4 lg:grid-cols-2">
               <article
                 v-for="event in group.events"
                 :key="event.key"
-                class="event-list-card group cursor-pointer rounded-[1.25rem] border p-3 transition focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/70 focus:ring-offset-2 focus:ring-offset-[var(--app-surface-0)] sm:rounded-[1.75rem] sm:p-5"
+                class="event-list-card group cursor-pointer rounded-[1.1rem] border p-2.5 transition focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/70 focus:ring-offset-2 focus:ring-offset-[var(--app-surface-0)] sm:rounded-[1.75rem] sm:p-5"
                 :class="getEventCardClass(event)"
                 :style="getEventCardStyle(event)"
                 role="button"
@@ -326,14 +326,14 @@
                 @keydown.space.prevent="openEventDetails(event)"
               >
                 <div
-                  class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+                  class="flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-start sm:justify-between"
                 >
-                  <div class="flex min-w-0 gap-3">
+                  <div class="flex min-w-0 gap-2.5 sm:gap-3">
                     <div
-                      class="flex h-14 w-14 flex-shrink-0 flex-col items-center justify-center rounded-xl text-center sm:h-16 sm:w-16 sm:rounded-2xl"
+                      class="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-xl text-center sm:h-16 sm:w-16 sm:rounded-2xl"
                       :class="event.dateBadgeClass"
                     >
-                      <div class="text-xl font-semibold leading-none sm:text-2xl">
+                      <div class="text-lg font-semibold leading-none sm:text-2xl">
                         {{ formatDay(event.date) }}
                       </div>
                       <div
@@ -372,12 +372,12 @@
                       </div>
 
                       <h4
-                        class="mt-2 text-base font-semibold leading-tight app-text-primary sm:mt-3 sm:text-xl"
+                        class="mt-1.5 text-[0.95rem] font-semibold leading-tight app-text-primary sm:mt-3 sm:text-xl"
                       >
                         {{ event.title }}
                       </h4>
 
-                      <div class="mt-2 space-y-1.5 text-xs app-text-secondary-soft sm:mt-3 sm:space-y-2 sm:text-sm">
+                      <div class="mt-1.5 space-y-1 text-[0.72rem] app-text-secondary-soft sm:mt-3 sm:space-y-2 sm:text-sm">
                         <div class="flex items-start gap-2">
                           <ClockIcon
                             class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 app-text-muted sm:h-4 sm:w-4"
@@ -435,7 +435,7 @@
                 </p>
 
                 <div
-                  class="mt-4 flex items-center justify-between gap-3 border-t app-border pt-3 sm:mt-5 sm:pt-4"
+                  class="mt-3 flex items-center justify-between gap-3 border-t app-border pt-2.5 sm:mt-5 sm:pt-4"
                 >
                   <span class="text-xs font-medium app-text-muted-soft">
                     {{ t("eventList.tapForDetails") }}
@@ -478,11 +478,11 @@
 
     <div
       v-if="selectedEvent"
-      class="app-overlay fixed inset-0 z-50 flex items-end p-0 sm:items-center sm:p-6"
+      class="app-overlay fixed inset-0 z-50 flex overscroll-none items-end p-0 sm:items-center sm:p-6"
       @click="closeEventDetails"
     >
       <div
-        class="app-panel max-h-[92vh] w-full overflow-hidden rounded-t-[2rem] sm:mx-auto sm:max-w-3xl sm:rounded-[2rem]"
+        class="app-panel max-h-[92vh] w-full overflow-hidden overscroll-contain rounded-t-[2rem] sm:mx-auto sm:max-w-3xl sm:rounded-[2rem]"
         @click.stop
       >
         <div
@@ -512,7 +512,7 @@
         </div>
 
         <div
-          class="max-h-[calc(92vh-5.5rem)] overflow-y-auto px-5 py-5 sm:px-6"
+          class="event-list-details-scroll max-h-[calc(92vh-5.5rem)] overflow-y-auto px-5 py-5 sm:px-6"
         >
           <div
             class="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,1fr)]"
@@ -718,7 +718,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
   ArrowTopRightOnSquareIcon,
   BookmarkIcon,
@@ -835,10 +835,70 @@ const { loadBookmarkedEventIds, toggleBookmark: toggleUnifiedBookmark } =
 const { t, locale } = useI18n();
 const userTimeZone = getUserTimeZone();
 
+let lockedScrollY = 0;
+let isBackgroundScrollLocked = false;
+let detailsHistoryEntryId: string | null = null;
+const detailsHistoryKey = "__eventListDetails";
+
+function lockBackgroundScroll(): void {
+  if (!import.meta.client || isBackgroundScrollLocked) return;
+
+  lockedScrollY = window.scrollY;
+  isBackgroundScrollLocked = true;
+  document.documentElement.style.overflow = "hidden";
+  Object.assign(document.body.style, {
+    position: "fixed",
+    top: `-${lockedScrollY}px`,
+    width: "100%",
+    overflow: "hidden",
+  });
+}
+
+function unlockBackgroundScroll(): void {
+  if (!import.meta.client || !isBackgroundScrollLocked) return;
+
+  document.documentElement.style.overflow = "";
+  Object.assign(document.body.style, {
+    position: "",
+    top: "",
+    width: "",
+    overflow: "",
+  });
+  window.scrollTo(0, lockedScrollY);
+  isBackgroundScrollLocked = false;
+}
+
+function closeDetailsFromHistory(): void {
+  detailsHistoryEntryId = null;
+  selectedEvent.value = null;
+}
+
+function handlePopState(): void {
+  if (selectedEvent.value) {
+    closeDetailsFromHistory();
+  }
+}
+
 onMounted(async () => {
+  window.addEventListener("popstate", handlePopState);
   await fetchEvents();
   await loadBookmarks();
   await fetchWaitlistStatuses();
+});
+
+onBeforeUnmount(() => {
+  if (import.meta.client) {
+    window.removeEventListener("popstate", handlePopState);
+  }
+  unlockBackgroundScroll();
+});
+
+watch(selectedEvent, (event) => {
+  if (event) {
+    lockBackgroundScroll();
+  } else {
+    unlockBackgroundScroll();
+  }
 });
 
 watch(
@@ -1045,11 +1105,30 @@ const resetFilters = () => {
 };
 
 const openEventDetails = (event: UnifiedEvent) => {
+  if (import.meta.client && !detailsHistoryEntryId) {
+    detailsHistoryEntryId = `event-list-${Date.now()}`;
+    const existingState =
+      history.state && typeof history.state === "object" ? history.state : {};
+    history.pushState(
+      { ...existingState, [detailsHistoryKey]: detailsHistoryEntryId },
+      "",
+    );
+  }
   selectedEvent.value = event;
 };
 
 const closeEventDetails = () => {
+  const currentEntryId = detailsHistoryEntryId;
   selectedEvent.value = null;
+  detailsHistoryEntryId = null;
+
+  if (
+    import.meta.client &&
+    currentEntryId &&
+    history.state?.[detailsHistoryKey] === currentEntryId
+  ) {
+    history.back();
+  }
 };
 
 async function loadBookmarks(): Promise<void> {
@@ -1449,6 +1528,11 @@ watch(user, async () => {
       var(--app-surface-0) 100%
     );
   backdrop-filter: blur(18px);
+}
+
+.event-list-details-scroll {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .event-list-chip-count {

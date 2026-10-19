@@ -119,6 +119,13 @@
                           {{ event.maxParticipants }}</span
                         >
                       </div>
+                      <button
+                        type="button"
+                        class="mt-2 inline-flex min-h-9 items-center rounded-lg border px-3 py-1.5 text-xs font-semibold app-btn-neutral"
+                        @click.stop="viewRegistrations(event)"
+                      >
+                        Registrierungen verwalten
+                      </button>
                     </div>
                   </div>
                   <svg
@@ -754,6 +761,77 @@
               </div>
 
               <div class="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+                <section class="rounded-xl border app-border p-4">
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 class="text-base font-semibold app-text-primary">
+                        Teilnehmer hinzufügen
+                      </h3>
+                      <p class="text-sm app-text-muted-soft">
+                        Admins können die Kapazität überbuchen oder direkt auf die Warteliste setzen.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      class="app-action-button app-action-secondary px-3 py-2 text-sm"
+                      @click="showManualParticipantForm = !showManualParticipantForm"
+                    >
+                      {{ showManualParticipantForm ? "Schließen" : "Hinzufügen" }}
+                    </button>
+                  </div>
+
+                  <div v-if="showManualParticipantForm" class="mt-4 space-y-3">
+                    <input
+                      v-model="playerSearchQuery"
+                      type="search"
+                      class="app-input w-full px-4 py-2"
+                      placeholder="Name, Spieler-ID oder E-Mail suchen"
+                      @input="searchPlayers"
+                    />
+                    <p v-if="playerSearchLoading" class="text-sm app-text-muted-soft">
+                      Suche läuft …
+                    </p>
+                    <p
+                      v-else-if="playerSearchQuery.trim().length > 0 && playerSearchResults.length === 0"
+                      class="text-sm app-text-muted-soft"
+                    >
+                      Keine passenden Spieler gefunden.
+                    </p>
+                    <div v-else class="space-y-2">
+                      <div
+                        v-for="player in playerSearchResults"
+                        :key="player.id"
+                        class="flex flex-col gap-2 rounded-lg border app-border p-3 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div class="min-w-0">
+                          <div class="font-medium app-text-primary">{{ player.name }}</div>
+                          <div class="truncate text-xs app-text-muted-soft">
+                            {{ player.playerId || "Keine Spieler-ID" }} · {{ player.email || "Keine E-Mail" }}
+                          </div>
+                        </div>
+                        <div class="flex shrink-0 gap-2">
+                          <button
+                            type="button"
+                            class="app-action-button app-action-secondary btn-small"
+                            :disabled="manualParticipantPendingId === player.id"
+                            @click="addManualParticipant(player, 'waitlist')"
+                          >
+                            Warteliste
+                          </button>
+                          <button
+                            type="button"
+                            class="app-action-button app-action-primary btn-small"
+                            :disabled="manualParticipantPendingId === player.id"
+                            @click="addManualParticipant(player, 'registration')"
+                          >
+                            In Liste
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
                 <div v-if="ticketRows.length > 0" class="registrations-table-shell">
                   <div class="registrations-table">
                     <table>
@@ -972,19 +1050,290 @@
       </div>
     </div>
 
-    <EventEditModal
+    <!-- Create/Edit Event Modal -->
+    <div
       v-if="showCreateForm || editingEvent"
-      :event-id="editingEvent?.id"
-      @close="closeModal"
-      @saved="onEventModalSaved"
-    />
+      class="modal-overlay"
+      @click="closeModal"
+    >
+      <div class="modal-content event-form-modal" @click.stop>
+        <div class="modal-header">
+          <h2>
+            {{
+              editingEvent
+                ? t("admin.eventsManager.editEvent")
+                : t("admin.eventsManager.createNewEvent")
+            }}
+          </h2>
+          <button @click="closeModal" class="close-btn">&times;</button>
+        </div>
+
+        <form @submit.prevent="saveEvent" class="event-form">
+          <div v-if="formError" class="form-error-banner" role="alert">
+            {{ formError }}
+          </div>
+
+          <div class="form-group">
+            <label for="name">{{ t("admin.eventsManager.eventName") }} *</label>
+            <input
+              id="name"
+              v-model="eventForm.name"
+              type="text"
+              required
+              class="form-input"
+              :placeholder="t('admin.eventsManager.placeholders.eventName')"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tagType">{{ t("admin.eventsManager.gameCategory") }} *</label>
+              <select
+                id="tagType"
+                v-model="eventForm.tagType"
+                required
+                class="form-input"
+              >
+                <option value="pokemon">Pokémon</option>
+                <option value="riftbound">Riftbound</option>
+                <option value="generic">{{ t("admin.eventsManager.genericGame") }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="gameTag">{{ t("admin.eventsManager.game") }} *</label>
+              <input
+                id="gameTag"
+                v-model="eventForm.tags.game"
+                type="text"
+                required
+                class="form-input"
+                :placeholder="t('admin.eventsManager.placeholders.game')"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="formatTag">{{ t("admin.eventsManager.format") }}</label>
+            <select
+              id="formatTag"
+              v-model="eventForm.tags.format"
+              class="form-input"
+            >
+              <option
+                v-for="formatOption in FORMAT_OPTIONS"
+                :key="formatOption.value"
+                :value="formatOption.value"
+              >
+                {{ formatOption.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eventType">{{ t("admin.eventsManager.eventType") }} *</label>
+            <select
+              id="eventType"
+              v-model="eventForm.tags.type"
+              required
+              class="form-input"
+            >
+              <option value="custom">{{ t("admin.eventsManager.eventTypes.custom") }}</option>
+              <option value="league_challenge">
+                {{ t("admin.eventsManager.eventTypes.leagueChallenge") }}
+              </option>
+              <option value="league_cup">
+                {{ t("admin.eventsManager.eventTypes.leagueCup") }}
+              </option>
+              <option value="local_tournament">{{ t("admin.eventsManager.eventTypes.localTournament") }}</option>
+              <option value="prerelease">
+                {{ t("admin.eventsManager.eventTypes.prerelease") }}
+              </option>
+              <option value="regional">{{ t("admin.eventsManager.eventTypes.regional") }}</option>
+              <option value="international">{{ t("admin.eventsManager.eventTypes.international") }}</option>
+              <option value="worlds">{{ t("admin.eventsManager.eventTypes.worlds") }}</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="hostTag">{{ t("admin.venue.columns.organization") }}</label>
+              <input
+                id="hostTag"
+                v-model="eventForm.tags.host"
+                type="text"
+                class="form-input"
+                list="host-organization-options"
+                :placeholder="t('admin.eventsManager.placeholders.hostOrganization')"
+                @change="syncVenueFromOrganization"
+                @blur="syncVenueFromOrganization"
+              />
+              <datalist id="host-organization-options">
+                <option
+                  v-for="organization in hostOrganizationOptions"
+                  :key="organization"
+                  :value="organization"
+                />
+              </datalist>
+            </div>
+
+            <div class="form-group">
+              <label for="venue">{{ t("common.venue") }} *</label>
+              <input
+                id="venue"
+                v-model="eventForm.venue"
+                type="text"
+                required
+                class="form-input"
+                list="venue-options"
+                :placeholder="t('admin.eventsManager.placeholders.venue')"
+                @change="syncOrganizationFromVenue"
+                @blur="syncOrganizationFromVenue"
+              />
+              <datalist id="venue-options">
+                <option
+                  v-for="venueOption in venueOptions"
+                  :key="venueOption"
+                  :value="venueOption"
+                />
+              </datalist>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="maxParticipants">{{ t("events.maxParticipants") }} *</label>
+              <input
+                id="maxParticipants"
+                v-model.number="eventForm.maxParticipants"
+                type="number"
+                min="1"
+                required
+                class="form-input"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="participationFee">{{ t("events.participationFee") }} (€)</label>
+              <input
+                id="participationFee"
+                v-model.number="eventForm.participationFee"
+                type="number"
+                step="0.01"
+                min="0"
+                class="form-input"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="eventDate">
+                {{ t("events.eventDate") }} *
+                <span v-if="eventForm.eventDate" class="field-help">
+                  {{ formatDateWithWeekday(eventForm.eventDate) }}
+                </span>
+                <span class="field-help">
+                  {{ t("admin.eventsManager.shownInTimezone", { timeZone: userTimeZone }) }}
+                </span>
+              </label>
+              <input
+                id="eventDate"
+                v-model="eventForm.eventDate"
+                type="datetime-local"
+                required
+                step="900"
+                class="form-input"
+                @change="onEventDateChange"
+                @blur="normalizeEventDateInput"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="registrationDeadline">
+                {{ t("events.registrationDeadline") }}
+                <span class="field-help">
+                  {{ t("admin.eventsManager.registrationDeadlineHelp") }}
+                </span>
+              </label>
+              <input
+                id="registrationDeadline"
+                v-model="eventForm.registrationDeadline"
+                type="datetime-local"
+                step="900"
+                class="form-input"
+                @change="normalizeRegistrationDeadlineInput"
+                @blur="normalizeRegistrationDeadlineInput"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">{{ t("common.description") }}</label>
+            <textarea
+              id="description"
+              v-model="eventForm.description"
+              class="form-textarea"
+              rows="3"
+              :placeholder="t('admin.eventsManager.placeholders.description')"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <div class="checkbox-wrapper">
+              <input
+                id="requiresDecklist"
+                v-model="eventForm.requiresDecklist"
+                type="checkbox"
+                class="form-checkbox"
+              />
+              <label for="requiresDecklist" class="checkbox-label">
+                {{ t("events.requiresDecklist") }}
+                <span class="checkbox-help">
+                  {{ t("admin.eventsManager.requiresDecklistHelp") }}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div v-if="editingEvent" class="form-group">
+            <label for="status">{{ t("common.status") }}</label>
+            <select id="status" v-model="eventForm.status" class="form-select">
+              <option value="upcoming">{{ t("events.eventStatus.upcoming") }}</option>
+              <option value="ongoing">{{ t("events.eventStatus.ongoing") }}</option>
+              <option value="completed">{{ t("events.eventStatus.completed") }}</option>
+              <option value="cancelled">{{ t("events.eventStatus.cancelled") }}</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" @click="closeModal" class="btn btn-secondary">
+              {{ t("common.cancel") }}
+            </button>
+            <button type="submit" :disabled="saving" class="btn btn-primary">
+              {{
+                saving
+                  ? t("admin.eventsManager.saving")
+                  : editingEvent
+                    ? t("admin.eventsManager.updateEvent")
+                    : t("admin.eventsManager.createEvent")
+              }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </AdminPageLayout>
 </template>
 
 <script setup lang="ts">
 import {
+  parseEventTags,
   getEventTypeLabel,
   getEventTypeBadgeClass,
+  FORMAT_OPTIONS,
+  type TagType,
 } from "~/types/eventTags";
 import { useTagDisplay } from "~/composables/useTagDisplay";
 import {
@@ -994,8 +1343,10 @@ import {
 import {
   DEFAULT_EVENT_TIME_ZONE,
   formatDateInTimeZone,
+  formatDateTimeLocalInput,
   getDateKeyInTimeZone,
   getUserTimeZone,
+  parseDateTimeLocalInput,
 } from "~/utils/eventDateTime";
 
 const { getDisplayTags } = useTagDisplay();
@@ -1066,12 +1417,55 @@ interface WaitlistEntry {
   };
 }
 
+interface AdminPlayerSearchResult {
+  id: string;
+  playerId?: string | null;
+  name: string;
+  email?: string | null;
+}
+
+interface VenueDirectoryEntry {
+  id: string;
+  organizationName: string;
+  venueName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface EventFormTags {
+  type?: string;
+  game: string;
+  format?: string;
+  host?: string;
+}
+
+interface EventFormState {
+  name: string;
+  venue: string;
+  tagType: TagType;
+  tags: EventFormTags;
+  maxParticipants: number;
+  participationFee: number;
+  description: string;
+  eventDate: string;
+  registrationDeadline: string;
+  requiresDecklist: boolean;
+  status: string;
+}
+
 // Page metadata
 // Reactive data
 const events = ref<CustomEvent[]>([]);
 const registrations = ref<Registration[]>([]);
 const waitlistEntries = ref<WaitlistEntry[]>([]);
+const showManualParticipantForm = ref(false);
+const playerSearchQuery = ref("");
+const playerSearchResults = ref<AdminPlayerSearchResult[]>([]);
+const playerSearchLoading = ref(false);
+const manualParticipantPendingId = ref<string | null>(null);
 const loading = ref(true);
+const saving = ref(false);
+const formError = ref("");
 const showCreateForm = ref(false);
 const showRegistrations = ref(false);
 const showCompletedEvents = ref(false);
@@ -1083,6 +1477,8 @@ const selectedDecklist = ref<{ playerName: string; decklist: string } | null>(
   null,
 );
 const userTimeZone = ref(DEFAULT_EVENT_TIME_ZONE);
+const venueDirectory = ref<VenueDirectoryEntry[]>([]);
+let playerSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Flatten registrations → one row per ticket for display
 interface TicketRow {
@@ -1285,6 +1681,192 @@ const closeEventDetails = () => {
   selectedEvent.value = null;
 };
 
+// Form data
+const createEmptyEventTags = (): EventFormTags => ({
+  type: "custom",
+  game: "Pokemon",
+  format: "standard",
+  host: "",
+});
+
+const createEventFormState = (): EventFormState => ({
+  name: "",
+  venue: "",
+  tagType: "pokemon",
+  tags: createEmptyEventTags(),
+  maxParticipants: 20,
+  participationFee: 0,
+  description: "",
+  eventDate: "",
+  registrationDeadline: "",
+  requiresDecklist: false,
+  status: "upcoming",
+});
+
+const eventForm = ref<EventFormState>(createEventFormState());
+
+// Helper function to get next Friday at 18:00
+const getNextFriday = (): Date => {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 5 = Friday
+  const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 7 - dayOfWeek + 5;
+
+  const nextFriday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + daysUntilFriday,
+    18,
+    0,
+    0,
+  );
+
+  return nextFriday;
+};
+
+// Format date with weekday
+const formatDateWithWeekday = (dateString: string): string => {
+  if (!dateString) return "";
+  const timeZone = userTimeZone.value;
+  const weekday = formatDateInTimeZone(
+    dateString,
+    {
+      weekday: "short",
+    },
+    "de-DE",
+    timeZone,
+  );
+  const formatted = formatDateInTimeZone(
+    dateString,
+    {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+    "de-DE",
+    timeZone,
+  );
+  return `${weekday}, ${formatted}`;
+};
+
+const formatDateTimeLocalString = (date: Date): string => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const normalizeToQuarterHour = (value: string): string => {
+  if (!value) return "";
+
+  const [datePart, timePart] = value.split("T");
+  if (!datePart || !timePart) return value;
+
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+  const roundedDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+  const roundedMinutes = Math.round(roundedDate.getUTCMinutes() / 15) * 15;
+  roundedDate.setUTCMinutes(roundedMinutes, 0, 0);
+
+  return formatDateTimeLocalString(roundedDate);
+};
+
+const normalizeEventDateInput = () => {
+  if (!eventForm.value.eventDate) return;
+
+  const normalizedValue = normalizeToQuarterHour(eventForm.value.eventDate);
+  if (normalizedValue !== eventForm.value.eventDate) {
+    eventForm.value.eventDate = normalizedValue;
+  }
+};
+
+const normalizeRegistrationDeadlineInput = () => {
+  if (!eventForm.value.registrationDeadline) return;
+
+  const normalizedValue = normalizeToQuarterHour(
+    eventForm.value.registrationDeadline,
+  );
+  if (normalizedValue !== eventForm.value.registrationDeadline) {
+    eventForm.value.registrationDeadline = normalizedValue;
+  }
+};
+
+const normalizedText = (value?: string | null) =>
+  value?.trim().toLowerCase() || "";
+
+const findVenueEntryByOrganization = (organizationName?: string) => {
+  const search = normalizedText(organizationName);
+  if (!search) return null;
+
+  return (
+    venueDirectory.value.find(
+      (entry) => normalizedText(entry.organizationName) === search,
+    ) || null
+  );
+};
+
+const findVenueEntryByVenueName = (venueName?: string) => {
+  const search = normalizedText(venueName);
+  if (!search) return null;
+
+  return (
+    venueDirectory.value.find(
+      (entry) => normalizedText(entry.venueName) === search,
+    ) || null
+  );
+};
+
+const syncVenueFromOrganization = () => {
+  const entry = findVenueEntryByOrganization(eventForm.value.tags.host);
+  if (entry) {
+    eventForm.value.venue = entry.venueName;
+  }
+};
+
+const syncOrganizationFromVenue = () => {
+  const entry = findVenueEntryByVenueName(eventForm.value.venue);
+  if (entry) {
+    eventForm.value.tags.host = entry.organizationName;
+  }
+};
+
+const hostOrganizationOptions = computed(() =>
+  [
+    ...new Set(venueDirectory.value.map((entry) => entry.organizationName)),
+  ].sort((left, right) => left.localeCompare(right)),
+);
+
+const venueOptions = computed(() =>
+  [...new Set(venueDirectory.value.map((entry) => entry.venueName))].sort(
+    (left, right) => left.localeCompare(right),
+  ),
+);
+
+// Initialize form with default dates when creating new event
+const initializeEventForm = () => {
+  const nextFriday = getNextFriday();
+  const eventDateTime = formatDateTimeLocalInput(
+    nextFriday,
+    userTimeZone.value,
+  );
+
+  // Registration deadline: 15 minutes before event
+  const regDeadline = new Date(nextFriday.getTime() - 15 * 60 * 1000);
+  const regDeadlineString = formatDateTimeLocalInput(
+    regDeadline,
+    userTimeZone.value,
+  );
+
+  eventForm.value = {
+    ...createEventFormState(),
+    eventDate: eventDateTime,
+    registrationDeadline: regDeadlineString,
+  };
+};
+
 // Computed
 const filteredEvents = computed(() => {
   if (!searchTerm.value) return events.value;
@@ -1300,14 +1882,68 @@ const filteredEvents = computed(() => {
 
 // Methods
 const createNewEvent = () => {
+  initializeEventForm();
+  formError.value = "";
   showCreateForm.value = true;
 };
 
-const onEventModalSaved = async (createdEvent?: { id: string }) => {
-  await loadEvents();
+const getRequestErrorMessage = (error: unknown, fallback: string): string => {
+  if (!error || typeof error !== "object") {
+    return fallback;
+  }
 
-  if (!createdEvent) {
-    closeModal();
+  if ("data" in error) {
+    const data = (error as { data?: { statusMessage?: unknown } }).data;
+    if (typeof data?.statusMessage === "string" && data.statusMessage.trim()) {
+      return data.statusMessage;
+    }
+  }
+
+  if ("statusMessage" in error) {
+    const statusMessage = (error as { statusMessage?: unknown }).statusMessage;
+    if (typeof statusMessage === "string" && statusMessage.trim()) {
+      return statusMessage;
+    }
+  }
+
+  if ("message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+  }
+
+  return fallback;
+};
+
+const onEventDateChange = () => {
+  normalizeEventDateInput();
+
+  // Auto-set registration deadline based on event date
+  if (eventForm.value.eventDate) {
+    const eventDate = parseDateTimeLocalInput(
+      eventForm.value.eventDate,
+      userTimeZone.value,
+    );
+
+    // Registration deadline: 15 minutes before event (but still editable)
+    const regDeadline = new Date(eventDate.getTime() - 15 * 60 * 1000);
+    eventForm.value.registrationDeadline = formatDateTimeLocalInput(
+      regDeadline,
+      userTimeZone.value,
+    );
+    normalizeRegistrationDeadlineInput();
+  }
+};
+
+const loadVenueDirectory = async () => {
+  try {
+    const response = await $fetch<{ venues: VenueDirectoryEntry[] }>(
+      "/api/admin/venues",
+    );
+    venueDirectory.value = response.venues || [];
+  } catch (error) {
+    console.error("Error loading venue directory:", error);
   }
 };
 
@@ -1326,6 +1962,56 @@ const loadEvents = async () => {
   }
 };
 
+const saveEvent = async () => {
+  try {
+    saving.value = true;
+    formError.value = "";
+    normalizeEventDateInput();
+    normalizeRegistrationDeadlineInput();
+    syncVenueFromOrganization();
+    syncOrganizationFromVenue();
+
+    const eventData = {
+      ...eventForm.value,
+      venue: eventForm.value.venue.trim(),
+      tags: {
+        ...eventForm.value.tags,
+        host: eventForm.value.tags.host?.trim() || undefined,
+        format: eventForm.value.tags.format || "standard",
+      },
+      participationFee: eventForm.value.participationFee
+        ? Number(eventForm.value.participationFee)
+        : undefined,
+      timeZone: userTimeZone.value,
+    };
+
+    if (editingEvent.value) {
+      await $fetch(`/api/admin/custom-events?id=${editingEvent.value.id}`, {
+        method: "PUT",
+        body: eventData,
+      });
+    } else {
+      await $fetch("/api/admin/custom-events", {
+        method: "POST",
+        body: eventData,
+      });
+    }
+
+    await loadEvents();
+    await loadVenueDirectory();
+    closeModal();
+    // TODO: Show success message
+  } catch (error) {
+    console.error("Error saving event:", error);
+    formError.value = getRequestErrorMessage(
+      error,
+      t("admin.eventsManager.saveError"),
+    );
+  } finally {
+    saving.value = false;
+  }
+};
+
 const editEvent = (event: CustomEvent) => {
   // Prevent editing external events from this page
   if ((event as any).isExternalEvent) {
@@ -1334,6 +2020,31 @@ const editEvent = (event: CustomEvent) => {
   }
 
   editingEvent.value = event;
+  formError.value = "";
+
+  eventForm.value = {
+    name: event.name,
+    venue: event.venue,
+    tagType: (event.tagType as TagType) || "pokemon",
+    tags: {
+      ...createEmptyEventTags(),
+      ...(event.tags
+        ? (parseEventTags(
+            event.tags,
+            (event.tagType as TagType) || "pokemon",
+          ) as Record<string, string | undefined>)
+        : {}),
+    },
+    maxParticipants: event.maxParticipants,
+    participationFee: event.participationFee || 0,
+    description: event.description || "",
+    eventDate: formatDateTimeLocalInput(event.eventDate, userTimeZone.value),
+    registrationDeadline: event.registrationDeadline
+      ? formatDateTimeLocalInput(event.registrationDeadline, userTimeZone.value)
+      : "",
+    requiresDecklist: event.requiresDecklist,
+    status: event.status,
+  };
 };
 
 const deleteEvent = async (event: CustomEvent) => {
@@ -1361,11 +2072,22 @@ const deleteEvent = async (event: CustomEvent) => {
 const viewRegistrations = async (event: CustomEvent) => {
   try {
     selectedEvent.value = event;
+    await loadRegistrationsForSelectedEvent();
+    showRegistrations.value = true;
+  } catch (error) {
+    console.error("Error loading registrations:", error);
+  }
+};
+
+const loadRegistrationsForSelectedEvent = async () => {
+  if (!selectedEvent.value) return;
+
+  try {
     const response = await $fetch<{
       registrations: Registration[];
       waitlist: WaitlistEntry[];
     }>(
-      `/api/admin/registrations?eventId=${event.id}`,
+      `/api/admin/registrations?eventId=${selectedEvent.value.id}`,
     );
     registrations.value = response.registrations || [];
     waitlistEntries.value = (response.waitlist || []).sort((a, b) => {
@@ -1375,10 +2097,65 @@ const viewRegistrations = async (event: CustomEvent) => {
         new Date(b.queuePositionAt).getTime()
       );
     });
-    showRegistrations.value = true;
   } catch (error) {
     console.error("Error loading registrations:", error);
-    // TODO: Show error message
+  }
+};
+
+const searchPlayers = () => {
+  if (playerSearchTimer) clearTimeout(playerSearchTimer);
+
+  const query = playerSearchQuery.value.trim();
+  if (query.length < 2) {
+    playerSearchResults.value = [];
+    playerSearchLoading.value = false;
+    return;
+  }
+
+  playerSearchTimer = setTimeout(async () => {
+    playerSearchLoading.value = true;
+    try {
+      const response = await $fetch<{ players: AdminPlayerSearchResult[] }>(
+        `/api/admin/players?page=1&limit=8&search=${encodeURIComponent(query)}`,
+      );
+      if (playerSearchQuery.value.trim() === query) {
+        playerSearchResults.value = response.players || [];
+      }
+    } catch (error) {
+      console.error("Error searching players:", error);
+      playerSearchResults.value = [];
+    } finally {
+      if (playerSearchQuery.value.trim() === query) {
+        playerSearchLoading.value = false;
+      }
+    }
+  }, 250);
+};
+
+const addManualParticipant = async (
+  player: AdminPlayerSearchResult,
+  target: "registration" | "waitlist",
+) => {
+  if (!selectedEvent.value || manualParticipantPendingId.value) return;
+
+  manualParticipantPendingId.value = player.id;
+  try {
+    await $fetch("/api/admin/registrations", {
+      method: "POST",
+      body: {
+        eventId: selectedEvent.value.id,
+        playerId: player.id,
+        target,
+      },
+    });
+    await Promise.all([loadRegistrationsForSelectedEvent(), loadEvents()]);
+    playerSearchQuery.value = "";
+    playerSearchResults.value = [];
+  } catch (error: any) {
+    console.error("Error adding manual participant:", error);
+    alert(error?.data?.statusMessage || "Teilnehmer konnte nicht hinzugefügt werden.");
+  } finally {
+    manualParticipantPendingId.value = null;
   }
 };
 
@@ -1454,6 +2231,8 @@ const cancelRegistration = async (registration: Registration) => {
 const closeModal = () => {
   showCreateForm.value = false;
   editingEvent.value = null;
+  formError.value = "";
+  initializeEventForm();
 };
 
 const closeRegistrationsModal = () => {
@@ -1462,6 +2241,15 @@ const closeRegistrationsModal = () => {
   registrations.value = [];
   waitlistEntries.value = [];
   updatingTicketIds.value = [];
+  showManualParticipantForm.value = false;
+  playerSearchQuery.value = "";
+  playerSearchResults.value = [];
+  playerSearchLoading.value = false;
+  manualParticipantPendingId.value = null;
+  if (playerSearchTimer) {
+    clearTimeout(playerSearchTimer);
+    playerSearchTimer = null;
+  }
 };
 
 const updateWaitlistPriority = async (
@@ -1546,6 +2334,7 @@ const copyRegistrationLink = async (eventId: string) => {
 // Load events on mount
 onMounted(async () => {
   userTimeZone.value = getUserTimeZone();
+  loadVenueDirectory();
   await loadEvents();
 
   const editEventId = useRoute().query.edit as string | undefined;
@@ -2051,15 +2840,74 @@ onMounted(async () => {
   gap: 0.5rem;
 }
 
+.event-form {
+  padding: 1.5rem;
+}
+
+.event-form-modal {
+  width: min(100%, 820px);
+  max-width: 820px;
+}
+
+.event-form {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.form-error-banner {
+  border: 1px solid color-mix(in srgb, var(--app-danger, #dc2626) 28%, transparent);
+  background: color-mix(in srgb, var(--app-danger, #dc2626) 10%, white);
+  color: var(--app-danger, #b91c1c);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.event-form :deep(.form-row) {
+  gap: 0.75rem;
+}
+
+.event-form :deep(.form-group) {
+  margin-bottom: 0;
+}
+
+.event-form :deep(.form-input),
+.event-form :deep(.form-select),
+.event-form :deep(.form-textarea) {
+  padding: 0.7rem 0.85rem;
+}
+
+@media (max-width: 639px) {
+  .event-form-modal {
+    width: 100%;
+    max-height: calc(100vh - 1.5rem);
+    border-radius: 14px;
+  }
+
+  .event-form {
+    padding: 1rem;
+  }
+}
+
 @media (min-width: 768px) {
   .events-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .event-form-modal {
+    max-width: 820px;
   }
 }
 
 @media (min-width: 1024px) {
   .events-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .event-form-modal {
+    max-width: 860px;
   }
 }
 </style>

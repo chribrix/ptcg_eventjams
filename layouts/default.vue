@@ -13,6 +13,7 @@ import {
   SunIcon,
 } from "@heroicons/vue/24/outline";
 import siteLogo from "~/assets/images/logo.png";
+import { adminNavigationItems } from "~/utils/adminNavigation";
 
 // Mobile menu state
 const mobileMenuOpen = ref(false);
@@ -317,15 +318,20 @@ const { t } = useI18n();
               <span>Liga</span>
             </NuxtLink>
 
-            <!-- Admin menu items for mobile -->
-            <div v-if="isAdmin">
+            <!-- Admin destinations are direct on mobile to avoid a second menu. -->
+            <div v-if="isAdmin" class="border-t app-border pt-3 mt-3">
+              <p class="px-3 pb-1 text-xs font-semibold uppercase tracking-[0.16em] app-text-muted-soft">
+                Administration
+              </p>
               <NuxtLink
-                to="/admin"
+                v-for="item in adminNavigationItems"
+                :key="item.to"
+                :to="item.to"
                 @click="mobileMenuOpen = false"
                 class="flex items-center space-x-3 px-3 py-2 text-[var(--app-text-secondary)] hover:bg-[var(--app-surface-2)] rounded-lg"
               >
-                <CogIcon class="w-5 h-5" />
-                <span>{{ t("nav.admin") }}</span>
+                <component :is="item.icon" class="w-5 h-5" />
+                <span>{{ item.label }}</span>
               </NuxtLink>
             </div>
 

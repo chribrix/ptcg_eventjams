@@ -21,58 +21,20 @@
         </nav>
       </aside>
 
-      <Transition name="admin-sidebar-overlay">
-        <div
-          v-if="mobileNavOpen"
-          class="mobile-sidebar-backdrop"
-          @click="mobileNavOpen = false"
-        />
-      </Transition>
-
-      <Transition name="admin-sidebar-drawer">
-        <aside v-if="mobileNavOpen" class="mobile-sidebar-drawer">
-          <div class="mobile-sidebar-header">
-            <div>
-              <p class="sidebar-eyebrow">Admin Panel</p>
-              <h2 class="sidebar-title">PTCG Event Jams</h2>
-            </div>
-            <button
-              type="button"
-              class="mobile-sidebar-close"
-              @click="mobileNavOpen = false"
-              aria-label="Close admin navigation"
-            >
-              <XMarkIcon class="w-5 h-5" />
-            </button>
-          </div>
-
-          <nav class="sidebar-nav" aria-label="Admin sections mobile">
+      <div class="admin-main">
+        <div class="admin-mobile-toolbar">
+          <nav class="admin-mobile-links" aria-label="Admin sections">
             <NuxtLink
               v-for="item in adminNavigationItems"
               :key="item.to"
               :to="item.to"
-              class="sidebar-link"
-              :class="{ 'sidebar-link-active': isActive(item) }"
-              @click="mobileNavOpen = false"
+              class="admin-mobile-link"
+              :class="{ 'admin-mobile-link-active': isActive(item) }"
             >
               <component :is="item.icon" class="sidebar-link-icon" />
               <span>{{ item.label }}</span>
             </NuxtLink>
           </nav>
-        </aside>
-      </Transition>
-
-      <div class="admin-main">
-        <div class="admin-mobile-toolbar">
-          <button
-            type="button"
-            class="mobile-nav-toggle"
-            @click="mobileNavOpen = true"
-            aria-label="Open admin navigation"
-          >
-            <Bars3Icon class="w-5 h-5" />
-            <span>Admin Menu</span>
-          </button>
         </div>
 
         <div class="admin-container">
@@ -99,8 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { Bars3Icon, XMarkIcon } from "@heroicons/vue/24/outline";
+import { computed } from "vue";
 import {
   adminNavigationItems,
   type AdminNavItem,
@@ -112,8 +73,6 @@ const props = defineProps<{
 }>();
 
 const route = useRoute();
-const mobileNavOpen = ref(false);
-
 const currentPath = computed(() => route.path);
 
 const isActive = (item: AdminNavItem) => {
@@ -124,12 +83,6 @@ const isActive = (item: AdminNavItem) => {
   return currentPath.value === item.to;
 };
 
-watch(
-  () => route.path,
-  () => {
-    mobileNavOpen.value = false;
-  },
-);
 </script>
 
 <style scoped>
@@ -174,64 +127,41 @@ watch(
 
 .admin-mobile-toolbar {
   display: flex;
-  justify-content: flex-start;
   margin-bottom: 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
-.mobile-nav-toggle,
-.mobile-sidebar-close {
+.admin-mobile-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-mobile-links {
+  display: flex;
+  gap: 0.5rem;
+  min-width: max-content;
+  padding: 0.1rem;
+}
+
+.admin-mobile-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
-  border: none;
-  cursor: pointer;
-}
-
-.mobile-nav-toggle {
-  padding: 0.9rem 1rem;
-  border-radius: 14px;
-  background: var(--admin-surface-strong);
-  color: var(--admin-text-strong);
-  font-weight: 600;
+  gap: 0.5rem;
+  padding: 0.7rem 0.85rem;
   border: 1px solid var(--admin-border);
-  box-shadow: var(--app-shadow-soft);
+  border-radius: 12px;
+  background: var(--admin-surface);
+  color: var(--admin-muted-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.mobile-sidebar-backdrop {
-  position: fixed;
-  inset: 0;
-  background: var(--app-overlay-strong);
-  backdrop-filter: blur(2px);
-  z-index: 40;
-}
-
-.mobile-sidebar-drawer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: min(82vw, 320px);
-  background: var(--app-surface-0);
-  color: var(--app-text-secondary);
-  padding: 1rem;
-  z-index: 50;
-  box-shadow: var(--app-shadow-strong);
-  border-right: 1px solid var(--admin-border);
-}
-
-.mobile-sidebar-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.mobile-sidebar-close {
-  padding: 0.5rem;
-  border-radius: 10px;
+.admin-mobile-link-active {
   background: var(--app-surface-2);
-  color: var(--app-text-secondary);
+  color: var(--admin-text-strong);
+  box-shadow: inset 0 0 0 1px var(--admin-border-strong);
 }
 
 .admin-page-header {
@@ -332,24 +262,6 @@ watch(
   width: 1.1rem;
   height: 1.1rem;
   flex-shrink: 0;
-}
-
-.admin-sidebar-overlay-enter-active,
-.admin-sidebar-overlay-leave-active,
-.admin-sidebar-drawer-enter-active,
-.admin-sidebar-drawer-leave-active {
-  transition: all 0.2s ease;
-}
-
-.admin-sidebar-overlay-enter-from,
-.admin-sidebar-overlay-leave-to {
-  opacity: 0;
-}
-
-.admin-sidebar-drawer-enter-from,
-.admin-sidebar-drawer-leave-to {
-  transform: translateX(-16px);
-  opacity: 0;
 }
 
 /* Tablet and up */

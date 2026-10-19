@@ -3,9 +3,14 @@ import { z } from "zod";
 import { promoteWaitlistForEvent } from "~/server/services/events/waitlistService";
 
 const createRegistrationSchema = z.object({
-  customEventId: z.string().min(1),
+  eventId: z.string().min(1).optional(),
+  customEventId: z.string().min(1).optional(),
   playerId: z.string().min(1),
   notes: z.string().optional(),
+  target: z.enum(["registration", "waitlist"]).default("registration"),
+}).refine((input) => input.eventId || input.customEventId, {
+  message: "Event ID is required",
+  path: ["eventId"],
 });
 
 const updateRegistrationSchema = z.object({
@@ -79,37 +84,34 @@ export async function listAdminRegistrationsForEvent(eventId: string) {
 
 export async function createAdminRegistration(rawInput: unknown) {
   const input = createRegistrationSchema.parse(rawInput);
+  const eventId = input.eventId || input.customEventId!;
 
   return prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM public.custom_events WHERE id = ${input.customEventId} FOR UPDATE`;
-
     const customEvent = await tx.customEvent.findUnique({
-      where: { id: input.customEventId },
+      where: { id: eventId },
     });
+    const externalEvent = customEvent
+      ? null
+      : await tx.externalEventOverride.findUnique({ where: { id: eventId } });
 
-    if (!customEvent) {
+    if (!customEvent && !externalEvent) {
       throw createError({
         statusCode: 404,
         statusMessage: "Event not found",
       });
     }
 
-    const currentTicketCount = await tx.registrationTicket.count({
-      where: {
-        registration: {
-          customEventId: input.customEventId,
-        },
-        status: {
-          not: "cancelled",
-        },
-      },
-    });
-
-    if (currentTicketCount >= customEvent.maxParticipants) {
+    if (externalEvent && !externalEvent.handleRegistrationLocally) {
       throw createError({
-        statusCode: 409,
-        statusMessage: "Event is full",
+        statusCode: 400,
+        statusMessage: "External event does not use local registration",
       });
+    }
+
+    if (customEvent) {
+      await tx.$queryRaw`SELECT id FROM public.custom_events WHERE id = ${eventId} FOR UPDATE`;
+    } else {
+      await tx.$queryRaw`SELECT id FROM public.external_event_overrides WHERE id = ${eventId} FOR UPDATE`;
     }
 
     const player = await tx.player.findUnique({
@@ -123,29 +125,97 @@ export async function createAdminRegistration(rawInput: unknown) {
       });
     }
 
-    const existingRegistration = await tx.eventRegistration.findUnique({
-      where: {
-        customEventId_playerId: {
-          customEventId: input.customEventId,
-          playerId: input.playerId,
-        },
-      },
-    });
+    const existingRegistration = customEvent
+      ? await tx.eventRegistration.findUnique({
+          where: {
+            customEventId_playerId: { customEventId: eventId, playerId: input.playerId },
+          },
+          include: { tickets: { where: { status: { not: "cancelled" } } } },
+        })
+      : await tx.eventRegistration.findUnique({
+          where: {
+            externalEventId_playerId: { externalEventId: eventId, playerId: input.playerId },
+          },
+          include: { tickets: { where: { status: { not: "cancelled" } } } },
+        });
 
-    if (existingRegistration) {
+    if (existingRegistration && existingRegistration.tickets.length > 0) {
       throw createError({
         statusCode: 409,
         statusMessage: "Player already registered for this event",
       });
     }
 
-    return tx.eventRegistration.create({
-      data: input,
+    const waitlistDelegate = (tx as any).waitlistEntry;
+    const eventKey = `${customEvent ? "custom" : "external"}:${eventId}`;
+
+    if (input.target === "waitlist") {
+      if (!waitlistDelegate) {
+        throw createError({ statusCode: 503, statusMessage: "Waitlist is temporarily unavailable" });
+      }
+
+      const existingWaitlistEntry = await waitlistDelegate.findUnique({
+        where: { eventKey_playerId: { eventKey, playerId: input.playerId } },
+      });
+      const now = new Date();
+      const data = {
+        status: "waiting",
+        queuePositionAt: now,
+        notifiedAt: null,
+        claimExpiresAt: null,
+        confirmedAt: null,
+      };
+
+      return existingWaitlistEntry
+        ? waitlistDelegate.update({ where: { id: existingWaitlistEntry.id }, data })
+        : waitlistDelegate.create({
+            data: {
+              ...data,
+              eventKey,
+              customEventId: customEvent ? eventId : null,
+              externalEventId: externalEvent ? eventId : null,
+              playerId: input.playerId,
+            },
+          });
+    }
+
+    const registration = existingRegistration
+      ? await tx.eventRegistration.update({
+          where: { id: existingRegistration.id },
+          data: { notes: input.notes },
+        })
+      : await tx.eventRegistration.create({
+          data: {
+            customEventId: customEvent ? eventId : null,
+            externalEventId: externalEvent ? eventId : null,
+            playerId: input.playerId,
+            notes: input.notes,
+          },
+        });
+
+    await tx.registrationTicket.create({
+      data: {
+        registrationId: registration.id,
+        participantName: player.name,
+        participantPlayerId: player.playerId || null,
+        status: "registered",
+      },
+    });
+
+    if (waitlistDelegate) {
+      await waitlistDelegate.updateMany({
+        where: { eventKey, playerId: input.playerId, status: { in: ["waiting", "pending_claim"] } },
+        data: { status: "confirmed", confirmedAt: new Date(), claimExpiresAt: null },
+      });
+    }
+
+    return tx.eventRegistration.findUnique({
+      where: { id: registration.id },
       include: {
         player: true,
-        customEvent: {
-          select: { id: true, name: true, eventDate: true },
-        },
+        tickets: true,
+        customEvent: { select: { id: true, name: true, eventDate: true } },
+        externalEvent: { select: { id: true, eventName: true, eventDate: true } },
       },
     });
   });

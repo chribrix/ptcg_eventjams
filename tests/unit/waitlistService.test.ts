@@ -179,6 +179,106 @@ describe("waitlist service", () => {
     expect(mails[0].to).toBe("b@example.com");
   });
 
+  it("immediately registers waiting users when increased capacity has free slots", async () => {
+    vi.setSystemTime(new Date("2026-05-05T12:00:00.000Z"));
+
+    const mails: any[] = [];
+    const entries = Array.from({ length: 5 }, (_, index): WaitlistEntry => ({
+      id: `wait-${index + 1}`,
+      eventKey: "custom:event-1",
+      customEventId: "event-1",
+      externalEventId: null,
+      playerId: `player-${index + 1}`,
+      status: "waiting",
+      priority: 0,
+      queuePositionAt: new Date(`2026-05-05T09:0${index}:00.000Z`),
+      notifiedAt: null,
+      claimExpiresAt: null,
+      confirmedAt: null,
+      createdAt: new Date(`2026-05-05T09:0${index}:00.000Z`),
+      player: {
+        email: `player-${index + 1}@example.com`,
+        name: `Player ${index + 1}`,
+        playerId: `P${index + 1}`,
+      } as any,
+    }));
+    const registrations: Array<{ id: string; playerId: string }> = [];
+    const tickets: any[] = [];
+
+    const tx = {
+      $queryRaw: vi.fn(),
+      customEvent: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "event-1",
+          name: "League Cup",
+          eventDate: new Date("2026-05-06T18:00:00.000Z"),
+          maxParticipants: 34,
+          requiresDecklist: false,
+          tags: { game: "Pokemon", type: "league_cup" },
+        }),
+      },
+      externalEventOverride: { findUnique: vi.fn().mockResolvedValue(null) },
+      registrationTicket: {
+        count: vi.fn().mockResolvedValue(26),
+        create: vi.fn().mockImplementation(async ({ data }: any) => {
+          tickets.push(data);
+          return { id: `ticket-${tickets.length}`, ...data };
+        }),
+      },
+      eventRegistration: {
+        upsert: vi.fn().mockImplementation(async ({ create }: any) => {
+          const registration = {
+            id: `registration-${registrations.length + 1}`,
+            playerId: create.playerId,
+          };
+          registrations.push(registration);
+          return registration;
+        }),
+      },
+      waitlistEntry: {
+        findMany: vi.fn().mockImplementation(async (args: any) => {
+          let out = entries.filter((entry) => entry.eventKey === args.where.eventKey);
+          if (typeof args.where.status === "string") {
+            out = out.filter((entry) => entry.status === args.where.status);
+          }
+          if (args.where.status?.in) {
+            out = out.filter((entry) => args.where.status.in.includes(entry.status));
+          }
+          if (args.take) out = out.slice(0, args.take);
+          return out;
+        }),
+        update: vi.fn().mockImplementation(async ({ where, data }: any) => {
+          const index = entries.findIndex((entry) => entry.id === where.id);
+          entries[index] = { ...entries[index], ...data };
+          return entries[index];
+        }),
+      },
+    } as any;
+
+    vi.doMock("~/lib/prisma", () => ({
+      default: { $transaction: vi.fn().mockImplementation(async (fn: any) => fn(tx)) },
+    }));
+    vi.doMock("~/server/util/waitlistMailer", () => ({
+      sendWaitlistSpotAvailableEmail: vi.fn(),
+      sendWaitlistRegistrationConfirmedEmail: vi.fn(async (payload: any) => mails.push(payload)),
+    }));
+
+    const { registerWaitlistForIncreasedCapacity } = await import(
+      "../../server/services/events/waitlistService"
+    );
+
+    await registerWaitlistForIncreasedCapacity({ customEventId: "event-1" });
+
+    expect(registrations).toHaveLength(5);
+    expect(tickets).toHaveLength(5);
+    expect(entries.every((entry) => entry.status === "confirmed")).toBe(true);
+    expect(mails).toHaveLength(5);
+    expect(mails[0]).toMatchObject({
+      to: "player-1@example.com",
+      eventName: "League Cup",
+    });
+  });
+
   it("does not send claim emails after cutoff (event start -1h)", async () => {
     vi.setSystemTime(new Date("2026-05-05T17:10:00.000Z"));
 
@@ -276,6 +376,62 @@ describe("waitlist service", () => {
       statusCode: 400,
       statusMessage: "Waitlist is only available for sanctioned tournaments",
     });
+  });
+
+  it("allows joining the waitlist for prereleases", async () => {
+    vi.setSystemTime(new Date("2026-05-05T12:00:00.000Z"));
+
+    const waitlistEntry = {
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({ id: "waitlist-1" }),
+    };
+    const tx = {
+      $queryRaw: vi.fn(),
+      customEvent: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "event-1",
+          name: "Journey Together Prerelease",
+          eventDate: new Date("2026-05-06T18:00:00.000Z"),
+          maxParticipants: 10,
+          requiresDecklist: false,
+          tagType: "pokemon",
+          tags: { game: "Pokemon", type: "prerelease" },
+        }),
+      },
+      externalEventOverride: { findUnique: vi.fn().mockResolvedValue(null) },
+      eventRegistration: { findUnique: vi.fn().mockResolvedValue(null) },
+      registrationTicket: { count: vi.fn().mockResolvedValue(10) },
+      waitlistEntry,
+    } as any;
+
+    vi.doMock("~/lib/prisma", () => ({
+      default: { $transaction: vi.fn().mockImplementation(async (fn: any) => fn(tx)) },
+    }));
+    vi.doMock("~/server/util/waitlistMailer", () => ({
+      sendWaitlistSpotAvailableEmail: vi.fn(),
+    }));
+
+    const { joinEventWaitlist } = await import("../../server/services/events/waitlistService");
+
+    await expect(
+      joinEventWaitlist("event-1", {
+        id: "player-1",
+        name: "Tester",
+        playerId: "123",
+        email: "test@example.com",
+        supabaseId: "sup-1",
+      } as any),
+    ).resolves.toMatchObject({ success: true, status: "waiting" });
+
+    expect(waitlistEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          eventKey: "custom:event-1",
+          customEventId: "event-1",
+          playerId: "player-1",
+        }),
+      }),
+    );
   });
 
   it("drops own waitlist claim and promotes next user", async () => {

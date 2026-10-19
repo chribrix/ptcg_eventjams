@@ -79,6 +79,8 @@ async function resolveEventContextById(
         WAITLIST_CUTOFF_HOURS_BEFORE_EVENT * 60 * 60 * 1000,
     );
 
+    const eventType = String(tags?.type || "").toLowerCase();
+
     return {
       eventId,
       eventName: customEvent.name,
@@ -89,7 +91,9 @@ async function resolveEventContextById(
       eventKey: `custom:${eventId}`,
       isSanctioned:
         tags?.sanctioned === true ||
-        ["league_cup", "league_challenge"].includes(String(tags?.type || "")),
+        ["league_cup", "league_challenge", "prerelease", "pre_release"].includes(
+          eventType,
+        ),
       claimCutoffAt,
     };
   }
