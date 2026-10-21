@@ -691,23 +691,26 @@
             leave-to-class="translate-y-full sm:translate-y-0 sm:scale-95"
           >
             <div
-              class="app-modal-surface flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl sm:max-w-6xl sm:rounded-2xl"
+              class="app-modal-surface flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden rounded-none sm:h-auto sm:max-h-[92vh] sm:max-w-6xl sm:rounded-2xl"
               @click.stop
             >
-              <div class="border-b app-border px-6 py-5">
+              <div class="border-b app-border px-4 py-3 sm:px-6 sm:py-5">
                 <div class="flex items-start justify-between gap-4">
                   <div class="min-w-0">
                     <p class="text-sm font-medium text-[var(--app-accent)]">
                       {{ t("admin.eventsManager.checkInLabel") }}
                     </p>
-                    <h2 class="text-2xl font-bold app-text-primary">
-                      {{
-                        t("admin.eventsManager.registrationsTitle", {
-                          name: selectedEvent?.name,
-                        })
-                      }}
+                    <h2 class="max-w-[calc(100vw-5.5rem)] truncate text-lg font-bold app-text-primary sm:max-w-none sm:text-2xl">
+                      <span class="sm:hidden">{{ selectedEvent?.name }}</span>
+                      <span class="hidden sm:inline">
+                        {{
+                          t("admin.eventsManager.registrationsTitle", {
+                            name: selectedEvent?.name,
+                          })
+                        }}
+                      </span>
                     </h2>
-                    <p class="mt-1 text-sm app-text-muted-soft">
+                    <p class="mt-0.5 hidden text-xs app-text-muted-soft sm:mt-1 sm:block sm:text-sm">
                       {{ t("admin.eventsManager.checkInHelp") }}
                     </p>
                   </div>
@@ -731,7 +734,7 @@
                   </button>
                 </div>
 
-                <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                <div class="registration-stats mt-2 grid grid-cols-3 gap-1.5 sm:mt-4 sm:gap-3">
                   <div class="registrations-stat-card">
                     <span class="registrations-stat-number">{{ ticketRows.length }}</span>
                     <span class="registrations-stat-label">
@@ -760,14 +763,13 @@
                 </div>
               </div>
 
-              <div class="flex-1 space-y-6 overflow-y-auto px-6 py-5">
-                <section class="rounded-xl border app-border p-4">
+              <section class="manual-participant-panel shrink-0 border-b app-border px-3 py-2 sm:px-6 sm:py-3">
                   <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h3 class="text-base font-semibold app-text-primary">
                         Teilnehmer hinzufügen
                       </h3>
-                      <p class="text-sm app-text-muted-soft">
+                      <p class="hidden text-xs app-text-muted-soft sm:block sm:text-sm">
                         Admins können die Kapazität überbuchen oder direkt auf die Warteliste setzen.
                       </p>
                     </div>
@@ -780,57 +782,90 @@
                     </button>
                   </div>
 
-                  <div v-if="showManualParticipantForm" class="mt-4 space-y-3">
-                    <input
-                      v-model="playerSearchQuery"
-                      type="search"
-                      class="app-input w-full px-4 py-2"
-                      placeholder="Name, Spieler-ID oder E-Mail suchen"
-                      @input="searchPlayers"
-                    />
-                    <p v-if="playerSearchLoading" class="text-sm app-text-muted-soft">
-                      Suche läuft …
-                    </p>
-                    <p
-                      v-else-if="playerSearchQuery.trim().length > 0 && playerSearchResults.length === 0"
-                      class="text-sm app-text-muted-soft"
-                    >
-                      Keine passenden Spieler gefunden.
-                    </p>
-                    <div v-else class="space-y-2">
-                      <div
-                        v-for="player in playerSearchResults"
-                        :key="player.id"
-                        class="flex flex-col gap-2 rounded-lg border app-border p-3 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div class="min-w-0">
-                          <div class="font-medium app-text-primary">{{ player.name }}</div>
-                          <div class="truncate text-xs app-text-muted-soft">
-                            {{ player.playerId || "Keine Spieler-ID" }} · {{ player.email || "Keine E-Mail" }}
-                          </div>
-                        </div>
-                        <div class="flex shrink-0 gap-2">
-                          <button
-                            type="button"
-                            class="app-action-button app-action-secondary btn-small"
-                            :disabled="manualParticipantPendingId === player.id"
-                            @click="addManualParticipant(player, 'waitlist')"
-                          >
-                            Warteliste
-                          </button>
-                          <button
-                            type="button"
-                            class="app-action-button app-action-primary btn-small"
-                            :disabled="manualParticipantPendingId === player.id"
-                            @click="addManualParticipant(player, 'registration')"
-                          >
-                            In Liste
-                          </button>
-                        </div>
-                      </div>
+                  <form
+                    v-if="showManualParticipantForm"
+                    class="manual-participant-form mt-2"
+                    @submit.prevent="addManualParticipant"
+                  >
+                    <div class="manual-participant-fields">
+                      <label class="manual-participant-field manual-participant-field-id">
+                        <span>Spieler-ID</span>
+                        <input
+                          v-model.trim="manualParticipantForm.pokemonPlayerId"
+                          class="app-input"
+                          type="text"
+                          inputmode="numeric"
+                          autocomplete="off"
+                          pattern="[0-9]+"
+                          required
+                          placeholder="z. B. 5124038"
+                        />
+                      </label>
+                      <label class="manual-participant-field manual-participant-field-name">
+                        <span>Name</span>
+                        <input
+                          v-model.trim="manualParticipantForm.playerName"
+                          class="app-input"
+                          type="text"
+                          autocomplete="name"
+                          required
+                          placeholder="Vor- und Nachname"
+                        />
+                      </label>
+                      <label class="manual-participant-field manual-participant-field-year">
+                        <span>Geburtsjahr</span>
+                        <input
+                          v-model.number="manualParticipantForm.birthYear"
+                          class="app-input"
+                          type="number"
+                          inputmode="numeric"
+                          min="1900"
+                          :max="currentYear"
+                          required
+                          placeholder="2000"
+                        />
+                      </label>
                     </div>
-                  </div>
-                </section>
+
+                    <div class="manual-participant-actions">
+                      <div class="manual-target-toggle" role="radiogroup" aria-label="Ziel auswählen">
+                        <label :class="{ 'is-selected': manualParticipantForm.target === 'registration' }">
+                          <input
+                            v-model="manualParticipantForm.target"
+                            class="sr-only"
+                            type="radio"
+                            value="registration"
+                          />
+                          <span aria-hidden="true">✓</span>
+                          Direkt hinzufügen
+                        </label>
+                        <label :class="{ 'is-selected': manualParticipantForm.target === 'waitlist' }">
+                          <input
+                            v-model="manualParticipantForm.target"
+                            class="sr-only"
+                            type="radio"
+                            value="waitlist"
+                          />
+                          <span aria-hidden="true">✓</span>
+                          Warteliste
+                        </label>
+                      </div>
+
+                      <button
+                        type="submit"
+                        class="app-action-button app-action-primary manual-participant-submit"
+                        :disabled="manualParticipantPending"
+                      >
+                        {{ manualParticipantPending ? "Wird gespeichert …" : "Speichern" }}
+                      </button>
+                    </div>
+                    <p v-if="manualParticipantError" class="manual-participant-error" role="alert">
+                      {{ manualParticipantError }}
+                    </p>
+                  </form>
+              </section>
+
+              <div class="registration-list-area min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-3 sm:space-y-6 sm:px-6 sm:py-5">
 
                 <div v-if="ticketRows.length > 0" class="registrations-table-shell">
                   <div class="registrations-table">
@@ -1417,13 +1452,6 @@ interface WaitlistEntry {
   };
 }
 
-interface AdminPlayerSearchResult {
-  id: string;
-  playerId?: string | null;
-  name: string;
-  email?: string | null;
-}
-
 interface VenueDirectoryEntry {
   id: string;
   organizationName: string;
@@ -1459,10 +1487,16 @@ const events = ref<CustomEvent[]>([]);
 const registrations = ref<Registration[]>([]);
 const waitlistEntries = ref<WaitlistEntry[]>([]);
 const showManualParticipantForm = ref(false);
-const playerSearchQuery = ref("");
-const playerSearchResults = ref<AdminPlayerSearchResult[]>([]);
-const playerSearchLoading = ref(false);
-const manualParticipantPendingId = ref<string | null>(null);
+const currentYear = new Date().getFullYear();
+const createEmptyManualParticipantForm = () => ({
+  pokemonPlayerId: "",
+  playerName: "",
+  birthYear: "" as number | "",
+  target: "registration" as "registration" | "waitlist",
+});
+const manualParticipantForm = ref(createEmptyManualParticipantForm());
+const manualParticipantPending = ref(false);
+const manualParticipantError = ref("");
 const loading = ref(true);
 const saving = ref(false);
 const formError = ref("");
@@ -1478,7 +1512,6 @@ const selectedDecklist = ref<{ playerName: string; decklist: string } | null>(
 );
 const userTimeZone = ref(DEFAULT_EVENT_TIME_ZONE);
 const venueDirectory = ref<VenueDirectoryEntry[]>([]);
-let playerSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Flatten registrations → one row per ticket for display
 interface TicketRow {
@@ -2102,60 +2135,31 @@ const loadRegistrationsForSelectedEvent = async () => {
   }
 };
 
-const searchPlayers = () => {
-  if (playerSearchTimer) clearTimeout(playerSearchTimer);
+const addManualParticipant = async () => {
+  if (!selectedEvent.value || manualParticipantPending.value) return;
 
-  const query = playerSearchQuery.value.trim();
-  if (query.length < 2) {
-    playerSearchResults.value = [];
-    playerSearchLoading.value = false;
-    return;
-  }
-
-  playerSearchTimer = setTimeout(async () => {
-    playerSearchLoading.value = true;
-    try {
-      const response = await $fetch<{ players: AdminPlayerSearchResult[] }>(
-        `/api/admin/players?page=1&limit=8&search=${encodeURIComponent(query)}`,
-      );
-      if (playerSearchQuery.value.trim() === query) {
-        playerSearchResults.value = response.players || [];
-      }
-    } catch (error) {
-      console.error("Error searching players:", error);
-      playerSearchResults.value = [];
-    } finally {
-      if (playerSearchQuery.value.trim() === query) {
-        playerSearchLoading.value = false;
-      }
-    }
-  }, 250);
-};
-
-const addManualParticipant = async (
-  player: AdminPlayerSearchResult,
-  target: "registration" | "waitlist",
-) => {
-  if (!selectedEvent.value || manualParticipantPendingId.value) return;
-
-  manualParticipantPendingId.value = player.id;
+  manualParticipantPending.value = true;
+  manualParticipantError.value = "";
   try {
     await $fetch("/api/admin/registrations", {
       method: "POST",
       body: {
         eventId: selectedEvent.value.id,
-        playerId: player.id,
-        target,
+        pokemonPlayerId: manualParticipantForm.value.pokemonPlayerId,
+        playerName: manualParticipantForm.value.playerName,
+        birthYear: Number(manualParticipantForm.value.birthYear),
+        target: manualParticipantForm.value.target,
       },
     });
     await Promise.all([loadRegistrationsForSelectedEvent(), loadEvents()]);
-    playerSearchQuery.value = "";
-    playerSearchResults.value = [];
+    manualParticipantForm.value = createEmptyManualParticipantForm();
+    showManualParticipantForm.value = false;
   } catch (error: any) {
     console.error("Error adding manual participant:", error);
-    alert(error?.data?.statusMessage || "Teilnehmer konnte nicht hinzugefügt werden.");
+    manualParticipantError.value =
+      error?.data?.statusMessage || "Teilnehmer konnte nicht hinzugefügt werden.";
   } finally {
-    manualParticipantPendingId.value = null;
+    manualParticipantPending.value = false;
   }
 };
 
@@ -2242,14 +2246,9 @@ const closeRegistrationsModal = () => {
   waitlistEntries.value = [];
   updatingTicketIds.value = [];
   showManualParticipantForm.value = false;
-  playerSearchQuery.value = "";
-  playerSearchResults.value = [];
-  playerSearchLoading.value = false;
-  manualParticipantPendingId.value = null;
-  if (playerSearchTimer) {
-    clearTimeout(playerSearchTimer);
-    playerSearchTimer = null;
-  }
+  manualParticipantForm.value = createEmptyManualParticipantForm();
+  manualParticipantPending.value = false;
+  manualParticipantError.value = "";
 };
 
 const updateWaitlistPriority = async (
@@ -2635,6 +2634,43 @@ onMounted(async () => {
   border-radius: 1rem;
 }
 
+@media (max-width: 639px) {
+  .registration-stats {
+    display: flex;
+    border: 1px solid var(--app-border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .registrations-stat-card {
+    min-height: 0 !important;
+    flex: 1;
+    padding: 0.5rem 0.4rem !important;
+    gap: 0.05rem;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .registrations-stat-card + .registrations-stat-card {
+    border-left: 1px solid var(--app-border) !important;
+  }
+
+  .registrations-stat-number {
+    font-size: 1.35rem;
+    line-height: 1;
+  }
+
+  .registrations-stat-label {
+    font-size: 0.68rem;
+    line-height: 1.15;
+  }
+
+  .registration-list-area {
+    padding-top: 0.75rem;
+  }
+}
+
 .registrations-stat-number {
   font-size: 2rem;
   line-height: 1;
@@ -2645,6 +2681,94 @@ onMounted(async () => {
 .registrations-stat-label {
   font-size: 0.875rem;
   color: var(--app-text-muted);
+}
+
+.manual-participant-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.manual-participant-fields {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.8fr) minmax(12rem, 1.5fr) minmax(7rem, 0.6fr);
+  gap: 0.6rem;
+}
+
+.manual-participant-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--app-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.manual-participant-field .app-input {
+  width: 100%;
+  min-height: 2.65rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.manual-participant-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.manual-target-toggle {
+  display: flex;
+  min-height: 2.65rem;
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  border-radius: 0.7rem;
+  background: var(--app-surface-0);
+}
+
+.manual-target-toggle label {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.7rem;
+  color: var(--app-text-muted);
+  font-size: 0.8rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.manual-target-toggle label + label {
+  border-left: 1px solid var(--app-border);
+}
+
+.manual-target-toggle label > span {
+  opacity: 0;
+}
+
+.manual-target-toggle label.is-selected {
+  background: color-mix(in srgb, var(--app-accent) 16%, var(--app-surface-1));
+  color: var(--app-text-primary);
+}
+
+.manual-target-toggle label.is-selected > span {
+  opacity: 1;
+  color: var(--app-accent);
+}
+
+.manual-participant-submit {
+  min-height: 2.65rem;
+  padding-inline: 1rem;
+  white-space: nowrap;
+}
+
+.manual-participant-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--app-danger-text, #ef4444);
+  font-size: 0.8rem;
 }
 
 .registrations-table-shell {
@@ -2672,6 +2796,9 @@ onMounted(async () => {
 }
 
 .registrations-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   background: color-mix(in srgb, var(--app-surface-1) 90%, var(--app-accent));
   font-weight: 600;
   color: var(--app-text-secondary);
@@ -2679,6 +2806,75 @@ onMounted(async () => {
 
 .registrations-table tr:hover {
   background: var(--app-surface-1);
+}
+
+@media (max-width: 639px) {
+  .manual-participant-panel {
+    padding-block: 0.45rem;
+  }
+
+  .manual-participant-form {
+    display: block;
+  }
+
+  .manual-participant-fields {
+    grid-template-areas:
+      "id year"
+      "name name";
+    grid-template-columns: minmax(0, 1fr) 7rem;
+    gap: 0.4rem 0.5rem;
+  }
+
+  .manual-participant-field-id {
+    grid-area: id;
+  }
+
+  .manual-participant-field-name {
+    grid-area: name;
+  }
+
+  .manual-participant-field-year {
+    grid-area: year;
+  }
+
+  .manual-participant-field .app-input {
+    min-height: 2.5rem;
+    font-size: 1rem;
+  }
+
+  .manual-participant-actions {
+    margin-top: 0.5rem;
+    align-items: stretch;
+  }
+
+  .manual-target-toggle {
+    min-width: 0;
+    flex: 1;
+    min-height: 2.5rem;
+  }
+
+  .manual-target-toggle label {
+    min-width: 0;
+    flex: 1;
+    padding: 0.4rem 0.35rem;
+    font-size: 0.72rem;
+    white-space: normal;
+    line-height: 1.1;
+  }
+
+  .manual-participant-submit {
+    min-height: 2.5rem;
+    padding-inline: 0.75rem;
+  }
+
+  .registration-list-area {
+    scrollbar-gutter: stable;
+  }
+
+  .registrations-table th,
+  .registrations-table td {
+    padding: 0.6rem;
+  }
 }
 
 .registrations-status-badge {

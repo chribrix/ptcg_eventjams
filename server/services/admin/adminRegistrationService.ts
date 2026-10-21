@@ -5,12 +5,18 @@ import { promoteWaitlistForEvent } from "~/server/services/events/waitlistServic
 const createRegistrationSchema = z.object({
   eventId: z.string().min(1).optional(),
   customEventId: z.string().min(1).optional(),
-  playerId: z.string().min(1),
+  playerId: z.string().min(1).optional(),
+  pokemonPlayerId: z.string().trim().regex(/^\d+$/, "Player ID must contain digits only").optional(),
+  playerName: z.string().trim().min(1).optional(),
+  birthYear: z.number().int().min(1900).max(new Date().getFullYear()).optional(),
   notes: z.string().optional(),
   target: z.enum(["registration", "waitlist"]).default("registration"),
 }).refine((input) => input.eventId || input.customEventId, {
   message: "Event ID is required",
   path: ["eventId"],
+}).refine((input) => input.playerId || (input.pokemonPlayerId && input.playerName && input.birthYear), {
+  message: "Player ID, name and birth year are required",
+  path: ["pokemonPlayerId"],
 });
 
 const updateRegistrationSchema = z.object({
@@ -114,9 +120,31 @@ export async function createAdminRegistration(rawInput: unknown) {
       await tx.$queryRaw`SELECT id FROM public.external_event_overrides WHERE id = ${eventId} FOR UPDATE`;
     }
 
-    const player = await tx.player.findUnique({
-      where: { id: input.playerId },
-    });
+    let player = input.playerId
+      ? await tx.player.findUnique({ where: { id: input.playerId } })
+      : null;
+
+    if (!input.playerId) {
+      const pokemonPlayerId = input.pokemonPlayerId!;
+      const playerName = input.playerName!;
+      const birthDate = new Date(Date.UTC(input.birthYear!, 0, 1));
+      const existingPlayer = await tx.player.findUnique({
+        where: { playerId: pokemonPlayerId },
+      });
+
+      player = existingPlayer
+        ? await tx.player.update({
+            where: { id: existingPlayer.id },
+            data: { name: playerName, birthDate },
+          })
+        : await tx.player.create({
+            data: {
+              playerId: pokemonPlayerId,
+              name: playerName,
+              birthDate,
+            },
+          });
+    }
 
     if (!player) {
       throw createError({
@@ -125,16 +153,18 @@ export async function createAdminRegistration(rawInput: unknown) {
       });
     }
 
+    const playerRecordId = player.id;
+
     const existingRegistration = customEvent
       ? await tx.eventRegistration.findUnique({
           where: {
-            customEventId_playerId: { customEventId: eventId, playerId: input.playerId },
+            customEventId_playerId: { customEventId: eventId, playerId: playerRecordId },
           },
           include: { tickets: { where: { status: { not: "cancelled" } } } },
         })
       : await tx.eventRegistration.findUnique({
           where: {
-            externalEventId_playerId: { externalEventId: eventId, playerId: input.playerId },
+            externalEventId_playerId: { externalEventId: eventId, playerId: playerRecordId },
           },
           include: { tickets: { where: { status: { not: "cancelled" } } } },
         });
@@ -155,7 +185,7 @@ export async function createAdminRegistration(rawInput: unknown) {
       }
 
       const existingWaitlistEntry = await waitlistDelegate.findUnique({
-        where: { eventKey_playerId: { eventKey, playerId: input.playerId } },
+        where: { eventKey_playerId: { eventKey, playerId: playerRecordId } },
       });
       const now = new Date();
       const data = {
@@ -174,7 +204,7 @@ export async function createAdminRegistration(rawInput: unknown) {
               eventKey,
               customEventId: customEvent ? eventId : null,
               externalEventId: externalEvent ? eventId : null,
-              playerId: input.playerId,
+              playerId: playerRecordId,
             },
           });
     }
@@ -188,7 +218,7 @@ export async function createAdminRegistration(rawInput: unknown) {
           data: {
             customEventId: customEvent ? eventId : null,
             externalEventId: externalEvent ? eventId : null,
-            playerId: input.playerId,
+            playerId: playerRecordId,
             notes: input.notes,
           },
         });
@@ -204,7 +234,7 @@ export async function createAdminRegistration(rawInput: unknown) {
 
     if (waitlistDelegate) {
       await waitlistDelegate.updateMany({
-        where: { eventKey, playerId: input.playerId, status: { in: ["waiting", "pending_claim"] } },
+        where: { eventKey, playerId: playerRecordId, status: { in: ["waiting", "pending_claim"] } },
         data: { status: "confirmed", confirmedAt: new Date(), claimExpiresAt: null },
       });
     }
