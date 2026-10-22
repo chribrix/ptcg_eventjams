@@ -7,8 +7,8 @@ import {
   type TomResultUpdate,
 } from "~/server/services/events/tomTdfService";
 
-const REPORT_DISPUTE_WINDOW_MS = 30_000;
 const SNAPSHOT_ARCHIVE_LIMIT = 30;
+const PLAYER_REPORT_AUTO_FINALIZE_AFTER_MS = 60_000;
 
 type PlayerReportedResult = "win" | "loss" | "tie";
 
@@ -41,6 +41,9 @@ type TomMetadata = {
   }>;
   reports?: MatchReport[];
   pairingsReleasedRound?: number;
+  pairingsReleasedRoundsByPod?: Record<string, number>;
+  tournamentReleasedAt?: string;
+  playerAccessedUserIds?: string[];
   snapshotArchive?: Array<{
     id: string;
     fileName: string;
@@ -50,6 +53,28 @@ type TomMetadata = {
     roundNumber?: number;
     xml: string;
   }>;
+};
+
+export const recordTournamentPlayerAccess = async (customEventId: string, playerUserId: string) => {
+  const tomState = getTomStateDelegate();
+  const record = await tomState.findUnique({ where: { customEventId } });
+  if (!record) return;
+  const metadata = getMetadata(record);
+  metadata.playerAccessedUserIds = Array.from(new Set([...(metadata.playerAccessedUserIds || []), playerUserId]));
+  await tomState.update({ where: { customEventId }, data: { metadata, updatedAt: new Date() } });
+};
+
+export const releaseTournamentForPlayers = async (customEventId: string) => {
+  const tomState = getTomStateDelegate();
+  const record = await tomState.findUnique({ where: { customEventId } });
+  if (!record) throw createError({ statusCode: 404, statusMessage: "No TOM state imported for this tournament" });
+  const metadata = getMetadata(record);
+  metadata.tournamentReleasedAt = new Date().toISOString();
+  const updated = await tomState.update({
+    where: { customEventId },
+    data: { metadata, updatedAt: new Date() },
+  });
+  return { record: updated, stateView: buildTomStateView(updated.currentXml) };
 };
 
 const parseTomSnapshotHint = (fileName?: string): {
@@ -173,7 +198,6 @@ const finalizePendingReports = (input: {
   metadata: TomMetadata;
   currentXml: string;
 }): { metadata: TomMetadata; currentXml: string; changed: boolean } => {
-  const now = Date.now();
   let changed = false;
   let currentXml = input.currentXml;
   const reports = input.metadata.reports || [];
@@ -208,11 +232,21 @@ const finalizePendingReports = (input: {
       continue;
     }
 
-    const ageMs = now - new Date(report.createdAt).getTime();
-    if (ageMs >= REPORT_DISPUTE_WINDOW_MS) {
-      report.status = "finalized";
-      changed = true;
-      currentXml = applyOutcomeToXmlForReport(currentXml, report);
+    // If the opponent does not contradict the first report within one minute,
+    // accept it. A later correction remains possible for an admin.
+    const firstReport = related
+      .slice()
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0];
+    const firstReportAge = firstReport ? Date.now() - new Date(firstReport.createdAt).getTime() : 0;
+    if (firstReport && Number.isFinite(firstReportAge) && firstReportAge >= PLAYER_REPORT_AUTO_FINALIZE_AFTER_MS) {
+      for (const item of related) {
+        if (item.status !== "finalized") {
+          item.status = "finalized";
+          item.conflictNote = "Accepted after one minute without contradiction";
+          changed = true;
+        }
+      }
+      currentXml = applyOutcomeToXmlForReport(currentXml, firstReport);
     }
   }
 
@@ -539,6 +573,16 @@ export const applyTournamentTomResultUpdates = async (input: {
   }
 
   const updatedXml = applyTomResultUpdates(record.currentXml, input.updates);
+  const metadata = getMetadata(record);
+
+  // Undo means the table is open again. Old player reports must not be allowed
+  // to immediately finalize the newly reset result.
+  const resetUpdates = input.updates.filter((update) => update.outcome === 0);
+  if (resetUpdates.length) {
+    metadata.reports = (metadata.reports || []).filter(
+      (report) => !resetUpdates.some((update) => sameMatchKey(report, update)),
+    );
+  }
 
   const updatedRecord = await tomState.update({
     where: {
@@ -548,7 +592,7 @@ export const applyTournamentTomResultUpdates = async (input: {
       currentXml: updatedXml,
       updatedAt: new Date(),
       metadata: {
-        ...(record.metadata as Record<string, unknown> | null),
+        ...metadata,
         lastResultUpdateAt: new Date().toISOString(),
       },
     },
@@ -562,7 +606,7 @@ export const applyTournamentTomResultUpdates = async (input: {
   };
 };
 
-export const releaseCurrentRoundForPlayers = async (customEventId: string) => {
+export const releaseCurrentRoundForPlayers = async (customEventId: string, divisionCategory?: string) => {
   const state = await getTournamentTomState(customEventId);
   if (!state) {
     throw createError({
@@ -571,7 +615,10 @@ export const releaseCurrentRoundForPlayers = async (customEventId: string) => {
     });
   }
 
-  const currentRoundNumber = state.stateView.currentRound?.number;
+  const snapshot = parseTomTdf(state.record.currentXml);
+  const currentRoundNumber = divisionCategory
+    ? snapshot.rounds.slice().reverse().find((round) => round.matches.some((match) => match.divisionCategory === divisionCategory && match.outcome === 0))?.number
+    : state.stateView.currentRound?.number;
   if (!currentRoundNumber) {
     throw createError({
       statusCode: 400,
@@ -580,7 +627,11 @@ export const releaseCurrentRoundForPlayers = async (customEventId: string) => {
   }
 
   const metadata = getMetadata(state.record);
-  metadata.pairingsReleasedRound = currentRoundNumber;
+  if (divisionCategory) {
+    metadata.pairingsReleasedRoundsByPod = { ...(metadata.pairingsReleasedRoundsByPod || {}), [divisionCategory]: currentRoundNumber };
+  } else {
+    metadata.pairingsReleasedRound = currentRoundNumber;
+  }
 
   const tomState = getTomStateDelegate();
   const updated = await tomState.update({
@@ -717,6 +768,17 @@ export const submitPlayerMatchReport = async (input: {
   };
 
   metadata.reports = metadata.reports || [];
+  // Let a player correct a pending/conflicting entry without accumulating
+  // stale statements for the same pairing.
+  metadata.reports = metadata.reports.filter(
+    (existing) =>
+      !(
+        existing.reporterUserId === input.reporterUserId &&
+        existing.status !== "finalized" &&
+        existing.status !== "admin_overridden" &&
+        sameMatchKey(existing, report)
+      ),
+  );
   metadata.reports.push(report);
 
   const finalized = finalizePendingReports({
@@ -755,7 +817,7 @@ export const getPlayerTournamentRun = async (input: {
   const snapshot = parseTomTdf(state.record.currentXml);
   const metadata = getMetadata(state.record);
   const reports = metadata.reports || [];
-  const releasedRound = metadata.pairingsReleasedRound || 0;
+  const releasedRoundsByPod = metadata.pairingsReleasedRoundsByPod || {};
 
   const playerMatches = snapshot.rounds
     .flatMap((round) =>
@@ -812,7 +874,7 @@ export const getPlayerTournamentRun = async (input: {
   const currentMatchCandidate =
     playerMatches.slice().reverse().find((match) => match.outcome === 0) || null;
   const currentMatch =
-    currentMatchCandidate && currentMatchCandidate.roundNumber <= releasedRound
+    currentMatchCandidate && currentMatchCandidate.roundNumber <= (releasedRoundsByPod[currentMatchCandidate.divisionCategory || ""] || metadata.pairingsReleasedRound || 0)
       ? currentMatchCandidate
       : null;
 
@@ -831,9 +893,16 @@ export const getPlayerTournamentRun = async (input: {
   const opponentReported = matchReports.some(
     (report) => report.reporterUserId !== input.playerUserId,
   );
+  const opponentReport = matchReports.find(
+    (report) => report.reporterUserId !== input.playerUserId,
+  );
+  const ownReport = matchReports.find(
+    (report) => report.reporterUserId === input.playerUserId,
+  );
 
   return {
     stateView: state.stateView,
+    playerUserId: input.playerUserId,
     playerMatches,
     score: {
       wins,
@@ -845,12 +914,15 @@ export const getPlayerTournamentRun = async (input: {
     reports: {
       currentMatchReports: matchReports,
       opponentReported,
-      disputeWindowSeconds: 30,
+      opponentResult: opponentReport?.reporterResult,
+      ownResult: ownReport?.reporterResult,
+      awaitingBothConfirmations: currentMatch?.outcome === 0,
     },
     release: {
-      pairingsReleasedRound: releasedRound,
+      pairingsReleasedRound: metadata.pairingsReleasedRound || 0,
+      pairingsReleasedRoundsByPod: releasedRoundsByPod,
       isCurrentRoundReleased:
-        !!currentMatchCandidate && currentMatchCandidate.roundNumber <= releasedRound,
+        !!currentMatchCandidate && currentMatchCandidate.roundNumber <= (releasedRoundsByPod[currentMatchCandidate.divisionCategory || ""] || metadata.pairingsReleasedRound || 0),
     },
   };
 };

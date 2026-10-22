@@ -1,5 +1,6 @@
 import { defineAdminRoute } from "~/server/services/admin/adminRoute";
 import { getTournamentTomState } from "~/server/services/events/tournamentTomStateService";
+import { exportTomPodTdf, parseTomTdf } from "~/server/services/events/tomTdfService";
 
 export default defineAdminRoute(async ({ event }) => {
   const eventId = getRouterParam(event, "eventId");
@@ -23,9 +24,17 @@ export default defineAdminRoute(async ({ event }) => {
   const query = getQuery(event);
   const mode = String(query.mode || "current");
   const snapshotId = String(query.snapshotId || "").trim();
+  const pod = String(query.pod || "").trim();
 
   const currentRound = state.stateView.currentRound;
-  if (mode === "current" && currentRound?.matches?.some((match) => match.outcome === 0)) {
+  const podDivision = pod
+    ? parseTomTdf(state.record.currentXml).divisions.find((division) => division.category === pod)
+    : undefined;
+  const latestPodRound = podDivision?.rounds.reduce(
+    (latest, round) => (!latest || round.number > latest.number ? round : latest),
+    undefined as (typeof podDivision.rounds)[number] | undefined,
+  );
+  if (mode === "current" && (pod ? latestPodRound?.matches.some((match) => match.outcome === 0) : currentRound?.matches?.some((match) => match.outcome === 0))) {
     throw createError({
       statusCode: 409,
       statusMessage:
@@ -53,6 +62,11 @@ export default defineAdminRoute(async ({ event }) => {
     }
     xmlToExport = snapshot.xml;
     exportLabel = snapshot.fileName || snapshot.id || "snapshot";
+  }
+
+  if (pod) {
+    xmlToExport = exportTomPodTdf(xmlToExport, pod);
+    exportLabel = `${exportLabel}_pod_${pod}`;
   }
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");

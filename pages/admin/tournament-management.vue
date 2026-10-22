@@ -1,40 +1,10 @@
 <template>
-  <AdminPageLayout title="Tournament Management" subtitle="Import TOM and manage rounds/divisions">
+  <AdminPageLayout title="Turniersteuerung" subtitle="Live-Workspace für ein gestartetes Turnier">
     <div class="tm-layout">
-      <section class="admin-card tm-selector-panel">
-        <div class="section-header tm-header">
-          <h2>Turnier auswählen</h2>
-          <button class="btn btn-secondary btn-small" :disabled="listLoading" @click="loadEvents">Refresh</button>
-        </div>
-        <div class="tm-selector-controls">
-          <input
-            v-model="tournamentSearch"
-            type="text"
-            class="tm-input"
-            placeholder="Turniername oder Venue suchen"
-          />
-          <select
-            v-model="selectedEventId"
-            class="tm-select"
-            :disabled="listLoading || filteredEvents.length === 0"
-            @change="onSelectEventChange"
-          >
-            <option v-if="filteredEvents.length === 0" value="">Keine Turniere gefunden</option>
-            <option
-              v-for="entry in filteredEvents"
-              :key="entry.id"
-              :value="entry.id"
-            >
-              {{ entry.name }} · {{ formatDate(entry.eventDate) }}
-            </option>
-          </select>
-        </div>
-      </section>
-
       <section class="admin-card tm-control-panel">
         <div v-if="detailsLoading" class="tm-state">Loading tournament details...</div>
         <div v-else-if="detailsError" class="tm-error">{{ detailsError }}</div>
-        <div v-else-if="!selectedEvent" class="tm-state">Select a tournament.</div>
+        <div v-else-if="!selectedEvent" class="tm-state">Öffne ein Turnier über die Eventverwaltung, um die Turniersteuerung zu starten.</div>
         <template v-else>
           <div class="tm-title-row">
             <div>
@@ -45,23 +15,22 @@
           </div>
 
           <div class="tm-import-panel">
-            <h3>TOM Source of Truth</h3>
+            <h3>Turnierkontrolle</h3>
             <div class="tm-import-actions">
               <input ref="fileInputRef" type="file" accept=".tdf,.xml,text/xml" @change="onTomFileSelected" />
-              <button class="btn btn-primary" :disabled="tomImporting || !pendingTomXml" @click="importTomXml">Import TOM XML</button>
-              <button class="btn btn-primary" :disabled="tomLoading || !tomStateLoaded" @click="releaseCurrentRound">Runde starten</button>
-              <button class="btn btn-secondary" :disabled="tomLoading" @click="loadTomState">Reload</button>
-              <button class="btn btn-info" :disabled="!tomStateLoaded || hasPendingCurrentRound" @click="exportTomXml('current')">Export Current</button>
-              <button class="btn btn-info" :disabled="!tomStateLoaded" @click="exportTomXml('source')">Export Source</button>
+              <button class="btn btn-primary" :disabled="tomImporting || !pendingTomXml" @click="importTomXml">Paarungen hochladen</button>
+              <button class="btn btn-primary" :disabled="!tomStateLoaded || tournamentReleased" @click="releaseTournament">Turnier freigeben</button>
+              <button class="btn btn-primary" :disabled="!tournamentReleased || tomLoading || !tomStateLoaded || !activePodCategory" @click="releaseCurrentRound">Runde starten{{ activePodCategory ? ` · Pod ${activePodCategory}` : "" }}</button>
+              <NuxtLink v-if="tournamentReleased && tomStateLoaded && selectedEventId" class="btn btn-secondary" :to="`/tournaments/${selectedEventId}/qr`" target="_blank">QR-Display öffnen</NuxtLink>
+              <button class="btn btn-secondary" :disabled="tomLoading" @click="loadTomState">Aktualisieren</button>
             </div>
             <p v-if="pendingTomFileName" class="tm-meta">Selected file: {{ pendingTomFileName }}</p>
             <p v-if="latestImportInfo" class="tm-meta">
               Last import: {{ latestImportInfo.fileName || "unknown file" }} ({{ latestImportInfo.snapshotKind }}{{ latestImportInfo.roundNumber ? ` r${latestImportInfo.roundNumber}` : "" }})
             </p>
-            <p v-if="tomMetadata?.pairingsReleasedRound" class="tm-meta">
-              Released round for players: {{ tomMetadata.pairingsReleasedRound }}
+            <p v-if="tournamentReleased" class="tm-meta">
+              Turnieransicht und QR-Zugang sind freigegeben.
             </p>
-            <p v-if="tomRefreshing" class="tm-meta">Live-Update aktiv …</p>
             <p v-if="tomSuccessMessage" class="tm-success-inline">{{ tomSuccessMessage }}</p>
             <div v-if="tomMetadata?.snapshotArchive?.length" class="tm-snapshot-list">
               <p class="tm-meta">Snapshot Exports:</p>
@@ -85,19 +54,39 @@
               <button class="tm-tab" :class="{ active: activeTomTab === 'overview' }" @click="setActiveTab('overview')">Overview</button>
               <button class="tm-tab" :class="{ active: activeTomTab === 'roster' }" @click="setActiveTab('roster')">Roster</button>
               <button
-                v-for="round in tomRoundsDetailed"
+                v-for="round in roundsForActivePod"
                 :key="`round-${round.number}`"
                 class="tm-tab"
-                :class="{ active: activeTomTab === `round-${round.number}` }"
+                :class="{ active: activeTomTab === `round-${round.number}`, current: roundIsCurrent(round), completed: roundIsComplete(round) }"
                 @click="setActiveTab(`round-${round.number}`)"
               >
                 {{ roundTabLabel(round) }}
               </button>
             </div>
+            <div v-if="tomDivisions.length > 1" class="tm-pod-tabs" aria-label="Pod auswählen">
+              <button
+                v-for="division in tomDivisions"
+                :key="division.category"
+                class="tm-pod-tab"
+                :class="{ active: activePodCategory === division.category }"
+                @click="selectPod(division.category)"
+              >
+                Pod {{ division.category }}
+              </button>
+            </div>
 
             <div v-if="activeTomTab === 'overview'" class="tm-overview">
               <div v-for="division in tomDivisions" :key="division.category" class="tm-overview-division">
-                <h4 class="tm-overview-title">{{ division.category }} • Round {{ division.currentRound?.number ?? "—" }}</h4>
+                <div class="tm-overview-title-row">
+                  <h4 class="tm-overview-title">Pod {{ division.category }} • Round {{ division.currentRound?.number ?? "—" }}</h4>
+                  <button
+                    class="btn btn-small btn-info"
+                    :disabled="division.currentRound?.matches?.some((match) => match.outcome === 0)"
+                    @click="exportTomXml('current', undefined, division.category)"
+                  >
+                    Runde beenden und TDF exportieren
+                  </button>
+                </div>
                 <div class="admin-table-wrapper">
                   <table class="admin-table">
                     <thead>
@@ -119,7 +108,7 @@
             </div>
 
             <div v-if="activeTomTab === 'roster'">
-              <p class="tm-meta">Click player row for impersonation demo view.</p>
+              <p class="tm-meta">📱 = Turnieransicht aktiviert · 🃏 = Deckliste liegt vor</p>
               <div class="admin-table-wrapper">
                 <table class="admin-table">
                   <thead>
@@ -134,7 +123,17 @@
                       @click="openDemoPlayer(player)"
                     >
                       <td class="mono">{{ player.userId }}</td>
-                      <td>{{ player.displayName }}</td>
+                      <td>
+                        <span>{{ player.displayName }}</span>
+                        <span v-if="player.hasOpenedTournament" class="tm-player-icon" title="Turnieransicht aktiviert" aria-label="Turnieransicht aktiviert">📱</span>
+                        <button
+                          v-if="player.decklist"
+                          class="tm-icon-button"
+                          title="Deckliste anzeigen"
+                          aria-label="Deckliste anzeigen"
+                          @click.stop="decklistModal = { player, decklist: player.decklist }"
+                        >🃏</button>
+                      </td>
                       <td>{{ player.birthDate || '—' }}</td>
                       <td>{{ player.divisions?.length ? player.divisions.join(', ') : '—' }}</td>
                       <td>
@@ -143,6 +142,15 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+              <div v-if="decklistModal" class="tm-decklist-overlay" @click.self="decklistModal = null">
+                <section class="tm-decklist-dialog" role="dialog" aria-modal="true" aria-label="Deckliste">
+                  <div class="tm-decklist-heading">
+                    <h4>Deckliste · {{ decklistModal.player.displayName }}</h4>
+                    <button class="btn btn-small btn-secondary" @click="decklistModal = null">Schließen</button>
+                  </div>
+                  <pre>{{ decklistModal.decklist }}</pre>
+                </section>
               </div>
 
               <div v-if="demoPlayer" class="tm-demo-panel">
@@ -172,6 +180,19 @@
               </div>
             </div>
 
+            <div v-if="activeRoundView" class="tm-round-actions">
+              <div>
+                <h3>Pod {{ activePodCategory || "—" }} · Runde {{ activeRoundView.number }}</h3>
+                <p class="tm-meta">Ergebnisse werden live aktualisiert. Die Runde kann erst beendet werden, wenn alle Ergebnisse gesetzt sind.</p>
+              </div>
+              <button
+                class="btn btn-primary"
+                :disabled="activeRoundView.matches.some((match) => match.outcome === 0)"
+                @click="exportTomXml('current', undefined, activePodCategory || undefined)"
+              >
+                Runde beenden und TDF exportieren
+              </button>
+            </div>
             <div v-if="activeRoundView" class="admin-table-wrapper">
               <table class="admin-table">
                 <thead>
@@ -214,6 +235,7 @@
                         <button class="btn btn-small btn-info" :disabled="tomResultSaving" @click="setTomMatchOutcome(activeRoundView.number, match, 2)">P2</button>
                         <button class="btn btn-small btn-secondary" :disabled="tomResultSaving" @click="setTomMatchOutcome(activeRoundView.number, match, 3)">Draw</button>
                         <button class="btn btn-small btn-danger" :disabled="tomResultSaving" @click="setTomMatchOutcome(activeRoundView.number, match, 8)">DGL</button>
+                        <button class="btn btn-small btn-secondary" :disabled="tomResultSaving || match.outcome === 0" @click="setTomMatchOutcome(activeRoundView.number, match, 0)">UNDO</button>
                       </div>
                     </td>
                   </tr>
@@ -232,7 +254,7 @@
 
 type EventListEntry = { id: string; name: string; venue: string; eventDate: string; status: string; maxParticipants: number; _count?: { registrations: number } };
 type SelectedEvent = { id: string; name: string; venue: string; eventDate: string; status: string };
-type TomPlayerView = { userId: string; displayName: string; birthDate?: string; divisions?: string[] };
+type TomPlayerView = { userId: string; displayName: string; birthDate?: string; divisions?: string[]; hasOpenedTournament?: boolean; decklist?: string | null };
 type TomMatchView = { tableNumber?: number; player1UserId?: string; player2UserId?: string; outcome: number; outcomeLabel: string; divisionCategory?: string };
 type TomDivisionStanding = {
   userId: string;
@@ -245,7 +267,7 @@ type TomDivisionStanding = {
   opponentWinPercent: number;
   opponentOpponentWinPercent: number;
 };
-type TomDivisionView = { category: string; standings?: TomDivisionStanding[]; currentRound: { number: number; matches: TomMatchView[] } | null };
+type TomDivisionView = { category: string; standings?: TomDivisionStanding[]; rounds?: Array<{ number: number; type?: number; stage?: number }>; currentRound: { number: number; matches: TomMatchView[] } | null };
 type TomRoundView = { number: number; type?: number; stage?: number; matches: TomMatchView[] };
 type PlayerRunResponse = { score: { wins: number; losses: number; ties: number; points: number }; playerMatches: Array<{ roundNumber: number; divisionCategory?: string; opponentUserId?: string; tableNumber?: number; outcomeLabel: string }>; reports?: { opponentReported?: boolean } };
 type TomReportStatus = "pending" | "conflicted" | "finalized" | "admin_overridden";
@@ -265,6 +287,7 @@ type TomMetadata = {
   reports?: TomReportMeta[];
   importHistory?: Array<{ fileName?: string; snapshotKind?: string; roundNumber?: number; importedAt?: string }>;
   pairingsReleasedRound?: number;
+  tournamentReleasedAt?: string;
   snapshotArchive?: Array<{
     id: string;
     fileName?: string;
@@ -293,6 +316,7 @@ const tomImporting = ref(false);
 const tomResultSaving = ref(false);
 const tomStateError = ref<string | null>(null);
 const tomSuccessMessage = ref<string | null>(null);
+const playerAccessQrDataUrl = ref<string | null>(null);
 const tomImportedAt = ref<string | null>(null);
 const tomUpdatedAt = ref<string | null>(null);
 const tomMetadata = ref<TomMetadata | null>(null);
@@ -301,6 +325,7 @@ const tomDivisions = ref<TomDivisionView[]>([]);
 const tomRoundsDetailed = ref<TomRoundView[]>([]);
 const tomCurrentRoundNumber = ref<number | null>(null);
 const activeTomTab = ref<string>("overview");
+const activePodCategory = ref<string | null>(null);
 const tomStateFingerprint = ref<string | null>(null);
 const userPinnedTab = ref<string>("overview");
 let tomStateRequestSeq = 0;
@@ -313,6 +338,7 @@ const demoPlayer = ref<TomPlayerView | null>(null);
 const demoRun = ref<PlayerRunResponse | null>(null);
 const demoLoading = ref(false);
 const demoError = ref<string | null>(null);
+const decklistModal = ref<{ player: TomPlayerView; decklist: string } | null>(null);
 let nowTickTimer: ReturnType<typeof setInterval> | null = null;
 const nowTick = ref(Date.now());
 let adminStateStream: EventSource | null = null;
@@ -320,10 +346,28 @@ let lastAdminStreamUpdatedAt = "";
 let tomRefreshInFlight = false;
 let tomRefreshQueued = false;
 
+const tournamentReleased = computed(() => !!tomMetadata.value?.tournamentReleasedAt);
+
 const setActiveTab = (tab: string) => {
   activeTomTab.value = tab;
   userPinnedTab.value = tab;
 };
+
+const selectPod = (category: string) => {
+  activePodCategory.value = category;
+  const latestRound = roundsForActivePod.value.at(-1);
+  if (latestRound && activeTomTab.value.startsWith("round-")) setActiveTab(`round-${latestRound.number}`);
+};
+
+const roundsForActivePod = computed(() => {
+  if (!activePodCategory.value) return tomRoundsDetailed.value;
+  return tomRoundsDetailed.value
+    .map((round) => ({ ...round, matches: round.matches.filter((match) => match.divisionCategory === activePodCategory.value) }))
+    .filter((round) => round.matches.length > 0);
+});
+
+const roundIsCurrent = (round: TomRoundView) => round.matches.some((match) => match.outcome === 0);
+const roundIsComplete = (round: TomRoundView) => round.matches.length > 0 && round.matches.every((match) => match.outcome !== 0);
 
 const filteredEvents = computed(() => {
   const query = tournamentSearch.value.trim().toLowerCase();
@@ -372,6 +416,7 @@ const selectEvent = async (eventId: string) => {
   userPinnedTab.value = "overview";
   pendingTomXml.value = null;
   pendingTomFileName.value = null;
+  playerAccessQrDataUrl.value = null;
   demoPlayer.value = null;
   demoRun.value = null;
   if (fileInputRef.value) fileInputRef.value.value = "";
@@ -456,6 +501,9 @@ const loadTomState = async (
     tomMetadata.value = response.metadata || null;
     tomPlayers.value = response.state.players;
     tomDivisions.value = response.state.divisions || [];
+    if (!activePodCategory.value || !tomDivisions.value.some((division) => division.category === activePodCategory.value)) {
+      activePodCategory.value = tomDivisions.value[0]?.category || null;
+    }
     tomRoundsDetailed.value = response.state.roundsDetailed || [];
     tomCurrentRoundNumber.value = response.state.currentRound?.number || null;
     if (response.state.currentRound?.number) {
@@ -548,8 +596,9 @@ const releaseCurrentRound = async () => {
   try {
     const result = await $fetch<{ success: boolean; releasedRound: number }>(`/api/admin/tournaments/${selectedEventId.value}/tom-bridge/release-round`, {
       method: "POST",
+      body: { divisionCategory: activePodCategory.value },
     });
-    tomSuccessMessage.value = `Runde ${result.releasedRound} wurde für Spieler freigegeben.`;
+    tomSuccessMessage.value = `Runde ${result.releasedRound} in Pod ${activePodCategory.value} wurde für Spieler freigegeben.`;
     await loadTomState();
   } catch (error: any) {
     tomStateError.value = error?.data?.statusMessage || "Failed to release current round.";
@@ -558,13 +607,53 @@ const releaseCurrentRound = async () => {
   }
 };
 
-const exportTomXml = async (mode: "current" | "source" | "snapshot" = "current", snapshotId?: string) => {
+const releaseTournament = async () => {
+  if (!selectedEventId.value) return;
+  tomLoading.value = true;
+  tomStateError.value = null;
+  try {
+    await $fetch(`/api/admin/tournaments/${selectedEventId.value}/tom-bridge/release-tournament`, { method: "POST" });
+    tomSuccessMessage.value = "Turnier freigegeben. QR-Display und Spieleransichten sind jetzt verfügbar.";
+    await loadTomState();
+  } catch (error: any) {
+    tomStateError.value = error?.data?.statusMessage || "Turnier konnte nicht freigegeben werden.";
+  } finally {
+    tomLoading.value = false;
+  }
+};
+
+const copyPlayerAccessLink = async () => {
+  if (!selectedEventId.value || !import.meta.client) return;
+  const url = `${window.location.origin}/tournaments/${selectedEventId.value}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    tomSuccessMessage.value = "Spieler-Zugangslink kopiert. Diesen Link als QR-Code ausgeben.";
+  } catch {
+    tomStateError.value = "Spieler-Zugangslink konnte nicht kopiert werden.";
+  }
+};
+
+const showPlayerAccessQr = async () => {
+  if (!selectedEventId.value || !import.meta.client) return;
+  try {
+    const QRCode = (await import("qrcode")).default;
+    playerAccessQrDataUrl.value = await QRCode.toDataURL(
+      `${window.location.origin}/tournaments/${selectedEventId.value}`,
+      { width: 440, margin: 1, errorCorrectionLevel: "M" },
+    );
+  } catch {
+    tomStateError.value = "QR-Code konnte nicht erzeugt werden.";
+  }
+};
+
+const exportTomXml = async (mode: "current" | "source" | "snapshot" = "current", snapshotId?: string, pod?: string) => {
   if (!selectedEventId.value) return;
   const params = new URLSearchParams();
   params.set("mode", mode);
   if (mode === "snapshot" && snapshotId) {
     params.set("snapshotId", snapshotId);
   }
+  if (pod) params.set("pod", pod);
   const response = await fetch(`/api/admin/tournaments/${selectedEventId.value}/tom-bridge/export?${params.toString()}`, { credentials: "include" });
   if (!response.ok) {
     tomStateError.value = mode === "current"
@@ -576,7 +665,7 @@ const exportTomXml = async (mode: "current" | "source" | "snapshot" = "current",
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `tournament_${selectedEventId.value}_${mode}.tdf`;
+  link.download = `tournament_${selectedEventId.value}_${pod ? `pod_${pod}_` : ""}${mode}.tdf`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -623,7 +712,7 @@ const resolveConflict = async (roundNumber: number, match: TomMatchView, outcome
 const activeRoundView = computed<TomRoundView | null>(() => {
   if (!activeTomTab.value.startsWith("round-")) return null;
   const roundNumber = Number.parseInt(activeTomTab.value.replace("round-", ""), 10);
-  return tomRoundsDetailed.value.find((round) => round.number === roundNumber) || null;
+  return roundsForActivePod.value.find((round) => round.number === roundNumber) || null;
 });
 
 const hasPendingCurrentRound = computed(() => {
@@ -755,13 +844,23 @@ const openDemoPlayer = async (player: TomPlayerView) => {
 
 const openFullPlayerView = (player: TomPlayerView) => {
   if (!selectedEventId.value) return;
+  // Open synchronously from the click event. Opening only after $fetch resolves
+  // is treated as an unsolicited popup by browsers and is commonly blocked.
+  const previewWindow = window.open("about:blank", "_blank");
+  if (!previewWindow) {
+    tomStateError.value = "Dein Browser hat das Vorschaufenster blockiert. Bitte Pop-ups für diese Seite erlauben.";
+    return;
+  }
+  previewWindow.document.title = "Turnieransicht wird geöffnet …";
   $fetch<{ success: boolean; url: string }>(
     `/api/admin/tournaments/${selectedEventId.value}/tom-bridge/viewer-token?playerUserId=${encodeURIComponent(player.userId)}`,
   )
     .then((response) => {
-      window.open(response.url, "_blank", "noopener,noreferrer");
+      previewWindow.location.replace(response.url);
+      previewWindow.opener = null;
     })
     .catch(() => {
+      previewWindow.close();
       tomStateError.value = "Konnte Turnieransicht-Link nicht erzeugen.";
     });
 };
@@ -824,9 +923,9 @@ const statusClass = (status: string) => {
 };
 
 onMounted(async () => {
-  await loadEvents();
+  const eventId = typeof route.query.eventId === "string" ? route.query.eventId : null;
+  if (eventId) await selectEvent(eventId);
   startNowTickTimer();
-  startAdminStateStream();
 });
 
 onBeforeUnmount(() => {
@@ -854,17 +953,34 @@ onBeforeUnmount(() => {
 .tm-title-row { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; margin-bottom: 1rem; }
 .tm-title { margin: 0; font-size: 1.35rem; color: var(--app-text-primary); }
 .tm-subtitle { margin: 0.3rem 0 0; color: var(--app-text-muted); }
-.tm-import-panel { border: 1px solid var(--app-border); background: var(--app-surface-1); border-radius: 10px; padding: 0.8rem; margin-bottom: 1rem; }
+.tm-import-panel { position: relative; border: 1px solid var(--app-border); background: var(--app-surface-1); border-radius: 10px; padding: 0.8rem; margin-bottom: 1rem; }
 .tm-import-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
+.tm-qr-panel { display: grid; justify-items: start; gap: 0.45rem; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--app-border); }
+.tm-qr-panel img { background: #fff; border: 1px solid var(--app-border); border-radius: 8px; }
 .tm-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.tm-pod-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: -0.35rem 0 1rem; }
+.tm-pod-tab { border: 1px solid var(--app-border); background: var(--app-surface-2); color: var(--app-text-secondary); border-radius: 8px; padding: 0.35rem 0.75rem; font-weight: 700; cursor: pointer; }
+.tm-pod-tab.active { border-color: var(--app-button-blue-border); background: var(--app-badge-info-bg); color: var(--app-badge-info-text); }
 .tm-tab { border: 1px solid var(--app-border); background: var(--app-surface-1); color: var(--app-text-secondary); border-radius: 999px; padding: 0.35rem 0.8rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
 .tm-tab.active { border-color: var(--app-button-blue-border); background: var(--app-badge-info-bg); color: var(--app-badge-info-text); }
+.tm-tab.current { background: var(--app-badge-success-bg); border-color: var(--app-badge-success-text); color: var(--app-badge-success-text); }
+.tm-tab.completed { background: var(--app-surface-2); color: var(--app-text-muted); }
 .tm-overview { display: grid; gap: 0.9rem; }
 .tm-overview-division { border: 1px solid var(--app-border); border-radius: 10px; padding: 0.7rem; background: var(--app-surface-1); }
 .tm-overview-title { margin: 0 0 0.6rem; color: var(--app-text-primary); font-size: 1rem; }
+.tm-overview-title-row { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .tm-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.tm-round-actions { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 0 0 0.65rem; }
+.tm-round-actions h3 { margin: 0; color: var(--app-text-primary); }
 .tm-roster-row { cursor: pointer; }
 .tm-roster-row.active { background: var(--app-feedback-info-bg); }
+.tm-player-icon { margin-left: 0.35rem; }
+.tm-icon-button { margin-left: 0.3rem; border: 0; background: transparent; cursor: pointer; font: inherit; padding: 0.1rem; }
+.tm-decklist-overlay { position: fixed; inset: 0; display: grid; place-items: center; padding: 1rem; background: rgb(15 23 42 / 58%); z-index: 50; }
+.tm-decklist-dialog { width: min(720px, 100%); max-height: min(80vh, 720px); overflow: auto; border: 1px solid var(--app-border); border-radius: 12px; padding: 1rem; background: var(--app-surface-1); box-shadow: 0 20px 50px rgb(0 0 0 / 30%); }
+.tm-decklist-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+.tm-decklist-heading h4 { margin: 0; }
+.tm-decklist-dialog pre { margin: 1rem 0 0; padding: 0.8rem; overflow: auto; border-radius: 8px; background: var(--app-surface-2); color: var(--app-text-primary); white-space: pre-wrap; font: 0.85rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .tm-demo-panel { margin-top: 0.8rem; padding: 0.8rem; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface-1); }
 .tm-report-lines { margin-top: 0.35rem; }
 .tm-report-line { margin: 0; color: var(--app-text-muted); font-size: 0.75rem; }

@@ -19,17 +19,20 @@ Stand: 2026-05-02
 - [x] Matches lassen sich unabhängig vom Round-Typ darstellen und bearbeiten.
 - [x] UI-Label „Swiss/Top Cut“ ist in den Round-Tabs sichtbar.
 
-## 4) Pairings-Freigabe („Runde starten“)
+## 4) Turnier- und Pairings-Freigabe
+- [x] Der Turniermanager wird über „Turnier starten“ am betreffenden Event geöffnet; es gibt keine zweite Turnierauswahl im Live-Workspace.
+- [x] „Turnier freigeben“ schaltet die persönliche Ansicht, das Standing und den globalen QR-Zugang frei.
+- [x] QR-Gäste identifizieren sich über Pokémon-Spieler-ID und Geburtsjahr aus der TOM-Datei; der Browserzugang bleibt beim Neuladen erhalten.
 - [x] Admin-Action `Runde starten` vorhanden.
-- [x] Freigabe wird serverseitig als `pairingsReleasedRound` im TOM-Metadata gespeichert.
+- [x] Freigabe wird serverseitig je Pod gespeichert.
 - [x] Spieler sehen aktuelle Pairings erst nach Freigabe.
 - [x] Ergebnis-Submit ist serverseitig an freigegebene aktuelle Pairings gebunden.
 
 ## 5) Spieler-Reporting / Konflikte / Finalisierung
 - [x] Spieler können Win/Loss/Tie melden.
 - [x] Gegner sieht eingehende Meldung.
-- [x] 30s Einspruchsfenster mit Konfliktstatus ist implementiert.
-- [x] Auto-Finalisierung bei übereinstimmenden Reports oder nach Ablauf.
+- [x] Konfliktstatus bei abweichenden Meldungen ist implementiert.
+- [x] Auto-Finalisierung ausschließlich bei übereinstimmenden Meldungen beider Spieler.
 - [x] Admin kann Konflikte je Match auflösen (`P1`, `P2`, `Draw`, `DGL`).
 
 ## 6) Export zurück nach TOM
@@ -46,6 +49,8 @@ Stand: 2026-05-02
 - [x] URL enthält keine offene Spieler-ID mehr; stattdessen gehashter `viewer`-Token.
 - [x] Aktuelle Runde ist hervorgehoben (oben), inkl. Gegnername und Tischnummer.
 - [x] Spielerseite ist auf Deutsch.
+- [x] Spielerseite aktualisiert sich per SSE und zusätzlich alle fünf Sekunden.
+- [x] Roster zeigt per Handy-Symbol den aktivierten Spielzugang; ein Karten-Symbol öffnet eine vorhandene Deckliste.
 
 ## 8) Nach Turnierende / nach Drop
 - [x] Historie bleibt sichtbar (Runden + Ergebnisse).
@@ -64,5 +69,5 @@ Stand: 2026-05-02
 ---
 
 ## Offene Restpunkte (empfohlen)
-1. [ ] Optional: „Export all pods“-Massenexport für mehrere Dateien/Selektionsprofile (aktuell ein konsolidierter TOM-Export).
+1. [ ] Optional: „Export all pods“-Massenexport als ZIP/Mehrfachdownload.
 2. [ ] Optional: Caching der Placement-Berechnung für sehr große Dashboard-Datenmengen.

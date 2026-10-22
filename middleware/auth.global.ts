@@ -38,12 +38,14 @@ export const createAuthRouteGuard = (
       "/confirm",
       "/set-password",
       "/password-set-success",
+      "/tournaments",
     ];
 
     // Check if path starts with public patterns
     const isPublicPath =
       publicPages.includes(applicationPath) ||
-      applicationPath.startsWith("/events/");
+      applicationPath.startsWith("/events/") ||
+      applicationPath.startsWith("/tournaments/");
 
     // Public pages should remain accessible without password-enforcement redirects.
     // This covers login, password setup, and legacy compatibility screens.

@@ -1,5 +1,6 @@
 import prisma from "~/lib/prisma";
 import { getTournamentTomState } from "~/server/services/events/tournamentTomStateService";
+import { resolveTomGuestAccess } from "~/server/services/events/tomGuestAccessService";
 import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
 
 const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
@@ -10,20 +11,18 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Event ID is required" });
   }
 
-  const player = await resolveAuthenticatedPlayer(event);
-  const registration = await prisma.eventRegistration.findFirst({
-    where: {
-      customEventId: eventId,
-      playerId: player.id,
-    },
-    select: { id: true },
-  });
-
-  if (!registration) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: "You are not registered for this tournament",
+  const guestTomUserId = resolveTomGuestAccess(event, eventId);
+  if (!guestTomUserId) {
+    const player = await resolveAuthenticatedPlayer(event);
+    const registration = await prisma.eventRegistration.findFirst({
+      where: { customEventId: eventId, playerId: player!.id },
+      select: { id: true },
     });
+    if (!registration) throw createError({ statusCode: 403, statusMessage: "You are not registered for this tournament" });
+  }
+  const tournamentState = await getTournamentTomState(eventId);
+  if (!tournamentState || !(tournamentState.record.metadata as { tournamentReleasedAt?: string } | null)?.tournamentReleasedAt) {
+    throw createError({ statusCode: 403, statusMessage: "Die Turnieransicht wurde noch nicht freigegeben." });
   }
 
   setHeader(event, "Content-Type", "text/event-stream");

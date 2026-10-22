@@ -1,5 +1,6 @@
 import { defineAdminRoute } from "~/server/services/admin/adminRoute";
 import { releaseCurrentRoundForPlayers } from "~/server/services/events/tournamentTomStateService";
+import { z } from "zod";
 
 export default defineAdminRoute(async ({ event }) => {
   const eventId = getRouterParam(event, "eventId");
@@ -11,7 +12,8 @@ export default defineAdminRoute(async ({ event }) => {
     });
   }
 
-  const released = await releaseCurrentRoundForPlayers(eventId);
+  const body = z.object({ divisionCategory: z.string().min(1).optional() }).parse(await readBody(event));
+  const released = await releaseCurrentRoundForPlayers(eventId, body.divisionCategory);
 
   return {
     success: true,

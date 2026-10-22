@@ -645,6 +645,13 @@
                     })
                   }}
                 </button>
+                <NuxtLink
+                  v-if="!selectedEvent.isExternalEvent"
+                  :to="`/admin/tournament-management?eventId=${selectedEvent.id}`"
+                  class="app-action-button app-action-primary flex-1 px-4 py-2 text-sm no-underline"
+                >
+                  Turnier starten
+                </NuxtLink>
                 <template v-if="!selectedEvent.isExternalEvent">
                   <button
                     @click="editEvent(selectedEvent)"
