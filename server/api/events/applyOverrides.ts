@@ -1,5 +1,6 @@
 import prisma from "~/lib/prisma";
 import { applyExternalEventOverridesToFeed } from "~/server/services/events/eventProjectionService";
+import type { PokemonGameType } from "~/types/eventGame";
 
 interface ParsedEvent {
   id: string;
@@ -14,6 +15,7 @@ interface ParsedEvent {
   cost?: string;
   streetAddress?: string;
   icon?: string;
+  gameType: PokemonGameType;
 }
 
 /**

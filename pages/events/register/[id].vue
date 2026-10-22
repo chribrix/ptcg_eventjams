@@ -688,6 +688,7 @@ interface ExistingRegistrationState {
 
 const route = useRoute();
 const eventId = route.params.id as string;
+const { track: trackAnalytics } = useAnalytics();
 
 // State
 const event = ref<CustomEvent | null>(null);
@@ -834,6 +835,9 @@ const joinWaitlist = async (): Promise<void> => {
     });
 
     waitlistStatus.value = response.status;
+    if (!response.alreadyJoined) {
+      trackAnalytics("waitlist_joined", eventId);
+    }
     if (response.status === "waiting") {
       waitlistMessage.value = response.alreadyJoined
         ? t("eventRegisterPage.waitlistAlreadyOnList")
@@ -858,6 +862,7 @@ const confirmWaitlistSpot = async (): Promise<void> => {
       method: "POST",
     });
     waitlistStatus.value = "confirmed";
+    trackAnalytics("waitlist_confirmed", eventId);
     waitlistMessage.value = t("eventRegisterPage.waitlistConfirmed");
     registrationSuccess.value = true;
     await fetchEventDetails();
@@ -1039,6 +1044,7 @@ const submitRegistration = async (): Promise<void> => {
 
     registrationSuccess.value = true;
     registrationCount.value += 1;
+    trackAnalytics("registration_completed", eventId);
 
     // Redirect to dashboard after successful registration
     setTimeout(() => {

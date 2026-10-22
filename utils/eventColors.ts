@@ -5,38 +5,45 @@
 
 export const EVENT_COLORS = {
   cup: {
-    bg: "#bbf7d0", // green-200 - soft green for League Cups
-    text: "#166534", // green-800 - dark green text
+    bg: "#fef3c7", // amber-100
+    text: "#92400e", // amber-800
+    accent: "#d99a00",
     name: "League Cup",
   },
   challenge: {
-    bg: "#bfdbfe", // blue-200 - soft blue for Challenges
-    text: "#1e40af", // blue-800 - dark blue text
+    bg: "#dbeafe", // blue-100
+    text: "#1e40af", // blue-800
+    accent: "#2563eb",
     name: "League Challenge",
   },
   local: {
     bg: "#e0f2fe", // sky-100 - soft sky blue for local events
     text: "#0c4a6e", // sky-900 - dark sky blue text
+    accent: "#0369a1",
     name: "Local Event",
   },
   custom: {
     bg: "#fed7aa", // orange-200 - soft orange for custom events
     text: "#9a3412", // orange-800 - dark orange text
+    accent: "#ea580c",
     name: "Crow's & Owl's Locals",
   },
   riftbound: {
     bg: "#e9d5ff", // purple-200 - soft purple for Riftbound events
     text: "#6b21a8", // purple-800 - dark purple text
+    accent: "#7e22ce",
     name: "Riftbound",
   },
   prerelease: {
-    bg: "#fef3c7", // amber-100 - soft yellow for prereleases
-    text: "#92400e", // amber-800 - dark amber text
+    bg: "#dcfce7", // green-100
+    text: "#166534", // green-800
+    accent: "#16a34a",
     name: "Pre Release",
   },
   friendly: {
     bg: "#e0f2fe", // sky-100 - same as local
     text: "#0c4a6e", // sky-900
+    accent: "#0369a1",
     name: "Friendly Event",
   },
 } as const;

@@ -75,5 +75,50 @@ describe("calendarEventUtils", () => {
     );
 
     expect(normalizedEvent.start).toBe("2026-07-11");
+    expect(normalizedEvent.gameType).toBe("tcg");
+  });
+
+  it("preserves VGC game types independently from challenge tier colors", () => {
+    const externalEvent = normalizeExternalCalendarEvent({
+      id: "vgc-1",
+      title: "VGC Challenge",
+      dateTime: "2026-09-26",
+      type: "League Challenge VG",
+      gameType: "vgc",
+      venue: "Test Store",
+      location: "Munich",
+      country: "DE",
+      link: "https://example.test/vgc-1",
+    });
+    const customEvent = normalizeCustomCalendarEvent(
+      {
+        id: "custom-vgc-1",
+        name: "Custom VGC Cup",
+        eventDate: "2026-09-27T10:00:00.000Z",
+        venue: "Test Store",
+        tags: { game: "Pokemon VGC", type: "league_cup" },
+        tagType: "pokemon",
+      },
+      "Europe/Berlin",
+    );
+
+    expect(externalEvent).toMatchObject({ type: "challenge", gameType: "vgc" });
+    expect(customEvent).toMatchObject({ type: "cup", gameType: "vgc" });
+  });
+
+  it("normalizes custom Pokémon GO events for the future G marker", () => {
+    const customEvent = normalizeCustomCalendarEvent(
+      {
+        id: "custom-go-1",
+        name: "Custom GO Event",
+        eventDate: "2026-09-28T10:00:00.000Z",
+        venue: "Test Store",
+        tags: { game: "Pokemon GO", type: "custom" },
+        tagType: "pokemon",
+      },
+      "Europe/Berlin",
+    );
+
+    expect(customEvent).toMatchObject({ type: "custom", gameType: "go" });
   });
 });

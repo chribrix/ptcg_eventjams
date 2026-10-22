@@ -431,13 +431,7 @@
     "eventTime": "Time",
     "registrationDeadlineMinutesBefore": "Registration deadline (minutes before)",
     "templateUpdated": "Template updated",
-    "templateUpdateError": "Failed to update template",
-    "eventCreated": "Event created",
-    "registrationLinkReady": "The registration link is ready to share.",
-    "copyLink": "Copy link",
-    "linkCopied": "Link copied",
-    "openEvent": "Open event",
-    "done": "Done"
+    "templateUpdateError": "Failed to update template"
   },
   "waitlist": {
     "spotAvailable": "A spot has opened up!",
@@ -605,8 +599,12 @@
       "confirmDeleteEvent": "Are you sure you want to delete \"{name}\"?",
       "confirmRemoveRegistration": "Remove {name} from this event?",
       "noRegistrationsYet": "No registrations yet for this event.",
+      "registrationSearchPlaceholder": "Search name, player ID, email, or birth year …",
+      "registrationSearchResults": "{count} results",
+      "noRegistrationSearchResults": "No matching registrations found.",
       "waitlistTitle": "Waitlist ({count})",
       "noWaitlistEntries": "No waitlist entries.",
+      "noWaitlistSearchResults": "No matching waitlist entries found.",
       "stats": {
         "totalRegistered": "Total Registered",
         "maxCapacity": "Max Capacity",

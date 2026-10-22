@@ -35,8 +35,8 @@ const EVENT_DISPLAY_META: Record<
 > = {
   league_cup: {
     label: "League Cup",
-    badgeClass: "border-green-200 bg-green-50 text-green-800",
-    dateBadgeClass: "bg-green-600 text-white",
+    badgeClass: "border-amber-300 bg-amber-100 text-amber-900",
+    dateBadgeClass: "bg-amber-500 text-white",
   },
   league_challenge: {
     label: "League Challenge",
@@ -45,8 +45,8 @@ const EVENT_DISPLAY_META: Record<
   },
   pre_release: {
     label: "Pre-Release",
-    badgeClass: "border-amber-200 bg-amber-50 text-amber-800",
-    dateBadgeClass: "bg-amber-500 text-white",
+    badgeClass: "border-green-300 bg-green-100 text-green-900",
+    dateBadgeClass: "bg-green-600 text-white",
   },
   local: {
     label: "Local Event",

@@ -1,26 +1,29 @@
 <template>
-  <AdminPageLayout title="Players Management">
+  <AdminPageLayout
+    title="Spielerverwaltung"
+    subtitle="Spielerdaten, Kontakte und Kontoverknüpfungen verwalten"
+  >
     <template #actions>
       <button @click="showCreateForm = true" class="btn btn-primary">
-        Add New Player
+        Spieler hinzufügen
       </button>
     </template>
 
     <!-- Create/Edit Player Modal -->
-    <div
+    <AppModal
       v-if="showCreateForm || editingPlayer"
-      class="modal-overlay"
-      @click="closeModal"
+      :title="editingPlayer ? 'Spieler bearbeiten' : 'Spieler hinzufügen'"
+      subtitle="Spielerdaten und Kontaktinformationen"
+      size="lg"
+      @close="closeModal"
     >
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>{{ editingPlayer ? "Edit Player" : "Add New Player" }}</h2>
-          <button @click="closeModal" class="close-btn">&times;</button>
-        </div>
-
-        <form @submit.prevent="savePlayer" class="player-form">
-          <div class="form-group">
-            <label for="playerId">Player ID *</label>
+      <form id="player-admin-form" @submit.prevent="savePlayer" class="player-form">
+          <AppFormField
+            label="Spieler-ID"
+            for-id="playerId"
+            hint="Die Spieler-ID darf nur Zahlen enthalten."
+            required
+          >
             <input
               id="playerId"
               v-model="playerForm.playerId"
@@ -29,28 +32,25 @@
               pattern="\d*"
               required
               class="form-input"
-              placeholder="e.g., 123456"
+              placeholder="z. B. 123456"
               :disabled="!!editingPlayer"
               @input="validatePlayerIdAdmin"
             />
-            <p class="form-hint">Player ID must contain only numbers</p>
-          </div>
+          </AppFormField>
 
-          <div class="form-group">
-            <label for="name">Full Name *</label>
+          <AppFormField label="Vollständiger Name" for-id="name" required>
             <input
               id="name"
               v-model="playerForm.name"
               type="text"
               required
               class="form-input"
-              placeholder="Player full name"
+              placeholder="Vor- und Nachname"
             />
-          </div>
+          </AppFormField>
 
           <div class="form-row">
-            <div class="form-group">
-              <label for="birthDate">Birth Date *</label>
+            <AppFormField label="Geburtsdatum" for-id="birthDate" required>
               <input
                 id="birthDate"
                 v-model="playerForm.birthDate"
@@ -58,10 +58,9 @@
                 required
                 class="form-input"
               />
-            </div>
+            </AppFormField>
 
-            <div class="form-group">
-              <label for="email">Email</label>
+            <AppFormField label="E-Mail" for-id="email">
               <input
                 id="email"
                 v-model="playerForm.email"
@@ -69,88 +68,78 @@
                 class="form-input"
                 placeholder="player@example.com"
               />
-            </div>
+            </AppFormField>
           </div>
 
           <div class="form-row">
-            <div class="form-group">
-              <label for="phone">Phone</label>
+            <AppFormField label="Telefon" for-id="phone">
               <input
                 id="phone"
                 v-model="playerForm.phone"
                 type="tel"
                 class="form-input"
-                placeholder="+1234567890"
-              />
-            </div>
+              placeholder="+49 …"
+            />
+            </AppFormField>
 
-            <div class="form-group">
-              <label for="emergencyContact">Emergency Contact</label>
+            <AppFormField label="Notfallkontakt" for-id="emergencyContact">
               <input
                 id="emergencyContact"
                 v-model="playerForm.emergencyContact"
                 type="text"
                 class="form-input"
-                placeholder="Contact name"
-              />
-            </div>
+              placeholder="Name des Kontakts"
+            />
+            </AppFormField>
           </div>
 
-          <div class="form-group">
-            <label for="emergencyPhone">Emergency Phone</label>
+          <AppFormField label="Notfallnummer" for-id="emergencyPhone">
             <input
               id="emergencyPhone"
               v-model="playerForm.emergencyPhone"
               type="tel"
               class="form-input"
-              placeholder="+1234567890"
+              placeholder="+49 …"
             />
-          </div>
+          </AppFormField>
+      </form>
 
-          <div class="form-actions">
-            <button type="button" @click="closeModal" class="btn btn-secondary">
-              Cancel
-            </button>
-            <button type="submit" :disabled="saving" class="btn btn-primary">
-              {{
-                saving
-                  ? "Saving..."
-                  : editingPlayer
-                    ? "Update Player"
-                    : "Add Player"
-              }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      <template #footer>
+        <button type="button" @click="closeModal" class="btn btn-secondary">
+          Abbrechen
+        </button>
+        <button
+          type="submit"
+          form="player-admin-form"
+          :disabled="saving"
+          class="btn btn-primary"
+        >
+          {{ saving ? "Speichert …" : editingPlayer ? "Aktualisieren" : "Hinzufügen" }}
+        </button>
+      </template>
+    </AppModal>
 
     <!-- Players List -->
-    <div class="admin-card">
-      <div class="section-header">
-        <h2>Players</h2>
-        <div class="search-box">
-          <input
-            v-model="searchTerm"
-            type="text"
-            placeholder="Search players..."
-            class="search-input"
-          />
-        </div>
-      </div>
+    <AppPanel title="Spieler" flush>
+      <template #actions>
+        <AppSearchField
+          v-model="searchTerm"
+          class="players-search"
+          placeholder="Spieler suchen …"
+        />
+      </template>
 
-      <div v-if="loading" class="loading">Loading players...</div>
+      <AppStatePanel v-if="loading" kind="loading" message="Spieler werden geladen …" />
 
       <div v-else-if="paginatedPlayers.length > 0">
-        <div class="admin-table-wrapper">
-          <table class="admin-table">
+        <AppDataTable>
             <thead>
               <tr>
-                <th>Player ID</th>
+                <th>Spieler-ID</th>
                 <th>Name</th>
-                <th>Birth Date</th>
-                <th>Email</th>
-                <th>Actions</th>
+                <th>Geburtsdatum</th>
+                <th>E-Mail</th>
+                <th>Aktionen</th>
               </tr>
             </thead>
             <tbody>
@@ -172,86 +161,42 @@
                       @click="editPlayer(player)"
                       class="btn btn-small btn-secondary"
                     >
-                      Edit
+                      Bearbeiten
                     </button>
                     <button
                       @click="deletePlayer(player)"
                       class="btn btn-small btn-danger"
                     >
-                      Delete
+                      Löschen
                     </button>
                   </div>
                 </td>
               </tr>
             </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination Controls -->
-        <div class="pagination" v-if="totalPages > 1">
-          <button
-            @click="goToPage(currentPage - 1)"
-            :disabled="currentPage === 1"
-            class="pagination-btn"
-          >
-            &laquo; Previous
-          </button>
-
-          <button
-            v-if="pageNumbers[0] > 1"
-            @click="goToPage(1)"
-            class="pagination-btn"
-          >
-            1
-          </button>
-          <span v-if="pageNumbers[0] > 2" class="pagination-ellipsis">...</span>
-
-          <button
-            v-for="page in pageNumbers"
-            :key="page"
-            @click="goToPage(page)"
-            :class="['pagination-btn', { active: currentPage === page }]"
-          >
-            {{ page }}
-          </button>
-
-          <span
-            v-if="pageNumbers[pageNumbers.length - 1] < totalPages - 1"
-            class="pagination-ellipsis"
-            >...</span
-          >
-          <button
-            v-if="pageNumbers[pageNumbers.length - 1] < totalPages"
-            @click="goToPage(totalPages)"
-            class="pagination-btn"
-          >
-            {{ totalPages }}
-          </button>
-
-          <button
-            @click="goToPage(currentPage + 1)"
-            :disabled="currentPage === totalPages"
-            class="pagination-btn"
-          >
-            Next &raquo;
-          </button>
-        </div>
+        </AppDataTable>
 
         <!-- Results info -->
         <div class="pagination-info">
-          Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
-          {{ Math.min(currentPage * itemsPerPage, filteredPlayers.length) }} of
-          {{ filteredPlayers.length }} player{{
-            filteredPlayers.length !== 1 ? "s" : ""
-          }}
+          {{ (currentPage - 1) * itemsPerPage + 1 }}–{{
+            Math.min(currentPage * itemsPerPage, filteredPlayers.length)
+          }} von {{ filteredPlayers.length }} Spielern
           <span v-if="searchTerm"
-            >(filtered from {{ players.length }} total)</span
+            >({{ players.length }} insgesamt)</span
           >
         </div>
       </div>
 
-      <div v-else class="no-data">No players found. Add your first player!</div>
-    </div>
+      <AppStatePanel
+        v-else
+        kind="empty"
+        title="Keine Spieler gefunden"
+        message="Passe die Suche an oder lege einen neuen Spieler an."
+      />
+
+      <template v-if="totalPages > 1" #footer>
+        <AppPagination :page="currentPage" :pages="totalPages" @change="goToPage" />
+      </template>
+    </AppPanel>
   </AdminPageLayout>
 </template>
 
@@ -323,22 +268,6 @@ const paginatedPlayers = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
   return filteredPlayers.value.slice(start, end);
-});
-
-const pageNumbers = computed(() => {
-  const pages = [];
-  const maxVisible = 5;
-  let startPage = Math.max(1, currentPage.value - Math.floor(maxVisible / 2));
-  let endPage = Math.min(totalPages.value, startPage + maxVisible - 1);
-
-  if (endPage - startPage < maxVisible - 1) {
-    startPage = Math.max(1, endPage - maxVisible + 1);
-  }
-
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(i);
-  }
-  return pages;
 });
 
 // Methods
@@ -486,6 +415,16 @@ onMounted(loadPlayers);
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.players-search {
+  width: min(100%, 22rem);
+}
+
+@media (min-width: 640px) {
+  .players-search {
+    min-width: 18rem;
+  }
 }
 
 .player-form {

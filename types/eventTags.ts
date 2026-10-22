@@ -5,6 +5,11 @@
  * Different tag schemas can be used based on tagType
  */
 
+import {
+  POKEMON_GAME_OPTIONS,
+  type PokemonGameValue,
+} from "~/types/eventGame";
+
 /**
  * Tag type enum - defines which tag schema to use
  */
@@ -36,7 +41,7 @@ export interface BaseEventTags {
  * Pokemon-specific event tags
  */
 export interface PokemonEventTags extends BaseEventTags {
-  game: "Pokemon";
+  game: PokemonGameValue;
 
   /**
    * Event type/tier
@@ -118,7 +123,7 @@ export const POKEDATA_DEFAULT_TAGS: PokemonEventTags = {
  * Predefined game options
  */
 export const GAME_OPTIONS = [
-  { value: "Pokemon", label: "Pokémon TCG" },
+  ...POKEMON_GAME_OPTIONS,
   { value: "Riftbound", label: "Riftbound" },
 ] as const;
 
@@ -208,7 +213,7 @@ export function getFormatLabel(format?: string): string {
  * Check if event is a Pokemon event
  */
 export function isPokemonEvent(tags: EventTags): boolean {
-  return tags.game === "Pokemon";
+  return tags.game?.startsWith("Pokemon") === true;
 }
 
 /**
@@ -244,6 +249,8 @@ export function getEventTypeBadgeClass(type?: string): string {
 export function getGameBadgeClass(game?: string): string {
   switch (game) {
     case "Pokemon":
+    case "Pokemon VGC":
+    case "Pokemon GO":
       return "bg-red-100 text-red-800 border-red-200";
     case "Riftbound":
       return "bg-indigo-100 text-indigo-800 border-indigo-200";

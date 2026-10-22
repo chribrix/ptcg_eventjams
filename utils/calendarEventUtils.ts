@@ -4,6 +4,11 @@ import {
   getDateKeyInTimeZone,
 } from "~/utils/eventDateTime";
 import { EVENT_COLORS } from "~/utils/eventColors";
+import {
+  getPokemonGameType,
+  getPokemonGameTypeFromEventType,
+  type PokemonGameType,
+} from "~/types/eventGame";
 
 export type CalendarEventType =
   | "cup"
@@ -33,6 +38,7 @@ export interface ExternalCalendarEvent {
   time?: string;
   cost?: string;
   streetAddress?: string;
+  gameType?: PokemonGameType;
 }
 
 export interface CustomCalendarEvent {
@@ -46,6 +52,7 @@ export interface CustomCalendarEvent {
   eventType?: string;
   tags?: unknown;
   tagType?: string;
+  gameType?: PokemonGameType;
 }
 
 export interface UnifiedCalendarEvent {
@@ -68,6 +75,7 @@ export interface UnifiedCalendarEvent {
   eventType?: string;
   tags?: unknown;
   tagType?: string;
+  gameType?: PokemonGameType;
 }
 
 export interface CalendarCategoryDefinition {
@@ -163,7 +171,7 @@ export function getCustomCalendarEventType(
     const parsedTags = parseEventTags(event.tags, event.tagType as TagType);
     const parsedType = String(parsedTags.type || "").toLowerCase();
 
-    if (parsedTags.game === "Pokemon" && parsedTags.type) {
+    if (event.tagType === "pokemon" && parsedTags.type) {
       if (parsedType === "league_cup") return "cup";
       if (parsedType === "league_challenge") return "challenge";
       if (parsedType === "local" || parsedType === "local_tournament") {
@@ -230,6 +238,8 @@ export function normalizeExternalCalendarEvent(
     cost: event.cost,
     streetAddress: event.streetAddress,
     icon: event.icon,
+    gameType:
+      event.gameType || getPokemonGameTypeFromEventType(event.type),
     isCustomEvent: false,
     isLocalRegistration,
   };
@@ -239,6 +249,13 @@ export function normalizeCustomCalendarEvent(
   event: CustomCalendarEvent,
   userTimeZone: string
 ): UnifiedCalendarEvent {
+  const parsedTags = event.tags
+    ? parseEventTags(event.tags, (event.tagType as TagType) || "pokemon")
+    : null;
+  const gameType =
+    getPokemonGameType(parsedTags?.game) ||
+    (event.tagType === "pokemon" ? "tcg" : undefined);
+
   return {
     id: String(event.id),
     title: event.name,
@@ -255,6 +272,7 @@ export function normalizeCustomCalendarEvent(
     eventType: event.eventType,
     tags: event.tags,
     tagType: event.tagType,
+    gameType,
   };
 }
 

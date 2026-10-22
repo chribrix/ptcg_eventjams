@@ -1,4 +1,5 @@
 import { applyEventOverrides } from "./applyOverrides";
+import type { PokemonGameType } from "~/types/eventGame";
 
 interface ParsedEvent {
   id: string;
@@ -13,12 +14,13 @@ interface ParsedEvent {
   time?: string;
   cost?: string;
   streetAddress?: string;
+  gameType: PokemonGameType;
 }
 
 export default defineEventHandler(
   async (event): Promise<{ events: ParsedEvent[] }> => {
     // Define cache key and TTL (18 hours)
-    const CACHE_KEY = "pokedata-detailed-events-v2";
+    const CACHE_KEY = "pokedata-detailed-events-v3-tcg-vgc";
     const CACHE_TTL = 18 * 60 * 60 * 1000; // 18 hours in milliseconds
 
     // Try to get cached data

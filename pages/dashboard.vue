@@ -1,56 +1,48 @@
 <template>
-  <div class="min-h-screen app-bg-page py-4 px-4">
-    <div class="max-w-4xl mx-auto">
-      <!-- Header -->
-      <div class="mb-5 text-center">
-        <h1 class="text-3xl font-bold app-text-strong sm:text-4xl">
-          {{ t("dashboard.title") }}
-        </h1>
-      </div>
+  <div class="min-h-screen app-bg-page px-2 py-4 sm:px-6 sm:py-8">
+    <div class="mx-auto max-w-6xl">
+      <AppPageHeader class="mb-4 sm:mb-6" :title="t('dashboard.title')" />
 
       <!-- Loading State -->
-      <div v-if="isLoading" class="flex items-center justify-center py-12">
-        <div class="flex items-center gap-3 app-text-secondary-soft">
-          <div
-            class="w-5 h-5 border-2 app-border border-t-[var(--app-accent)] rounded-full animate-spin"
-          ></div>
-          <span class="text-lg">{{ t("dashboard.loadingRegistrations") }}</span>
-        </div>
-      </div>
+      <AppStatePanel
+        v-if="isLoading"
+        kind="loading"
+        :message="t('dashboard.loadingRegistrations')"
+      />
 
       <!-- Error State -->
-      <div
+      <AppStatePanel
         v-else-if="error"
-        class="app-feedback-danger rounded-lg p-6 text-center"
+        kind="error"
+        :title="t('dashboard.errorLoading')"
+        :message="error"
       >
-        <h3 class="text-xl font-semibold mb-2">
-          {{ t("dashboard.errorLoading") }}
-        </h3>
-        <p class="mb-4">{{ error }}</p>
-        <button
-          @click="fetchRegistrations"
-          class="app-action-button app-action-danger rounded-lg px-6 py-2 font-medium"
-        >
-          {{ t("dashboard.tryAgain") }}
-        </button>
-      </div>
+        <template #actions>
+          <button
+            class="app-action-button app-action-danger rounded-lg px-6 py-2 font-medium"
+            @click="fetchRegistrations"
+          >
+            {{ t("dashboard.tryAgain") }}
+          </button>
+        </template>
+      </AppStatePanel>
 
       <!-- Empty State -->
-      <div
+      <AppStatePanel
         v-else-if="registrations.length === 0"
-        class="app-panel rounded-lg p-8 text-center"
+        kind="empty"
+        :title="t('dashboard.emptyTitle')"
+        :message="t('dashboard.emptyText')"
       >
-        <h3 class="text-2xl font-semibold app-text-strong mb-2">{{ t("dashboard.emptyTitle") }}</h3>
-        <p class="app-text-secondary-soft mb-6">
-          {{ t("dashboard.emptyText") }}
-        </p>
-        <NuxtLink
-          to="/eventlist"
-          class="inline-flex app-action-button app-action-primary rounded-lg px-6 py-3 font-medium"
-        >
-          Browse Events
-        </NuxtLink>
-      </div>
+        <template #actions>
+          <NuxtLink
+            to="/eventlist"
+            class="inline-flex app-action-button app-action-primary rounded-lg px-6 py-3 font-medium"
+          >
+            Veranstaltungen ansehen
+          </NuxtLink>
+        </template>
+      </AppStatePanel>
 
       <!-- Current Registrations List -->
       <div v-else>
@@ -111,26 +103,14 @@
           </div>
         </div>
 
-        <div
+        <AppModal
           v-if="selectedTimelineEntry"
-          class="fixed inset-0 z-50 flex items-end app-overlay p-0 sm:items-center sm:justify-center sm:p-4"
-          @click="closeTimelineModal"
+          :title="selectedTimelineEntry.customEvent.name"
+          :subtitle="formatEventDate(selectedTimelineEntry.customEvent.eventDate)"
+          size="sm"
+          bottom-sheet-mobile
+          @close="closeTimelineModal"
         >
-          <div
-            class="w-full rounded-t-2xl app-modal-surface p-4 sm:max-w-md sm:rounded-2xl"
-            @click.stop
-          >
-            <div class="mb-3 flex items-start justify-between gap-3">
-              <h3 class="text-lg font-bold app-text-strong">{{ selectedTimelineEntry.customEvent.name }}</h3>
-              <button
-                type="button"
-                class="rounded-md app-btn-neutral px-2 py-1 text-sm"
-                @click="closeTimelineModal"
-              >
-                ×
-              </button>
-            </div>
-            <p class="text-sm app-text-secondary-soft">{{ formatEventDate(selectedTimelineEntry.customEvent.eventDate) }}</p>
             <p class="mt-1 text-sm app-text-secondary-soft">{{ selectedTimelineEntry.customEvent.venue }}</p>
             <p
               v-if="timelineActionError"
@@ -231,18 +211,17 @@
                 </button>
               </template>
             </div>
-          </div>
-        </div>
+        </AppModal>
 
         <h2 class="text-2xl font-bold app-text-strong mb-6">
           {{ t("dashboard.currentRegistrations") }}
         </h2>
         <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 mb-12">
-          <article
+          <AppEventCard
             v-for="registration in registrations"
             :key="registration.id"
-            class="rounded-lg shadow-sm border p-4 sm:p-6 hover:shadow-lg transition-all duration-200 cursor-pointer block"
             :class="getDashboardEntryCardClass(registration)"
+            bare
           >
             <!-- Game Type Header -->
             <div
@@ -546,7 +525,7 @@
                 </span>
               </div>
             </div>
-          </article>
+          </AppEventCard>
         </div>
       </div>
 

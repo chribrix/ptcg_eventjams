@@ -439,13 +439,7 @@
     "eventTime": "Uhrzeit",
     "registrationDeadlineMinutesBefore": "Anmeldeschluss (Minuten vorher)",
     "templateUpdated": "Vorlage aktualisiert",
-    "templateUpdateError": "Vorlage konnte nicht aktualisiert werden",
-    "eventCreated": "Event wurde erstellt",
-    "registrationLinkReady": "Der Registrierungslink kann jetzt geteilt werden.",
-    "copyLink": "Link kopieren",
-    "linkCopied": "Link kopiert",
-    "openEvent": "Event öffnen",
-    "done": "Fertig"
+    "templateUpdateError": "Vorlage konnte nicht aktualisiert werden"
   },
   "waitlist": {
     "spotAvailable": "Ein Platz ist frei geworden!",
@@ -613,8 +607,12 @@
       "confirmDeleteEvent": "Möchtest du \"{name}\" wirklich löschen?",
       "confirmRemoveRegistration": "{name} aus diesem Event entfernen?",
       "noRegistrationsYet": "Für dieses Event gibt es noch keine Registrierungen.",
+      "registrationSearchPlaceholder": "Name, Spieler-ID, E-Mail oder Jahrgang suchen …",
+      "registrationSearchResults": "{count} Treffer",
+      "noRegistrationSearchResults": "Keine passenden Registrierungen gefunden.",
       "waitlistTitle": "Warteliste ({count})",
       "noWaitlistEntries": "Keine Wartelisteneinträge.",
+      "noWaitlistSearchResults": "Keine passenden Wartelisteneinträge gefunden.",
       "stats": {
         "totalRegistered": "Insgesamt registriert",
         "maxCapacity": "Maximale Kapazität",

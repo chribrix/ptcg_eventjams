@@ -38,18 +38,16 @@
         </div>
 
         <div class="admin-container">
-          <div
+          <AppPageHeader
             v-if="title || subtitle || $slots.actions"
-            class="admin-page-header"
+            class="mb-4 sm:mb-6"
+            :title="title || ''"
+            :subtitle="subtitle"
           >
-            <div class="header-content">
-              <h1 v-if="title" class="page-title">{{ title }}</h1>
-              <p v-if="subtitle" class="page-subtitle">{{ subtitle }}</p>
-            </div>
-            <div v-if="$slots.actions" class="header-actions">
+            <template v-if="$slots.actions" #actions>
               <slot name="actions" />
-            </div>
-          </div>
+            </template>
+          </AppPageHeader>
 
           <div class="admin-page-content">
             <slot />
@@ -101,7 +99,7 @@ const isActive = (item: AdminNavItem) => {
   --admin-input: var(--app-surface-1);
   min-height: 100vh;
   background: var(--app-bg-page);
-  padding: 0.75rem;
+  padding: 0.5rem;
 }
 
 .admin-shell {
@@ -203,6 +201,20 @@ const isActive = (item: AdminNavItem) => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+@media (max-width: 639px) {
+  .admin-mobile-toolbar {
+    margin-bottom: 0.65rem;
+  }
+
+  .admin-mobile-link {
+    padding: 0.58rem 0.7rem;
+  }
+
+  .admin-page-content {
+    gap: 1rem;
+  }
 }
 
 .sidebar-branding {

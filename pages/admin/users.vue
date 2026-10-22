@@ -1,67 +1,64 @@
 <template>
   <AdminPageLayout
-    title="Admin Users"
-    subtitle="Manage Supabase auth users, linked players, admin roles, and password reset actions"
+    title="Benutzerverwaltung"
+    subtitle="Konten, verknüpfte Spieler, Adminrollen und Passwortaktionen verwalten"
   >
     <template #actions>
       <button class="btn btn-secondary" :disabled="loading" @click="loadUsers">
-        Refresh Users
+        Aktualisieren
       </button>
     </template>
 
-    <div class="admin-card filters-card">
+    <AppPanel compact>
       <div class="filters-grid">
-        <label class="form-group">
-          <span>Search</span>
-          <input
-            v-model="searchTerm"
-            type="text"
-            class="form-input"
-            placeholder="Email, player name, provider, player ID"
-            @keyup.enter="applyFilters"
-          />
-        </label>
+        <AppSearchField
+          v-model="searchTerm"
+          label="Suche"
+          placeholder="E-Mail, Name, Provider oder Spieler-ID"
+          @submit="applyFilters"
+        />
 
-        <label class="form-group">
-          <span>Role Filter</span>
+        <AppFormField label="Rolle" for-id="user-role-filter">
           <select
+            id="user-role-filter"
             v-model="roleFilter"
             class="form-input"
             @change="applyFilters"
           >
-            <option value="">All users</option>
+            <option value="">Alle Benutzer</option>
             <option value="admin">Admins</option>
-            <option value="user">Non-admin users</option>
-            <option value="unlinked">Unlinked auth users</option>
+            <option value="user">Benutzer ohne Adminrolle</option>
+            <option value="unlinked">Nicht verknüpft</option>
           </select>
-        </label>
+        </AppFormField>
       </div>
-    </div>
+    </AppPanel>
 
     <div v-if="feedbackMessage" :class="['feedback', feedbackType]">
       {{ feedbackMessage }}
     </div>
 
-    <div class="admin-card">
-      <div class="section-header">
-        <h2>Auth Users</h2>
-        <p class="results-summary">{{ pagination.total }} total users</p>
-      </div>
+    <AppPanel title="Auth-Benutzer" flush>
+      <template #actions>
+        <p class="results-summary">{{ pagination.total }} Benutzer</p>
+      </template>
 
-      <div v-if="loading" class="loading">Loading users...</div>
-      <div v-else-if="items.length === 0" class="no-data">
-        No auth users matched the current filters.
-      </div>
-      <div v-else class="admin-table-wrapper">
-        <table class="admin-table">
+      <AppStatePanel v-if="loading" kind="loading" message="Benutzer werden geladen …" />
+      <AppStatePanel
+        v-else-if="items.length === 0"
+        kind="empty"
+        title="Keine Benutzer gefunden"
+        message="Für die aktuellen Filter gibt es keine Treffer."
+      />
+      <AppDataTable v-else>
           <thead>
             <tr>
               <th>Email</th>
-              <th>Linked Player</th>
-              <th>Role</th>
-              <th>Password</th>
-              <th>Last Sign In</th>
-              <th>Actions</th>
+              <th>Verknüpfter Spieler</th>
+              <th>Rolle</th>
+              <th>Passwort</th>
+              <th>Letzte Anmeldung</th>
+              <th>Aktionen</th>
             </tr>
           </thead>
           <tbody>
@@ -104,7 +101,7 @@
                     :disabled="detailLoading === item.id"
                     @click="selectUser(item.id)"
                   >
-                    Inspect
+                    Details
                   </button>
                   <button
                     class="btn btn-small"
@@ -112,53 +109,39 @@
                     :disabled="actionLoadingId === item.id"
                     @click="toggleRole(item.id, !item.isAdmin)"
                   >
-                    {{ item.isAdmin ? "Remove Admin" : "Make Admin" }}
+                    {{ item.isAdmin ? "Admin entfernen" : "Zum Admin machen" }}
                   </button>
                   <button
                     class="btn btn-small btn-info"
                     :disabled="actionLoadingId === item.id || !item.email"
                     @click="sendPasswordReset(item.id)"
                   >
-                    Reset Password
+                    Passwort zurücksetzen
                   </button>
                 </div>
               </td>
             </tr>
           </tbody>
-        </table>
-      </div>
+      </AppDataTable>
 
-      <div class="pagination" v-if="pagination.pages > 1">
-        <button
-          class="pagination-btn"
-          :disabled="pagination.page <= 1"
-          @click="changePage(pagination.page - 1)"
-        >
-          Previous
-        </button>
-        <span class="pagination-status"
-          >Page {{ pagination.page }} of {{ pagination.pages }}</span
-        >
-        <button
-          class="pagination-btn"
-          :disabled="pagination.page >= pagination.pages"
-          @click="changePage(pagination.page + 1)"
-        >
-          Next
-        </button>
-      </div>
-    </div>
+      <template v-if="pagination.pages > 1" #footer>
+        <AppPagination
+          :page="pagination.page"
+          :pages="pagination.pages"
+          @change="changePage"
+        />
+      </template>
+    </AppPanel>
 
-    <div v-if="selectedUser" class="admin-card">
-      <div class="section-header">
-        <h2>User Detail</h2>
+    <AppPanel v-if="selectedUser" title="Benutzerdetails">
+      <template #actions>
         <button
           class="btn btn-secondary btn-small"
           @click="selectedUser = null"
         >
-          Close
+          Schließen
         </button>
-      </div>
+      </template>
 
       <div class="detail-grid">
         <div>
@@ -234,18 +217,24 @@
               </button>
             </div>
             <div class="manual-password-form">
-              <input
-                v-model="manualPassword"
-                type="password"
-                class="form-input"
-                placeholder="Temporary password (min. 8 characters)"
-              />
-              <input
-                v-model="manualPasswordConfirm"
-                type="password"
-                class="form-input"
-                placeholder="Repeat temporary password"
-              />
+              <AppFormField label="Temporäres Passwort" for-id="manual-password">
+                <input
+                  id="manual-password"
+                  v-model="manualPassword"
+                  type="password"
+                  class="form-input"
+                  placeholder="Mindestens 8 Zeichen"
+                />
+              </AppFormField>
+              <AppFormField label="Passwort wiederholen" for-id="manual-password-confirm">
+                <input
+                  id="manual-password-confirm"
+                  v-model="manualPasswordConfirm"
+                  type="password"
+                  class="form-input"
+                  placeholder="Passwort wiederholen"
+                />
+              </AppFormField>
               <button
                 class="btn btn-small btn-primary"
                 :disabled="
@@ -273,7 +262,7 @@
           }}</pre>
         </div>
       </div>
-    </div>
+    </AppPanel>
   </AdminPageLayout>
 </template>
 
@@ -519,6 +508,20 @@ await loadUsers();
 
 .filters-grid {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: end;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--app-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.filter-field .form-input {
+  min-height: 2.75rem;
 }
 
 .results-summary {

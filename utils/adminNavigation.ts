@@ -9,6 +9,7 @@ import {
   ExclamationTriangleIcon,
   BuildingStorefrontIcon,
   TrophyIcon,
+  PresentationChartLineIcon,
 } from "@heroicons/vue/24/outline";
 
 export type AdminNavItem = {
@@ -24,6 +25,12 @@ export const adminNavigationItems: AdminNavItem[] = [
     to: "/admin",
     icon: ChartBarIcon,
     match: (path) => path === "/admin",
+  },
+  {
+    label: "Analytics",
+    to: "/admin/analytics",
+    icon: PresentationChartLineIcon,
+    match: (path) => path.startsWith("/admin/analytics"),
   },
   {
     label: "Events",

@@ -42,9 +42,17 @@
               <!-- Compact View -->
               <div class="p-3 flex items-center justify-between gap-3">
                 <div class="flex-1 min-w-0">
-                  <h4 class="mb-1 truncate text-sm font-semibold app-text-primary">
-                    {{ getEventTitle(event) }}
-                  </h4>
+                  <div class="mb-1 flex min-w-0 items-center gap-1.5">
+                    <span
+                      v-if="getGameMarker(event)"
+                      class="inline-flex h-4 min-w-4 flex-shrink-0 items-center justify-center rounded-sm border app-border app-surface-2 px-0.5 text-[10px] font-black app-text-primary"
+                    >
+                      {{ getGameMarker(event) }}
+                    </span>
+                    <h4 class="truncate text-sm font-semibold app-text-primary">
+                      {{ getEventTitle(event) }}
+                    </h4>
+                  </div>
                   <div class="flex items-center gap-2 text-xs app-text-secondary-soft">
                     <MapPinIcon class="w-3 h-3 flex-shrink-0" />
                     <span class="truncate">{{ getCityFromEvent(event) }}</span>
@@ -271,6 +279,11 @@ import {
 import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
 import { useEventBookmarks } from "~/composables/useEventBookmarks";
 import type { EventBookmarkDraft } from "~/utils/guestEventBookmarks";
+import {
+  getPokemonGameMarker,
+  getPokemonGameType,
+  type PokemonGameType,
+} from "~/types/eventGame";
 const { t, locale } = useI18n();
 
 interface ParsedEvent {
@@ -291,6 +304,7 @@ interface ParsedEvent {
   eventType?: string;
   tags?: any;
   tagType?: string;
+  gameType?: PokemonGameType;
 }
 
 interface CustomEvent {
@@ -324,6 +338,7 @@ const user = useSupabaseUser();
 const isUserLoggedIn = computed(() => Boolean(user.value));
 const { loadBookmarkedEventIds, toggleBookmark: toggleUnifiedBookmark } =
   useEventBookmarks();
+const { track: trackAnalytics } = useAnalytics();
 const expandedEvents = ref<Set<string>>(new Set());
 const bookmarkedEventIds = ref<Set<string>>(new Set());
 const bookmarkPendingId = ref<string | null>(null);
@@ -424,6 +439,7 @@ async function toggleBookmark(event: ParsedEvent): Promise<void> {
   }
 
   bookmarkPendingId.value = event.id;
+  const wasBookmarked = isBookmarked(event.id);
 
   try {
     const bookmark: EventBookmarkDraft = {
@@ -442,9 +458,11 @@ async function toggleBookmark(event: ParsedEvent): Promise<void> {
 
     await toggleUnifiedBookmark({
       isAuthenticated: Boolean(user.value),
-      isBookmarked: isBookmarked(event.id),
+      isBookmarked: wasBookmarked,
       bookmark,
     });
+
+    if (!wasBookmarked) trackAnalytics("event_bookmarked", event.id);
 
     bookmarkedEventIds.value = await loadBookmarkedEventIds(Boolean(user.value));
 
@@ -569,6 +587,12 @@ const getEventTitle = (event: ParsedEvent): string => {
   }
   // For external events, use name field first, then fall back to title or venue
   return event.name || event.title || event.venue || "Event";
+};
+
+const getGameMarker = (event: ParsedEvent) => {
+  if (event.gameType) return getPokemonGameMarker(event.gameType);
+  if (event.tagType !== "pokemon" || !event.tags) return undefined;
+  return getPokemonGameMarker(getPokemonGameType(event.tags.game) || "tcg");
 };
 
 const getEventDate = (event: ParsedEvent): string => {

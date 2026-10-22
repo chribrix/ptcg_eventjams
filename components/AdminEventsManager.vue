@@ -2,15 +2,13 @@
   <AdminPageLayout :title="t('admin.eventsManager.title')">
     <!-- Search bar -->
     <div class="events-manager-toolbar sticky top-0 z-10">
-      <input
+      <AppSearchField
         v-model="searchTerm"
-        type="text"
         :placeholder="t('admin.eventsManager.searchPlaceholder')"
-        class="app-input w-full px-4 py-2"
       />
     </div>
 
-    <div class="p-4 pb-24">
+    <div class="pb-24">
       <div v-if="loading" class="flex justify-center items-center py-12">
         <div
           class="events-manager-spinner"
@@ -40,14 +38,18 @@
             >
           </h2>
 
-          <div v-if="upcomingEvents.length > 0" class="space-y-2">
-            <div
+          <div v-if="upcomingEvents.length > 0" class="grid gap-3 lg:grid-cols-2">
+            <AppEventCard
               v-for="event in upcomingEvents"
               :key="event.id"
-              class="events-manager-card"
+              bare
+              interactive
+              compact
               @click="openEventDetails(event)"
+              @keydown.enter.prevent="openEventDetails(event)"
+              @keydown.space.prevent="openEventDetails(event)"
             >
-              <div class="p-4">
+              <div>
                 <div class="flex items-start justify-between gap-3">
                   <div class="flex-1 min-w-0">
                     <h3 class="events-manager-card-title">
@@ -143,7 +145,7 @@
                   </svg>
                 </div>
               </div>
-            </div>
+            </AppEventCard>
           </div>
           <div v-else class="text-center py-8 app-text-muted-soft">
             {{ t("admin.eventsManager.noUpcomingEvents") }}
@@ -199,14 +201,19 @@
             leave-from-class="max-h-[5000px] opacity-100"
             leave-to-class="max-h-0 opacity-0"
           >
-            <div v-if="showCompletedEvents" class="space-y-2 overflow-hidden">
-              <div
+            <div v-if="showCompletedEvents" class="grid gap-3 overflow-hidden lg:grid-cols-2">
+              <AppEventCard
                 v-for="event in completedEvents"
                 :key="event.id"
-                class="events-manager-card app-card-interactive-muted"
+                bare
+                interactive
+                compact
+                muted
                 @click="openEventDetails(event)"
+                @keydown.enter.prevent="openEventDetails(event)"
+                @keydown.space.prevent="openEventDetails(event)"
               >
-                <div class="p-4">
+                <div>
                   <div class="flex items-start justify-between gap-3">
                     <div class="flex-1 min-w-0">
                       <h3 class="events-manager-card-title app-text-secondary-soft">
@@ -268,7 +275,7 @@
                     </svg>
                   </div>
                 </div>
-              </div>
+              </AppEventCard>
             </div>
           </Transition>
         </div>
@@ -866,8 +873,23 @@
               </section>
 
               <div class="registration-list-area min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-3 sm:space-y-6 sm:px-6 sm:py-5">
+                <div class="registration-search-bar">
+                  <AppSearchField
+                    v-model="registrationSearchTerm"
+                    :placeholder="t('admin.eventsManager.registrationSearchPlaceholder')"
+                  />
+                  <span class="registration-search-result-count" aria-live="polite">
+                    {{
+                      t("admin.eventsManager.registrationSearchResults", {
+                        count:
+                          filteredTicketRows.length +
+                          filteredWaitlistEntries.length,
+                      })
+                    }}
+                  </span>
+                </div>
 
-                <div v-if="ticketRows.length > 0" class="registrations-table-shell">
+                <div v-if="filteredTicketRows.length > 0" class="registrations-table-shell">
                   <div class="registrations-table">
                     <table>
                       <thead>
@@ -887,7 +909,7 @@
                       </thead>
                       <tbody>
                         <tr
-                          v-for="row in ticketRows"
+                          v-for="row in filteredTicketRows"
                           :key="row.ticketId"
                           :class="getRegistrationRowClass(row)"
                           @click="toggleTicketCheckIn(row)"
@@ -964,7 +986,11 @@
                 </div>
 
                 <div v-else class="registrations-empty-state">
-                  {{ t("admin.eventsManager.noRegistrationsYet") }}
+                  {{
+                    registrationSearchTerm && ticketRows.length > 0
+                      ? t("admin.eventsManager.noRegistrationSearchResults")
+                      : t("admin.eventsManager.noRegistrationsYet")
+                  }}
                 </div>
 
                 <div class="space-y-3">
@@ -976,7 +1002,7 @@
                     }}
                   </h3>
                   <div
-                    v-if="waitlistEntries.length > 0"
+                    v-if="filteredWaitlistEntries.length > 0"
                     class="registrations-table-shell"
                   >
                     <div class="registrations-table">
@@ -995,10 +1021,10 @@
                         </thead>
                         <tbody>
                           <tr
-                            v-for="(entry, index) in waitlistEntries"
+                            v-for="entry in filteredWaitlistEntries"
                             :key="entry.id"
                           >
-                            <td>{{ index + 1 }}</td>
+                            <td>{{ waitlistEntries.indexOf(entry) + 1 }}</td>
                             <td>{{ entry.priority }}</td>
                             <td>{{ entry.player.playerId || "—" }}</td>
                             <td class="font-medium app-text-primary">
@@ -1046,7 +1072,11 @@
                     </div>
                   </div>
                   <div v-else class="registrations-empty-state">
-                    {{ t("admin.eventsManager.noWaitlistEntries") }}
+                    {{
+                      registrationSearchTerm && waitlistEntries.length > 0
+                        ? t("admin.eventsManager.noWaitlistSearchResults")
+                        : t("admin.eventsManager.noWaitlistEntries")
+                    }}
                   </div>
                 </div>
               </div>
@@ -1057,59 +1087,44 @@
     </Teleport>
 
     <!-- Decklist Viewer Modal -->
-    <div
+    <AppModal
       v-if="selectedDecklist"
-      class="modal-overlay"
-      @click="closeDecklistModal"
-      style="z-index: 1001"
+      :title="t('admin.eventsManager.decklistTitle', { name: selectedDecklist.playerName })"
+      size="lg"
+      @close="closeDecklistModal"
     >
-      <div class="modal-content modal-large" @click.stop>
-        <div class="modal-header">
-          <h2>
-            {{ t("admin.eventsManager.decklistTitle", { name: selectedDecklist.playerName }) }}
-          </h2>
-          <button @click="closeDecklistModal" class="close-btn">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="decklist-viewer">
-            <pre class="decklist-content-modal">{{
-              selectedDecklist.decklist
-            }}</pre>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button @click="closeDecklistModal" class="btn btn-secondary">
-            ← {{ t("common.back") }}
-          </button>
-        </div>
+      <div class="decklist-viewer">
+        <pre class="decklist-content-modal">{{ selectedDecklist.decklist }}</pre>
       </div>
-    </div>
+      <template #footer>
+        <button @click="closeDecklistModal" class="btn btn-secondary">
+          ← {{ t("common.back") }}
+        </button>
+      </template>
+    </AppModal>
 
     <!-- Create/Edit Event Modal -->
-    <div
+    <AppModal
       v-if="showCreateForm || editingEvent"
-      class="modal-overlay"
-      @click="closeModal"
+      :title="
+        editingEvent
+          ? t('admin.eventsManager.editEvent')
+          : t('admin.eventsManager.createNewEvent')
+      "
+      :subtitle="t('admin.eventsManager.shownInTimezone', { timeZone: userTimeZone })"
+      size="lg"
+      @close="closeModal"
     >
-      <div class="modal-content event-form-modal" @click.stop>
-        <div class="modal-header">
-          <h2>
-            {{
-              editingEvent
-                ? t("admin.eventsManager.editEvent")
-                : t("admin.eventsManager.createNewEvent")
-            }}
-          </h2>
-          <button @click="closeModal" class="close-btn">&times;</button>
-        </div>
-
         <form @submit.prevent="saveEvent" class="event-form">
           <div v-if="formError" class="form-error-banner" role="alert">
             {{ formError }}
           </div>
 
-          <div class="form-group">
-            <label for="name">{{ t("admin.eventsManager.eventName") }} *</label>
+          <AppFormField
+            :label="t('admin.eventsManager.eventName')"
+            for-id="name"
+            required
+          >
             <input
               id="name"
               v-model="eventForm.name"
@@ -1118,7 +1133,7 @@
               class="form-input"
               :placeholder="t('admin.eventsManager.placeholders.eventName')"
             />
-          </div>
+          </AppFormField>
 
           <div class="form-row">
             <div class="form-group">
@@ -1357,8 +1372,7 @@
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </AppModal>
   </AdminPageLayout>
 </template>
 
@@ -1506,6 +1520,7 @@ const showCompletedEvents = ref(false);
 const editingEvent = ref<CustomEvent | null>(null);
 const selectedEvent = ref<CustomEvent | null>(null);
 const searchTerm = ref("");
+const registrationSearchTerm = ref("");
 const copiedEventId = ref<string | null>(null);
 const selectedDecklist = ref<{ playerName: string; decklist: string } | null>(
   null,
@@ -1552,6 +1567,42 @@ const ticketRows = computed<TicketRow[]>(() =>
     })),
   ),
 );
+
+const normalizeRegistrationSearch = (value?: string | number | null) =>
+  String(value ?? "")
+    .trim()
+    .toLocaleLowerCase();
+
+const filteredTicketRows = computed(() => {
+  const search = normalizeRegistrationSearch(registrationSearchTerm.value);
+  if (!search) return ticketRows.value;
+
+  return ticketRows.value.filter((row) =>
+    [
+      row.participantName,
+      row.participantPlayerId,
+      row.bookerEmail,
+      getBirthYear(row.birthDate),
+      row.ticketStatus,
+      getTicketStatusLabel(row.ticketStatus),
+    ].some((value) => normalizeRegistrationSearch(value).includes(search)),
+  );
+});
+
+const filteredWaitlistEntries = computed(() => {
+  const search = normalizeRegistrationSearch(registrationSearchTerm.value);
+  if (!search) return waitlistEntries.value;
+
+  return waitlistEntries.value.filter((entry) =>
+    [
+      entry.player.name,
+      entry.player.playerId,
+      entry.player.email,
+      entry.status,
+      entry.priority,
+    ].some((value) => normalizeRegistrationSearch(value).includes(search)),
+  );
+});
 
 const updatingTicketIds = ref<string[]>([]);
 
@@ -2104,6 +2155,7 @@ const deleteEvent = async (event: CustomEvent) => {
 
 const viewRegistrations = async (event: CustomEvent) => {
   try {
+    registrationSearchTerm.value = "";
     selectedEvent.value = event;
     await loadRegistrationsForSelectedEvent();
     showRegistrations.value = true;
@@ -2249,6 +2301,7 @@ const closeRegistrationsModal = () => {
   manualParticipantForm.value = createEmptyManualParticipantForm();
   manualParticipantPending.value = false;
   manualParticipantError.value = "";
+  registrationSearchTerm.value = "";
 };
 
 const updateWaitlistPriority = async (
@@ -2779,6 +2832,25 @@ onMounted(async () => {
   box-shadow: var(--app-shadow-soft);
 }
 
+.registration-search-bar {
+  position: sticky;
+  top: -0.75rem;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: -0.25rem -0.15rem 0;
+  padding: 0.25rem 0.15rem 0.5rem;
+  background: var(--app-modal-surface, var(--app-surface-0));
+}
+
+.registration-search-result-count {
+  flex: none;
+  color: var(--app-text-muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
 .registrations-table {
   overflow-x: auto;
 }
@@ -2809,6 +2881,18 @@ onMounted(async () => {
 }
 
 @media (max-width: 639px) {
+  .registration-search-bar {
+    top: -0.75rem;
+    gap: 0.45rem;
+  }
+
+  .registration-search-result-count {
+    max-width: 4.5rem;
+    white-space: normal;
+    text-align: right;
+    line-height: 1.1;
+  }
+
   .manual-participant-panel {
     padding-block: 0.45rem;
   }

@@ -632,23 +632,23 @@ describe("Custom Event Overrides", () => {
     it("should return correct badge color for cup events", () => {
       const eventType = "cup";
       const colorMap: Record<string, string> = {
-        cup: "#bbf7d0",
-        challenge: "#bfdbfe",
+        cup: "#fef3c7",
+        challenge: "#dbeafe",
         local: "#e0f2fe",
         custom: "#fed7aa",
       };
-      expect(colorMap[eventType]).toBe("#bbf7d0");
+      expect(colorMap[eventType]).toBe("#fef3c7");
     });
 
     it("should return correct badge color for challenge events", () => {
       const eventType = "challenge";
       const colorMap: Record<string, string> = {
-        cup: "#bbf7d0",
-        challenge: "#bfdbfe",
+        cup: "#fef3c7",
+        challenge: "#dbeafe",
         local: "#e0f2fe",
         custom: "#fed7aa",
       };
-      expect(colorMap[eventType]).toBe("#bfdbfe");
+      expect(colorMap[eventType]).toBe("#dbeafe");
     });
 
     it("should return correct display name for event types", () => {

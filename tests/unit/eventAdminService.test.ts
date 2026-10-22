@@ -58,7 +58,7 @@ describe("eventAdminService", () => {
         tagType: "pokemon",
         tags: {
           type: "custom",
-          game: "Pokemon",
+          game: "Pokemon VGC",
           format: "standard",
           host: "League Org",
         },
@@ -96,6 +96,9 @@ describe("eventAdminService", () => {
           createdBy: "admin-1",
           eventDate,
           registrationDeadline,
+          tags: expect.objectContaining({
+            game: "Pokemon VGC",
+          }),
         }),
       }),
     );

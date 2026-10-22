@@ -1,35 +1,14 @@
 <template>
   <section class="w-full max-w-6xl mx-auto">
     <div class="app-panel overflow-hidden rounded-[1.25rem] sm:rounded-[2rem]">
-      <div class="border-b app-border px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
-        <div
-          class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
-        >
-          <div class="max-w-2xl">
-            <p
-              class="app-hero-eyebrow text-xs font-semibold uppercase tracking-[0.32em]"
-            >
-              {{ t("eventList.eyebrow") }}
-            </p>
-            <h2
-              class="mt-2 text-2xl font-semibold tracking-tight app-text-primary sm:text-3xl"
-            >
-              {{ t("eventList.title") }}
-            </h2>
-            <p class="mt-2 text-sm leading-6 app-text-secondary-soft sm:text-base">
-              {{ t("eventList.subtitle") }}
-            </p>
-            <p
-              v-if="!user"
-              class="mt-2 text-xs leading-5 app-text-secondary-soft sm:text-sm"
-            >
-              {{ t("eventList.guestBookmarkHint") }}
-              <NuxtLink to="/register" class="underline font-semibold">
-                {{ t("eventList.guestBookmarkHintCta") }}
-              </NuxtLink>
-            </p>
-          </div>
-
+      <AppPageHeader
+        embedded
+        heading-tag="h2"
+        :eyebrow="t('eventList.eyebrow')"
+        :title="t('eventList.title')"
+        :subtitle="t('eventList.subtitle')"
+      >
+        <template #aside>
           <div class="grid grid-cols-2 gap-3 lg:min-w-[16rem]">
             <div
               class="app-stat-card rounded-2xl p-3 backdrop-blur"
@@ -52,10 +31,20 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </template>
+      </AppPageHeader>
 
       <div class="px-2.5 py-3 sm:px-6 sm:py-5 lg:px-8">
+        <p
+          v-if="!user"
+          class="mb-3 text-xs leading-5 app-text-secondary-soft sm:text-sm"
+        >
+          {{ t("eventList.guestBookmarkHint") }}
+          <NuxtLink to="/register" class="font-semibold underline">
+            {{ t("eventList.guestBookmarkHintCta") }}
+          </NuxtLink>
+        </p>
+
         <div
           v-if="error"
           class="app-feedback-danger rounded-2xl px-4 py-3 text-sm"
@@ -269,31 +258,18 @@
       </div>
 
       <div class="border-t app-border px-2.5 py-3 sm:px-6 sm:py-5 lg:px-8">
-        <div
+        <AppStatePanel
           v-if="isLoading"
-          class="flex min-h-[18rem] items-center justify-center"
-        >
-          <div class="flex flex-col items-center gap-3 app-text-secondary-soft">
-            <div
-              class="h-10 w-10 animate-spin rounded-full border-4 app-border"
-              style="border-top-color: var(--app-button-blue);"
-            ></div>
-            <span class="text-sm font-medium">{{ t("eventList.loading") }}</span>
-          </div>
-        </div>
+          kind="loading"
+          :message="t('eventList.loading')"
+        />
 
-        <div
+        <AppStatePanel
           v-else-if="filteredEvents.length === 0"
-          class="flex min-h-[18rem] flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-[var(--app-surface-3)] app-surface-0 px-6 text-center"
-        >
-          <CalendarIcon class="app-muted-icon h-12 w-12" />
-          <h3 class="mt-4 text-lg font-semibold app-text-primary">
-            {{ t("eventList.noMatchesTitle") }}
-          </h3>
-          <p class="mt-2 max-w-md text-sm leading-6 app-text-secondary-soft">
-            {{ t("eventList.noMatchesText") }}
-          </p>
-        </div>
+          kind="empty"
+          :title="t('eventList.noMatchesTitle')"
+          :message="t('eventList.noMatchesText')"
+        />
 
         <div v-else class="space-y-5 sm:space-y-8">
           <section
@@ -312,39 +288,35 @@
               </div>
             </div>
 
-            <div class="grid gap-3 sm:gap-4 lg:grid-cols-2">
-              <article
+            <div class="event-list-grid">
+              <AppEventCard
                 v-for="event in group.events"
                 :key="event.key"
-                class="event-list-card group cursor-pointer rounded-[1.1rem] border p-2.5 transition focus:outline-none focus:ring-2 focus:ring-[var(--app-accent)]/70 focus:ring-offset-2 focus:ring-offset-[var(--app-surface-0)] sm:rounded-[1.75rem] sm:p-5"
+                class="event-list-card group"
                 :class="getEventCardClass(event)"
                 :style="getEventCardStyle(event)"
-                role="button"
-                tabindex="0"
+                bare
+                interactive
                 @click="openEventDetails(event)"
                 @keydown.enter.prevent="openEventDetails(event)"
                 @keydown.space.prevent="openEventDetails(event)"
               >
-                <div
-                  class="flex flex-col gap-2.5 sm:gap-3 sm:flex-row sm:items-start sm:justify-between"
-                >
-                  <div class="flex min-w-0 gap-2.5 sm:gap-3">
+                <div class="event-list-card-main">
+                  <div class="event-list-card-primary">
                     <div
-                      class="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-xl text-center sm:h-16 sm:w-16 sm:rounded-2xl"
+                      class="event-list-date"
                       :class="event.dateBadgeClass"
                     >
-                      <div class="text-lg font-semibold leading-none sm:text-2xl">
+                      <div class="event-list-date-day">
                         {{ formatDay(event.date) }}
                       </div>
-                      <div
-                        class="mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] sm:text-[0.7rem] sm:tracking-[0.18em]"
-                      >
+                      <div class="event-list-date-month">
                         {{ formatMonth(event.date) }}
                       </div>
                     </div>
 
-                    <div class="min-w-0 flex-1">
-                      <div class="flex flex-wrap items-center gap-2">
+                    <div class="event-list-card-copy">
+                      <div class="event-list-badges">
                         <span
                           class="rounded-full border px-2.5 py-1 text-[11px] font-medium sm:px-3 sm:text-xs"
                           :class="event.typeBadgeClass"
@@ -372,12 +344,12 @@
                       </div>
 
                       <h4
-                        class="mt-1.5 text-[0.95rem] font-semibold leading-tight app-text-primary sm:mt-3 sm:text-xl"
+                        class="event-list-title"
                       >
                         {{ event.title }}
                       </h4>
 
-                      <div class="mt-1.5 space-y-1 text-[0.72rem] app-text-secondary-soft sm:mt-3 sm:space-y-2 sm:text-sm">
+                      <div class="event-list-meta">
                         <div class="flex items-start gap-2">
                           <ClockIcon
                             class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 app-text-muted sm:h-4 sm:w-4"
@@ -403,9 +375,7 @@
                     </div>
                   </div>
 
-                  <div
-                    class="flex flex-wrap gap-2 sm:max-w-[13rem] sm:justify-end"
-                  >
+                  <div class="event-list-card-stats">
                     <div
                       v-if="event.priceLabel"
                       class="app-info-card rounded-xl border px-2.5 py-1.5 text-xs font-semibold sm:rounded-2xl sm:px-3 sm:py-2 sm:text-sm"
@@ -429,13 +399,13 @@
 
                 <p
                   v-if="event.description"
-                  class="mt-3 text-xs leading-5 app-text-secondary-soft sm:mt-4 sm:text-sm sm:leading-6"
+                  class="event-list-description"
                 >
                   {{ event.description }}
                 </p>
 
                 <div
-                  class="mt-3 flex items-center justify-between gap-3 border-t app-border pt-2.5 sm:mt-5 sm:pt-4"
+                  class="event-list-card-footer"
                 >
                   <span class="text-xs font-medium app-text-muted-soft">
                     {{ t("eventList.tapForDetails") }}
@@ -460,7 +430,7 @@
                     }}
                   </button>
                 </div>
-              </article>
+              </AppEventCard>
             </div>
           </section>
         </div>
@@ -476,52 +446,25 @@
       <FunnelIcon class="h-5 w-5" />
     </button>
 
-    <div
+    <AppModal
       v-if="selectedEvent"
-      class="app-overlay fixed inset-0 z-50 flex overscroll-none items-end p-0 sm:items-center sm:p-6"
-      @click="closeEventDetails"
+      :title="selectedEvent.title"
+      :eyebrow="selectedEvent.typeLabel"
+      :subtitle="`${formatEventDate(selectedEvent.date)} · ${selectedEvent.venue}`"
+      :accent="getEventTypeColor(selectedEvent).accent"
+      size="xl"
+      bottom-sheet-mobile
+      @close="closeEventDetails"
     >
-      <div
-        class="app-panel max-h-[92vh] w-full overflow-hidden overscroll-contain rounded-t-[2rem] sm:mx-auto sm:max-w-3xl sm:rounded-[2rem]"
-        @click.stop
-      >
-        <div
-          class="flex items-start justify-between gap-4 border-b app-border px-5 py-4 sm:px-6"
-        >
-          <div>
-            <div class="flex flex-wrap items-center gap-2">
-              <span
-                class="rounded-full border px-3 py-1 text-xs font-medium"
-                :class="selectedEvent.typeBadgeClass"
-              >
-                {{ selectedEvent.typeLabel }}
-              </span>
-            </div>
-            <h3 class="mt-3 text-xl font-semibold app-text-primary sm:text-2xl">
-              {{ selectedEvent.title }}
-            </h3>
-          </div>
-
-          <button
-            type="button"
-            class="rounded-2xl border app-border p-2 app-text-muted transition hover:bg-[var(--app-surface-2)] hover:text-[var(--app-text-primary)]"
-            @click="closeEventDetails"
-          >
-            <XMarkIcon class="h-5 w-5" />
-          </button>
-        </div>
-
-        <div
-          class="event-list-details-scroll max-h-[calc(92vh-5.5rem)] overflow-y-auto px-5 py-5 sm:px-6"
-        >
+        <div class="event-list-details-scroll" :style="getEventCardStyle(selectedEvent)">
           <div
-            class="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,1fr)]"
+            class="event-list-detail-grid"
           >
-            <div class="space-y-5">
+            <div class="event-list-detail-column">
               <div
-                class="event-list-modal-section rounded-[1.5rem] border p-4"
+                class="event-list-modal-section event-list-detail-facts"
               >
-                <div class="grid gap-4 sm:grid-cols-2">
+                <div class="event-list-facts-grid">
                   <div class="flex gap-3">
                     <ClockIcon
                       class="mt-0.5 h-5 w-5 flex-shrink-0 app-text-muted"
@@ -590,7 +533,7 @@
 
               <div
                 v-if="selectedEvent.description"
-                class="event-list-modal-section rounded-[1.5rem] border p-4"
+                class="event-list-modal-section"
               >
                 <div
                   class="text-xs font-semibold uppercase tracking-[0.18em] app-text-muted-soft"
@@ -603,9 +546,9 @@
               </div>
             </div>
 
-            <div class="space-y-4">
+            <div class="event-list-detail-column">
               <div
-                class="event-list-modal-section rounded-[1.5rem] border p-4"
+                class="event-list-modal-section"
               >
                 <div
                   class="text-xs font-semibold uppercase tracking-[0.18em] app-text-muted-soft"
@@ -702,7 +645,7 @@
               </div>
 
               <div
-                class="event-list-modal-section rounded-[1.5rem] border p-4 text-sm app-text-secondary-soft"
+                class="event-list-modal-section event-list-detail-tip text-sm app-text-secondary-soft"
               >
                 <div class="font-semibold">{{ t("eventList.quickTipTitle") }}</div>
                 <p class="mt-2 leading-6">
@@ -712,8 +655,7 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </AppModal>
   </section>
 </template>
 
@@ -730,7 +672,6 @@ import {
   MapIcon,
   MapPinIcon,
   TicketIcon,
-  XMarkIcon,
 } from "@heroicons/vue/24/outline";
 import {
   formatDateInTimeZone,
@@ -750,6 +691,7 @@ import {
 import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
 import { useEventBookmarks } from "~/composables/useEventBookmarks";
 import type { EventBookmarkDraft } from "~/utils/guestEventBookmarks";
+import { getEventColor } from "~/utils/eventColors";
 
 interface ExternalEvent {
   id: string;
@@ -832,6 +774,7 @@ const waitlistStatuses = ref<Record<string, "waitlist" | "waitlist_claim">>({});
 const user = useSupabaseUser();
 const { loadBookmarkedEventIds, toggleBookmark: toggleUnifiedBookmark } =
   useEventBookmarks();
+const { track: trackAnalytics } = useAnalytics();
 const { t, locale } = useI18n();
 const userTimeZone = getUserTimeZone();
 
@@ -1156,25 +1099,16 @@ function isBookmarked(eventId: string): boolean {
   return bookmarkedEventIds.value.has(eventId);
 }
 
-function getEventCardAccent(event: UnifiedEvent): string {
-  if (event.waitlistStatus === "waitlist_claim") {
-    return "var(--app-button-blue-border)";
-  }
-  if (event.waitlistStatus === "waitlist") {
-    return "var(--app-button-amber-border)";
-  }
-  if (event.source === "custom") {
-    return "var(--app-accent)";
-  }
-  if (isBookmarked(event.id)) {
-    return "var(--app-bookmark-border)";
-  }
-  return "var(--app-border)";
+function getEventTypeColor(event: UnifiedEvent) {
+  return getEventColor(event.typeKey);
 }
 
 function getEventCardStyle(event: UnifiedEvent) {
+  const color = getEventTypeColor(event);
   return {
-    "--event-list-card-accent": getEventCardAccent(event),
+    "--event-list-card-accent": color.accent,
+    "--event-list-card-soft": color.bg,
+    "--event-list-card-type-text": color.text,
   } as Record<string, string>;
 }
 
@@ -1191,6 +1125,7 @@ async function toggleBookmark(event: UnifiedEvent): Promise<void> {
   }
 
   bookmarkPendingId.value = event.id;
+  const wasBookmarked = isBookmarked(event.id);
 
   try {
     const bookmark: EventBookmarkDraft = {
@@ -1209,9 +1144,11 @@ async function toggleBookmark(event: UnifiedEvent): Promise<void> {
 
     await toggleUnifiedBookmark({
       isAuthenticated: Boolean(user.value),
-      isBookmarked: isBookmarked(event.id),
+      isBookmarked: wasBookmarked,
       bookmark,
     });
+
+    if (!wasBookmarked) trackAnalytics("event_bookmarked", event.id);
 
     bookmarkedEventIds.value = await loadBookmarkedEventIds(Boolean(user.value));
 
@@ -1535,6 +1472,11 @@ watch(user, async () => {
   -webkit-overflow-scrolling: touch;
 }
 
+.event-list-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
 .event-list-chip-count {
   background: color-mix(in srgb, var(--app-surface-1) 88%, white);
   color: var(--app-text-secondary);
@@ -1548,6 +1490,11 @@ watch(user, async () => {
 .event-list-card {
   position: relative;
   overflow: hidden;
+  min-height: 0;
+  border-color: color-mix(in srgb, var(--event-list-card-accent) 30%, var(--app-border));
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--event-list-card-soft) 18%, transparent), transparent 42%),
+    var(--app-surface-0);
   box-shadow: var(--app-shadow-soft);
   transition:
     transform 0.2s,
@@ -1560,13 +1507,8 @@ watch(user, async () => {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
-  width: 4px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--event-list-card-accent) 96%, white),
-    color-mix(in srgb, var(--event-list-card-accent) 60%, transparent)
-  );
-  opacity: 0.96;
+  width: 0.3rem;
+  background: var(--event-list-card-accent);
 }
 
 .event-list-card::after {
@@ -1589,6 +1531,119 @@ watch(user, async () => {
   box-shadow: var(--app-shadow-strong);
 }
 
+.event-list-card-main {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.event-list-card-primary {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.event-list-date {
+  display: flex;
+  width: 3.25rem;
+  height: 3.25rem;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.9rem;
+  text-align: center;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--event-list-card-accent) 20%, transparent);
+}
+
+.event-list-date-day {
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.event-list-date-month {
+  margin-top: 0.3rem;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.event-list-card-copy {
+  min-width: 0;
+}
+
+.event-list-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.event-list-badges > :first-child {
+  border-color: color-mix(in srgb, var(--event-list-card-accent) 48%, transparent);
+  background: var(--event-list-card-soft);
+  color: var(--event-list-card-type-text);
+}
+
+.event-list-title {
+  margin: 0.55rem 0 0;
+  color: var(--app-text-primary);
+  font-size: 1rem;
+  font-weight: 750;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.event-list-meta {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  color: var(--app-text-secondary);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.event-list-meta span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.event-list-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-left: 3.95rem;
+}
+
+.event-list-card-stats > div {
+  border-color: color-mix(in srgb, var(--event-list-card-accent) 26%, var(--app-border));
+  background: color-mix(in srgb, var(--event-list-card-soft) 12%, var(--app-surface-2));
+}
+
+.event-list-description {
+  display: -webkit-box;
+  margin: 0.75rem 0 0;
+  overflow: hidden;
+  color: var(--app-text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.event-list-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid color-mix(in srgb, var(--event-list-card-accent) 18%, var(--app-border));
+}
+
 .event-list-game-pill {
   border-color: color-mix(in srgb, var(--app-accent) 10%, var(--app-border));
   background: color-mix(in srgb, var(--app-surface-2) 88%, var(--app-accent) 12%);
@@ -1596,12 +1651,110 @@ watch(user, async () => {
 }
 
 .event-list-modal-section {
-  border-color: color-mix(in srgb, var(--app-accent) 14%, var(--app-border));
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--event-list-card-accent) 20%, var(--app-border));
+  border-radius: 1rem;
   background:
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--app-accent) 5%, var(--app-bg-page)) 0%,
+      color-mix(in srgb, var(--event-list-card-soft) 8%, var(--app-bg-page)) 0%,
       var(--app-bg-page) 100%
     );
+}
+
+.event-list-detail-grid,
+.event-list-detail-column,
+.event-list-facts-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.event-list-detail-tip {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .event-list-grid {
+    gap: 1rem;
+  }
+
+  .event-list-card {
+    min-height: 15rem;
+  }
+
+  .event-list-card-main {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .event-list-card-primary {
+    grid-template-columns: 4.25rem minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .event-list-date {
+    width: 4.25rem;
+    height: 4.25rem;
+    border-radius: 1.1rem;
+  }
+
+  .event-list-date-day {
+    font-size: 1.65rem;
+  }
+
+  .event-list-date-month {
+    font-size: 0.67rem;
+  }
+
+  .event-list-title {
+    margin-top: 0.75rem;
+    font-size: 1.2rem;
+  }
+
+  .event-list-meta {
+    gap: 0.55rem;
+    margin-top: 0.8rem;
+    font-size: 0.88rem;
+  }
+
+  .event-list-card-stats {
+    max-width: 12rem;
+    justify-content: flex-end;
+    padding-left: 0;
+  }
+
+  .event-list-description {
+    font-size: 0.86rem;
+  }
+
+  .event-list-modal-section {
+    padding: 1rem;
+    border-radius: 1.2rem;
+  }
+
+  .event-list-facts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .event-list-detail-tip {
+    display: block;
+  }
+}
+
+@media (min-width: 900px) {
+  .event-list-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .event-list-detail-grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.8fr);
+    gap: 1rem;
+  }
+
+  .event-list-detail-column {
+    align-content: start;
+    gap: 1rem;
+  }
 }
 </style>
