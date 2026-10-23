@@ -322,6 +322,7 @@ const selectedEvent = ref<SelectedEvent | null>(null);
 const tournamentSearch = ref("");
 const route = useRoute();
 const router = useRouter();
+const LAST_ACTIVE_TOURNAMENT_STORAGE_KEY = "cj-tournament-management-active-event";
 
 const tomStateLoaded = ref(false);
 const tomLoading = ref(false);
@@ -428,6 +429,9 @@ const selectEvent = async (eventId: string) => {
   if (!eventId) return;
   if (selectedEventId.value === eventId && selectedEvent.value) return;
   selectedEventId.value = eventId;
+  if (import.meta.client) {
+    window.localStorage.setItem(LAST_ACTIVE_TOURNAMENT_STORAGE_KEY, eventId);
+  }
   await syncSelectedEventToQuery(eventId);
   activeTomTab.value = "overview";
   userPinnedTab.value = "overview";
@@ -987,7 +991,10 @@ const statusClass = (status: string) => {
 
 onMounted(async () => {
   const eventId = typeof route.query.eventId === "string" ? route.query.eventId : null;
-  if (eventId) await selectEvent(eventId);
+  const lastActiveEventId = import.meta.client
+    ? window.localStorage.getItem(LAST_ACTIVE_TOURNAMENT_STORAGE_KEY)
+    : null;
+  if (eventId || lastActiveEventId) await selectEvent(eventId || lastActiveEventId!);
   startNowTickTimer();
 });
 
