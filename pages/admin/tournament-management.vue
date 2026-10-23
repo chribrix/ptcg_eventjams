@@ -600,7 +600,12 @@ const importTomXml = async () => {
     if (fileInputRef.value) fileInputRef.value.value = "";
     await loadTomState();
   } catch (error: any) {
-    tomStateError.value = error?.data?.statusMessage || "Failed to import TOM XML.";
+    tomStateError.value =
+      error?.data?.statusMessage ||
+      error?.data?.message ||
+      error?.statusMessage ||
+      error?.message ||
+      "Failed to import TOM XML.";
   } finally {
     tomImporting.value = false;
   }
