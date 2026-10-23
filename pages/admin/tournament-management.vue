@@ -663,7 +663,8 @@ const endTournament = async () => {
 
 const copyPlayerAccessLink = async () => {
   if (!selectedEventId.value || !import.meta.client) return;
-  const url = `${window.location.origin}/tournaments/${selectedEventId.value}`;
+  const info = await $fetch<{ tournament?: { enrollmentCode?: string } }>(`/api/tournaments/${selectedEventId.value}/tom-bridge/access-info`);
+  const url = `${window.location.origin}/e/${info.tournament?.enrollmentCode || selectedEventId.value}`;
   try {
     await navigator.clipboard.writeText(url);
     tomSuccessMessage.value = "Spieler-Zugangslink kopiert. Diesen Link als QR-Code ausgeben.";
@@ -675,9 +676,10 @@ const copyPlayerAccessLink = async () => {
 const showPlayerAccessQr = async () => {
   if (!selectedEventId.value || !import.meta.client) return;
   try {
+    const info = await $fetch<{ tournament?: { enrollmentCode?: string } }>(`/api/tournaments/${selectedEventId.value}/tom-bridge/access-info`);
     const QRCode = (await import("qrcode")).default;
     playerAccessQrDataUrl.value = await QRCode.toDataURL(
-      `${window.location.origin}/tournaments/${selectedEventId.value}`,
+      `${window.location.origin}/e/${info.tournament?.enrollmentCode || selectedEventId.value}`,
       { width: 440, margin: 1, errorCorrectionLevel: "M" },
     );
   } catch {

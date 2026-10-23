@@ -161,6 +161,7 @@ model CustomEvent {
 model TournamentTomState {
   id                String    @id @default(cuid())
   customEventId     String    @unique @map("custom_event_id")
+  enrollmentCode    String?   @unique @map("enrollment_code")
   sourceXml         String    @map("source_xml")
   currentXml        String    @map("current_xml")
   importedByAdminId String    @map("imported_by_admin_id")

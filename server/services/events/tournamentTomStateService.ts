@@ -1,4 +1,5 @@
 import prisma from "~/lib/prisma";
+import { randomBytes } from "node:crypto";
 import {
   applyTomResultUpdates,
   buildTomStandings,
@@ -10,6 +11,7 @@ import {
 const SNAPSHOT_ARCHIVE_LIMIT = 30;
 const PLAYER_REPORT_AUTO_FINALIZE_AFTER_MS = 60_000;
 const TOURNAMENT_HISTORY_WINDOW_MS = 24 * 60 * 60 * 1000;
+const ENROLLMENT_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 
 type PlayerReportedResult = "win" | "loss" | "tie";
 
@@ -165,6 +167,42 @@ const getTomStateDelegate = () => {
     findUnique: (args: any) => Promise<any>;
     update: (args: any) => Promise<any>;
   };
+};
+
+const createEnrollmentCode = () => Array.from(randomBytes(5), (byte) =>
+  ENROLLMENT_CODE_ALPHABET[byte % ENROLLMENT_CODE_ALPHABET.length],
+).join("");
+
+const findAvailableEnrollmentCode = async () => {
+  const tomState = getTomStateDelegate();
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const code = createEnrollmentCode();
+    const existing = await tomState.findUnique({ where: { enrollmentCode: code } });
+    if (!existing) return code;
+  }
+  throw createError({ statusCode: 500, statusMessage: "Enrollment-Code konnte nicht erzeugt werden." });
+};
+
+export const ensureTournamentEnrollmentCode = async (customEventId: string) => {
+  const tomState = getTomStateDelegate();
+  const record = await tomState.findUnique({ where: { customEventId } });
+  if (!record) throw createError({ statusCode: 404, statusMessage: "No TOM state imported for this tournament" });
+  if (record.enrollmentCode) return record.enrollmentCode;
+
+  const enrollmentCode = await findAvailableEnrollmentCode();
+  const updated = await tomState.update({
+    where: { customEventId },
+    data: { enrollmentCode, updatedAt: new Date() },
+  });
+  return updated.enrollmentCode!;
+};
+
+export const getTournamentTomStateByEnrollmentCode = async (enrollmentCode: string) => {
+  const normalizedCode = enrollmentCode.trim().toUpperCase();
+  if (!/^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{5}$/.test(normalizedCode)) return null;
+  const tomState = getTomStateDelegate();
+  const record = await tomState.findUnique({ where: { enrollmentCode: normalizedCode } });
+  return record ? { record, stateView: buildTomStateView(record.currentXml) } : null;
 };
 
 const getMetadata = (record: { metadata: unknown }): TomMetadata => {
@@ -493,9 +531,11 @@ export const upsertTournamentTomState = async (input: {
     roundNumber: snapshotHint.roundNumber,
   };
 
+  const enrollmentCode = existingRecord?.enrollmentCode || await findAvailableEnrollmentCode();
   const record = await tomState.upsert({
     where: {
       customEventId: input.customEventId,
+      enrollmentCode,
     },
     create: {
       customEventId: input.customEventId,

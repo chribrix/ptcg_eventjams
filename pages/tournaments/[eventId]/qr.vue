@@ -7,6 +7,7 @@
         <img :src="qrDataUrl" alt="QR Code zum Turnierzugang" />
       </div>
       <p class="qr-scan-label">QR Code scannen</p>
+      <p v-if="enrollmentUrl" class="qr-short-link">Oder im Browser: <a :href="enrollmentUrl">{{ enrollmentUrl }}</a></p>
     </section>
 
     <section class="qr-guide-side">
@@ -29,14 +30,16 @@ const route = useRoute();
 const eventId = computed(() => String(route.params.eventId || ""));
 const tournamentName = ref("Pokémon Turnier");
 const qrDataUrl = ref<string | null>(null);
+const enrollmentUrl = ref("");
 
 onMounted(async () => {
   if (!eventId.value) return;
   try {
-    const result = await $fetch<{ tournament?: { name?: string } }>(`/api/tournaments/${eventId.value}/tom-bridge/access-info`);
+    const result = await $fetch<{ tournament?: { name?: string; enrollmentCode?: string } }>(`/api/tournaments/${eventId.value}/tom-bridge/access-info`);
     tournamentName.value = result.tournament?.name || tournamentName.value;
+    enrollmentUrl.value = `${window.location.origin}/e/${result.tournament?.enrollmentCode || eventId.value}`;
     const QRCode = (await import("qrcode")).default;
-    qrDataUrl.value = await QRCode.toDataURL(`${window.location.origin}/tournaments/${eventId.value}`, {
+    qrDataUrl.value = await QRCode.toDataURL(enrollmentUrl.value, {
       width: 1400,
       margin: 1,
       errorCorrectionLevel: "M",
@@ -57,6 +60,8 @@ onMounted(async () => {
 .qr-code-frame { width: min(58vh, 56vw); aspect-ratio: 1; display: grid; place-items: center; padding: clamp(1rem, 2vw, 2rem); background: #fff; border: clamp(6px, 0.8vw, 12px) solid #38bdf8; border-radius: 24px; box-shadow: 0 22px 70px rgb(15 23 42 / 0.18); }
 .qr-code-frame img { width: 100%; height: 100%; object-fit: contain; }
 .qr-scan-label { margin: 0; color: #0f172a; font-size: clamp(1.5rem, 2.8vw, 3.2rem); font-weight: 800; }
+.qr-short-link { margin: -0.6rem 0 0; color: #334155; font-size: clamp(1rem, 1.55vw, 1.7rem); font-weight: 700; }
+.qr-short-link a { color: #0369a1; text-decoration: underline; text-underline-offset: 0.18em; }
 .qr-steps { display: grid; gap: clamp(1.3rem, 3.3vh, 2.8rem); margin: 0; padding: 0; list-style: none; }
 .qr-steps li { display: grid; grid-template-columns: clamp(3.5rem, 5vw, 5.4rem) 1fr; gap: 1.1rem; align-items: start; }
 .qr-steps span { display: grid; place-items: center; width: clamp(3.5rem, 5vw, 5.4rem); aspect-ratio: 1; border-radius: 50%; background: #38bdf8; color: #082f49; font-size: clamp(1.8rem, 3.3vw, 3.6rem); font-weight: 900; }
