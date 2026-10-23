@@ -243,6 +243,15 @@
                 <MapIcon class="h-5 w-5" />
                 Maps
               </a>
+              <NuxtLink
+                v-if="selectedEvent.customEventId && selectedEvent.tournamentViewAvailable"
+                :to="`/tournaments/${selectedEvent.customEventId}`"
+                class="app-btn-primary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-bold"
+                @click="selectedEvent = null"
+              >
+                <TicketIcon class="h-5 w-5" />
+                Turnieransicht
+              </NuxtLink>
               <button
                 v-if="
                   selectedEvent.entryType === 'bookmark' &&
@@ -340,6 +349,8 @@ const tr = (key: string, fallback: string, params?: Record<string, unknown>) => 
 type CompactEventEntry = {
   id: string;
   entryType?: "registration" | "bookmark" | "waitlist";
+  customEventId?: string | null;
+  tournamentViewAvailable?: boolean;
   externalEventId?: string | null;
   status?: string;
   claimExpiresAt?: string | null;

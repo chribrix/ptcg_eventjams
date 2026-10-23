@@ -122,7 +122,7 @@ export default defineEventHandler(async (event) => {
       tournamentViewAvailableByEventId.set(
         tomState.customEventId,
         isTournamentViewAvailable(
-          tomState.metadata as { pairingsReleasedRound?: unknown } | null,
+          tomState.metadata as { pairingsReleasedRound?: unknown; tournamentReleasedAt?: unknown } | null,
         ),
       );
 
