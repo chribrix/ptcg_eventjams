@@ -677,7 +677,9 @@ const exportTomXml = async (mode: "current" | "source" | "snapshot" = "current",
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `tournament_${selectedEventId.value}_${pod ? `pod_${pod}_` : ""}${mode}.tdf`;
+  const disposition = response.headers.get("content-disposition") || "";
+  const exportedName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+  link.download = exportedName || `tournament_${selectedEventId.value}_${pod ? `pod_${pod}_` : ""}${mode}.tdf`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

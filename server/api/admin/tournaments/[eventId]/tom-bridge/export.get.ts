@@ -69,12 +69,27 @@ export default defineAdminRoute(async ({ event }) => {
     exportLabel = `${exportLabel}_pod_${pod}`;
   }
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const safeName = (state.stateView.tournament.name || `event_${eventId}`)
+  const metadata = (state.record.metadata || {}) as {
+    lastImportedFileName?: string;
+    importHistory?: Array<{ fileName?: string }>;
+  };
+  const originalFileName =
+    metadata.importHistory?.find((entry) => entry.fileName)?.fileName ||
+    metadata.lastImportedFileName ||
+    state.stateView.tournament.name ||
+    `event_${eventId}`;
+  const originalStem = originalFileName
+    .replace(/\.(?:tdf|xml)$/i, "")
+    .replace(/_r\d+-(?:start|begin|end)$/i, "");
+  const safeName = originalStem
     .replace(/[^a-zA-Z0-9_-]+/g, "_")
     .replace(/^_+|_+$/g, "");
-  const safeLabel = exportLabel.replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
-  const fileName = `${safeName || `event_${eventId}`}_${safeLabel || "results"}_${timestamp}.tdf`;
+  const exportRound = pod ? latestPodRound?.number : currentRound?.number;
+  const exportSuffix =
+    mode === "current" && exportRound
+      ? `cj_r${exportRound}_end`
+      : `cj_${exportLabel.replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "") || "export"}`;
+  const fileName = `${safeName || `event_${eventId}`}_${exportSuffix}.tdf`;
 
   setHeader(event, "Content-Type", "application/xml; charset=utf-8");
   setHeader(event, "Content-Disposition", `attachment; filename="${fileName}"`);
