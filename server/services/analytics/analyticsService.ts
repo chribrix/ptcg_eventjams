@@ -20,7 +20,9 @@ type AnalyticsInput = {
   eventId?: string | null;
 };
 
-const BOT_PATTERN = /bot|crawler|spider|headless|preview|facebookexternalhit|slurp/i;
+// Public pages are frequently fetched by link previewers, security scanners and
+// generic HTTP clients. None of those requests should become website traffic.
+const AUTOMATED_CLIENT_PATTERN = /bot|crawler|spider|headless|preview|facebookexternalhit|slurp|curl|wget|python|axios|postman|insomnia|httpx|go-http-client|zgrab|nmap|masscan|node-fetch|okhttp|java\//i;
 const TIME_ZONE = "Europe/Berlin";
 
 export function normalizeAnalyticsPath(input: string): string | null {
@@ -34,6 +36,20 @@ export function normalizeAnalyticsPath(input: string): string | null {
     return null;
   }
   return path.slice(0, 300);
+}
+
+function isFirstPartyBrowserRequest(event: H3Event): boolean {
+  const origin = getHeader(event, "origin");
+  const host = getHeader(event, "x-forwarded-host") || getHeader(event, "host");
+  if (!origin || !host) return false;
+
+  try {
+    // Allow a port on the local development host, but require the same host in
+    // production. This prevents external scanners from posting made-up views.
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
 }
 
 function dailyVisitorHash(event: H3Event, occurredAt: Date): string {
@@ -54,7 +70,9 @@ function dailyVisitorHash(event: H3Event, occurredAt: Date): string {
 export async function recordAnalyticsEvent(event: H3Event, input: AnalyticsInput) {
   const path = normalizeAnalyticsPath(input.path);
   const userAgent = getHeader(event, "user-agent") || "";
-  if (!path || BOT_PATTERN.test(userAgent)) return { tracked: false };
+  if (!path || AUTOMATED_CLIENT_PATTERN.test(userAgent) || !isFirstPartyBrowserRequest(event)) {
+    return { tracked: false };
+  }
 
   const occurredAt = new Date();
   const visitorHash = dailyVisitorHash(event, occurredAt);
