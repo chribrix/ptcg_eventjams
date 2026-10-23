@@ -20,7 +20,7 @@ export type ProvisionPlayerInput = {
   name: string;
   playerId?: string | null;
   preferredLoginMethod?: "password" | "otp";
-  birthDate?: Date;
+  birthYear?: number;
 };
 
 export const normalizePreferredLoginMethod = (
@@ -42,14 +42,14 @@ export type AuthUserProvisioningSource = {
   raw_user_meta_data?: Record<string, any> | null;
 };
 
-const DEFAULT_BIRTH_DATE = new Date("2000-01-01T00:00:00.000Z");
+const DEFAULT_BIRTH_YEAR = 2000;
 
 export const getProvisionPlayerInputFromAuthUser = (
   authUser: AuthUserProvisioningSource,
   options: {
     preferredLoginMethod?: "password" | "otp";
     fallbackEmail?: string | null;
-    birthDate?: Date;
+    birthYear?: number;
   } = {},
 ): ProvisionPlayerInput | null => {
   const metadata = authUser.user_metadata || authUser.raw_user_meta_data || {};
@@ -68,7 +68,7 @@ export const getProvisionPlayerInputFromAuthUser = (
     name: String(metadata.name),
     playerId: metadataPlayerId || null,
     preferredLoginMethod: options.preferredLoginMethod,
-    birthDate: options.birthDate,
+    birthYear: options.birthYear,
   };
 };
 
@@ -144,7 +144,7 @@ export const ensurePlayerForAuthUser = async (
       name: input.name,
       email: normalizedEmail,
       preferredLoginMethod,
-      birthDate: input.birthDate || DEFAULT_BIRTH_DATE,
+      birthYear: input.birthYear || DEFAULT_BIRTH_YEAR,
     },
   });
 };

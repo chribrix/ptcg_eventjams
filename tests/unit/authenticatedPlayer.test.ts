@@ -264,7 +264,7 @@ describe("authenticatedPlayer utility", () => {
         email: "missing@example.com",
         name: "missing",
         playerId: null,
-        birthDate: new Date("2000-01-01T00:00:00.000Z"),
+        birthYear: 2000,
       },
       select: expect.any(Object),
     });

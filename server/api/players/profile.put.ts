@@ -18,7 +18,7 @@ const updateProfileSchema = z.object({
     .regex(/^\d+$/, "Player ID must contain only numbers"),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Valid email is required"),
-  birthDate: z.string().datetime().optional(),
+  birthYear: z.coerce.number().int().min(1900).max(new Date().getFullYear()).optional(),
 });
 
 export default defineEventHandler(async (event) => {
@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const { playerId, name, email, birthDate } = validation.data;
+    const { playerId, name, email, birthYear } = validation.data;
 
     // Check if the new playerId is different and already exists
     if (playerId !== currentPlayer.playerId) {
@@ -105,7 +105,7 @@ export default defineEventHandler(async (event) => {
         playerId,
         name,
         email: email.toLowerCase(),
-        birthDate: birthDate ? new Date(birthDate) : undefined,
+        ...(birthYear !== undefined ? { birthYear } : {}),
       },
     });
 
@@ -133,7 +133,7 @@ export default defineEventHandler(async (event) => {
         playerId: updatedPlayer.playerId,
         name: updatedPlayer.name,
         email: updatedPlayer.email,
-        birthDate: updatedPlayer.birthDate,
+        birthYear: updatedPlayer.birthYear,
         phone: updatedPlayer.phone,
         emergencyContact: updatedPlayer.emergencyContact,
         emergencyPhone: updatedPlayer.emergencyPhone,

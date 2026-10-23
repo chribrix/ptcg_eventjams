@@ -214,7 +214,7 @@ model Player {
   playerId             String?             @unique @map("player_id") // External player ID provided by player (optional)
   preferredLoginMethod String              @default("password") @map("preferred_login_method")
   name                 String
-  birthDate            DateTime            @map("birth_date")
+  birthYear            Int                 @map("birth_year")
   email                String?
   phone                String?
   emergencyContact     String?             @map("emergency_contact")

@@ -124,7 +124,7 @@ export default defineEventHandler(async (event) => {
                 playerId: metadataPlayerId,
                 name: metadata.name,
                 email: email.toLowerCase(),
-                birthDate: new Date("2000-01-01T00:00:00.000Z"),
+                birthYear: 2000,
               },
             });
           }

@@ -17,7 +17,7 @@ const registerPlayerSchema = z.object({
     .optional()
     .or(z.literal("")),
   name: z.string().min(1, "Name is required"),
-  birthDate: z.string().datetime().optional(),
+  birthYear: z.coerce.number().int().min(1900).max(new Date().getFullYear()).optional(),
   preferredLoginMethod: z.enum(["password", "otp"]).optional(),
 });
 
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const { playerId, name, birthDate, preferredLoginMethod } = validation.data;
+    const { playerId, name, birthYear, preferredLoginMethod } = validation.data;
 
     const player = await ensurePlayerForAuthUser(prisma, {
       supabaseId: user.id,
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
       name,
       playerId: playerId || null,
       preferredLoginMethod,
-      birthDate: birthDate ? new Date(birthDate) : undefined,
+      birthYear,
     });
 
     return {

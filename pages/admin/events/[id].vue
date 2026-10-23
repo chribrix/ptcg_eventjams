@@ -98,7 +98,7 @@
                 <th>Player ID</th>
                 <th>Name</th>
                 <th>Email</th>
-                <th>Birth Date</th>
+                <th>Birth Year</th>
                 <th>Registered At</th>
                 <th>Tournament Status</th>
                 <th v-if="event.requiresDecklist">Decklist Status</th>
@@ -110,7 +110,7 @@
                 <td class="font-mono text-sm">{{ reg.player.playerId }}</td>
                 <td class="font-semibold">{{ reg.player.name }}</td>
                 <td>{{ reg.player.email || "N/A" }}</td>
-                <td>{{ formatDate(reg.player.birthDate) }}</td>
+                <td>{{ reg.player.birthYear }}</td>
                 <td>{{ formatDateTime(reg.registeredAt) }}</td>
                 <td>
                   <span
@@ -208,7 +208,7 @@ interface Player {
   playerId: string;
   name: string;
   email: string | null;
-  birthDate: string;
+  birthYear: number;
 }
 
 interface Registration {
@@ -425,7 +425,7 @@ const applyPlayerAction = async (
 const exportRegistrations = () => {
   if (!event.value || registrations.value.length === 0) return;
 
-  const headers = ["Player ID", "Name", "Email", "Birth Date", "Registered At"];
+  const headers = ["Player ID", "Name", "Email", "Birth Year", "Registered At"];
 
   if (event.value.requiresDecklist) {
     headers.push("Decklist Status");
@@ -436,7 +436,7 @@ const exportRegistrations = () => {
       reg.player.playerId,
       reg.player.name,
       reg.player.email || "",
-      formatDate(reg.player.birthDate),
+      String(reg.player.birthYear),
       formatDateTime(reg.registeredAt),
     ];
 

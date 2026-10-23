@@ -168,7 +168,7 @@ export const resolveAuthenticatedPlayerFactory = (
           name: fallbackName,
           // Keep playerId optional; it can be provided later by profile/registration flows.
           playerId: null,
-          birthDate: new Date("2000-01-01T00:00:00.000Z"),
+          birthYear: 2000,
         },
         select: playerIdentitySelect,
       });

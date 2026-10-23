@@ -79,15 +79,19 @@
             />
           </div>
 
-          <!-- Birth Date -->
+          <!-- Birth year -->
           <div>
             <label class="mb-2 block text-sm font-medium app-text-secondary">
-              Birth Date
+              Birth Year
             </label>
             <input
-              v-model="birthDateInput"
-              type="date"
+              v-model.trim="birthYearInput"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]{4}"
+              maxlength="4"
               class="app-input w-full px-4 py-3"
+              placeholder="z. B. 1998"
             />
           </div>
 
@@ -159,7 +163,7 @@ const loading = ref(true);
 const saving = ref(false);
 const successMessage = ref("");
 const errorMessage = ref("");
-const birthDateInput = ref("");
+const birthYearInput = ref("");
 
 const form = ref({
   playerId: "",
@@ -185,11 +189,7 @@ onMounted(async () => {
       email: response.player.email || "",
     };
 
-    // Format birthDate for input
-    if (response.player.birthDate) {
-      const date = new Date(response.player.birthDate);
-      birthDateInput.value = date.toISOString().split("T")[0];
-    }
+    birthYearInput.value = response.player.birthYear ? String(response.player.birthYear) : "";
   } catch (err) {
     console.error("Error loading profile:", err);
     errorMessage.value = "Failed to load profile data";
@@ -204,19 +204,11 @@ const updateProfile = async () => {
   errorMessage.value = "";
 
   try {
-    // Convert birthDate to ISO string if provided
-    let birthDate: string | undefined;
-    if (birthDateInput.value) {
-      birthDate = new Date(
-        birthDateInput.value + "T00:00:00.000Z"
-      ).toISOString();
-    }
-
     await $fetch("/api/players/profile", {
       method: "PUT",
       body: {
         ...form.value,
-        birthDate,
+        birthYear: birthYearInput.value ? Number(birthYearInput.value) : undefined,
       },
     });
 

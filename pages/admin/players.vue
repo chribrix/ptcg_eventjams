@@ -50,11 +50,13 @@
           </AppFormField>
 
           <div class="form-row">
-            <AppFormField label="Geburtsdatum" for-id="birthDate" required>
+            <AppFormField label="Geburtsjahr" for-id="birthYear" required>
               <input
-                id="birthDate"
-                v-model="playerForm.birthDate"
-                type="date"
+                id="birthYear"
+                v-model.number="playerForm.birthYear"
+                type="number"
+                min="1900"
+                :max="new Date().getFullYear()"
                 required
                 class="form-input"
               />
@@ -137,7 +139,7 @@
               <tr>
                 <th>Spieler-ID</th>
                 <th>Name</th>
-                <th>Geburtsdatum</th>
+                <th>Geburtsjahr</th>
                 <th>E-Mail</th>
                 <th>Aktionen</th>
               </tr>
@@ -146,7 +148,7 @@
               <tr v-for="player in paginatedPlayers" :key="player.id">
                 <td class="font-mono">{{ player.playerId }}</td>
                 <td>{{ player.name }}</td>
-                <td>{{ formatDate(player.birthDate) }}</td>
+                <td>{{ player.birthYear }}</td>
                 <td>{{ player.email || "N/A" }}</td>
                 <td>
                   <div class="action-buttons">
@@ -205,7 +207,7 @@ interface Player {
   id: string;
   playerId: string;
   name: string;
-  birthDate: string;
+  birthYear: number;
   email?: string;
   phone?: string;
   emergencyContact?: string;
@@ -237,7 +239,7 @@ const itemsPerPage = 10;
 const playerForm = ref({
   playerId: "",
   name: "",
-  birthDate: "",
+  birthYear: new Date().getFullYear(),
   email: "",
   phone: "",
   emergencyContact: "",
@@ -313,7 +315,6 @@ const savePlayer = async () => {
 
     const playerData = {
       ...playerForm.value,
-      birthDate: new Date(playerForm.value.birthDate).toISOString(),
       email: playerForm.value.email || undefined,
       phone: playerForm.value.phone || undefined,
       emergencyContact: playerForm.value.emergencyContact || undefined,
@@ -348,7 +349,7 @@ const editPlayer = (player: Player) => {
   playerForm.value = {
     playerId: player.playerId,
     name: player.name,
-    birthDate: new Date(player.birthDate).toISOString().slice(0, 10),
+    birthYear: player.birthYear,
     email: player.email || "",
     phone: player.phone || "",
     emergencyContact: player.emergencyContact || "",
@@ -382,16 +383,12 @@ const closeModal = () => {
   playerForm.value = {
     playerId: "",
     name: "",
-    birthDate: "",
+    birthYear: new Date().getFullYear(),
     email: "",
     phone: "",
     emergencyContact: "",
     emergencyPhone: "",
   };
-};
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString();
 };
 
 const impersonatePlayer = (player: Player) => {

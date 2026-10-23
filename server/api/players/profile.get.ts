@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
         playerId: player.playerId,
         name: player.name,
         email: player.email,
-        birthDate: player.birthDate,
+        birthYear: player.birthYear,
         preferredLoginMethod: normalizePreferredLoginMethod(
           (player as any).preferredLoginMethod || "password",
         ),

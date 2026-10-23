@@ -773,7 +773,7 @@ describe("authenticated player handler integration", () => {
             supabaseId: "supabase-user-1",
             name: "Linked Player",
             email: "old-email@example.com",
-            birthDate: new Date("2000-01-01T00:00:00.000Z"),
+            birthYear: 2000,
             preferredLoginMethod: "password",
           }),
       },
@@ -898,7 +898,7 @@ describe("authenticated player handler integration", () => {
           supabaseId: "supabase-user-1",
           name: "Updated Player",
           email: "updated@example.com",
-          birthDate: new Date("2000-01-01T00:00:00.000Z"),
+          birthYear: 2000,
           phone: null,
           emergencyContact: null,
           emergencyPhone: null,
@@ -922,7 +922,7 @@ describe("authenticated player handler integration", () => {
           playerId: "12345",
           name: "Updated Player",
           email: "updated@example.com",
-          birthDate: "2000-01-01T00:00:00.000Z",
+          birthYear: 2000,
         },
       },
     );
@@ -939,7 +939,7 @@ describe("authenticated player handler integration", () => {
         playerId: "12345",
         name: "Updated Player",
         email: "updated@example.com",
-        birthDate: new Date("2000-01-01T00:00:00.000Z"),
+        birthYear: 2000,
       },
     });
     expect(mockPrisma.errorLog.create).toHaveBeenCalledWith({

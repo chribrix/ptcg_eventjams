@@ -52,7 +52,7 @@ describe("adminRegistrationService", () => {
       id: "player-record-1",
       playerId: "5124038",
       name: "Robert Müller",
-      birthDate: new Date("2000-01-01T00:00:00.000Z"),
+      birthYear: 2000,
     });
     tx.eventRegistration.findUnique
       .mockResolvedValueOnce(null)
@@ -79,7 +79,7 @@ describe("adminRegistrationService", () => {
       data: {
         playerId: "5124038",
         name: "Robert Müller",
-        birthDate: new Date("2000-01-01T00:00:00.000Z"),
+        birthYear: 2000,
       },
     });
     expect(tx.eventRegistration.create).toHaveBeenCalledWith({

@@ -936,7 +936,7 @@
                           <td class="font-medium app-text-primary">
                             {{ row.participantName }}
                           </td>
-                          <td>{{ getBirthYear(row.birthDate) }}</td>
+                          <td>{{ row.birthYear }}</td>
                           <td>
                             {{
                               row.bookerEmail ||
@@ -1454,7 +1454,7 @@ interface Registration {
     playerId: string;
     name: string;
     email?: string;
-    birthDate: string;
+    birthYear: number;
   };
 }
 
@@ -1543,7 +1543,7 @@ interface TicketRow {
   participantPlayerId?: string | null;
   bookerEmail?: string;
   registeredAt: string;
-  birthDate: string;
+  birthYear: number;
   ticketStatus: string;
   decklist?: string | null;
   bringingDecklistOnsite?: boolean | null;
@@ -1566,7 +1566,7 @@ const ticketRows = computed<TicketRow[]>(() =>
       participantPlayerId: t.participantPlayerId,
       bookerEmail: reg.player.email,
       registeredAt: reg.registeredAt,
-      birthDate: reg.player.birthDate,
+      birthYear: reg.player.birthYear,
       ticketStatus: t.status,
       decklist: t.decklist,
       bringingDecklistOnsite: t.bringingDecklistOnsite,
@@ -1589,7 +1589,7 @@ const filteredTicketRows = computed(() => {
       row.participantName,
       row.participantPlayerId,
       row.bookerEmail,
-      getBirthYear(row.birthDate),
+      String(row.birthYear),
       row.ticketStatus,
       getTicketStatusLabel(row.ticketStatus),
     ].some((value) => normalizeRegistrationSearch(value).includes(search)),
@@ -1751,15 +1751,6 @@ const getTicketStatusLabel = (status: string): string => {
   };
 
   return labels[status] || status;
-};
-
-const getBirthYear = (birthDate: string): string => {
-  const date = new Date(birthDate);
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
-
-  return String(date.getFullYear());
 };
 
 // Open event details modal

@@ -118,7 +118,7 @@ export async function getAdminEventDetail(eventId: string) {
               playerId: true,
               name: true,
               email: true,
-              birthDate: true,
+              birthYear: true,
             },
           },
           tickets: true,
@@ -158,7 +158,7 @@ export async function getAdminEventDetail(eventId: string) {
         playerId: registration.player.playerId,
         name: registration.player.name,
         email: registration.player.email,
-        birthDate: registration.player.birthDate.toISOString(),
+        birthYear: registration.player.birthYear,
       },
     };
   });

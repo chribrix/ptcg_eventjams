@@ -8,7 +8,7 @@ export const createPlayerInputSchema = z.object({
     .min(1, "Player ID is required")
     .regex(/^\d+$/, "Player ID must contain only numbers"),
   name: z.string().min(1, "Name is required"),
-  birthDate: z.string().datetime(),
+  birthYear: z.number().int().min(1900).max(new Date().getFullYear()),
   email: z.string().email().optional(),
   phone: z.string().optional(),
   emergencyContact: z.string().optional(),
@@ -17,7 +17,7 @@ export const createPlayerInputSchema = z.object({
 
 export const updatePlayerInputSchema = z.object({
   name: z.string().min(1).optional(),
-  birthDate: z.string().datetime().optional(),
+  birthYear: z.number().int().min(1900).max(new Date().getFullYear()).optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
   emergencyContact: z.string().optional(),
@@ -106,7 +106,6 @@ export async function createAdminPlayer(rawInput: unknown) {
   return prisma.player.create({
     data: {
       ...input,
-      birthDate: new Date(input.birthDate),
     },
   });
 }
@@ -121,7 +120,6 @@ export async function updateAdminPlayer(
     where: { id: playerRecordId },
     data: {
       ...input,
-      birthDate: input.birthDate ? new Date(input.birthDate) : undefined,
     },
   });
 }

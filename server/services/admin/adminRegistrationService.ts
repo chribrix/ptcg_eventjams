@@ -127,7 +127,7 @@ export async function createAdminRegistration(rawInput: unknown) {
     if (!input.playerId) {
       const pokemonPlayerId = input.pokemonPlayerId!;
       const playerName = input.playerName!;
-      const birthDate = new Date(Date.UTC(input.birthYear!, 0, 1));
+      const birthYear = input.birthYear!;
       const existingPlayer = await tx.player.findUnique({
         where: { playerId: pokemonPlayerId },
       });
@@ -135,13 +135,13 @@ export async function createAdminRegistration(rawInput: unknown) {
       player = existingPlayer
         ? await tx.player.update({
             where: { id: existingPlayer.id },
-            data: { name: playerName, birthDate },
+            data: { name: playerName, birthYear },
           })
         : await tx.player.create({
             data: {
               playerId: pokemonPlayerId,
               name: playerName,
-              birthDate,
+              birthYear,
             },
           });
     }
