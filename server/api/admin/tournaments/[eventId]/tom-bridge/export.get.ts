@@ -78,10 +78,11 @@ export default defineAdminRoute(async ({ event }) => {
     metadata.lastImportedFileName ||
     state.stateView.tournament.name ||
     `event_${eventId}`;
-  const originalPrefix = originalFileName
-    .replace(/_r\d+-(?:start|begin|end)(?=\.(?:tdf|xml)$)/i, "");
-  const safeName = originalPrefix
-    .replace(/[^a-zA-Z0-9_.-]+/g, "_")
+  const originalStem = originalFileName
+    .replace(/\.(?:tdf|xml)$/i, "")
+    .replace(/_r\d+-(?:start|begin|end)$/i, "");
+  const safeName = originalStem
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
     .replace(/^_+|_+$/g, "");
   const exportRound = pod ? latestPodRound?.number : currentRound?.number;
   const exportSuffix =
