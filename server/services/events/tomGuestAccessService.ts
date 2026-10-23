@@ -27,7 +27,9 @@ export const grantTomGuestAccess = (event: H3Event, eventId: string, playerUserI
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    path: `/tournaments/${eventId}`,
+    // The player view itself lives at /tournaments/:eventId, but its data is
+    // fetched from /api/tournaments/:eventId. The cookie must cover both.
+    path: "/",
     maxAge: ACCESS_TTL_SECONDS,
   });
 };
