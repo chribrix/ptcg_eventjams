@@ -95,7 +95,10 @@
                     <tbody>
                       <tr v-for="(entry, idx) in division.standings || []" :key="`${division.category}-${entry.userId}`">
                         <td>{{ idx + 1 }}</td>
-                        <td>{{ entry.displayName }}</td>
+                        <td>
+                          <span>{{ entry.displayName }}</span>
+                          <span v-if="hasOpenedTournament(entry.userId)" class="tm-player-icon" title="Turnieransicht aktiviert" aria-label="Turnieransicht aktiviert">📱</span>
+                        </td>
                         <td>{{ entry.matchPoints }}</td>
                         <td>{{ entry.wins }}-{{ entry.losses }}-{{ entry.ties }}</td>
                         <td>{{ entry.opponentWinPercent.toFixed(2) }}%</td>
@@ -125,7 +128,7 @@
                       <td class="mono">{{ player.userId }}</td>
                       <td>
                         <span>{{ player.displayName }}</span>
-                        <span v-if="player.hasOpenedTournament" class="tm-player-icon" title="Turnieransicht aktiviert" aria-label="Turnieransicht aktiviert">📱</span>
+                        <span v-if="hasOpenedTournament(player.userId)" class="tm-player-icon" title="Turnieransicht aktiviert" aria-label="Turnieransicht aktiviert">📱</span>
                         <button
                           v-if="player.decklist"
                           class="tm-icon-button"
@@ -202,8 +205,14 @@
                   <tr v-for="(match, idx) in activeRoundView.matches" :key="`${activeRoundView.number}-${match.tableNumber || idx}`">
                     <td>{{ match.divisionCategory || '—' }}</td>
                     <td>{{ match.tableNumber || '—' }}</td>
-                    <td :class="playerCellClass(match, 'p1')">{{ playerNameByTomId(match.player1UserId) }}</td>
-                    <td :class="playerCellClass(match, 'p2')">{{ playerNameByTomId(match.player2UserId) }}</td>
+                    <td :class="playerCellClass(match, 'p1')">
+                      <span>{{ playerNameByTomId(match.player1UserId) }}</span>
+                      <span v-if="hasOpenedTournament(match.player1UserId)" class="tm-player-icon" title="Turnieransicht aktiviert" aria-label="Turnieransicht aktiviert">📱</span>
+                    </td>
+                    <td :class="playerCellClass(match, 'p2')">
+                      <span>{{ playerNameByTomId(match.player2UserId) }}</span>
+                      <span v-if="hasOpenedTournament(match.player2UserId)" class="tm-player-icon" title="Turnieransicht aktiviert" aria-label="Turnieransicht aktiviert">📱</span>
+                    </td>
                     <td :class="outcomeCellClass(match)">{{ match.outcomeLabel }}</td>
                     <td>
                       <span class="status-pill" :class="reportStatusClass(activeRoundView.number, match)">
@@ -750,6 +759,9 @@ const playerNameByTomId = (userId?: string) => {
   const found = tomPlayers.value.find((p) => p.userId === userId);
   return found?.displayName || userId;
 };
+
+const hasOpenedTournament = (userId?: string) =>
+  !!userId && tomPlayers.value.some((player) => player.userId === userId && player.hasOpenedTournament);
 
 const playerCellClass = (match: TomMatchView, side: "p1" | "p2") => {
   if (match.outcome === 3) return "draw-cell";
