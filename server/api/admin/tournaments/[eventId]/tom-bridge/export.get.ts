@@ -71,16 +71,18 @@ export default defineAdminRoute(async ({ event }) => {
 
   const metadata = (state.record.metadata || {}) as {
     lastImportedFileName?: string;
+    sourceFileStem?: string;
     importHistory?: Array<{ fileName?: string }>;
   };
   const originalFileName =
+    metadata.sourceFileStem ||
+    state.stateView.tournament.name ||
     metadata.importHistory?.find((entry) => entry.fileName)?.fileName ||
     metadata.lastImportedFileName ||
-    state.stateView.tournament.name ||
     `event_${eventId}`;
   const originalStem = originalFileName
     .replace(/\.(?:tdf|xml)$/i, "")
-    .replace(/_r\d+-(?:start|begin|end)$/i, "");
+    .replace(/(?:_cj_r\d+_end|_r\d+-(?:start|begin|end))+$/i, "");
   const safeName = originalStem
     .replace(/[^a-zA-Z0-9_-]+/g, "_")
     .replace(/^_+|_+$/g, "");

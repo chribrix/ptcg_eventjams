@@ -33,6 +33,7 @@ type TomMetadata = {
   importedAt?: string;
   lastResultUpdateAt?: string;
   lastImportedFileName?: string;
+  sourceFileStem?: string;
   importHistory?: Array<{
     importedAt: string;
     importedByAdminId: string;
@@ -56,6 +57,14 @@ type TomMetadata = {
     xml: string;
   }>;
 };
+
+const getStableSourceFileStem = (fileName?: string) => fileName
+  ?.replace(/\.(?:tdf|xml)$/i, "")
+  // TOM adds _rN-begin/end; Chrispyjams adds _cj_rN_end. Strip an entire
+  // suffix chain so importing a TOM-generated follow-up file never changes
+  // the stable filename prefix of subsequent exports.
+  .replace(/(?:_cj_r\d+_end|_r\d+-(?:start|begin|end))+$/i, "")
+  .trim();
 
 export const recordTournamentPlayerAccess = async (customEventId: string, playerUserId: string) => {
   const tomState = getTomStateDelegate();
@@ -499,6 +508,7 @@ export const upsertTournamentTomState = async (input: {
         importedByAdminId: input.importedByAdminId,
         importedAt: new Date().toISOString(),
         lastImportedFileName: input.sourceFileName,
+        sourceFileStem: getStableSourceFileStem(input.sourceFileName) || stateView.tournament.name,
         importHistory: [importHistoryEntry],
         pairingsReleasedRound: 0,
       },
@@ -513,6 +523,7 @@ export const upsertTournamentTomState = async (input: {
   });
 
   const updateMetadata = getMetadata(record);
+  updateMetadata.sourceFileStem = updateMetadata.sourceFileStem || getStableSourceFileStem(input.sourceFileName) || stateView.tournament.name;
   updateMetadata.lastImportedFileName = input.sourceFileName;
   updateMetadata.importedByAdminId = input.importedByAdminId;
   updateMetadata.importedAt = new Date().toISOString();
