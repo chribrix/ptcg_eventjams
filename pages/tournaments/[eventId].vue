@@ -52,7 +52,15 @@
               <button class="tm-result-button tm-loss" :disabled="submitting" @click="submitResult('loss')">{{ t("tournamentPlayer.loss") }}</button>
               <button class="tm-result-button tm-tie" :disabled="submitting" @click="submitResult('tie')">{{ t("tournamentPlayer.draw") }}</button>
             </div>
-            <p v-if="runData.reports?.opponentReported" class="tm-opponent-report">Dein Gegner hat bereits ein Ergebnis eingetragen. Wähle jetzt dein Ergebnis aus deiner Sicht.</p>
+            <p v-if="runData.reports?.hasConflict" class="tm-result-conflict">
+              Eure Angaben stimmen nicht überein. Bitte besprecht das Ergebnis und korrigiere deine Angabe, falls nötig. Der Veranstalter wurde informiert.
+            </p>
+            <p v-else-if="runData.reports?.ownResult && !runData.reports?.opponentReported" class="tm-opponent-report">
+              Deine Angabe ist gespeichert. Wenn keine abweichende Angabe kommt, wird sie nach einer Minute übernommen.
+            </p>
+            <p v-else-if="runData.reports?.opponentReported" class="tm-opponent-report">
+              Dein Gegner hat <strong>{{ reportedResultLabel(runData.reports.opponentResult!) }}</strong> angegeben. Gib dein Ergebnis aus deiner Sicht an.
+            </p>
           </div>
           <div v-else-if="runData.release?.historyExpired" class="tm-state">
             <p>Diese Turnieransicht ist abgelaufen.</p>
@@ -124,7 +132,7 @@ type PlayerRun = {
     player1UserId?: string;
     player2UserId?: string;
   } | null;
-  reports?: { ownResult?: "win" | "loss" | "tie"; opponentReported?: boolean; opponentResult?: "win" | "loss" | "tie"; awaitingBothConfirmations?: boolean };
+  reports?: { ownResult?: "win" | "loss" | "tie"; opponentReported?: boolean; opponentResult?: "win" | "loss" | "tie"; hasConflict?: boolean; awaitingBothConfirmations?: boolean };
   release?: {
     pairingsReleasedRound?: number;
     pairingsReleasedRoundsByPod?: Record<string, number>;
@@ -421,6 +429,8 @@ onBeforeUnmount(() => {
 .tm-correct-button { border: 1px solid var(--app-border); border-radius: 10px; padding: 0.65rem 1rem; background: var(--app-surface-2); color: var(--app-text-primary); font: inherit; font-weight: 700; cursor: pointer; }
 .tm-correct-button:hover { border-color: var(--app-accent); }
 .tm-opponent-report { margin: 1rem 0 0; color: var(--app-text-secondary); font-size: 0.9rem; line-height: 1.4; }
+.tm-opponent-report strong { color: var(--app-text-primary); }
+.tm-result-conflict { margin: 1rem 0 0; padding: 0.8rem 0.9rem; border: 1px solid var(--app-feedback-error-border); border-radius: 10px; background: var(--app-feedback-error-bg); color: var(--app-feedback-error-text); font-size: 0.9rem; font-weight: 650; line-height: 1.4; }
 .tm-emoji-reaction { position: absolute; z-index: 2; top: 50%; left: 50%; pointer-events: none; font-size: clamp(3.5rem, 16vw, 6rem); line-height: 1; filter: drop-shadow(0 8px 14px rgb(0 0 0 / 35%)); transform: translate(-50%, -50%); }
 .tm-emoji-pop-enter-active { animation: tm-emoji-burst 1.6s ease-out both; }
 .tm-emoji-pop-leave-active { transition: opacity 180ms ease; }

@@ -985,6 +985,7 @@ export const getPlayerTournamentRun = async (input: {
       opponentReported,
       opponentResult: opponentReport?.reporterResult,
       ownResult: ownReport?.reporterResult,
+      hasConflict: matchReports.some((report) => report.status === "conflicted"),
       awaitingBothConfirmations: currentMatch?.outcome === 0,
     },
     release: {
