@@ -31,15 +31,15 @@
               />
             </svg>
           </div>
-          <h1 class="mb-2 text-3xl font-bold app-text-primary">My Profile</h1>
-          <p class="app-text-secondary">Update your personal information</p>
+          <h1 class="mb-2 text-3xl font-bold app-text-primary">Mein Profil</h1>
+          <p class="app-text-secondary">Verwalte deine persönlichen Daten</p>
         </div>
 
         <form @submit.prevent="updateProfile" class="space-y-6">
           <!-- Player ID -->
           <div>
             <label class="mb-2 block text-sm font-medium app-text-secondary">
-              Player ID *
+              Spieler-ID *
             </label>
             <input
               v-model="form.playerId"
@@ -50,13 +50,13 @@
               required
               @input="validatePlayerId"
             />
-            <p class="mt-1 text-xs app-text-muted">Your Pokemon TCG player ID</p>
+            <p class="mt-1 text-xs app-text-muted">Deine Pokémon-TCG-Spieler-ID</p>
           </div>
 
           <!-- Name -->
           <div>
             <label class="mb-2 block text-sm font-medium app-text-secondary">
-              Full Name *
+              Vollständiger Name *
             </label>
             <input
               v-model="form.name"
@@ -69,7 +69,7 @@
           <!-- Email -->
           <div>
             <label class="mb-2 block text-sm font-medium app-text-secondary">
-              Email *
+              E-Mail *
             </label>
             <input
               v-model="form.email"
@@ -82,7 +82,7 @@
           <!-- Birth year -->
           <div>
             <label class="mb-2 block text-sm font-medium app-text-secondary">
-              Birth Year
+              Geburtsjahr
             </label>
             <input
               v-model.trim="birthYearInput"
@@ -102,14 +102,14 @@
               :disabled="saving"
               class="app-action-button app-action-primary flex-1 px-6 py-3"
             >
-              <span v-if="saving">Saving...</span>
-              <span v-else>Save Changes</span>
+              <span v-if="saving">Speichern …</span>
+              <span v-else>Änderungen speichern</span>
             </button>
             <NuxtLink
               to="/"
               class="app-action-button app-action-secondary px-6 py-3"
             >
-              Cancel
+              Abbrechen
             </NuxtLink>
           </div>
         </form>
@@ -119,7 +119,7 @@
             to="/set-password?return=/profile"
             class="app-action-button app-action-secondary px-4 py-3"
           >
-            Change Password
+            Passwort ändern
           </NuxtLink>
         </div>
 
@@ -192,7 +192,7 @@ onMounted(async () => {
     birthYearInput.value = response.player.birthYear ? String(response.player.birthYear) : "";
   } catch (err) {
     console.error("Error loading profile:", err);
-    errorMessage.value = "Failed to load profile data";
+    errorMessage.value = "Profildaten konnten nicht geladen werden.";
   } finally {
     loading.value = false;
   }
@@ -212,7 +212,7 @@ const updateProfile = async () => {
       },
     });
 
-    successMessage.value = "Profile updated successfully!";
+    successMessage.value = "Profil erfolgreich aktualisiert.";
 
     // Clear success message after 3 seconds
     setTimeout(() => {
@@ -221,7 +221,7 @@ const updateProfile = async () => {
   } catch (err: any) {
     console.error("Error updating profile:", err);
     errorMessage.value =
-      err?.data?.message || err?.message || "Failed to update profile";
+      err?.data?.message || err?.message || "Profil konnte nicht aktualisiert werden.";
   } finally {
     saving.value = false;
   }
