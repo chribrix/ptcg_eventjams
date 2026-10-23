@@ -394,8 +394,8 @@ onBeforeUnmount(() => {
 .tm-result-button { min-height: 4rem; border: 1px solid var(--app-border); border-radius: 12px; padding: 0.65rem 0.35rem; font: inherit; font-size: clamp(0.88rem, 4vw, 1.05rem); font-weight: 800; line-height: 1.1; cursor: pointer; transition: transform 120ms ease, filter 120ms ease; }
 .tm-result-button:not(:disabled):active { transform: scale(0.98); }
 .tm-result-button:disabled { cursor: not-allowed; opacity: 0.5; }
-.tm-win { background: #16a34a; border-color: #15803d; color: #fff; }
-.tm-win:not(:disabled):hover { background: #15803d; }
+.tm-win { background: #15803d; border-color: #166534; color: #fff; }
+.tm-win:not(:disabled):hover { background: #166534; }
 .tm-loss { background: var(--app-button-red); border-color: var(--app-button-red-border); color: var(--app-button-red-text); }
 .tm-tie { background: var(--app-surface-2); color: var(--app-text-primary); }
 .tm-tie { grid-column: 1 / -1; width: min(100%, 250px); justify-self: center; }

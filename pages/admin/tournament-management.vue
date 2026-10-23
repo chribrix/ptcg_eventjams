@@ -351,9 +351,11 @@ const decklistModal = ref<{ player: TomPlayerView; decklist: string } | null>(nu
 let nowTickTimer: ReturnType<typeof setInterval> | null = null;
 const nowTick = ref(Date.now());
 let adminStateStream: EventSource | null = null;
+let adminStatePollingTimer: ReturnType<typeof setInterval> | null = null;
 let lastAdminStreamUpdatedAt = "";
 let tomRefreshInFlight = false;
 let tomRefreshQueued = false;
+const PLAYER_REPORT_AUTO_FINALIZE_AFTER_MS = 60_000;
 
 const tournamentReleased = computed(() => !!tomMetadata.value?.tournamentReleasedAt);
 
@@ -431,6 +433,7 @@ const selectEvent = async (eventId: string) => {
   if (fileInputRef.value) fileInputRef.value.value = "";
   await loadSelectedEventDetails();
   startAdminStateStream();
+  startAdminStatePolling();
 };
 
 const onSelectEventChange = async () => {
@@ -831,7 +834,7 @@ const reportSummaryLine = (report: TomReportMeta) => {
 
 const pendingSecondsLeft = (report: TomReportMeta) => {
   if (!report.createdAt || report.status !== "pending") return null;
-  const left = Math.ceil((new Date(report.createdAt).getTime() + 30_000 - nowTick.value) / 1000);
+  const left = Math.ceil((new Date(report.createdAt).getTime() + PLAYER_REPORT_AUTO_FINALIZE_AFTER_MS - nowTick.value) / 1000);
   return Math.max(0, left);
 };
 
@@ -924,6 +927,19 @@ const stopAdminStateStream = () => {
   adminStateStream = null;
 };
 
+const startAdminStatePolling = () => {
+  stopAdminStatePolling();
+  adminStatePollingTimer = setInterval(() => {
+    requestTomStateRefresh();
+  }, 5_000);
+};
+
+const stopAdminStatePolling = () => {
+  if (!adminStatePollingTimer) return;
+  clearInterval(adminStatePollingTimer);
+  adminStatePollingTimer = null;
+};
+
 const formatDate = (value: string) => new Date(value).toLocaleString("de-DE", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 const statusClass = (status: string) => {
@@ -943,6 +959,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   stopNowTickTimer();
   stopAdminStateStream();
+  stopAdminStatePolling();
 });
 </script>
 
