@@ -878,6 +878,18 @@ export const getPlayerTournamentRun = async (input: {
       ? currentMatchCandidate
       : null;
 
+  // Pairings may already be uploaded to Chrispyjams before the organizer
+  // releases the round. Do not leak an unreleased pending pairing through the
+  // round history; only the live match is published after release.
+  const publishedPlayerMatches = playerMatches.filter((match) => {
+    if (match.outcome !== 0) return true;
+    const releasedRound =
+      releasedRoundsByPod[match.divisionCategory || ""] ||
+      metadata.pairingsReleasedRound ||
+      0;
+    return match.roundNumber <= releasedRound;
+  });
+
   const matchReports = currentMatch
     ? reports.filter((report) =>
         sameMatchKey(report, {
@@ -903,7 +915,7 @@ export const getPlayerTournamentRun = async (input: {
   return {
     stateView: state.stateView,
     playerUserId: input.playerUserId,
-    playerMatches,
+    playerMatches: publishedPlayerMatches,
     score: {
       wins,
       losses,
