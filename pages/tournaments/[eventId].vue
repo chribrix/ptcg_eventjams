@@ -27,6 +27,7 @@
       </section>
 
       <section
+        v-if="!guestAccessRequired || runData"
         :key="`match-card-${matchArrivalKey}`"
         class="tm-player-card tm-match-card"
         :class="{ 'tm-match-arrival': !!runData?.currentMatch && matchArrivalKey > 0 }"
@@ -149,10 +150,12 @@ type PlayerRun = {
 };
 
 const route = useRoute();
+const router = useRouter();
 const eventId = computed(() => String(route.params.eventId || ""));
 const isQrDisplayRoute = computed(() => route.path.endsWith("/qr"));
 const viewerToken = computed(() => (typeof route.query.viewer === "string" ? route.query.viewer : ""));
 const isImpersonationView = computed(() => viewerToken.value.length > 0);
+const requiresTournamentLogin = computed(() => !isImpersonationView.value && route.query.login === "1");
 
 const loading = ref(false);
 const submitting = ref(false);
@@ -305,6 +308,8 @@ const unlockGuestAccess = async () => {
       method: "POST",
       body: { playerId: guestPlayerId.value, birthYear: guestBirthYear.value },
     });
+    const { login: _login, ...queryWithoutLogin } = route.query;
+    await router.replace({ query: queryWithoutLogin });
     await loadRun();
     startEventStream();
   } catch (err: any) {
@@ -378,6 +383,10 @@ const stopEventStream = () => {
 };
 
 onMounted(async () => {
+  if (requiresTournamentLogin.value) {
+    guestAccessRequired.value = true;
+    return;
+  }
   await loadRun();
   startEventStream();
   startPolling();

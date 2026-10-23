@@ -245,7 +245,7 @@
               </a>
               <NuxtLink
                 v-if="selectedEvent.customEventId && selectedEvent.tournamentViewAvailable"
-                :to="`/tournaments/${selectedEvent.customEventId}`"
+                :to="`/tournaments/${selectedEvent.customEventId}?login=1`"
                 class="app-btn-primary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-bold"
                 @click="selectedEvent = null"
               >

@@ -372,7 +372,7 @@
                     registration.customEventId &&
                     registration.tournamentViewAvailable
                   "
-                  :to="`/tournaments/${registration.customEventId}`"
+                  :to="`/tournaments/${registration.customEventId}?login=1`"
                   class="w-full app-action-button app-action-primary py-3 px-4 rounded-lg font-medium"
                 >
                   <svg
