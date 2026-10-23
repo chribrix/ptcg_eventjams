@@ -18,9 +18,10 @@
             <h3>Turnierkontrolle</h3>
             <div class="tm-import-actions">
               <input ref="fileInputRef" type="file" accept=".tdf,.xml,text/xml" @change="onTomFileSelected" />
-              <button class="btn btn-primary" :disabled="tomImporting || !pendingTomXml" @click="importTomXml">Paarungen hochladen</button>
-              <button class="btn btn-primary" :disabled="!tomStateLoaded || tournamentReleased" @click="releaseTournament">Turnier freigeben</button>
-              <button class="btn btn-primary" :disabled="!tournamentReleased || tomLoading || !tomStateLoaded || !activePodCategory" @click="releaseCurrentRound">Runde starten{{ activePodCategory ? ` · Pod ${activePodCategory}` : "" }}</button>
+              <button class="btn btn-primary" :disabled="tomImporting || !pendingTomXml || tournamentEnded" @click="importTomXml">Paarungen hochladen</button>
+              <button class="btn btn-primary" :disabled="!tomStateLoaded || tournamentReleased || tournamentEnded" @click="releaseTournament">Turnier freigeben</button>
+              <button class="btn btn-primary" :disabled="!tournamentReleased || tournamentEnded || tomLoading || !tomStateLoaded || !activePodCategory" @click="releaseCurrentRound">Pairings freigeben{{ activePodCategory ? ` · Pod ${activePodCategory}` : "" }}</button>
+              <button class="btn btn-danger" :disabled="!tournamentReleased || tournamentEnded || tomLoading || tomResultSaving || hasPendingMatches" @click="endTournament">Turnier beenden</button>
               <NuxtLink v-if="tournamentReleased && tomStateLoaded && selectedEventId" class="btn btn-secondary" :to="`/tournaments/${selectedEventId}/qr`" target="_blank">QR-Display öffnen</NuxtLink>
               <button class="btn btn-secondary" :disabled="tomLoading" @click="loadTomState">Aktualisieren</button>
             </div>
@@ -28,7 +29,10 @@
             <p v-if="latestImportInfo" class="tm-meta">
               Last import: {{ latestImportInfo.fileName || "unknown file" }} ({{ latestImportInfo.snapshotKind }}{{ latestImportInfo.roundNumber ? ` r${latestImportInfo.roundNumber}` : "" }})
             </p>
-            <p v-if="tournamentReleased" class="tm-meta">
+            <p v-if="tournamentEnded" class="tm-meta">
+              Turnier beendet. Spieler sehen ihre vollständige Rundenhistorie noch 24 Stunden.
+            </p>
+            <p v-else-if="tournamentReleased" class="tm-meta">
               Turnieransicht und QR-Zugang sind freigegeben.
             </p>
             <p v-if="tomSuccessMessage" class="tm-success-inline">{{ tomSuccessMessage }}</p>
@@ -297,6 +301,7 @@ type TomMetadata = {
   importHistory?: Array<{ fileName?: string; snapshotKind?: string; roundNumber?: number; importedAt?: string }>;
   pairingsReleasedRound?: number;
   tournamentReleasedAt?: string;
+  tournamentEndedAt?: string;
   snapshotArchive?: Array<{
     id: string;
     fileName?: string;
@@ -358,6 +363,7 @@ let tomRefreshQueued = false;
 const PLAYER_REPORT_AUTO_FINALIZE_AFTER_MS = 60_000;
 
 const tournamentReleased = computed(() => !!tomMetadata.value?.tournamentReleasedAt);
+const tournamentEnded = computed(() => !!tomMetadata.value?.tournamentEndedAt);
 
 const setActiveTab = (tab: string) => {
   activeTomTab.value = tab;
@@ -634,6 +640,22 @@ const releaseTournament = async () => {
   }
 };
 
+const endTournament = async () => {
+  if (!selectedEventId.value) return;
+  tomLoading.value = true;
+  tomStateError.value = null;
+  tomSuccessMessage.value = null;
+  try {
+    await $fetch(`/api/admin/tournaments/${selectedEventId.value}/tom-bridge/end-tournament`, { method: "POST" });
+    tomSuccessMessage.value = "Turnier beendet. Die Spieleransicht bleibt 24 Stunden als Rundenhistorie verfügbar.";
+    await loadTomState();
+  } catch (error: any) {
+    tomStateError.value = error?.data?.statusMessage || "Turnier konnte nicht beendet werden.";
+  } finally {
+    tomLoading.value = false;
+  }
+};
+
 const copyPlayerAccessLink = async () => {
   if (!selectedEventId.value || !import.meta.client) return;
   const url = `${window.location.origin}/tournaments/${selectedEventId.value}`;
@@ -736,6 +758,10 @@ const hasPendingCurrentRound = computed(() => {
   );
   return !!currentRound?.matches?.some((match) => match.outcome === 0);
 });
+
+const hasPendingMatches = computed(() =>
+  tomRoundsDetailed.value.some((round) => round.matches.some((match) => match.outcome === 0)),
+);
 
 const roundTabLabel = (round: TomRoundView) => {
   const typeLabel = round.type === 1 ? "Top Cut" : "Swiss";

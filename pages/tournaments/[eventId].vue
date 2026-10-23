@@ -54,6 +54,12 @@
             </div>
             <p v-if="runData.reports?.opponentReported" class="tm-opponent-report">Dein Gegner hat bereits ein Ergebnis eingetragen. Wähle jetzt dein Ergebnis aus deiner Sicht.</p>
           </div>
+          <div v-else-if="runData.release?.historyExpired" class="tm-state">
+            <p>Diese Turnieransicht ist abgelaufen.</p>
+          </div>
+          <div v-else-if="runData.release?.tournamentEndedAt" class="tm-state">
+            <p>Turnier beendet. Deine Rundenhistorie ist noch 24 Stunden verfügbar.</p>
+          </div>
           <div v-else-if="runData.release && runData.release.isCurrentRoundReleased === false" class="tm-state">
             <div class="tm-waiting-state">
               <div class="tm-waiting-gif">
@@ -119,7 +125,14 @@ type PlayerRun = {
     player2UserId?: string;
   } | null;
   reports?: { ownResult?: "win" | "loss" | "tie"; opponentReported?: boolean; opponentResult?: "win" | "loss" | "tie"; awaitingBothConfirmations?: boolean };
-  release?: { pairingsReleasedRound?: number; pairingsReleasedRoundsByPod?: Record<string, number>; isCurrentRoundReleased?: boolean };
+  release?: {
+    pairingsReleasedRound?: number;
+    pairingsReleasedRoundsByPod?: Record<string, number>;
+    isCurrentRoundReleased?: boolean;
+    tournamentEndedAt?: string;
+    historyAvailableUntil?: string;
+    historyExpired?: boolean;
+  };
   stateView?: {
     players?: Array<{ userId: string; displayName?: string; firstName?: string; lastName?: string }>;
     tournament?: { name?: string };

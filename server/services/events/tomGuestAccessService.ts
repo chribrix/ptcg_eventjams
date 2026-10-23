@@ -1,7 +1,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { H3Event } from "h3";
 
-const ACCESS_TTL_SECONDS = 12 * 60 * 60;
+// Tournament access must survive imports between rounds and remain available
+// for the 24-hour post-tournament history window.
+const ACCESS_TTL_SECONDS = 48 * 60 * 60;
 
 const getSecret = () =>
   process.env.TOM_GUEST_ACCESS_SECRET ||

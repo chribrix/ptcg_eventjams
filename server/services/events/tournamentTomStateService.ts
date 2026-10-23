@@ -9,6 +9,7 @@ import {
 
 const SNAPSHOT_ARCHIVE_LIMIT = 30;
 const PLAYER_REPORT_AUTO_FINALIZE_AFTER_MS = 60_000;
+const TOURNAMENT_HISTORY_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 type PlayerReportedResult = "win" | "loss" | "tie";
 
@@ -43,6 +44,7 @@ type TomMetadata = {
   pairingsReleasedRound?: number;
   pairingsReleasedRoundsByPod?: Record<string, number>;
   tournamentReleasedAt?: string;
+  tournamentEndedAt?: string;
   playerAccessedUserIds?: string[];
   snapshotArchive?: Array<{
     id: string;
@@ -69,7 +71,39 @@ export const releaseTournamentForPlayers = async (customEventId: string) => {
   const record = await tomState.findUnique({ where: { customEventId } });
   if (!record) throw createError({ statusCode: 404, statusMessage: "No TOM state imported for this tournament" });
   const metadata = getMetadata(record);
+  if (metadata.tournamentEndedAt) {
+    throw createError({ statusCode: 409, statusMessage: "Das Turnier wurde bereits beendet." });
+  }
   metadata.tournamentReleasedAt = new Date().toISOString();
+  const updated = await tomState.update({
+    where: { customEventId },
+    data: { metadata, updatedAt: new Date() },
+  });
+  return { record: updated, stateView: buildTomStateView(updated.currentXml) };
+};
+
+export const endTournamentForPlayers = async (customEventId: string) => {
+  const tomState = getTomStateDelegate();
+  const record = await tomState.findUnique({ where: { customEventId } });
+  if (!record) throw createError({ statusCode: 404, statusMessage: "No TOM state imported for this tournament" });
+
+  const metadata = getMetadata(record);
+  if (!metadata.tournamentReleasedAt) {
+    throw createError({ statusCode: 409, statusMessage: "Gib zuerst das Turnier für Spieler frei." });
+  }
+  if (metadata.tournamentEndedAt) {
+    throw createError({ statusCode: 409, statusMessage: "Das Turnier wurde bereits beendet." });
+  }
+
+  const snapshot = parseTomTdf(record.currentXml);
+  if (snapshot.rounds.some((round) => round.matches.some((match) => match.outcome === 0))) {
+    throw createError({
+      statusCode: 409,
+      statusMessage: "Alle Ergebnisse müssen gesetzt sein, bevor das Turnier beendet werden kann.",
+    });
+  }
+
+  metadata.tournamentEndedAt = new Date().toISOString();
   const updated = await tomState.update({
     where: { customEventId },
     data: { metadata, updatedAt: new Date() },
@@ -435,6 +469,10 @@ export const upsertTournamentTomState = async (input: {
   sourceFileName?: string;
 }) => {
   const tomState = getTomStateDelegate();
+  const existingRecord = await tomState.findUnique({ where: { customEventId: input.customEventId } });
+  if (existingRecord && getMetadata(existingRecord).tournamentEndedAt) {
+    throw createError({ statusCode: 409, statusMessage: "Ein beendetes Turnier kann nicht mehr aktualisiert werden." });
+  }
   const stateView = buildTomStateView(input.xml);
 
   const snapshotHint = parseTomSnapshotHint(input.sourceFileName);
@@ -471,10 +509,6 @@ export const upsertTournamentTomState = async (input: {
       importedByAdminId: input.importedByAdminId,
       importedAt: new Date(),
       updatedAt: new Date(),
-      metadata: {
-        importedByAdminId: input.importedByAdminId,
-        importedAt: new Date().toISOString(),
-      },
     },
   });
 
@@ -627,6 +661,12 @@ export const releaseCurrentRoundForPlayers = async (customEventId: string, divis
   }
 
   const metadata = getMetadata(state.record);
+  if (!metadata.tournamentReleasedAt) {
+    throw createError({ statusCode: 409, statusMessage: "Gib zuerst das Turnier für Spieler frei." });
+  }
+  if (metadata.tournamentEndedAt) {
+    throw createError({ statusCode: 409, statusMessage: "Das Turnier wurde bereits beendet." });
+  }
   if (divisionCategory) {
     metadata.pairingsReleasedRoundsByPod = { ...(metadata.pairingsReleasedRoundsByPod || {}), [divisionCategory]: currentRoundNumber };
   } else {
@@ -818,6 +858,11 @@ export const getPlayerTournamentRun = async (input: {
   const metadata = getMetadata(state.record);
   const reports = metadata.reports || [];
   const releasedRoundsByPod = metadata.pairingsReleasedRoundsByPod || {};
+  const tournamentEndedAt = metadata.tournamentEndedAt;
+  const historyAvailableUntil = tournamentEndedAt
+    ? new Date(new Date(tournamentEndedAt).getTime() + TOURNAMENT_HISTORY_WINDOW_MS).toISOString()
+    : undefined;
+  const historyExpired = !!historyAvailableUntil && new Date(historyAvailableUntil).getTime() <= Date.now();
 
   const playerMatches = snapshot.rounds
     .flatMap((round) =>
@@ -874,14 +919,15 @@ export const getPlayerTournamentRun = async (input: {
   const currentMatchCandidate =
     playerMatches.slice().reverse().find((match) => match.outcome === 0) || null;
   const currentMatch =
-    currentMatchCandidate && currentMatchCandidate.roundNumber <= (releasedRoundsByPod[currentMatchCandidate.divisionCategory || ""] || metadata.pairingsReleasedRound || 0)
+    !tournamentEndedAt && currentMatchCandidate && currentMatchCandidate.roundNumber <= (releasedRoundsByPod[currentMatchCandidate.divisionCategory || ""] || metadata.pairingsReleasedRound || 0)
       ? currentMatchCandidate
       : null;
 
   // Pairings may already be uploaded to Chrispyjams before the organizer
   // releases the round. Do not leak an unreleased pending pairing through the
   // round history; only the live match is published after release.
-  const publishedPlayerMatches = playerMatches.filter((match) => {
+  const publishedPlayerMatches = historyExpired ? [] : playerMatches.filter((match) => {
+    if (tournamentEndedAt) return true;
     if (match.outcome !== 0) return true;
     const releasedRound =
       releasedRoundsByPod[match.divisionCategory || ""] ||
@@ -933,6 +979,9 @@ export const getPlayerTournamentRun = async (input: {
     release: {
       pairingsReleasedRound: metadata.pairingsReleasedRound || 0,
       pairingsReleasedRoundsByPod: releasedRoundsByPod,
+      tournamentEndedAt,
+      historyAvailableUntil,
+      historyExpired,
       isCurrentRoundReleased:
         !!currentMatchCandidate && currentMatchCandidate.roundNumber <= (releasedRoundsByPod[currentMatchCandidate.divisionCategory || ""] || metadata.pairingsReleasedRound || 0),
     },
