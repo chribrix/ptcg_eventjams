@@ -101,11 +101,7 @@ describe("auth route middleware", () => {
 
   it("redirects invalid client sessions to login with the requested path", async () => {
     const navigate = vi.fn();
-    const signOut = vi.fn().mockResolvedValue(undefined);
     const ensureValidSession = vi.fn().mockResolvedValue(null);
-
-    vi.stubGlobal("localStorage", { clear: vi.fn() });
-    vi.stubGlobal("sessionStorage", { clear: vi.fn() });
 
     const { createAuthRouteGuard } =
       await import("../../middleware/auth.global");
@@ -115,7 +111,6 @@ describe("auth route middleware", () => {
         user: { value: { id: "supabase-user-1" } },
         ensureValidSession,
       }),
-      getSupabaseClient: () => ({ auth: { signOut } }),
       navigate,
       isClient: true,
     } as any);
@@ -126,7 +121,6 @@ describe("auth route middleware", () => {
     });
 
     expect(ensureValidSession).toHaveBeenCalled();
-    expect(signOut).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith("/login?redirect=%2Fprofile");
   });
 

@@ -1,11 +1,8 @@
-import { clearClientAuthState } from "~/utils/clientAuthState";
-
 import { getApplicationRoutePath } from "~/utils/applicationRoutePath";
 import { buildLoginRedirectPath } from "~/utils/loginRedirect";
 
 type AuthMiddlewareDependencies = {
   getAuth?: typeof useAuth;
-  getSupabaseClient?: typeof useSupabaseClient;
   navigate?: typeof navigateTo;
   delay?: (ms: number) => Promise<void>;
   isClient?: boolean;
@@ -15,7 +12,6 @@ export const createAuthRouteGuard = (
   dependencies: AuthMiddlewareDependencies = {},
 ) => {
   const getAuth = dependencies.getAuth || useAuth;
-  const getSupabaseClient = dependencies.getSupabaseClient || useSupabaseClient;
   const navigate = dependencies.navigate || navigateTo;
   const delay =
     dependencies.delay ||
@@ -24,7 +20,6 @@ export const createAuthRouteGuard = (
 
   return async (to: { path: string; fullPath?: string }) => {
     const { user, ensureValidSession } = getAuth();
-    const supabase = getSupabaseClient();
     const loginRedirect = buildLoginRedirectPath(to);
     const applicationPath = getApplicationRoutePath(to.path);
 
@@ -65,9 +60,7 @@ export const createAuthRouteGuard = (
     if (user.value) {
       const validUser = await ensureValidSession();
       if (!validUser) {
-        // Session expired, clean up and redirect
-        clearClientAuthState({ clearAllStorage: true });
-        await supabase.auth.signOut();
+        // The auth session service owns invalidation. The guard only redirects.
         return navigate(loginRedirect);
       }
 

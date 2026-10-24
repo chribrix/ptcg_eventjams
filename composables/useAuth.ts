@@ -1,10 +1,13 @@
 import { clearClientAuthState as clearSharedClientAuthState } from "~/utils/clientAuthState";
 import { isAuthRetryableFetchError } from "@supabase/supabase-js";
+import { createAuthSessionService } from "~/services/authSessionService";
+
+let authSessionService: ReturnType<typeof createAuthSessionService<any>> | null =
+  null;
 
 export const useAuth = () => {
   const supabaseUser = useSupabaseUser();
   const supabaseClient = useSupabaseClient();
-  const isRefreshing = ref(false);
   const { error: showErrorToast } = useToast();
 
   // Helper to log errors to database
@@ -46,97 +49,6 @@ export const useAuth = () => {
     clearSharedClientAuthState({ clearAllStorage });
   };
 
-  // Check and refresh session if needed
-  const ensureValidSession = async () => {
-    if (isRefreshing.value) return supabaseUser.value;
-
-    try {
-      isRefreshing.value = true;
-      const {
-        data: { session },
-        error,
-      } = await supabaseClient.auth.getSession();
-
-      if (error) {
-        await logError("session_check_failed", error.message, { error });
-        if (isAuthRetryableFetchError(error)) {
-          return supabaseUser.value;
-        }
-
-        await clearInvalidSession();
-        showErrorToast("Your session has expired. Please log in again.", 7000);
-        return null;
-      }
-
-      // If no session, user is logged out
-      if (!session) {
-        return null;
-      }
-
-      // Check if token is expired or about to expire (within 5 minutes)
-      const expiresAt = session.expires_at;
-      const now = Math.floor(Date.now() / 1000);
-      const fiveMinutes = 5 * 60;
-
-      if (expiresAt && expiresAt - now < fiveMinutes) {
-        // Token expired or expiring soon, try to refresh
-        try {
-          const {
-            data: { session: newSession },
-            error: refreshError,
-          } = await supabaseClient.auth.refreshSession();
-
-          if (refreshError) {
-            await logError("token_refresh_failed", refreshError.message, {
-              refreshError,
-            });
-            if (isAuthRetryableFetchError(refreshError)) {
-              return supabaseUser.value;
-            }
-
-            await clearInvalidSession();
-            showErrorToast("Session expired. Please log in again.", 7000);
-            return null;
-          }
-
-          return newSession?.user || null;
-        } catch (refreshError) {
-          const errorMessage =
-            refreshError instanceof Error
-              ? refreshError.message
-              : "Unknown refresh error";
-          await logError("token_refresh_exception", errorMessage, {
-            refreshError,
-          });
-          if (isAuthRetryableFetchError(refreshError)) {
-            return supabaseUser.value;
-          }
-
-          await clearInvalidSession();
-          showErrorToast("Authentication error. Please log in again.", 7000);
-          return null;
-        }
-      }
-
-      return session.user;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Unknown session validation error";
-      await logError("session_validation_exception", errorMessage, { error });
-      if (isAuthRetryableFetchError(error)) {
-        return supabaseUser.value;
-      }
-
-      await clearInvalidSession();
-      showErrorToast("Session validation failed. Please log in again.", 7000);
-      return null;
-    } finally {
-      isRefreshing.value = false;
-    }
-  };
-
   const assignLocation = (path: string) => {
     if (!process.client) return;
     window.location.assign(path);
@@ -149,6 +61,28 @@ export const useAuth = () => {
     } catch {}
 
     clearClientAuthState(false);
+  };
+
+  if (process.client && !authSessionService) {
+    authSessionService = createAuthSessionService({
+      getSession: () => supabaseClient.auth.getSession(),
+      refreshSession: () => supabaseClient.auth.refreshSession(),
+      signOut: () => supabaseClient.auth.signOut(),
+      getCurrentUser: () => supabaseUser.value,
+      clearAuthState: () => clearClientAuthState(false),
+      logError,
+      isRetryableError: isAuthRetryableFetchError,
+    });
+  }
+
+  // All components delegate to one service: one in-flight refresh and one timer.
+  const ensureValidSession = async () => {
+    if (!process.client || !authSessionService) return supabaseUser.value;
+    const validUser = await authSessionService.ensureValidSession();
+    if (!validUser && supabaseUser.value) {
+      showErrorToast("Your session has expired. Please log in again.", 7000);
+    }
+    return validUser;
   };
 
   const logout = createLogoutAction({
@@ -174,23 +108,9 @@ export const useAuth = () => {
     return currentUser.user_metadata?.name || currentUser.email || null;
   });
 
-  // Setup periodic session check on client side
+  // Start the singleton monitor once for the entire browser app.
   if (process.client) {
-    // Check session every 5 minutes, but don't let it block anything
-    const checkInterval = setInterval(
-      () => {
-        if (supabaseUser.value) {
-          // Run async but don't await - let it happen in background
-          ensureValidSession().catch(() => {});
-        }
-      },
-      5 * 60 * 1000,
-    );
-
-    // Clean up on unmount
-    onUnmounted(() => {
-      clearInterval(checkInterval);
-    });
+    authSessionService?.startMonitoring();
   }
 
   return {
