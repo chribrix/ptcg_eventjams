@@ -1,6 +1,6 @@
 import prisma from "~/lib/prisma";
 import { hasAdminRole, isAdminUserId } from "../../../util/adminAccess";
-import { serverSupabaseUser } from "#supabase/server";
+import { resolveOptionalAuthUser } from "~/server/services/auth/authService";
 
 // Get participants for an event
 export default defineEventHandler(async (event) => {
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     } else {
       // Otherwise check the actual authenticated user
       try {
-        const user = await serverSupabaseUser(event);
+        const user = await resolveOptionalAuthUser(event);
         if (user) {
           isAdmin = hasAdminRole(user);
         }

@@ -10,6 +10,7 @@ import crypto from "crypto";
 import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
 import { PrismaClient } from "@prisma/client";
 import { clearAdminPasswordResetState } from "~/server/util/passwordSetupState";
+import { requireAuthUser } from "~/server/services/auth/authService";
 
 const prisma = new PrismaClient();
 
@@ -24,14 +25,6 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Get the user's access token from the Authorization header
-  const authHeader = getHeader(event, "authorization");
-  const accessToken = authHeader?.replace(/^Bearer\s+/i, "");
-
-  if (!accessToken) {
-    throw createError({ statusCode: 401, statusMessage: "Not authenticated" });
-  }
-
   const supabaseUrl = config.public.supabaseUrl as string;
   const serviceKey = config.supabaseServiceKey;
 
@@ -42,18 +35,11 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Verify the access token and get the user
+  // Admin access is isolated from end-user identity verification.
   const supabaseAdmin = createSupabaseServerClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabaseAdmin.auth.getUser(accessToken);
-  if (userError || !user) {
-    throw createError({ statusCode: 401, statusMessage: "Invalid session" });
-  }
+  const user = await requireAuthUser(event);
 
   // Apply server-side pepper via HMAC-SHA256
   const pepper = config.passwordPepper;

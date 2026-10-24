@@ -1,12 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
-import { serverSupabaseUser } from "#supabase/server";
 import {
   ensurePlayerForAuthUser,
   getProvisionPlayerInputFromAuthUser,
   normalizePreferredLoginMethod,
 } from "~/server/util/playerProvisioning";
-import { getServerSupabaseUserSafely } from "~/server/util/supabaseAuthCookies";
+import { resolveOptionalAuthUser } from "~/server/services/auth/authService";
 
 // Ensures the logged-in auth user has a canonical local Player row.
 //
@@ -17,7 +16,7 @@ type EnsurePlayerDependencies = {
   getRuntimeConfig?: typeof useRuntimeConfig;
   createPrismaClient?: () => PrismaClient;
   createSupabaseAdminClient?: (supabaseUrl: string, serviceKey: string) => any;
-  getServerSupabaseUser?: typeof serverSupabaseUser;
+  getServerSupabaseUser?: (event: any) => Promise<any>;
   provisionPlayer?: typeof ensurePlayerForAuthUser;
 };
 
@@ -34,7 +33,7 @@ export const createEnsurePlayerHandler = (
         auth: { autoRefreshToken: false, persistSession: false },
       }));
   const getServerUser =
-    dependencies.getServerSupabaseUser || serverSupabaseUser;
+    dependencies.getServerSupabaseUser || resolveOptionalAuthUser;
   const provisionPlayer =
     dependencies.provisionPlayer || ensurePlayerForAuthUser;
   const prisma = createPrismaClient();
@@ -53,23 +52,7 @@ export const createEnsurePlayerHandler = (
 
     const supabaseAdmin = createSupabaseAdminClient(supabaseUrl, serviceKey);
 
-    let user = await getServerSupabaseUserSafely(event, getServerUser);
-
-    if (!user) {
-      const authHeader = getHeader(event, "authorization");
-      const accessToken = authHeader?.replace(/^Bearer\s+/i, "");
-
-      if (accessToken) {
-        const {
-          data: { user: tokenUser },
-          error: tokenUserError,
-        } = await supabaseAdmin.auth.getUser(accessToken);
-
-        if (!tokenUserError && tokenUser) {
-          user = tokenUser;
-        }
-      }
-    }
+    const user = await getServerUser(event);
 
     if (!user) {
       throw createError({ statusCode: 401, statusMessage: "Unauthorized" });

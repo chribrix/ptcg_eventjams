@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import type { H3Event } from "h3";
+import { resolveOptionalAuthUser } from "~/server/services/auth/authService";
 
 const prisma = new PrismaClient();
 
@@ -43,7 +44,7 @@ export async function logError(
     let userEmail: string | undefined;
 
     try {
-      const supabaseUser = await serverSupabaseUser(event);
+      const supabaseUser = await resolveOptionalAuthUser(event);
       if (supabaseUser) {
         userId = supabaseUser.id;
         userEmail = supabaseUser.email;

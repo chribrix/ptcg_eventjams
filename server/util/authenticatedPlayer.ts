@@ -1,9 +1,8 @@
 import type { Player } from "@prisma/client";
-import { serverSupabaseUser } from "#supabase/server";
 import { createError } from "h3";
 import type { H3Event } from "h3";
 import { logError } from "~/server/util/errorLogger";
-import { clearSupabaseAuthCookies } from "~/server/util/supabaseAuthCookies";
+import { resolveOptionalAuthUser } from "~/server/services/auth/authService";
 
 type PlayerLookupClient = {
   player: {
@@ -46,7 +45,7 @@ export const playerIdentitySelect = {
 export const resolveAuthenticatedIdentityFactory = (
   getSupabaseUser: (
     event: H3Event,
-  ) => Promise<SupabaseUserLike | null> = serverSupabaseUser,
+  ) => Promise<SupabaseUserLike | null> = resolveOptionalAuthUser,
 ) => {
   return async (event: H3Event): Promise<AuthenticatedIdentity> => {
     const impersonatedPlayerId = event.context.impersonatedUserId;
@@ -58,14 +57,7 @@ export const resolveAuthenticatedIdentityFactory = (
       };
     }
 
-    let supabaseUser: SupabaseUserLike | null = null;
-
-    try {
-      supabaseUser = await getSupabaseUser(event);
-    } catch {
-      clearSupabaseAuthCookies(event);
-      supabaseUser = null;
-    }
+    const supabaseUser = await getSupabaseUser(event).catch(() => null);
 
     if (!supabaseUser?.id) {
       throw createError({

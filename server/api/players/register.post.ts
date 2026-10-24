@@ -1,12 +1,11 @@
 import { PrismaClient } from "@prisma/client";
-import { serverSupabaseUser } from "#supabase/server";
 import { z } from "zod";
 import {
   logDatabaseError,
   logValidationError,
 } from "~/server/util/errorLogger";
 import { ensurePlayerForAuthUser } from "~/server/util/playerProvisioning";
-import { getServerSupabaseUserSafely } from "~/server/util/supabaseAuthCookies";
+import { requireAuthUser } from "~/server/services/auth/authService";
 
 const prisma = new PrismaClient();
 
@@ -23,7 +22,7 @@ const registerPlayerSchema = z.object({
 
 export default defineEventHandler(async (event) => {
   try {
-    const user = await getServerSupabaseUserSafely(event, serverSupabaseUser);
+    const user = await requireAuthUser(event);
 
     if (!user?.id || !user.email) {
       throw createError({

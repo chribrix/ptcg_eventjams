@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { resolveOptionalAuthUser } from "~/server/services/auth/authService";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -6,16 +7,15 @@ export default defineEventHandler(async (event) => {
 
   try {
     const {
-      userId,
-      userEmail,
       errorType,
       errorMessage,
-      cookies,
       userAgent,
       url,
       stackTrace,
       metadata,
     } = body;
+
+    const authenticatedUser = await resolveOptionalAuthUser(event);
 
     // Get IP address from request
     const ipAddress = getRequestIP(event, { xForwardedFor: true });
@@ -23,11 +23,13 @@ export default defineEventHandler(async (event) => {
     // Create error log
     const errorLog = await prisma.errorLog.create({
       data: {
-        userId: userId || null,
-        userEmail: userEmail || null,
+        // Do not trust identity or cookie data supplied by a browser log call.
+        userId: authenticatedUser?.id || null,
+        userEmail: authenticatedUser?.email || null,
         errorType,
         errorMessage,
-        cookies: cookies || null,
+        // Authentication material must never be persisted in diagnostics.
+        cookies: null,
         userAgent: userAgent || null,
         ipAddress: ipAddress || null,
         url: url || null,

@@ -20,14 +20,6 @@ export const useAuth = () => {
 
     try {
       const user = supabaseUser.value;
-      const cookies: Record<string, string> = {};
-
-      // Get all cookies
-      document.cookie.split(";").forEach((cookie) => {
-        const [name, value] = cookie.split("=").map((c) => c.trim());
-        if (name) cookies[name] = value || "";
-      });
-
       await $fetch("/api/admin/error-logs/create", {
         method: "POST",
         body: {
@@ -35,7 +27,6 @@ export const useAuth = () => {
           userEmail: user?.email || null,
           errorType,
           errorMessage,
-          cookies,
           userAgent: navigator.userAgent,
           url: window.location.href,
           stackTrace: new Error().stack,

@@ -1,6 +1,5 @@
-import { serverSupabaseUser } from "#supabase/server";
 import type { H3Event } from "h3";
-import { getServerSupabaseUserSafely } from "~/server/util/supabaseAuthCookies";
+import { resolveOptionalAuthUser } from "~/server/services/auth/authService";
 
 type AuthUserLike = {
   id: string;
@@ -43,10 +42,7 @@ export function hasAdminRole(user: AuthUserLike | null | undefined): boolean {
 
 export async function getAuthenticatedAdminState(event: H3Event) {
   try {
-    const user = (await getServerSupabaseUserSafely(
-      event,
-      serverSupabaseUser,
-    )) as AuthUserLike | null;
+    const user = (await resolveOptionalAuthUser(event)) as AuthUserLike | null;
 
     if (!user) {
       throw createError({
