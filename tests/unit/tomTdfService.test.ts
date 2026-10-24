@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   applyTomResultUpdates,
-  exportTomPodTdf,
   getPlayerPairings,
   parseTomTdf,
 } from "~/server/services/events/tomTdfService";
@@ -67,17 +66,4 @@ describe("tomTdfService", () => {
     expect(pairings.matches.some((match) => match.outcome === 5)).toBe(true);
   });
 
-  it("exports a self-contained TOM document for one pod", () => {
-    const cupXml = readFileSync(resolve(process.cwd(), "../../TOM_DATA/260301_Cup.tdf"), "utf8");
-    const source = parseTomTdf(cupXml);
-    const exported = exportTomPodTdf(cupXml, "8");
-    const parsed = parseTomTdf(exported);
-
-    expect(source.divisions.map((division) => division.category)).toEqual(["8", "2"]);
-    expect(parsed.divisions).toHaveLength(1);
-    expect(parsed.divisions[0].category).toBe("8");
-    expect(parsed.players.map((player) => player.userId).sort()).toEqual(
-      [...parsed.divisions[0].playerUserIds].sort(),
-    );
-  });
 });

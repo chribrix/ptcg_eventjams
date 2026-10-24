@@ -417,39 +417,6 @@ export const parseTomTdf = (xml: string): TomTournamentSnapshot => {
   };
 };
 
-/** Creates a standalone TOM document containing only the selected pod. */
-export const exportTomPodTdf = (xml: string, divisionCategory: string): string => {
-  const snapshot = parseTomTdf(xml);
-  const division = snapshot.divisions.find((entry) => entry.category === divisionCategory);
-  if (!division) {
-    throw createError({ statusCode: 404, statusMessage: `Pod ${divisionCategory} was not found in this TOM file` });
-  }
-
-  const podsContent = xml.match(/<pods>([\s\S]*?)<\/pods>/i)?.[1] ?? "";
-  const podXml = Array.from(podsContent.matchAll(/<pod\b([^>]*)>[\s\S]*?<\/pod>/gi))
-    .find((match) => parseAttributes(match[1]).category === divisionCategory && /<rounds>/i.test(match[0]))?.[0];
-  if (!podXml) {
-    throw createError({ statusCode: 422, statusMessage: "Selected TOM pod could not be exported" });
-  }
-
-  const playerIds = new Set(division.playerUserIds);
-  for (const match of division.rounds.flatMap((round) => round.matches)) {
-    if (match.player1UserId) playerIds.add(match.player1UserId);
-    if (match.player2UserId) playerIds.add(match.player2UserId);
-  }
-  const playersSection = xml.match(/<players>([\s\S]*?)<\/players>/i);
-  if (!playersSection) {
-    throw createError({ statusCode: 422, statusMessage: "TOM player list is missing" });
-  }
-  const selectedPlayers = Array.from(playersSection[1].matchAll(/<player\b([^>]*)>[\s\S]*?<\/player>/gi))
-    .filter((match) => playerIds.has(parseAttributes(match[1]).userid || ""))
-    .map((match) => match[0]);
-
-  let podExport = xml.replace(/<players>[\s\S]*?<\/players>/i, `<players>\n${selectedPlayers.join("\n")}\n</players>`);
-  podExport = podExport.replace(/<pods>[\s\S]*?<\/pods>/i, `<pods>\n${podXml}\n</pods>`);
-  return podExport;
-};
-
 export const getCurrentRound = (snapshot: TomTournamentSnapshot): TomRound | null => {
   if (!snapshot.rounds.length) {
     return null;

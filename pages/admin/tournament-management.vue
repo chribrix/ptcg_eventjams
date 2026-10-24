@@ -88,7 +88,7 @@
                     :disabled="division.currentRound?.matches?.some((match) => match.outcome === 0)"
                     @click="exportTomXml('current', undefined, division.category)"
                   >
-                    Runde beenden und TDF exportieren
+                    Runde beenden und vollständige TDF exportieren
                   </button>
                 </div>
                 <div class="admin-table-wrapper">
@@ -197,7 +197,7 @@
                 :disabled="activeRoundView.matches.some((match) => match.outcome === 0)"
                 @click="exportTomXml('current', undefined, activePodCategory || undefined)"
               >
-                Runde beenden und TDF exportieren
+                Runde beenden und vollständige TDF exportieren
               </button>
             </div>
             <div v-if="activeRoundView" class="admin-table-wrapper">
@@ -698,7 +698,7 @@ const exportTomXml = async (mode: "current" | "source" | "snapshot" = "current",
   if (mode === "snapshot" && snapshotId) {
     params.set("snapshotId", snapshotId);
   }
-  if (pod) params.set("pod", pod);
+  if (pod) params.set("completedPod", pod);
   const response = await fetch(`/api/admin/tournaments/${selectedEventId.value}/tom-bridge/export?${params.toString()}`, { credentials: "include" });
   if (!response.ok) {
     tomStateError.value = mode === "current"
@@ -712,7 +712,7 @@ const exportTomXml = async (mode: "current" | "source" | "snapshot" = "current",
   link.href = url;
   const disposition = response.headers.get("content-disposition") || "";
   const exportedName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
-  link.download = exportedName || `tournament_${selectedEventId.value}_${pod ? `pod_${pod}_` : ""}${mode}.tdf`;
+  link.download = exportedName || `tournament_${selectedEventId.value}_${mode}.tdf`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

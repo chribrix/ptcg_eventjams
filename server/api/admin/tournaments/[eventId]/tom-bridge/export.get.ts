@@ -24,17 +24,19 @@ export default defineAdminRoute(async ({ event }) => {
   const query = getQuery(event);
   const mode = String(query.mode || "current");
   const snapshotId = String(query.snapshotId || "").trim();
-  const pod = String(query.pod || "").trim();
+  // This only scopes the completion check. Every downloaded file is the full
+  // tournament TDF, including all other pods.
+  const completedPod = String(query.completedPod || "").trim();
 
   const currentRound = state.stateView.currentRound;
-  const podDivision = pod
-    ? parseTomTdf(state.record.currentXml).divisions.find((division) => division.category === pod)
+  const podDivision = completedPod
+    ? parseTomTdf(state.record.currentXml).divisions.find((division) => division.category === completedPod)
     : undefined;
   const latestPodRound = podDivision?.rounds.reduce(
     (latest, round) => (!latest || round.number > latest.number ? round : latest),
     undefined as (typeof podDivision.rounds)[number] | undefined,
   );
-  if (mode === "current" && (pod ? latestPodRound?.matches.some((match) => match.outcome === 0) : currentRound?.matches?.some((match) => match.outcome === 0))) {
+  if (mode === "current" && (completedPod ? latestPodRound?.matches.some((match) => match.outcome === 0) : currentRound?.matches?.some((match) => match.outcome === 0))) {
     throw createError({
       statusCode: 409,
       statusMessage:
@@ -64,7 +66,7 @@ export default defineAdminRoute(async ({ event }) => {
     exportLabel = snapshot.fileName || snapshot.id || "snapshot";
   }
 
-  // A TOM export must remain a complete tournament snapshot. The selected pod
+  // A TOM export must remain a complete tournament snapshot. `completedPod`
   // scopes the completion check and exported round number, but never strips
   // other pods that may still be running independently.
 
@@ -85,7 +87,7 @@ export default defineAdminRoute(async ({ event }) => {
   const safeName = originalStem
     .replace(/[^a-zA-Z0-9_-]+/g, "_")
     .replace(/^_+|_+$/g, "");
-  const exportRound = pod ? latestPodRound?.number : currentRound?.number;
+  const exportRound = completedPod ? latestPodRound?.number : currentRound?.number;
   const exportSuffix =
     mode === "current" && exportRound
       ? `cj_r${exportRound}_end`
