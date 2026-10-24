@@ -2,7 +2,7 @@
 
 **Zweck:** Läden/Betreiber, ihre Orte, Einstellungen und Mitarbeiterrechte verwalten. Ein Mandant ist eine Berechtigungs- und Datengrenze; ein Ort oder Freitext-`venue` ist keine Grenze.
 
-**Heute:** Es gibt keine `Tenant`-Tabelle. `VenueDirectoryEntry` speichert Organisations-/Ortsnamen, Adminrolle ist global. Crows & Owls ist fachlich der erste Tenant, aber noch nicht als solcher modelliert.
+**Heute:** Die additive Migration `20261024230000_add_tenant_foundation` legt `Tenant` und `TenantMembership` an und ordnet bestehende eigene Events, Vorlagen, Orte, Overrides und Liga-Saisons Crows & Owls zu. `server/services/tenants/tenantService.ts` prüft serverseitig die Rollenmatrix. Die bisherigen Routen sind noch nicht durchgängig auf Tenant-Scope umgestellt; ein zweiter Laden bleibt bis dahin gesperrt.
 
 **Daten:** `Tenant`, `TenantMembership`, `Venue`, Tenant-Konfiguration. Andere Module speichern oder referenzieren `tenantId`, besitzen aber diese Stammdaten nicht.
 
@@ -11,3 +11,7 @@
 **Interaktion:** Identität liefert verifizierten Actor; alle schreibenden Fachmodule prüfen den Tenant. Katalog besitzt Events mit `tenantId`, Buchung/Turnier/Decklisten leiten Scope aus ihrem Objekt ab und prüfen ihn erneut. Plattformadmin ist ein eigener expliziter Pfad.
 
 **Betrieb und Nachweis:** Lokal und remote derselbe Port; remote mit kurzlebigem signiertem Actor-Kontext, nie mit vom Client behaupteter Membership. Backfill für Crows & Owls vor dem zweiten Laden. Tests mit zwei Tenants, gleichen Event-/Ortsnamen und Cross-Tenant-Zugriffsversuchen; Health, Audit und Cache-Invalidierung für Membership-Änderungen dokumentieren.
+
+**Zwischenstand:** `prisma validate`, `prisma generate` und `tests/unit/tenantService.test.ts` sind grün. Migration gegen reale Daten, tenantbezogene API-Abfragen und die getrennte Bereitstellung stehen aus.
+
+**Rollout-Sperre:** Die additive Migration setzt für bestehende Schreibpfade vorübergehend `crows-and-owls` als Default. Alte globale Eindeutigkeiten für Orte, externe Overrides und Saison-Slugs gelten ebenfalls noch. Vor dem zweiten Tenant müssen neue Objekte ihre `tenantId` ausdrücklich aus dem serverseitig geprüften Kontext erhalten, alle Listen/Mutationen Scope prüfen und die Eindeutigkeiten tenantbezogen migriert werden.

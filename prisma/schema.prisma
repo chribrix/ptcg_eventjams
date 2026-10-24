@@ -116,6 +116,39 @@ model AdminUser {
   @@schema("users")
 }
 
+model Tenant {
+  id                     String                  @id
+  slug                   String                  @unique
+  name                   String
+  status                 String                  @default("active")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
+  memberships            TenantMembership[]
+  customEvents           CustomEvent[]
+  eventTemplates         EventTemplate[]
+  venueDirectoryEntries  VenueDirectoryEntry[]
+  externalEventOverrides ExternalEventOverride[]
+  leagueSeasons          LeagueSeason[]
+
+  @@map("tenants")
+  @@schema("public")
+}
+
+model TenantMembership {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  userId    String   @map("user_id") // Supabase auth.users.id
+  role      String   // owner, admin, staff
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@map("tenant_memberships")
+  @@schema("public")
+}
+
 model Event {
   id          String   @id
   name        String?
@@ -135,6 +168,7 @@ model Event {
 
 model CustomEvent {
   id                   String              @id @default(cuid())
+  tenantId             String              @default("crows-and-owls") @map("tenant_id")
   name                 String
   venue                String
   maxParticipants      Int                 @map("max_participants")
@@ -150,10 +184,12 @@ model CustomEvent {
   createdAt            DateTime            @default(now()) @map("created_at")
   updatedAt            DateTime            @updatedAt @map("updated_at")
   creator              AdminUser           @relation(fields: [createdBy], references: [id])
+  tenant               Tenant              @relation(fields: [tenantId], references: [id])
   registrations        EventRegistration[]
   waitlistEntries      WaitlistEntry[]
   tomState             TournamentTomState?
 
+  @@index([tenantId])
   @@map("custom_events")
   @@schema("public")
 }
@@ -176,6 +212,7 @@ model TournamentTomState {
 
 model EventTemplate {
   id                            String    @id @default(cuid())
+  tenantId                      String    @default("crows-and-owls") @map("tenant_id")
   name                          String
   venue                         String
   maxParticipants               Int       @map("max_participants")
@@ -192,19 +229,24 @@ model EventTemplate {
   createdAt                     DateTime  @default(now()) @map("created_at")
   updatedAt                     DateTime  @updatedAt @map("updated_at")
   creator                       AdminUser @relation(fields: [createdBy], references: [id])
+  tenant                        Tenant    @relation(fields: [tenantId], references: [id])
 
+  @@index([tenantId])
   @@map("event_templates")
   @@schema("public")
 }
 
 model VenueDirectoryEntry {
   id               String   @id @default(cuid())
+  tenantId         String   @default("crows-and-owls") @map("tenant_id")
   organizationName String   @map("organization_name")
   venueName        String   @map("venue_name")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
 
   @@unique([organizationName, venueName])
+  @@index([tenantId])
   @@map("venue_directory_entries")
   @@schema("public")
 }
@@ -335,6 +377,7 @@ model RegistrationTicket {
 // Allows admins to override details of events fetched from pokedata.ovh
 model ExternalEventOverride {
   id            String   @id @default(cuid())
+  tenantId      String   @default("crows-and-owls") @map("tenant_id")
   // Matching criteria - used to identify the external event
   eventName     String   @map("event_name") // Event venue/name from pokedata
   eventDate     DateTime @map("event_date") // Event date from pokedata
@@ -363,10 +406,12 @@ model ExternalEventOverride {
   notes     String? // Admin notes about why this override exists
 
   creator       AdminUser           @relation(fields: [createdBy], references: [id])
+  tenant        Tenant              @relation(fields: [tenantId], references: [id])
   registrations EventRegistration[]
   waitlistEntries WaitlistEntry[]
 
   @@unique([eventName, eventDate]) // One override per event name+date combo
+  @@index([tenantId])
   @@map("external_event_overrides")
   @@schema("public")
 }
@@ -397,6 +442,7 @@ model ErrorLog {
 // Keep the Prisma client model aligned with those existing tables.
 model LeagueSeason {
   id          String            @id @default(cuid())
+  tenantId    String            @default("crows-and-owls") @map("tenant_id")
   name        String
   slug        String            @unique
   startsOn    DateTime          @map("starts_on") @db.Date
@@ -409,8 +455,10 @@ model LeagueSeason {
   pointRules  LeaguePointRule[]
   events      LeagueEvent[]
   changeLog   LeagueChangeLog[]
+  tenant      Tenant            @relation(fields: [tenantId], references: [id])
 
   @@index([isActive])
+  @@index([tenantId])
   @@map("league_seasons")
   @@schema("public")
 }

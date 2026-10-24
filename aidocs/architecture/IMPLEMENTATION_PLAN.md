@@ -60,9 +60,9 @@ Die Tabelle ist der Start der Paritätsliste. Vor Änderungen an einem Bereich w
 
 **Prüftor:** Bestehende API-Tests unverändert grün; Modulverträge und Dokumentation stehen; lokale Adapter reproduzieren die bisherigen Antworten.
 
-### P2 — Mandanten ohne Datenverlust
+### P2 — Mandanten ohne Datenverlust (Grundlage begonnen)
 
-- [ ] Tenant und Membership schemafähig ergänzen, Crows & Owls als ersten Tenant anlegen, bestehende eigene Events/Vorlagen/Orte/Overrides zuordnen.
+- [ ] Tenant und Membership schemafähig ergänzen, Crows & Owls als ersten Tenant anlegen, bestehende eigene Events/Vorlagen/Orte/Overrides zuordnen. Schema und additive SQL-Migration sind erstellt und lokal validiert; reale DB-Migration und Backfill-Report stehen aus.
 - [ ] Mandantenauflösung und Rechteprüfung in zentralem Serverdienst einführen; alle Listen und Mutationen auf Tenant-Scope prüfen. Plattformadmin ausdrücklich separat modellieren.
 - [ ] Migration zunächst additiv, mit Backfill-Report über null/mehrdeutige Zuordnungen. Erst nach Korrektur `NOT NULL`, Indizes und Eindeutigkeiten setzen.
 - [ ] Zweiten Test-Tenant mit identischen Namen/Orten anlegen und Isolation von Events, Buchungen, Decklisten, TOM-Zustand und Adminansichten prüfen.
@@ -104,5 +104,6 @@ Die Tabelle ist der Start der Paritätsliste. Vor Änderungen an einem Bereich w
 | 2026-10-24 | Test-Baseline: `npm test` liefert 50 bestandene, 2 fehlgeschlagene und 2 übersprungene Testdateien; 374 bestandene, 2 fehlgeschlagene, 4 übersprungene Tests. Fehlgeschlagen sind `tests/unit/playerCheckEndpoint.test.ts` (erwartete Auth-Existenz) und `tests/unit/playerRegisterEndpoint.test.ts` (erwartete 401, erhaltene 500). Nuxt meldet fehlende Supabase-Testkonfiguration; das erklärt nicht automatisch beide Assertion-Fehler. | Lokaler Lauf auf diesem Branch, Exit-Code 1; keine Produktcodeänderung in diesem Schritt. | Auth-Testfixtures und Fehlerbehandlung prüfen; danach Baseline erneut laufen lassen. |
 | 2026-10-24 | Beide Auth-Tests an die bestehenden zentralen Schnittstellen angepasst; Bye-/Score-Veröffentlichung, Request-ID für Ergebnismeldungen, sichere neue Diagnostik und League-Prisma-Modelle umgesetzt. Spielerantwort enthält keine unveröffentlichten TOM-Runden oder Geburtsdaten mehr. Service-Role-Key ist nicht mehr Analytics-Salt. | `npm test`: 56 Testdateien bestanden, 2 übersprungen; 388 Tests bestanden, 4 übersprungen. `npm run build`, `prisma validate`, `prisma generate` erfolgreich. | Browser-Netzausfall, historische Logs, übrige Funktionsfixtures und Typfehler-Baseline bearbeiten. |
 | 2026-10-24 | Typprüfung ist noch kein Freigabetor: nach Prisma-Generierung meldet `vue-tsc --noEmit` 119 Fehler in bestehenden UI/API-Typen; keine Meldung in den neu eingeführten Turnier-/Diagnosedateien. | Lokaler Typprüfungslauf, Exit-Code 2. | Vor P1 relevante Typfehler priorisieren und ein grünes Typprüftor herstellen. |
+| 2026-10-24 | Mandantengrundlage additiv modelliert: Bestandsdaten erhalten den Crows-&-Owls-Tenant; Membership und zentrale Rollenprüfung sind vorhanden. Ein weiterer Tenant bleibt bis zur vollständigen Scope-Prüfung gesperrt. Die vorübergehenden `tenantId`-Defaults müssen vor Freigabe des zweiten Tenants durch explizite Objektzuordnung ersetzt werden. | `prisma validate`, `prisma generate`, `npm test`: 392 bestanden/4 übersprungen; `npm run build` erfolgreich. `vue-tsc --noEmit` weiterhin 119 bestehende Fehler. Keine reale DB-Migration ausgeführt. | Reale Migration mit Bestandsdaten prüfen, dann API-Routen und Listen tenantbezogen absichern. |
 
 Offene Produktentscheidungen stehen im Ist-/Zielentwurf. Technische Detailentscheidungen werden hier mit Auswirkungen auf Kompatibilität und Rückrollbarkeit nachgetragen.
