@@ -1,6 +1,6 @@
 import { defineAdminRoute } from "~/server/services/admin/adminRoute";
 import { getTournamentTomState } from "~/server/services/events/tournamentTomStateService";
-import { exportTomPodTdf, parseTomTdf } from "~/server/services/events/tomTdfService";
+import { parseTomTdf } from "~/server/services/events/tomTdfService";
 
 export default defineAdminRoute(async ({ event }) => {
   const eventId = getRouterParam(event, "eventId");
@@ -64,10 +64,9 @@ export default defineAdminRoute(async ({ event }) => {
     exportLabel = snapshot.fileName || snapshot.id || "snapshot";
   }
 
-  if (pod) {
-    xmlToExport = exportTomPodTdf(xmlToExport, pod);
-    exportLabel = `${exportLabel}_pod_${pod}`;
-  }
+  // A TOM export must remain a complete tournament snapshot. The selected pod
+  // scopes the completion check and exported round number, but never strips
+  // other pods that may still be running independently.
 
   const metadata = (state.record.metadata || {}) as {
     lastImportedFileName?: string;
