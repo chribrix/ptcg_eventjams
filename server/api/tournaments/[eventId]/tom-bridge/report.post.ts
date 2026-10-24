@@ -7,6 +7,7 @@ import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPl
 const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
 
 const reportSchema = z.object({
+  requestId: z.string().uuid().optional(),
   roundNumber: z.number().int().positive(),
   divisionCategory: z.string().optional(),
   tableNumber: z.number().int().positive().optional(),
@@ -54,6 +55,7 @@ export default defineEventHandler(async (event) => {
   const report = await submitPlayerMatchReport({
     customEventId: eventId,
     reporterUserId: guestTomUserId || player?.playerId || "",
+    requestId: payload.requestId,
     roundNumber: payload.roundNumber,
     divisionCategory: payload.divisionCategory,
     tableNumber: payload.tableNumber,

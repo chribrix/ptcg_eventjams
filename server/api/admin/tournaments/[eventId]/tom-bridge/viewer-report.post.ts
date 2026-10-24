@@ -5,6 +5,7 @@ import { resolveTomViewerToken } from "~/server/services/events/tomViewerTokenSe
 
 const payloadSchema = z.object({
   viewer: z.string().min(1),
+  requestId: z.string().uuid().optional(),
   roundNumber: z.number().int().positive(),
   divisionCategory: z.string().optional(),
   tableNumber: z.number().int().positive().optional(),
@@ -26,6 +27,7 @@ export default defineAdminRoute(async ({ event }) => {
   const report = await submitPlayerMatchReport({
     customEventId: eventId,
     reporterUserId: playerUserId,
+    requestId: input.requestId,
     roundNumber: input.roundNumber,
     divisionCategory: input.divisionCategory,
     tableNumber: input.tableNumber,

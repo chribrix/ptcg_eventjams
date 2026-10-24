@@ -57,19 +57,13 @@ describe("players/check endpoint", () => {
     const handler = createCheckPlayerHandler({
       createPrismaClient: () => mockPrisma as any,
       createSupabaseAdminClient: () => ({
-        auth: { admin: {} },
+        auth: { admin: { listUsers: vi.fn().mockResolvedValue({ data: { users: [{ id: "auth-1", email: "user@example.com" }] }, error: null }) } },
       }),
       getRuntimeConfig: () =>
         ({
           public: { supabaseUrl: "https://example.supabase.co" },
           supabaseServiceKey: "service-role-key",
         }) as any,
-      fetchImpl: vi.fn().mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue({
-          users: [{ id: "auth-1", email: "user@example.com" }],
-        }),
-      }) as any,
     });
 
     await expect(handler(createEvent())).resolves.toEqual({
@@ -109,17 +103,13 @@ describe("players/check endpoint", () => {
     const handler = createCheckPlayerHandler({
       createPrismaClient: () => mockPrisma as any,
       createSupabaseAdminClient: () => ({
-        auth: { admin: {} },
+        auth: { admin: { listUsers: vi.fn().mockResolvedValue({ data: { users: [] }, error: null }) } },
       }),
       getRuntimeConfig: () =>
         ({
           public: { supabaseUrl: "https://example.supabase.co" },
           supabaseServiceKey: "service-role-key",
         }) as any,
-      fetchImpl: vi.fn().mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue({ users: [] }),
-      }) as any,
     });
 
     await expect(handler(createEvent())).resolves.toEqual({

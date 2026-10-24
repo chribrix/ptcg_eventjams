@@ -59,7 +59,6 @@ function dailyVisitorHash(event: H3Event, occurredAt: Date): string {
   const secret =
     process.env.ANALYTICS_SALT ||
     process.env.NUXT_SESSION_PASSWORD ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
     "local-development-analytics-salt";
 
   return createHmac("sha256", secret)
@@ -68,6 +67,9 @@ function dailyVisitorHash(event: H3Event, occurredAt: Date): string {
 }
 
 export async function recordAnalyticsEvent(event: H3Event, input: AnalyticsInput) {
+  if (process.env.NODE_ENV === "production" && !process.env.ANALYTICS_SALT && !process.env.NUXT_SESSION_PASSWORD) {
+    return { tracked: false };
+  }
   const path = normalizeAnalyticsPath(input.path);
   const userAgent = getHeader(event, "user-agent") || "";
   if (!path || AUTOMATED_CLIENT_PATTERN.test(userAgent) || !isFirstPartyBrowserRequest(event)) {

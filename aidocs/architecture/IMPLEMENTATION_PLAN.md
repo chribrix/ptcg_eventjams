@@ -42,12 +42,12 @@ Die Tabelle ist der Start der Paritätsliste. Vor Änderungen an einem Bereich w
 
 ## Phasen und Prüftore
 
-### P0 — Baseline und akute Risiken
+### P0 — Baseline und akute Risiken (in Arbeit)
 
-- [ ] Bestehende Tests und Build auf diesem Branch ausführen; bekannte Fehler mit genauer Ursache als Baseline dokumentieren. Keine Architekturänderung wird durch einen bereits roten Test stillschweigend „grün“ erklärt.
-- [ ] Kritische Flows aus dem Funktionsinventar als reproduzierbare Fixtures bzw. Integrationstests erfassen. Für Bye vor Freigabe und Meldung bei Netzabbruch zuerst einen fehlschlagenden Charakterisierungstest schaffen.
-- [ ] Decklisten-Logging/Debugdatei und unredigierte Fehlerdiagnostik bereinigen; die Auth-Logging-Invariante testen.
-- [ ] League-Prisma-Modelle, SQL-Migration und generierten Client abgleichen.
+- [x] Bestehende Tests und Build auf diesem Branch ausführen; die zwei roten Baseline-Tests waren veraltete Mocks und sind angepasst. `npm test`: 388 bestanden, 4 übersprungen. `npm run build`: erfolgreich. `vue-tsc --noEmit`: noch 119 bestehende Typfehler; kein grünes Typprüftor.
+- [ ] Kritische Flows aus dem gesamten Funktionsinventar als reproduzierbare Fixtures bzw. Integrationstests erfassen. Bye vor Freigabe, wiederholte und gleichzeitige Meldungen sowie die Reduktion der Spielerantwort auf veröffentlichte Daten sind jetzt getestet; Browser-Netzabbruch und weitere Bereiche fehlen noch.
+- [x] Neue Decklisten-Logs/Debugdatei und unredigierte neue Fehlerdiagnostik bereinigen; sichere Felder zentral über `safeDiagnostics` begrenzen. Vorhandene historische Logeinträge und Admin-Log-Leseprojektion müssen vor produktiver Freigabe gesondert auf Altlasten geprüft werden.
+- [x] League-Prisma-Modelle gegen SQL-Migration abgleichen und Client generieren. `prisma validate` und `prisma generate` erfolgreich; reale Datenbankmigration/Abfrage noch nicht geprüft.
 
 **Prüftor:** Baseline-Bericht vorhanden; kritische Ist-Flows reproduzierbar; keine sensiblen Daten in neuen Logs oder Tests.
 
@@ -102,5 +102,7 @@ Die Tabelle ist der Start der Paritätsliste. Vor Änderungen an einem Bereich w
 | --- | --- | --- | --- |
 | 2026-10-24 | Branch für Rework angelegt; Architektur als Arbeitsdokument und kombinierter/separater Betrieb als Ziel festgelegt. | `codex/chrispyjams-architecture-rework`; dieses Dokument | P0-Funktionsfixtures erfassen. |
 | 2026-10-24 | Test-Baseline: `npm test` liefert 50 bestandene, 2 fehlgeschlagene und 2 übersprungene Testdateien; 374 bestandene, 2 fehlgeschlagene, 4 übersprungene Tests. Fehlgeschlagen sind `tests/unit/playerCheckEndpoint.test.ts` (erwartete Auth-Existenz) und `tests/unit/playerRegisterEndpoint.test.ts` (erwartete 401, erhaltene 500). Nuxt meldet fehlende Supabase-Testkonfiguration; das erklärt nicht automatisch beide Assertion-Fehler. | Lokaler Lauf auf diesem Branch, Exit-Code 1; keine Produktcodeänderung in diesem Schritt. | Auth-Testfixtures und Fehlerbehandlung prüfen; danach Baseline erneut laufen lassen. |
+| 2026-10-24 | Beide Auth-Tests an die bestehenden zentralen Schnittstellen angepasst; Bye-/Score-Veröffentlichung, Request-ID für Ergebnismeldungen, sichere neue Diagnostik und League-Prisma-Modelle umgesetzt. Spielerantwort enthält keine unveröffentlichten TOM-Runden oder Geburtsdaten mehr. Service-Role-Key ist nicht mehr Analytics-Salt. | `npm test`: 56 Testdateien bestanden, 2 übersprungen; 388 Tests bestanden, 4 übersprungen. `npm run build`, `prisma validate`, `prisma generate` erfolgreich. | Browser-Netzausfall, historische Logs, übrige Funktionsfixtures und Typfehler-Baseline bearbeiten. |
+| 2026-10-24 | Typprüfung ist noch kein Freigabetor: nach Prisma-Generierung meldet `vue-tsc --noEmit` 119 Fehler in bestehenden UI/API-Typen; keine Meldung in den neu eingeführten Turnier-/Diagnosedateien. | Lokaler Typprüfungslauf, Exit-Code 2. | Vor P1 relevante Typfehler priorisieren und ein grünes Typprüftor herstellen. |
 
 Offene Produktentscheidungen stehen im Ist-/Zielentwurf. Technische Detailentscheidungen werden hier mit Auswirkungen auf Kompatibilität und Rückrollbarkeit nachgetragen.

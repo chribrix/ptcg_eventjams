@@ -1,0 +1,7 @@
+# Event-Services (heutige Übergangsgrenze)
+
+Dieser Ordner enthält derzeit mehrere Fachgebiete. `pokedataService.ts` importiert externe Events, `eventProjectionService.ts` formt Kalender-/Adminansichten, `waitlistService.ts` verwaltet Nachrücken, `tomTdfService.ts` verarbeitet TOM/TDF und `tournamentTomStateService.ts` verwaltet Turnierzustand. `tournamentPublication.ts` ist die zentrale Freigaberegel für Pairing, Bye, Verlauf und Spielerpunkte.
+
+**Daten und Interaktion:** Katalog nutzt `CustomEvent` und `ExternalEventOverride`; Warteliste nutzt `EventRegistration`, `RegistrationTicket` und `WaitlistEntry`; Turnier nutzt `TournamentTomState` am eigenen Event. Die gemeinsame Datenbank und API-Routen sind heute die Integrationsform. Auth und Adminrechte werden in Routen über die bestehenden zentralen Services geprüft. Kein Clientrollenwert erteilt Schreibrecht.
+
+**Betrieb und Nachweis:** Heute ein Nitro-Deployment. Die Zielgrenzen stehen in den READMEs für [Katalog](../../../modules/catalog/README.md), [Buchung](../../../modules/booking/README.md) und [Turnier](../../../modules/tournament/README.md). P0 testet die Turnierfreigabe, wiederholte/parallele Meldungen und das Ausblenden privater TOM-Daten in `tests/unit/tournamentPlayerRun.test.ts`; bestehende Event-/Wartelistentests bleiben Paritätsbasis. Vor einer Extraktion sind öffentliche Ports, Dateneigentum, Tenant-Scope und Remote-Fehlerverhalten pro Bereich umzusetzen.

@@ -19,19 +19,9 @@ export const useAuth = () => {
     if (!process.client) return;
 
     try {
-      const user = supabaseUser.value;
       await $fetch("/api/admin/error-logs/create", {
         method: "POST",
-        body: {
-          userId: user?.id || null,
-          userEmail: user?.email || null,
-          errorType,
-          errorMessage,
-          userAgent: navigator.userAgent,
-          url: window.location.href,
-          stackTrace: new Error().stack,
-          metadata: additionalData || null,
-        },
+        body: { errorType },
       });
     } catch {}
   };

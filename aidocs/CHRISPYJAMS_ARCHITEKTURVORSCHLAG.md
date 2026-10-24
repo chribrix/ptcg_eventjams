@@ -2,6 +2,8 @@
 
 Stand: 24. Oktober 2026. **Arbeitsdokument** auf Branch `codex/chrispyjams-architecture-rework`. Grundlage: statische Sichtung des Repositories und der Ideen in [`hot-features.md`](../hot-features.md). Umsetzung, Funktionsinventar und Prüftore stehen im [Implementierungsplan](architecture/IMPLEMENTATION_PLAN.md); Modulverträge und Dokumentationsstand im [Modulindex](architecture/MODULES.md). Entscheidungen und Prüfergebnisse werden im Verlauf ergänzt. Dies ist keine Aussage über den Zustand einer laufenden Datenbank oder produktiver Deployments.
 
+**Fortschritt:** P0 hat die Bye-/Score-Freigabe vereinheitlicht, wiederholbare Ergebnismeldungen mit Request-ID ergänzt, neue Diagnoseeinträge auf sichere Felder begrenzt und die League-Modelle im Prisma-Schema wiederhergestellt. Die Spielerantwort gibt keine unveröffentlichten TOM-Runden oder Geburtsdaten mehr zurück. Die Befundtabelle unten beschreibt den **vorgefundenen Ausgangszustand**; der aktuelle Umsetzungsstand steht im Implementierungsplan.
+
 ## Kurzentscheidung
 
 Chrispyjams erhält **klar abgegrenzte Fachmodule mit zwei Betriebsarten**: gemeinsam in einer Anwendung und, wo sinnvoll, als eigenständig deployte Dienste. Die Modulverträge sollen beide Aufrufarten unterstützen. Die Umstellung beginnt im gemeinsamen Deployment, damit Buchung, Warteliste, Turnierfreigabe und Decklistenstatus ohne zusätzliche Netzwerkrisiken entkoppelt werden können. Getrennte Deployments werden erst nach Vertrags-, Datenhoheits- und Integrationstests aktiviert; die Architektur darf sie dann nicht durch private Tabellenzugriffe oder interne Imports verhindern.

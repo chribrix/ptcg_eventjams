@@ -288,15 +288,7 @@ const logError = async (
   try {
     await $fetch("/api/admin/error-logs/create", {
       method: "POST",
-      body: {
-        userId: null,
-        userEmail: email.value || null,
-        errorType,
-        errorMessage,
-        userAgent: navigator.userAgent,
-        url: window.location.href,
-        metadata: additionalData || null,
-      },
+      body: { errorType },
     });
   } catch {}
 };

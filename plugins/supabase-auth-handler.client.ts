@@ -13,19 +13,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     try {
       await $fetch("/api/admin/error-logs/create", {
         method: "POST",
-        body: {
-          userId: null,
-          userEmail: null,
-          errorType: `auth_handler_${errorType}`,
-          errorMessage,
-          userAgent: navigator.userAgent,
-          url: window.location.href,
-          metadata: {
-            ...metadata,
-            pluginName: "supabase-auth-handler",
-            timestamp: new Date().toISOString(),
-          },
-        },
+        body: { errorType: `auth_handler_${errorType}` },
       });
     } catch (logError) {
       console.error("Failed to log to database:", logError);

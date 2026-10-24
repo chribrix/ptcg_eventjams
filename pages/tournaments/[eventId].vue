@@ -177,6 +177,7 @@ let eventStream: EventSource | null = null;
 let emojiReactionTimer: ReturnType<typeof setTimeout> | null = null;
 let waitingGifCycleTimer: ReturnType<typeof setTimeout> | null = null;
 let waitingGifHideTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingReport: { matchKey: string; result: "win" | "loss" | "tie"; requestId: string } | null = null;
 
 watch(
   () => runData.value?.currentMatch?.roundNumber,
@@ -320,10 +321,9 @@ const unlockGuestAccess = async () => {
 };
 
 const submitResult = async (result: "win" | "loss" | "tie") => {
-  if (!eventId.value || !runData.value?.currentMatch) return;
+  if (!eventId.value || !runData.value?.currentMatch || submitting.value) return;
   submitting.value = true;
   error.value = null;
-  playReaction(result);
   try {
     const body = {
       roundNumber: runData.value.currentMatch.roundNumber,
@@ -333,16 +333,35 @@ const submitResult = async (result: "win" | "loss" | "tie") => {
       player2UserId: runData.value.currentMatch.player2UserId,
       result,
     };
+    const matchKey = JSON.stringify([eventId.value, body.roundNumber, body.divisionCategory, body.tableNumber, body.player1UserId, body.player2UserId]);
+    if (!pendingReport || pendingReport.matchKey !== matchKey || pendingReport.result !== result) {
+      pendingReport = { matchKey, result, requestId: crypto.randomUUID() };
+    }
     await $fetch(isImpersonationView.value
       ? `/api/admin/tournaments/${eventId.value}/tom-bridge/viewer-report`
       : `/api/tournaments/${eventId.value}/tom-bridge/report`, {
       method: "POST",
-      body: isImpersonationView.value ? { ...body, viewer: viewerToken.value } : body,
+      body: isImpersonationView.value
+        ? { ...body, requestId: pendingReport.requestId, viewer: viewerToken.value }
+        : { ...body, requestId: pendingReport.requestId },
     });
     await loadRun(true);
+    pendingReport = null;
     correctionMode.value = false;
+    playReaction(result);
   } catch (err: any) {
-    error.value = err?.data?.statusMessage || t("tournamentPlayer.errorSubmit");
+    await loadRun(true);
+    if (runData.value?.reports?.ownResult === result) {
+      pendingReport = null;
+      correctionMode.value = false;
+      playReaction(result);
+    } else {
+      const status = err?.response?.status || err?.status || err?.statusCode;
+      if (status >= 400 && status < 500) pendingReport = null;
+      error.value = status >= 400 && status < 500
+        ? err?.data?.statusMessage || t("tournamentPlayer.errorSubmit")
+        : "Übermittlung unklar. Bitte erneut versuchen; dieselbe Meldung wird sicher wiederholt.";
+    }
   } finally {
     submitting.value = false;
   }

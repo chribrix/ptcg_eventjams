@@ -9,6 +9,7 @@ import {
   resolveAuthenticatedPlayerFactory,
   type AuthenticatedPlayer,
 } from "~/server/util/authenticatedPlayer";
+import { safeDiagnosticRecord } from "~/server/util/safeDiagnostics";
 
 const ticketSchema = z.object({
   name: z.string().min(1, "Participant name is required").max(100),
@@ -303,20 +304,7 @@ export const createRegistrationHandler =
 
       // Log successful registration
       await prismaClient.errorLog.create({
-        data: {
-          errorType: "info_event_registration_success",
-          errorMessage: `User registered for event: ${eventName}`,
-          userEmail: bookerEmail,
-          userId: authenticatedBooker.supabaseId || null,
-          url: `/events/${eventId}/register`,
-          metadata: {
-            eventId,
-            eventName,
-            bookerPlayerId,
-            ticketCount: createdTickets.length,
-            registrationId: registration.id,
-          },
-        },
+        data: safeDiagnosticRecord({ errorType: "info_event_registration_success", userId: authenticatedBooker.supabaseId }),
       });
 
       return {

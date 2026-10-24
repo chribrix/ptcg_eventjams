@@ -2,7 +2,7 @@
 
 **Zweck:** Saisons, Spieleridentitäten/Aliase, Punkteregeln, Turnierimporte, Tabellen und Exporte verwalten. Liga ist eine eigene fachliche Grenze, auch wenn sie zunächst zusammen mit Turnier deployt werden kann.
 
-**Heute:** `server/services/league`, `server/api/admin/league`, `server/api/league` und SQL-Migrationen für `league_*`. Die entsprechenden Modelle fehlen derzeit in der eingecheckten `prisma/schema.prisma`; das muss vor Umbau geprüft und behoben werden.
+**Heute:** `server/services/league`, `server/api/admin/league`, `server/api/league` und SQL-Migrationen für `league_*`. P0 hat die zuvor fehlenden Modelle in `prisma/schema.prisma` ergänzt; Schema-Validierung und Client-Generierung sind erfolgreich. Ein Abgleich gegen eine reale Datenbank steht aus.
 
 **Daten:** Saison, Ligaspieler/Aliase, Punkteregeln, Liga-Event/Teilnahme, Importprotokoll und Änderungshistorie. Tenant-Zuordnung ist beim Mandanten-Backfill festzulegen.
 

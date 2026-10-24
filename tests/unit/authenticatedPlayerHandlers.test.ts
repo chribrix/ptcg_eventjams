@@ -351,9 +351,10 @@ describe("authenticated player handler integration", () => {
     expect(mockPrisma.errorLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         userId: "supabase-user-1",
-        userEmail: "player@example.com",
+        errorType: "info_registration_cancelled",
       }),
     });
+    expect(JSON.stringify(mockPrisma.errorLog.create.mock.calls)).not.toContain("player@example.com");
     expect(result.success).toBe(true);
   });
 
@@ -945,9 +946,10 @@ describe("authenticated player handler integration", () => {
     expect(mockPrisma.errorLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         userId: "supabase-user-1",
-        userEmail: "updated@example.com",
+        errorType: "info_profile_updated",
       }),
     });
+    expect(JSON.stringify(mockPrisma.errorLog.create.mock.calls)).not.toContain("updated@example.com");
     expect(result.success).toBe(true);
   });
 });

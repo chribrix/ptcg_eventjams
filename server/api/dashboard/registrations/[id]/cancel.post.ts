@@ -6,6 +6,7 @@ import {
 } from "~/server/util/errorLogger";
 import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
 import { promoteWaitlistForEvent } from "~/server/services/events/waitlistService";
+import { safeDiagnosticRecord } from "~/server/util/safeDiagnostics";
 
 const CANCELLATION_DEADLINE_HOURS = 2;
 const prisma = new PrismaClient();
@@ -136,28 +137,13 @@ export default defineEventHandler(async (event) => {
         externalEventId: registration.externalEvent?.id,
       },
       activeTickets.length,
-    ).catch((waitlistError) => {
-      console.error("Waitlist promotion after cancellation failed:", waitlistError);
+    ).catch(() => {
+      console.error("[diagnostic] waitlist_promotion_failed");
     });
 
     // Log successful cancellation
     await prisma.errorLog.create({
-      data: {
-        errorType: "info_registration_cancelled",
-        errorMessage: `User cancelled registration for event`,
-        userEmail: registration.player.email,
-        userId: player.supabaseId,
-        url: `/dashboard/registrations/${registrationId}/cancel`,
-        metadata: {
-          registrationId,
-          eventName:
-            registration.customEvent?.name ||
-            registration.externalEvent?.eventName ||
-            "Unknown Event",
-          eventDate: eventData.eventDate,
-          cancelledTickets: activeTickets.length,
-        },
-      },
+      data: safeDiagnosticRecord({ errorType: "info_registration_cancelled", userId: player.supabaseId }),
     });
 
     return {

@@ -104,6 +104,12 @@ describe("players/register endpoint", () => {
     vi.doMock("#supabase/server", () => ({
       serverSupabaseUser: vi.fn().mockResolvedValue(null),
     }));
+    vi.doMock("~/server/services/auth/authService", () => ({
+      requireAuthUser: vi.fn().mockRejectedValue(createError({
+        statusCode: 401,
+        statusMessage: "Unauthorized",
+      })),
+    }));
     vi.doMock("~/server/util/errorLogger", () => ({
       logValidationError: vi.fn().mockResolvedValue(undefined),
       logDatabaseError: vi.fn().mockResolvedValue(undefined),

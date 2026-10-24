@@ -13,6 +13,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
+import { safeDiagnosticRecord } from "~/server/util/safeDiagnostics";
 
 const hasSupabaseAdminRole = (
   appMetadata: Record<string, unknown> | null | undefined,
@@ -134,44 +135,13 @@ export default defineNitroPlugin(async (nitroApp) => {
         authWithoutPlayerCount++;
 
         await prisma.errorLog.create({
-          data: {
-            errorType: "account_mismatch",
-            errorMessage: `Supabase auth user exists without linked player record`,
-            userEmail: authUser.email || null,
-            userId: authUser.id,
-            metadata: {
-              supabaseId: authUser.id,
-              email: authUser.email || null,
-              createdAt: authUser.created_at,
-              appMetadata: authUser.app_metadata,
-              userMetadata: authUser.user_metadata,
-              type: "auth_without_player",
-            },
-          },
+          data: safeDiagnosticRecord({ errorType: "account_mismatch_auth_without_player", userId: authUser.id }),
         });
       } else if (!hasLinkedPlayer && emailMatches.length > 0) {
         authWithEmailOnlyMatchCount++;
 
         await prisma.errorLog.create({
-          data: {
-            errorType: "account_mismatch",
-            errorMessage:
-              "Supabase auth user only has legacy email-based player match candidates",
-            userEmail: authUser.email || null,
-            userId: authUser.id,
-            metadata: {
-              supabaseId: authUser.id,
-              email: authUser.email || null,
-              type: "auth_email_only_match_candidate",
-              matchingPlayers: emailMatches.map((player) => ({
-                id: player.id,
-                playerId: player.playerId,
-                name: player.name,
-                email: player.email,
-                supabaseId: player.supabaseId,
-              })),
-            },
-          },
+          data: safeDiagnosticRecord({ errorType: "account_mismatch_email_only", userId: authUser.id }),
         });
       }
     }
@@ -181,19 +151,7 @@ export default defineNitroPlugin(async (nitroApp) => {
 
     for (const player of playersWithoutSupabaseId) {
       await prisma.errorLog.create({
-        data: {
-          errorType: "account_mismatch",
-          errorMessage: `Player record exists without Supabase ID`,
-          userEmail: player.email,
-          userId: null,
-          metadata: {
-            playerId: player.playerId,
-            playerDbId: player.id,
-            name: player.name,
-            email: player.email,
-            type: "player_without_supabase_id",
-          },
-        },
+        data: safeDiagnosticRecord({ errorType: "account_mismatch_player_without_auth", userId: player.id }),
       });
     }
 
@@ -205,22 +163,7 @@ export default defineNitroPlugin(async (nitroApp) => {
 
       duplicatePlayerEmailCount++;
       await prisma.errorLog.create({
-        data: {
-          errorType: "account_mismatch",
-          errorMessage: "Multiple player records share the same email",
-          userEmail: email,
-          userId: null,
-          metadata: {
-            type: "duplicate_player_email",
-            email,
-            players: matchingPlayers.map((player) => ({
-              id: player.id,
-              playerId: player.playerId,
-              name: player.name,
-              supabaseId: player.supabaseId,
-            })),
-          },
-        },
+        data: safeDiagnosticRecord({ errorType: "account_mismatch_duplicate_email" }),
       });
     }
 
@@ -239,27 +182,10 @@ export default defineNitroPlugin(async (nitroApp) => {
 
       legacyAdminMismatchCount++;
       await prisma.errorLog.create({
-        data: {
-          errorType: "account_mismatch",
-          errorMessage: authUser
-            ? "Legacy admin row exists without matching Supabase admin metadata"
-            : "Legacy admin row exists without matching auth user",
-          userEmail: adminRow.email,
+        data: safeDiagnosticRecord({
+          errorType: authUser ? "account_mismatch_legacy_admin_role" : "account_mismatch_legacy_admin_missing",
           userId: adminRow.id,
-          metadata: {
-            type: authUser
-              ? "legacy_admin_without_supabase_role"
-              : "legacy_admin_without_auth_user",
-            adminRow,
-            authUser: authUser
-              ? {
-                  id: authUser.id,
-                  email: authUser.email,
-                  appMetadata: authUser.app_metadata,
-                }
-              : null,
-          },
-        },
+        }),
       });
     }
 

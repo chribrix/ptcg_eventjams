@@ -1,4 +1,3 @@
-import { writeFileSync } from "node:fs";
 import { CardRepository } from "./repository/CardRepository";
 
 export type ValidationResult = {
@@ -112,11 +111,6 @@ class PTCGDeckValidator {
   async check(decklist: string) {
     let errors: Array<string> = [];
     const { deckTokens, errors: parseErrors } = await this.parseDeck(decklist);
-
-    writeFileSync(
-      "./debug/data/decktokens.json",
-      JSON.stringify(deckTokens, null, 2),
-    );
 
     if (parseErrors.length > 0) {
       return { isValid: false, errors: parseErrors };

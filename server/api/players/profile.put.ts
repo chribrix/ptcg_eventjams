@@ -7,6 +7,7 @@ import {
   logAuthError,
 } from "~/server/util/errorLogger";
 import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
+import { safeDiagnosticRecord } from "~/server/util/safeDiagnostics";
 
 const prisma = new PrismaClient();
 const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
@@ -36,7 +37,7 @@ export default defineEventHandler(async (event) => {
     const validation = updateProfileSchema.safeParse(body);
 
     if (!validation.success) {
-      console.error("Validation error:", validation.error);
+      console.error("[diagnostic] player_profile_validation_failed");
       await logValidationError(
         event,
         validation.error,
@@ -111,19 +112,7 @@ export default defineEventHandler(async (event) => {
 
     // Log successful profile update
     await prisma.errorLog.create({
-      data: {
-        errorType: "info_profile_updated",
-        errorMessage: `User updated their profile`,
-        userEmail: updatedPlayer.email || currentPlayer.email || null,
-        userId: currentPlayer.supabaseId || null,
-        url: "/api/players/profile",
-        metadata: {
-          playerId: updatedPlayer.playerId,
-          playerName: updatedPlayer.name,
-          emailChanged: currentPlayer.email !== email.toLowerCase(),
-          playerIdChanged: currentPlayer.playerId !== playerId,
-        },
-      },
+      data: safeDiagnosticRecord({ errorType: "info_profile_updated", userId: currentPlayer.supabaseId }),
     });
 
     return {

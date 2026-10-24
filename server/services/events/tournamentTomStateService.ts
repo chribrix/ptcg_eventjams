@@ -7,6 +7,7 @@ import {
   tomOutcomeLabel,
   type TomResultUpdate,
 } from "~/server/services/events/tomTdfService";
+import { isTournamentMatchPublished } from "~/server/services/events/tournamentPublication";
 
 const SNAPSHOT_ARCHIVE_LIMIT = 30;
 const PLAYER_REPORT_AUTO_FINALIZE_AFTER_MS = 60_000;
@@ -17,6 +18,7 @@ type PlayerReportedResult = "win" | "loss" | "tie";
 
 type MatchReport = {
   id: string;
+  requestId?: string;
   roundNumber: number;
   divisionCategory?: string;
   tableNumber?: number;
@@ -166,6 +168,7 @@ const getTomStateDelegate = () => {
     upsert: (args: any) => Promise<any>;
     findUnique: (args: any) => Promise<any>;
     update: (args: any) => Promise<any>;
+    updateMany: (args: any) => Promise<{ count: number }>;
   };
 };
 
@@ -791,6 +794,7 @@ export const resolveTournamentTomConflict = async (input: {
 export const submitPlayerMatchReport = async (input: {
   customEventId: string;
   reporterUserId: string;
+  requestId?: string;
   roundNumber: number;
   divisionCategory?: string;
   tableNumber?: number;
@@ -799,98 +803,78 @@ export const submitPlayerMatchReport = async (input: {
   result: PlayerReportedResult;
 }) => {
   const tomState = getTomStateDelegate();
-  const record = await tomState.findUnique({
-    where: { customEventId: input.customEventId },
-  });
-
-  if (!record) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: "No TOM state imported for this tournament",
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const record = await tomState.findUnique({
+      where: { customEventId: input.customEventId },
     });
-  }
+    if (!record) {
+      throw createError({ statusCode: 404, statusMessage: "No TOM state imported for this tournament" });
+    }
 
-  const playerRun = await getPlayerTournamentRun({
-    customEventId: input.customEventId,
-    playerUserId: input.reporterUserId,
-  });
+    const metadata = getMetadata(record);
+    const previous = input.requestId
+      ? metadata.reports?.find((item) => item.requestId === input.requestId)
+      : undefined;
+    if (previous) {
+      if (
+        previous.reporterUserId !== input.reporterUserId ||
+        previous.reporterResult !== input.result ||
+        !sameMatchKey(previous, input)
+      ) {
+        throw createError({ statusCode: 409, statusMessage: "Request ID was already used for another result" });
+      }
+      return { report: previous, record, stateView: buildTomStateView(record.currentXml) };
+    }
 
-  if (!playerRun.currentMatch) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: "No active released match available for result submission",
+    const playerRun = await getPlayerTournamentRun({
+      customEventId: input.customEventId,
+      playerUserId: input.reporterUserId,
     });
-  }
+    if (!playerRun.currentMatch) {
+      throw createError({ statusCode: 403, statusMessage: "No active released match available for result submission" });
+    }
+    if (!sameMatchKey(playerRun.currentMatch, input)) {
+      throw createError({ statusCode: 400, statusMessage: "Submitted match does not match your current released pairing" });
+    }
 
-  const isCurrentMatch =
-    playerRun.currentMatch.roundNumber === input.roundNumber &&
-    (playerRun.currentMatch.divisionCategory || "") === (input.divisionCategory || "") &&
-    (playerRun.currentMatch.tableNumber ?? null) === (input.tableNumber ?? null) &&
-    (playerRun.currentMatch.player1UserId || "") === (input.player1UserId || "") &&
-    (playerRun.currentMatch.player2UserId || "") === (input.player2UserId || "");
+    const report: MatchReport = {
+      id: `report_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      requestId: input.requestId,
+      roundNumber: input.roundNumber,
+      divisionCategory: input.divisionCategory,
+      tableNumber: input.tableNumber,
+      player1UserId: input.player1UserId,
+      player2UserId: input.player2UserId,
+      reporterUserId: input.reporterUserId,
+      reporterResult: input.result,
+      mappedOutcome: mapPlayerResultToOutcome(input.reporterUserId, input.player1UserId, input.player2UserId, input.result),
+      createdAt: new Date().toISOString(),
+      status: "pending",
+    };
 
-  if (!isCurrentMatch) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Submitted match does not match your current released pairing",
-    });
-  }
-
-  const metadata = getMetadata(record);
-  const mappedOutcome = mapPlayerResultToOutcome(
-    input.reporterUserId,
-    input.player1UserId,
-    input.player2UserId,
-    input.result,
-  );
-
-  const report: MatchReport = {
-    id: `report_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    roundNumber: input.roundNumber,
-    divisionCategory: input.divisionCategory,
-    tableNumber: input.tableNumber,
-    player1UserId: input.player1UserId,
-    player2UserId: input.player2UserId,
-    reporterUserId: input.reporterUserId,
-    reporterResult: input.result,
-    mappedOutcome,
-    createdAt: new Date().toISOString(),
-    status: "pending",
-  };
-
-  metadata.reports = metadata.reports || [];
-  // Let a player correct a pending/conflicting entry without accumulating
-  // stale statements for the same pairing.
-  metadata.reports = metadata.reports.filter(
-    (existing) =>
-      !(
+    metadata.reports = (metadata.reports || []).filter(
+      (existing) => !(
         existing.reporterUserId === input.reporterUserId &&
         existing.status !== "finalized" &&
         existing.status !== "admin_overridden" &&
         sameMatchKey(existing, report)
       ),
-  );
-  metadata.reports.push(report);
+    );
+    metadata.reports.push(report);
 
-  const finalized = finalizePendingReports({
-    metadata,
-    currentXml: record.currentXml,
-  });
+    const finalized = finalizePendingReports({ metadata, currentXml: record.currentXml });
+    const nextUpdatedAt = new Date(Math.max(Date.now(), new Date(record.updatedAt).getTime() + 1));
+    const result = await tomState.updateMany({
+      where: { customEventId: input.customEventId, updatedAt: record.updatedAt },
+      data: { metadata: finalized.metadata, currentXml: finalized.currentXml, updatedAt: nextUpdatedAt },
+    });
+    if (result.count === 1) {
+      const updated = await tomState.findUnique({ where: { customEventId: input.customEventId } });
+      return { report, record: updated, stateView: buildTomStateView(updated.currentXml) };
+    }
+  }
 
-  const updated = await tomState.update({
-    where: { customEventId: input.customEventId },
-    data: {
-      metadata: finalized.metadata,
-      currentXml: finalized.currentXml,
-      updatedAt: new Date(),
-    },
-  });
-
-  return {
-    report,
-    record: updated,
-    stateView: buildTomStateView(updated.currentXml),
-  };
+  throw createError({ statusCode: 409, statusMessage: "Tournament changed; please retry the result submission" });
 };
 
 export const getPlayerTournamentRun = async (input: {
@@ -942,10 +926,14 @@ export const getPlayerTournamentRun = async (input: {
     )
     .sort((a, b) => a.roundNumber - b.roundNumber);
 
+  const publishedMatches = playerMatches.filter((match) =>
+    isTournamentMatchPublished(match, metadata),
+  );
+
   let wins = 0;
   let losses = 0;
   let ties = 0;
-  for (const match of playerMatches) {
+  for (const match of publishedMatches) {
     if (match.outcome === 0) {
       continue;
     }
@@ -970,22 +958,11 @@ export const getPlayerTournamentRun = async (input: {
   const currentMatchCandidate =
     playerMatches.slice().reverse().find((match) => match.outcome === 0) || null;
   const currentMatch =
-    !tournamentEndedAt && currentMatchCandidate && currentMatchCandidate.roundNumber <= (releasedRoundsByPod[currentMatchCandidate.divisionCategory || ""] || metadata.pairingsReleasedRound || 0)
+    !tournamentEndedAt && currentMatchCandidate && isTournamentMatchPublished(currentMatchCandidate, metadata)
       ? currentMatchCandidate
       : null;
 
-  // Pairings may already be uploaded to Chrispyjams before the organizer
-  // releases the round. Do not leak an unreleased pending pairing through the
-  // round history; only the live match is published after release.
-  const publishedPlayerMatches = historyExpired ? [] : playerMatches.filter((match) => {
-    if (tournamentEndedAt) return true;
-    if (match.outcome !== 0) return true;
-    const releasedRound =
-      releasedRoundsByPod[match.divisionCategory || ""] ||
-      metadata.pairingsReleasedRound ||
-      0;
-    return match.roundNumber <= releasedRound;
-  });
+  const publishedPlayerMatches = historyExpired ? [] : publishedMatches;
 
   const matchReports = currentMatch
     ? reports.filter((report) =>
@@ -1010,7 +987,15 @@ export const getPlayerTournamentRun = async (input: {
   );
 
   return {
-    stateView: state.stateView,
+    // The admin state contains all TOM rounds (including unreleased pairings)
+    // and player birth dates. The player view needs only names for opponents.
+    stateView: {
+      tournament: { name: state.stateView.tournament.name },
+      players: state.stateView.players.map((player) => ({
+        userId: player.userId,
+        displayName: player.displayName,
+      })),
+    },
     playerUserId: input.playerUserId,
     playerMatches: publishedPlayerMatches,
     score: {
@@ -1035,7 +1020,7 @@ export const getPlayerTournamentRun = async (input: {
       historyAvailableUntil,
       historyExpired,
       isCurrentRoundReleased:
-        !!currentMatchCandidate && currentMatchCandidate.roundNumber <= (releasedRoundsByPod[currentMatchCandidate.divisionCategory || ""] || metadata.pairingsReleasedRound || 0),
+        !!currentMatchCandidate && isTournamentMatchPublished(currentMatchCandidate, metadata),
     },
   };
 };

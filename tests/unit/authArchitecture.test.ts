@@ -37,4 +37,9 @@ describe("server auth architecture", () => {
 
     expect(violations).toEqual([]);
   });
+
+  it("does not use the service role key as an analytics secret", async () => {
+    const source = await readFile(join(serverRoot, "services", "analytics", "analyticsService.ts"), "utf8");
+    expect(source).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
+  });
 });

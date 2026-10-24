@@ -16,6 +16,8 @@ Status: Zielgrenzen als Planungs-READMEs. Die Implementierung liegt noch überwi
 
 Die README erklärt Zweck und Nichtzuständigkeit, öffentliche Befehle/Abfragen/Ereignisse und ihre Versionen, eigene Daten, verwendete zentrale Utilities, Abhängigkeiten und Interaktionen, Actor-/Tenant-Prüfung, Fehler- und Konsistenzverhalten, lokale und entfernte Betriebsart, Migration/Kompatibilität, Tests und Betrieb. Für jedes Untermodul oder eigenständig betriebene Service wird dieselbe Vorlage an seiner Codegrenze geführt. Adapter für pokedata und TOM werden im jeweiligen Fachmodul dokumentiert; wenn sie eigene Deployments erhalten, bekommen sie zusätzliche READMEs.
 
+Die **heutigen Codegrenzen** sind zusätzlich direkt dokumentiert: [Auth](../../server/services/auth/README.md), [Events](../../server/services/events/README.md), [Liga](../../server/services/league/README.md), [Admin](../../server/services/admin/README.md), [Analytics](../../server/services/analytics/README.md) und [serverseitige Utilities](../../server/util/README.md). Diese READMEs benennen ausdrücklich Übergangskopplungen und verweisen auf die Zielmodule.
+
 ## Import- und Eigentumsregel
 
 Eine API-Route ist ein dünner Adapter. Sie löst Auth/Tenant über zentrale Dienste auf und ruft den öffentlichen Modul-Port auf. Kein Modul importiert interne Dateien eines anderen Moduls oder liest dessen private Prisma-Modelle. Gemeinsame DTOs und technische Utilities haben einen benannten Eigentümer; fachliche Statusregeln bleiben im verantwortlichen Modul. Diese Regel wird ab P1 durch Architekturtests oder Import-Grenzen geprüft.

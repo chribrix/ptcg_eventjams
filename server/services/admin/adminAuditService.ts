@@ -1,4 +1,5 @@
 import prisma from "~/lib/prisma";
+import { safeDiagnosticRecord } from "~/server/util/safeDiagnostics";
 
 type AdminActionLogInput = {
   actorUserId: string;
@@ -10,17 +11,9 @@ type AdminActionLogInput = {
 export async function logAdminAction(input: AdminActionLogInput) {
   try {
     await prisma.errorLog.create({
-      data: {
-        userId: input.actorUserId,
-        errorType: input.actionType,
-        errorMessage: `Admin action: ${input.actionType}`,
-        metadata: {
-          targetUserId: input.targetUserId || null,
-          ...(input.metadata || {}),
-        },
-      },
+      data: safeDiagnosticRecord({ errorType: input.actionType, userId: input.actorUserId, targetUserId: input.targetUserId }),
     });
-  } catch (error) {
-    console.error("Failed to write admin action log:", error);
+  } catch {
+    console.error("[diagnostic] admin_audit_persistence_failed");
   }
 }

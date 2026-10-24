@@ -1,4 +1,3 @@
-import { defineEventHandler } from "#imports";
 import PTCGDeckValidator from "../util/PTCGValidator.js";
 import { logError, logDatabaseError } from "~/server/util/errorLogger";
 
@@ -19,7 +18,6 @@ export default defineEventHandler(async (event) => {
 
     const data = await readBody(event);
 
-    console.info("Validating decklist:", data.decklist);
     const validator = new PTCGDeckValidator(cardRepo);
     const result = await validator.check(data.decklist);
 
@@ -28,11 +26,11 @@ export default defineEventHandler(async (event) => {
       body: result,
     };
   } catch (error) {
-    console.error("Deck validation error:", error);
+    console.error("Deck validation error");
     await logDatabaseError(event, error as Error, "validate_deck");
     return {
       statusCode: 500,
-      body: { message: "Failed to validate deck", error: String(error) },
+      body: { message: "Failed to validate deck" },
     };
   }
 });

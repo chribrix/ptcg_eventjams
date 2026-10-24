@@ -2,7 +2,7 @@
 
 **Zweck:** Decklisten je Ticket einreichen, versionieren, validieren und prüfen. „Vor Ort mitbringen“ ist eine separate Erfüllungsoption. Die Modulgrenze wird vor der ersten breiten Inbetriebnahme stabilisiert.
 
-**Heute:** Decktext und Vor-Ort-Flag liegen in `RegistrationTicket`; `requiresDecklist` in Event/Override. `server/api/dashboard/decklist.put.ts` ändert zusätzlich Ticketstatus. Validator, Kartenrepository und Importer sind vorhanden; Validate-Endpunkt und Validator schreiben aktuell sensible Deckdaten in Log/Debugdatei.
+**Heute:** Decktext und Vor-Ort-Flag liegen in `RegistrationTicket`; `requiresDecklist` in Event/Override. `server/api/dashboard/decklist.put.ts` ändert zusätzlich Ticketstatus. Validator, Kartenrepository und Importer sind vorhanden. P0 hat Decktext-Ausgabe und Debugdatei aus Validate-Endpunkt/Validator entfernt; der eigene Einreichungszustand fehlt weiterhin.
 
 **Daten:** Ticket-/Tenant-Referenz, verschlüsselungs-/zugriffsgeschützte Einreichung, Format, Version, Prüfergebnis, Freigabe- und Friststatus. Kartenkatalog/Validator sind interne Adapter; Buchung besitzt weiterhin den Ticket-Teilnahmestatus.
 
