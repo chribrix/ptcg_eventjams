@@ -1,6 +1,7 @@
 import type { H3Event } from "h3";
 import { resolveOptionalAuthUser } from "~/server/services/auth/authService";
 import { safeDiagnosticRecord } from "~/server/util/safeDiagnostics";
+import { createSupabaseAdminClient } from "~/server/util/supabaseAdminClient";
 
 type AuthUserLike = {
   id: string;
@@ -89,7 +90,7 @@ export async function isAdminUserId(userId: string): Promise<boolean> {
   }
 
   try {
-    const supabaseAdmin = useSupabaseServiceRole();
+    const supabaseAdmin = createSupabaseAdminClient();
     const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
 
     if (error) {

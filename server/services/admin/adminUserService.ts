@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
+import { createSupabaseAdminClient } from "~/server/util/supabaseAdminClient";
 import prisma from "~/lib/prisma";
 import { z } from "zod";
 import { hasAdminRole } from "~/server/util/adminAccess";
@@ -43,17 +44,6 @@ function getSupabaseConfig() {
     supabaseAnonKey: config.public.supabaseAnonKey,
     supabaseServiceKey: config.supabaseServiceKey,
   };
-}
-
-function createSupabaseAdminClient() {
-  const { supabaseUrl, supabaseServiceKey } = getSupabaseConfig();
-
-  return createSupabaseServerClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
 }
 
 function createSupabasePublicAuthClient() {

@@ -1,6 +1,6 @@
 # Gemeinsame serverseitige Utilities
 
-Dieser Ordner enthält technische Querschnittsfunktionen. `authenticatedPlayer.ts` verbindet verifizierte Supabase-Identität mit dem lokalen `Player`; `adminAccess.ts` prüft globale Adminrechte; `safeDiagnostics.ts` begrenzt neue Diagnoseeinträge auf erlaubte Codes, Status, HTTP-Methode und sichere User-ID. `errorLogger.ts` ist der einzige allgemeine Logger für API-Fehler und nutzt diese Begrenzung. `createSupabaseServerClient.ts` kapselt die Server-Client-Erzeugung.
+Dieser Ordner enthält technische Querschnittsfunktionen. `authenticatedPlayer.ts` verbindet verifizierte Supabase-Identität mit dem lokalen `Player`; `adminAccess.ts` prüft globale Adminrechte; `safeDiagnostics.ts` begrenzt neue Diagnoseeinträge auf erlaubte Codes, Status, HTTP-Methode und sichere User-ID. `errorLogger.ts` ist der einzige allgemeine Logger für API-Fehler und nutzt diese Begrenzung. `createSupabaseServerClient.ts` kapselt die Server-Client-Erzeugung; `supabaseAdminClient.ts` liefert den serverseitigen Service-Role-Client für ausschließlich administrative Auth-Operationen.
 
 **Regel:** Globale Funktionen haben genau einen Eigentümer und einen dokumentierten Vertrag. Keine fachlichen Event-/Turnier-/Buchungsregeln hier ablegen. Auth-Identität bleibt in `server/services/auth/authService.ts` autoritativ; Utilities dürfen sie nur nutzen. Keine Cookies, Header, Tokens, Passwörter, Decklisten oder rohe Request-/Fehlerobjekte in Datenbank oder Konsole protokollieren.
 

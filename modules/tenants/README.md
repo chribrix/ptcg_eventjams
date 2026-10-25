@@ -3,6 +3,7 @@
 **Zweck:** Läden/Betreiber, ihre Orte, Einstellungen und Mitarbeiterrechte verwalten. Ein Mandant ist eine Berechtigungs- und Datengrenze; ein Ort oder Freitext-`venue` ist keine Grenze.
 
 **Heute:** Die additive Migration `20261024230000_add_tenant_foundation` legt `Tenant` und `TenantMembership` an und ordnet bestehende eigene Events, Vorlagen, Orte, Overrides und Liga-Saisons Crows & Owls zu. `server/services/tenants/tenantService.ts` prüft serverseitig die Rollenmatrix. Die bisherigen Routen sind noch nicht durchgängig auf Tenant-Scope umgestellt; ein zweiter Laden bleibt bis dahin gesperrt.
+Die Plattformadmin-UI kann weitere Läden als **Entwurf** anlegen, umbenennen und Mitgliedschaften vorbereiten. Eine Aktivierungsaktion gibt es noch nicht.
 
 **Daten:** `Tenant`, `TenantMembership`, `Venue`, Tenant-Konfiguration. Andere Module speichern oder referenzieren `tenantId`, besitzen aber diese Stammdaten nicht.
 

@@ -23,6 +23,9 @@ export const createAuthRouteGuard = (
     const loginRedirect = buildLoginRedirectPath(to);
     const applicationPath = getApplicationRoutePath(to.path);
 
+    // Public design fixture contains no live admin data and is available only on the dev server.
+    if (import.meta.dev && applicationPath === "/admin-style-preview") return;
+
     const publicPages = [
       "/",
       "/login",
