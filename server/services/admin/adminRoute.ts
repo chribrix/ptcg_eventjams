@@ -1,5 +1,6 @@
 import { ZodError } from "zod";
 import { verifyAdmin } from "~/server/util/adminAccess";
+import { safeDiagnosticRecord } from "~/server/util/safeDiagnostics";
 
 type AdminRouteHandler<T> = (context: {
   event: Parameters<typeof verifyAdmin>[0];
@@ -24,12 +25,15 @@ export function defineAdminRoute<T>(handler: AdminRouteHandler<T>) {
         throw error;
       }
 
-      const message =
-        error instanceof Error ? error.message : "Internal server error";
+      const diagnostic = safeDiagnosticRecord({
+        errorType: "admin_route_unexpected_error",
+        error,
+      });
+      console.error("[diagnostic]", diagnostic.errorType, diagnostic.metadata);
 
       throw createError({
         statusCode: 500,
-        statusMessage: message,
+        statusMessage: "Internal server error",
       });
     }
   });

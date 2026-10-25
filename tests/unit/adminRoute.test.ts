@@ -81,15 +81,18 @@ describe("defineAdminRoute", () => {
 
   it("wraps unexpected failures as 500 errors", async () => {
     verifyAdmin.mockResolvedValue({ id: "admin-user-id" });
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const { defineAdminRoute } =
       await import("~/server/services/admin/adminRoute");
     const handler = defineAdminRoute(async () => {
-      throw new Error("boom");
+      throw new Error("Authorization: Bearer secret-value");
     });
 
     await expect(handler({} as never)).rejects.toMatchObject({
       statusCode: 500,
-      statusMessage: "boom",
+      statusMessage: "Internal server error",
     });
+    expect(JSON.stringify(log.mock.calls)).not.toContain("secret-value");
+    log.mockRestore();
   });
 });

@@ -1,5 +1,6 @@
 import type { H3Event } from "h3";
 import { resolveOptionalAuthUser } from "~/server/services/auth/authService";
+import { safeDiagnosticRecord } from "~/server/util/safeDiagnostics";
 
 type AuthUserLike = {
   id: string;
@@ -60,7 +61,8 @@ export async function getAuthenticatedAdminState(event: H3Event) {
       throw error;
     }
 
-    console.error("Admin authentication error:", error);
+    const diagnostic = safeDiagnosticRecord({ errorType: "admin_authentication_error", error });
+    console.error("[diagnostic]", diagnostic.errorType, diagnostic.metadata);
     throw createError({
       statusCode: 500,
       statusMessage: "Internal server error during admin verification",
@@ -91,13 +93,15 @@ export async function isAdminUserId(userId: string): Promise<boolean> {
     const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
 
     if (error) {
-      console.error("Admin role lookup failed:", error);
+      const diagnostic = safeDiagnosticRecord({ errorType: "admin_role_lookup_failed", error });
+      console.error("[diagnostic]", diagnostic.errorType, diagnostic.metadata);
       return false;
     }
 
     return hasAdminRole((data?.user as AuthUserLike | null) || null);
   } catch (error) {
-    console.error("Admin role lookup error:", error);
+    const diagnostic = safeDiagnosticRecord({ errorType: "admin_role_lookup_error", error });
+    console.error("[diagnostic]", diagnostic.errorType, diagnostic.metadata);
     return false;
   }
 }

@@ -1,4 +1,5 @@
 import { getAuthenticatedAdminState } from "../../util/adminAccess";
+import { safeDiagnosticRecord } from "~/server/util/safeDiagnostics";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -19,7 +20,8 @@ export default defineEventHandler(async (event) => {
       throw error;
     }
 
-    console.error("Admin check error:", error);
+    const diagnostic = safeDiagnosticRecord({ errorType: "admin_check_error", error });
+    console.error("[diagnostic]", diagnostic.errorType, diagnostic.metadata);
     throw createError({
       statusCode: 500,
       statusMessage: "Internal server error",

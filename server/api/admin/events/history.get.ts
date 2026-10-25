@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { defineAdminRoute } from "~/server/services/admin/adminRoute";
 import { countRegistrationTickets } from "~/server/services/events/eventProjectionService";
+import { safeDiagnosticRecord } from "~/server/util/safeDiagnostics";
 
 const prisma = new PrismaClient();
 
@@ -160,11 +161,11 @@ export function createAdminEventHistoryHandler(
         data: eventHistory,
       };
     } catch (error) {
+      const diagnostic = safeDiagnosticRecord({ errorType: "admin_event_history_error", error });
+      console.error("[diagnostic]", diagnostic.errorType, diagnostic.metadata);
       throw createError({
         statusCode: 500,
-        statusMessage:
-          "Failed to fetch event history: " +
-          (error instanceof Error ? error.message : String(error)),
+        statusMessage: "Failed to fetch event history",
       });
     }
   };
