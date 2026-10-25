@@ -1,5 +1,11 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "~/lib/prisma";
+import {
+  eventRefFromLegacy,
+  eventRefKey,
+  type EventRef,
+  type LegacyEventReference,
+} from "~/server/contracts/moduleContracts";
 import type { AuthenticatedPlayer } from "~/server/util/authenticatedPlayer";
 import {
   sendWaitlistRegistrationConfirmedEmail,
@@ -67,8 +73,11 @@ async function lockEventRow(
 async function resolveEventContextById(
   tx: Prisma.TransactionClient,
   eventId: string,
+  source?: EventRef["source"],
 ): Promise<EventContext> {
-  const customEvent = await tx.customEvent.findUnique({ where: { id: eventId } });
+  const customEvent = source === "external"
+    ? null
+    : await tx.customEvent.findUnique({ where: { id: eventId } });
   if (customEvent) {
     const tags = customEvent.tags as
       | { type?: string; sanctioned?: boolean }
@@ -88,7 +97,7 @@ async function resolveEventContextById(
       maxParticipants: customEvent.maxParticipants,
       requiresDecklist: customEvent.requiresDecklist,
       isExternalEvent: false,
-      eventKey: `custom:${eventId}`,
+      eventKey: eventRefKey({ source: "owned", id: eventId }),
       isSanctioned:
         tags?.sanctioned === true ||
         ["league_cup", "league_challenge", "prerelease", "pre_release"].includes(
@@ -96,6 +105,10 @@ async function resolveEventContextById(
         ),
       claimCutoffAt,
     };
+  }
+
+  if (source === "owned") {
+    throw createError({ statusCode: 404, statusMessage: "Event not found" });
   }
 
   const externalEvent = await tx.externalEventOverride.findUnique({
@@ -118,7 +131,7 @@ async function resolveEventContextById(
     maxParticipants: externalEvent.maxParticipants || 0,
     requiresDecklist: externalEvent.requiresDecklist,
     isExternalEvent: true,
-    eventKey: `external:${eventId}`,
+    eventKey: eventRefKey({ source: "external", id: eventId }),
     isSanctioned: true,
     claimCutoffAt,
   };
@@ -521,12 +534,12 @@ export async function dropEventWaitlist(eventId: string, player: AuthenticatedPl
 }
 
 export async function promoteWaitlistForEvent(
-  eventRef: { customEventId?: string | null; externalEventId?: string | null },
+  eventRef: LegacyEventReference,
   slotsFreed: number,
 ): Promise<void> {
   void slotsFreed;
-  const eventId = eventRef.customEventId || eventRef.externalEventId;
-  if (!eventId) return;
+  const resolvedRef = eventRefFromLegacy(eventRef);
+  if (!resolvedRef) return;
 
   let recipients: Array<{
     email: string;
@@ -540,7 +553,7 @@ export async function promoteWaitlistForEvent(
     const waitlist = getWaitlistDelegate(tx);
     if (!waitlist) return;
 
-    const context = await resolveEventContextById(tx, eventId);
+    const context = await resolveEventContextById(tx, resolvedRef.id, resolvedRef.source);
     if (!context || context.maxParticipants <= 0) return;
 
     await lockEventRow(tx, context);
@@ -606,10 +619,10 @@ export async function promoteWaitlistForEvent(
  * fixed slot immediately and therefore does not require a claim action.
  */
 export async function registerWaitlistForIncreasedCapacity(
-  eventRef: { customEventId?: string | null; externalEventId?: string | null },
+  eventRef: LegacyEventReference,
 ): Promise<void> {
-  const eventId = eventRef.customEventId || eventRef.externalEventId;
-  if (!eventId) return;
+  const resolvedRef = eventRefFromLegacy(eventRef);
+  if (!resolvedRef) return;
 
   const recipients: Array<{
     to: string;
@@ -622,7 +635,7 @@ export async function registerWaitlistForIncreasedCapacity(
     const waitlist = getWaitlistDelegate(tx);
     if (!waitlist) return;
 
-    const context = await resolveEventContextById(tx, eventId);
+    const context = await resolveEventContextById(tx, resolvedRef.id, resolvedRef.source);
     if (context.maxParticipants <= 0) return;
 
     await lockEventRow(tx, context);

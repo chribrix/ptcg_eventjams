@@ -43,6 +43,35 @@ describe("waitlist service", () => {
     vi.stubGlobal("createError", createError);
   });
 
+  it("uses the explicit external reference when own and external IDs collide", async () => {
+    const ownLookup = vi.fn().mockResolvedValue({ id: "same-id" });
+    const externalLookup = vi.fn().mockResolvedValue({
+      id: "same-id",
+      handleRegistrationLocally: true,
+      eventDate: new Date("2026-05-06T18:00:00.000Z"),
+      eventName: "External event",
+      maxParticipants: 0,
+      requiresDecklist: false,
+    });
+    const tx = {
+      customEvent: { findUnique: ownLookup },
+      externalEventOverride: { findUnique: externalLookup },
+      waitlistEntry: {},
+    };
+    vi.doMock("~/lib/prisma", () => ({
+      default: { $transaction: vi.fn().mockImplementation(async (fn: any) => fn(tx)) },
+    }));
+    vi.doMock("~/server/util/waitlistMailer", () => ({
+      sendWaitlistSpotAvailableEmail: vi.fn(),
+    }));
+
+    const { promoteWaitlistForEvent } = await import("../../server/services/events/waitlistService");
+    await promoteWaitlistForEvent({ externalEventId: "same-id" }, 1);
+
+    expect(externalLookup).toHaveBeenCalledWith({ where: { id: "same-id" } });
+    expect(ownLookup).not.toHaveBeenCalled();
+  });
+
   it("requeues expired claim to end and assigns next prioritized waiting user", async () => {
     vi.setSystemTime(new Date("2026-05-05T12:00:00.000Z"));
 

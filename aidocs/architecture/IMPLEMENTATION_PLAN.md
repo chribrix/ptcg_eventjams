@@ -51,9 +51,9 @@ Die Tabelle ist der Start der Paritätsliste. Vor Änderungen an einem Bereich w
 
 **Prüftor:** Baseline-Bericht vorhanden; kritische Ist-Flows reproduzierbar; keine sensiblen Daten in neuen Logs oder Tests.
 
-### P1 — Verträge und zentrale Utilities
+### P1 — Verträge und zentrale Utilities (begonnen)
 
-- [ ] Modul-Ports und DTOs definieren (`EventRef`, `ActorContext`, `TenantContext`, Resultat/Fehlercodes). Routen bleiben als Adapter bestehen.
+- [ ] Modul-Ports und DTOs definieren (`EventRef`, `ActorContext`, `TenantContext`, Resultat/Fehlercodes). Gemeinsame serialisierbare Grundtypen und Legacy-Adapter sind vorhanden; fachliche Ports, Versionierung und Fehlerabbildung fehlen. Routen bleiben als Adapter bestehen.
 - [ ] Zentrale Utility-/Service-Eigentümer für Auth, Tenant-Rechte, Zeit, IDs, API-Fehler und redigierte Diagnostik festlegen; doppelte Implementierungen schrittweise entfernen.
 - [ ] Für jedes Zielmodul README am tatsächlichen Modulverzeichnis anlegen bzw. die Planungs-README übernehmen. Vertragsänderung ohne aktualisierte Dokumentation und Contract-Test ist nicht fertig.
 - [ ] Import-Regeln/Architekturtest einführen: fremde private Tabellen, interne Service-Imports und zyklische Modulabhängigkeiten verhindern.
@@ -106,5 +106,6 @@ Die Tabelle ist der Start der Paritätsliste. Vor Änderungen an einem Bereich w
 | 2026-10-24 | Typprüfung ist noch kein Freigabetor: nach Prisma-Generierung meldet `vue-tsc --noEmit` 119 Fehler in bestehenden UI/API-Typen; keine Meldung in den neu eingeführten Turnier-/Diagnosedateien. | Lokaler Typprüfungslauf, Exit-Code 2. | Vor P1 relevante Typfehler priorisieren und ein grünes Typprüftor herstellen. |
 | 2026-10-24 | Mandantengrundlage additiv modelliert: Bestandsdaten erhalten den Crows-&-Owls-Tenant; Membership und zentrale Rollenprüfung sind vorhanden. Ein weiterer Tenant bleibt bis zur vollständigen Scope-Prüfung gesperrt. Die vorübergehenden `tenantId`-Defaults müssen vor Freigabe des zweiten Tenants durch explizite Objektzuordnung ersetzt werden. | `prisma validate`, `prisma generate`, `npm test`: 392 bestanden/4 übersprungen; `npm run build` erfolgreich. `vue-tsc --noEmit` weiterhin 119 bestehende Fehler. Keine reale DB-Migration ausgeführt. | Reale Migration mit Bestandsdaten prüfen, dann API-Routen und Listen tenantbezogen absichern. |
 | 2026-10-24 | Admin-Adapter verwendet zentrale sichere Diagnostik für unerwartete Fehler; API-500-Antworten enthalten keine Exception-Texte mehr. Der Fehlervertrag der bestehenden 4xx-Fälle bleibt erhalten. | 28 gezielte Admin-Tests bestanden, darunter Prüfung auf geheimen Bearer-Text in Logs und Antwort. | Weitere rohe Fehlerpfade und historische Logs prüfen; API-Fehlercodes als Modulvertrag vereinheitlichen. |
+| 2026-10-25 | Gemeinsamer `EventRef`-Vertrag und Actor-/Tenant-Kontexttypen eingeführt. Quellgebundene Wartelistenaktionen nutzen die bekannte Eventquelle auch bei identischer ID eines eigenen und externen Events. Die öffentlichen Routen mit bloßer ID bleiben unverändert und müssen vor Multi-Tenant-Betrieb eindeutig werden. | 11 gezielte Wartelisten-/Tenant-Tests bestanden, einschließlich ID-Kollision; Gesamtlauf: 393 bestanden, 4 übersprungen; Build erfolgreich. | Weitere Aufrufer auf explizite Referenzen umstellen und öffentliche Auflösung versionieren. |
 
 Offene Produktentscheidungen stehen im Ist-/Zielentwurf. Technische Detailentscheidungen werden hier mit Auswirkungen auf Kompatibilität und Rückrollbarkeit nachgetragen.

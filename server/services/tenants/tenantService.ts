@@ -2,11 +2,12 @@ import prisma from "~/lib/prisma";
 import type { H3Event } from "h3";
 import { requireAuthUser } from "~/server/services/auth/authService";
 import { hasAdminRole } from "~/server/util/adminAccess";
+import type { TenantContext } from "~/server/contracts/moduleContracts";
 
 export const DEFAULT_TENANT_ID = "crows-and-owls";
 
 export type TenantPermission = "view" | "manage_events" | "manage_members";
-export type TenantRole = "owner" | "admin" | "staff" | "platform_admin";
+export type TenantRole = TenantContext["role"];
 
 const ROLE_PERMISSIONS: Record<TenantRole, ReadonlySet<TenantPermission>> = {
   owner: new Set(["view", "manage_events", "manage_members"]),
@@ -47,5 +48,5 @@ export async function requireTenantPermission(
     throw createError({ statusCode: 403, statusMessage: "Tenant access denied" });
   }
 
-  return { actorUserId: user.id, tenantId: tenant.id, slug: tenant.slug, role };
+  return { actorUserId: user.id, tenantId: tenant.id, slug: tenant.slug, role } satisfies TenantContext;
 }

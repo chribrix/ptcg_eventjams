@@ -5,7 +5,7 @@ Status: Zielgrenzen als Planungs-READMEs. Die Implementierung liegt noch überwi
 | Modul | Planungs-README | Heutige Hauptorte | Künftige Datenhoheit |
 | --- | --- | --- | --- |
 | Identität & Zugriff | [README](../../modules/identity/README.md) | `server/services/auth`, `server/util/authenticatedPlayer.ts`, `server/util/adminAccess.ts`, `services/authSessionService.ts` | Identitätszuordnung, globale Rollen; Supabase bleibt Auth-Provider. |
-| Mandanten | [README](../../modules/tenants/README.md) | Noch kein eigenes Modul; Anfänge in `VenueDirectoryEntry` und Adminrollen. | Tenant, Mitgliedschaft, Orte, Tenant-Konfiguration. |
+| Mandanten | [README](../../modules/tenants/README.md) | Additive Grundlage in `server/services/tenants`, Prisma-Modelle; bestehende Routen noch nicht vollständig gescoped. | Tenant, Mitgliedschaft, Orte, Tenant-Konfiguration. |
 | Kalender & Eventkatalog | [README](../../modules/catalog/README.md) | `server/services/events/pokedataService.ts`, `eventProjectionService.ts`, `server/services/admin/eventAdminService.ts`, `server/api/events*` | Events, Vorlagen, Quellenverknüpfung, Kalenderprojektion. |
 | Buchung & Warteliste | [README](../../modules/booking/README.md) | `server/api/events/[id]/register.post.ts`, `server/api/bookings`, `server/services/events/waitlistService.ts` | Registrierungen, Tickets, Warteliste. |
 | Turnier | [README](../../modules/tournament/README.md) | `server/services/events/tom*`, `tournamentTomStateService.ts`, `server/api/**/tom-bridge` | Turnierzustand, Pairings, Meldungen, Freigaben. |
@@ -16,7 +16,7 @@ Status: Zielgrenzen als Planungs-READMEs. Die Implementierung liegt noch überwi
 
 Die README erklärt Zweck und Nichtzuständigkeit, öffentliche Befehle/Abfragen/Ereignisse und ihre Versionen, eigene Daten, verwendete zentrale Utilities, Abhängigkeiten und Interaktionen, Actor-/Tenant-Prüfung, Fehler- und Konsistenzverhalten, lokale und entfernte Betriebsart, Migration/Kompatibilität, Tests und Betrieb. Für jedes Untermodul oder eigenständig betriebene Service wird dieselbe Vorlage an seiner Codegrenze geführt. Adapter für pokedata und TOM werden im jeweiligen Fachmodul dokumentiert; wenn sie eigene Deployments erhalten, bekommen sie zusätzliche READMEs.
 
-Die **heutigen Codegrenzen** sind zusätzlich direkt dokumentiert: [Auth](../../server/services/auth/README.md), [Mandanten](../../server/services/tenants/README.md), [Events](../../server/services/events/README.md), [Liga](../../server/services/league/README.md), [Admin](../../server/services/admin/README.md), [Analytics](../../server/services/analytics/README.md) und [serverseitige Utilities](../../server/util/README.md). Diese READMEs benennen ausdrücklich Übergangskopplungen und verweisen auf die Zielmodule.
+Die **heutigen Codegrenzen** sind zusätzlich direkt dokumentiert: [gemeinsame Verträge](../../server/contracts/README.md), [Auth](../../server/services/auth/README.md), [Mandanten](../../server/services/tenants/README.md), [Events](../../server/services/events/README.md), [Liga](../../server/services/league/README.md), [Admin](../../server/services/admin/README.md), [Analytics](../../server/services/analytics/README.md) und [serverseitige Utilities](../../server/util/README.md). Diese READMEs benennen ausdrücklich Übergangskopplungen und verweisen auf die Zielmodule.
 
 ## Import- und Eigentumsregel
 
