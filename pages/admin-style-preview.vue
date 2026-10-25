@@ -16,6 +16,25 @@
       <div class="preview-row"><span class="preview-dot"></span><span><strong>Event veröffentlicht</strong><small>Gestern · 18:05 Uhr</small></span><span class="preview-type">Kalender</span></div>
       <div class="preview-row"><span class="preview-dot"></span><span><strong>Turnierrunde abgeschlossen</strong><small>Samstag · 20:14 Uhr</small></span><span class="preview-type">Turnier</span></div>
     </section>
+    <section class="admin-card preview-subpage" aria-label="Beispiel einer Admin-Unterseite">
+      <div class="section-header">
+        <div><p class="preview-subpage-kicker">Unterseitenmuster</p><h2>Veranstaltung verwalten</h2></div>
+        <span class="badge badge-success">Aktiv</span>
+      </div>
+      <div class="preview-subpage-fields">
+        <label class="form-group">Eventname<input class="form-input" value="Crows & Owls Locals" readonly /></label>
+        <label class="form-group">Ort<input class="form-input" value="Crows & Owls" readonly /></label>
+      </div>
+      <div class="admin-table-wrapper">
+        <table class="admin-table">
+          <thead><tr><th>Teilnehmer</th><th>Status</th><th>Anmeldung</th></tr></thead>
+          <tbody>
+            <tr><td>Alex Beispiel</td><td><span class="badge badge-success">Bestätigt</span></td><td>Heute</td></tr>
+            <tr><td>Sam Muster</td><td><span class="badge badge-warning">Warteliste</span></td><td>Gestern</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </AdminPageLayout>
 </template>
 
@@ -26,6 +45,8 @@ useHead({ title: "Admin Designvorschau – ChrispyJams" });
 </script>
 
 <style scoped>
+@import "~/assets/css/admin-shared.css";
+
 .preview-badge { display:inline-flex; align-items:center; padding:.35rem .6rem; border-radius:3px; border:1px solid var(--app-border); color:var(--app-text-secondary); background:var(--app-surface-1); font-size:.7rem; font-weight:750; }
 .preview-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; }
 .preview-stats div, .preview-activity { background:var(--app-surface-0); border:1px solid var(--app-border); border-radius:5px; }
@@ -41,5 +62,8 @@ useHead({ title: "Admin Designvorschau – ChrispyJams" });
 .preview-row strong { color:var(--app-text-primary); font-size:.85rem; }
 .preview-dot { width:.55rem; height:.55rem; border-radius:50%; background:var(--app-accent); }
 .preview-type { color:var(--app-text-muted); font-size:.73rem; }
+.preview-subpage-kicker { margin:0 0 .15rem; color:var(--app-accent); font-size:.66rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.preview-subpage-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; }
+@media (max-width:560px) { .preview-subpage-fields { grid-template-columns:1fr; } }
 @media (max-width:720px) { .preview-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 </style>

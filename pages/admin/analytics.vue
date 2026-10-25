@@ -111,13 +111,13 @@ const pageLabel = (path: string) => ({
 </script>
 
 <style scoped>
-.range-switch { display: inline-flex; gap: 0.25rem; padding: 0.25rem; border: 1px solid var(--app-border); border-radius: 0.85rem; background: var(--app-surface-1); }
-.range-switch button, .retry-button { border: 0; border-radius: 0.65rem; padding: 0.55rem 0.7rem; background: transparent; color: var(--app-text-secondary); font-weight: 700; cursor: pointer; }
-.range-switch button.active, .retry-button { background: var(--app-accent); color: var(--app-accent-contrast, white); }
+.range-switch { display: inline-flex; gap: 0.2rem; padding: 0.15rem; border: 1px solid var(--app-border); border-radius: 4px; background: var(--app-surface-1); }
+.range-switch button, .retry-button { border: 0; border-radius: 3px; padding: 0.38rem 0.55rem; background: transparent; color: var(--app-text-secondary); font-weight: 700; cursor: pointer; }
+.range-switch button.active, .retry-button { background: var(--app-accent); color: var(--app-bg-page); }
 .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
-.summary-card { display: flex; min-width: 0; flex-direction: column; gap: 0.2rem; padding: 0.85rem; border: 1px solid var(--app-border); border-radius: 1rem; background: var(--app-surface-0); }
+.summary-card { display: flex; min-width: 0; flex-direction: column; gap: 0.15rem; padding: 0.7rem; border: 1px solid var(--app-border); border-radius: 5px; background: var(--app-surface-0); }
 .summary-card span { color: var(--app-text-secondary); font-size: 0.78rem; font-weight: 700; }
-.summary-card strong { color: var(--app-text-primary); font-size: clamp(1.65rem, 7vw, 2.4rem); line-height: 1; }
+.summary-card strong { color: var(--app-text-primary); font-size: clamp(1.5rem, 5vw, 1.85rem); line-height: 1; }
 .summary-card small { overflow: hidden; color: var(--app-text-muted); font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
 .chart-wrap { min-width: 0; }
 .chart-legend { display: flex; justify-content: flex-end; gap: 1rem; color: var(--app-text-muted); font-size: 0.75rem; }
@@ -125,21 +125,21 @@ const pageLabel = (path: string) => ({
 .chart-legend i { width: 0.65rem; height: 0.65rem; border-radius: 999px; }
 .views-dot { background: var(--app-accent); }
 .visitors-dot { background: #a78bfa; }
-.history-chart { width: 100%; height: 15rem; overflow: visible; }
+.history-chart { width: 100%; height: 12rem; overflow: visible; }
 .chart-grid { stroke: var(--app-border); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .chart-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .chart-line-views, .chart-point-views { stroke: var(--app-accent); fill: var(--app-accent); }
 .chart-line-visitors, .chart-point-visitors { stroke: #a78bfa; fill: #a78bfa; }
 .chart-point { vector-effect: non-scaling-stroke; }
 .chart-labels { display: flex; justify-content: space-between; color: var(--app-text-muted); font-size: 0.72rem; }
-.detail-grid { display: grid; gap: 1rem; }
+.detail-grid { display: grid; gap: 0.7rem; }
 .metric-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
-.metric-list li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--app-border); }
+.metric-list li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid var(--app-border); }
 .metric-list li:last-child { border-bottom: 0; }
 .metric-list div { display: flex; min-width: 0; flex-direction: column; }
 .metric-list strong { color: var(--app-text-primary); font-size: 0.88rem; }
 .metric-list span { overflow: hidden; color: var(--app-text-muted); font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
 .metric-list b { flex-shrink: 0; color: var(--app-text-primary); font-size: 1.1rem; }
 .privacy-note { margin: 0; padding: 0 0.25rem; color: var(--app-text-muted); font-size: 0.74rem; line-height: 1.5; }
-@media (min-width: 700px) { .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; } .summary-card { padding: 1.1rem; } .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 700px) { .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; } .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>

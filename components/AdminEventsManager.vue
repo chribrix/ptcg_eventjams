@@ -2402,7 +2402,7 @@ onMounted(async () => {
 
 .events-grid {
   display: grid;
-  gap: 1.5rem;
+  gap: 0.7rem;
   grid-template-columns: 1fr;
 }
 
@@ -2410,8 +2410,7 @@ onMounted(async () => {
   padding: 0.75rem 1rem;
   background: var(--app-surface-0);
   border: 1px solid var(--app-border);
-  border-radius: 1rem;
-  box-shadow: var(--app-shadow-soft);
+  border-radius: 5px;
 }
 
 .events-manager-spinner {
@@ -2446,7 +2445,7 @@ onMounted(async () => {
 .events-manager-card {
   background: var(--app-surface-0);
   border: 1px solid var(--app-border);
-  border-radius: 0.75rem;
+  border-radius: 5px;
   overflow: hidden;
   cursor: pointer;
   transition:
@@ -2454,13 +2453,10 @@ onMounted(async () => {
     box-shadow 0.2s,
     border-color 0.2s,
     opacity 0.2s;
-  box-shadow: var(--app-shadow-soft);
 }
 
 .events-manager-card:hover {
-  transform: translateY(-1px);
   border-color: var(--app-surface-3);
-  box-shadow: var(--app-shadow-strong);
 }
 
 .events-manager-card-title {
@@ -2485,16 +2481,14 @@ onMounted(async () => {
 
 .event-card {
   background: var(--app-surface-0);
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 2px solid var(--app-border);
+  border-radius: 5px;
+  padding: 0.8rem;
+  border: 1px solid var(--app-border);
   transition: all 0.2s;
-  box-shadow: var(--app-shadow-soft);
 }
 
 .event-card:hover {
   border-color: var(--app-accent);
-  box-shadow: var(--app-shadow-strong);
 }
 
 .event-card.upcoming {
@@ -2539,9 +2533,9 @@ onMounted(async () => {
 }
 
 .status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
   font-weight: 500;
   text-transform: capitalize;
 }
@@ -2608,9 +2602,9 @@ onMounted(async () => {
 
 .registration-link-input {
   flex: 1;
-  padding: 0.625rem;
+  padding: 0.5rem 0.65rem;
   border: 1px solid var(--app-border);
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 0.875rem;
   background: var(--app-surface-1);
   font-family: monospace;
@@ -2679,17 +2673,17 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  padding: 1rem 1.1rem;
+  padding: 0.65rem 0.75rem;
   background: color-mix(in srgb, var(--app-surface-1) 92%, var(--app-accent));
   border: 1px solid color-mix(in srgb, var(--app-border) 82%, var(--app-accent));
-  border-radius: 1rem;
+  border-radius: 5px;
 }
 
 @media (max-width: 639px) {
   .registration-stats {
     display: flex;
     border: 1px solid var(--app-border);
-    border-radius: 0.75rem;
+    border-radius: 5px;
     overflow: hidden;
   }
 
@@ -2774,7 +2768,7 @@ onMounted(async () => {
   min-height: 2.65rem;
   overflow: hidden;
   border: 1px solid var(--app-border);
-  border-radius: 0.7rem;
+  border-radius: 5px;
   background: var(--app-surface-0);
 }
 
@@ -2824,10 +2818,9 @@ onMounted(async () => {
 
 .registrations-table-shell {
   border: 1px solid var(--app-border);
-  border-radius: 1rem;
+  border-radius: 5px;
   overflow: hidden;
   background: var(--app-surface-0);
-  box-shadow: var(--app-shadow-soft);
 }
 
 .registration-search-bar {
@@ -2962,9 +2955,9 @@ onMounted(async () => {
 .registrations-status-badge {
   display: inline-flex;
   align-items: center;
-  border-radius: 9999px;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.75rem;
+  border-radius: 3px;
+  padding: 0.18rem 0.45rem;
+  font-size: 0.72rem;
   font-weight: 700;
   border: 1px solid transparent;
   text-transform: capitalize;
@@ -3023,7 +3016,7 @@ onMounted(async () => {
 
 .registrations-empty-state {
   border: 1px dashed var(--app-border);
-  border-radius: 1rem;
+  border-radius: 5px;
   padding: 1.25rem;
   text-align: center;
   color: var(--app-text-muted);
@@ -3032,9 +3025,9 @@ onMounted(async () => {
 
 .status-badge {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
   font-weight: 600;
   text-transform: capitalize;
 }
@@ -3061,9 +3054,9 @@ onMounted(async () => {
 
 .decklist-status {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
   font-weight: 600;
 }
 
@@ -3092,8 +3085,8 @@ onMounted(async () => {
   max-height: 60vh;
   overflow-y: auto;
   background-color: var(--app-surface-1);
-  border-radius: 0.5rem;
-  padding: 1rem;
+  border-radius: 5px;
+  padding: 0.75rem;
   border: 1px solid var(--app-border);
 }
 
@@ -3107,11 +3100,11 @@ onMounted(async () => {
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 0.85rem;
 }
 
 .modal-footer {
-  padding: 1rem 1.5rem;
+  padding: 0.65rem 0.85rem;
   border-top: 1px solid var(--app-border);
   display: flex;
   justify-content: flex-start;
@@ -3119,7 +3112,7 @@ onMounted(async () => {
 }
 
 .event-form {
-  padding: 1.5rem;
+  padding: 0.85rem;
 }
 
 .event-form-modal {
@@ -3130,16 +3123,16 @@ onMounted(async () => {
 .event-form {
   display: grid;
   gap: 0.75rem;
-  padding: 1.25rem;
+  padding: 0.85rem;
 }
 
 .form-error-banner {
-  border: 1px solid color-mix(in srgb, var(--app-danger, #dc2626) 28%, transparent);
-  background: color-mix(in srgb, var(--app-danger, #dc2626) 10%, white);
-  color: var(--app-danger, #b91c1c);
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
-  font-size: 0.95rem;
+  border: 1px solid var(--app-feedback-error-border);
+  background: var(--app-feedback-error-bg);
+  color: var(--app-feedback-error-text);
+  border-radius: 5px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.82rem;
   line-height: 1.4;
 }
 
@@ -3154,14 +3147,14 @@ onMounted(async () => {
 .event-form :deep(.form-input),
 .event-form :deep(.form-select),
 .event-form :deep(.form-textarea) {
-  padding: 0.7rem 0.85rem;
+  padding: 0.5rem 0.65rem;
 }
 
 @media (max-width: 639px) {
   .event-form-modal {
     width: 100%;
     max-height: calc(100vh - 1.5rem);
-    border-radius: 14px;
+    border-radius: 5px;
   }
 
   .event-form {
@@ -3188,4 +3181,5 @@ onMounted(async () => {
     max-width: 860px;
   }
 }
+
 </style>

@@ -425,13 +425,13 @@ onMounted(loadPlayers);
 }
 
 .player-form {
-  padding: 1.5rem;
+  padding: 0.85rem;
 }
 
 .form-hint {
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--app-text-muted);
 }
 
 .pagination {
@@ -439,16 +439,16 @@ onMounted(loadPlayers);
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 1.5rem;
+  margin-top: 0.75rem;
   flex-wrap: wrap;
 }
 
 .pagination-btn {
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.55rem;
   border: 1px solid var(--admin-border, rgba(148, 163, 184, 0.18));
-  background: rgba(15, 23, 42, 0.88);
-  color: var(--admin-text, #e5eefb);
-  border-radius: 0.375rem;
+  background: var(--app-surface-1);
+  color: var(--app-text-secondary);
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
@@ -456,14 +456,14 @@ onMounted(loadPlayers);
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: rgba(30, 41, 59, 0.94);
-  border-color: var(--admin-accent, #38bdf8);
+  background: var(--app-surface-2);
+  border-color: var(--app-accent);
 }
 
 .pagination-btn.active {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
+  background: var(--app-accent);
+  color: var(--app-bg-page);
+  border-color: var(--app-accent);
 }
 
 .pagination-btn:disabled {

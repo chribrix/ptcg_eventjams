@@ -599,9 +599,9 @@ onMounted(() => {
 .logs-active-filters {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.45rem;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
 }
 
 .logs-filter-label {
@@ -614,9 +614,9 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.45rem 0.8rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
 }
 
 .logs-filter-chip-search {
@@ -639,7 +639,7 @@ onMounted(() => {
 }
 
 .logs-stats-grid {
-  gap: 1rem;
+  gap: 0.65rem;
 }
 
 .logs-stat-label {
@@ -689,8 +689,8 @@ onMounted(() => {
 .logs-type-pill {
   display: inline-flex;
   align-items: center;
-  padding: 0.3rem 0.65rem;
-  border-radius: 999px;
+  padding: 0.18rem 0.45rem;
+  border-radius: 3px;
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -735,8 +735,8 @@ onMounted(() => {
 }
 
 .logs-pagination-page {
-  padding: 0.55rem 0.9rem;
-  border-radius: 10px;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
   transition: all 0.2s;
   font-size: 0.9rem;
   border: 1px solid var(--app-border);
@@ -785,10 +785,10 @@ onMounted(() => {
 
 .logs-code-block {
   margin-top: 0.35rem;
-  padding: 0.9rem 1rem;
+  padding: 0.65rem 0.75rem;
   background: var(--app-surface-0);
   border: 1px solid var(--app-border);
-  border-radius: 14px;
+  border-radius: 4px;
   color: var(--app-text-secondary);
   font-size: 0.78rem;
   overflow-x: auto;

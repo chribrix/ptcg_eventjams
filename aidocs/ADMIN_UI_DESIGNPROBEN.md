@@ -22,3 +22,13 @@ Das alte Bild zeigt 12 gleichgewichtige Punkte in einer langen linken Leiste, w�
 - Mobile Prüfung bei 375px und Standard-In-App-Viewport; Desktopprüfung bei 1440px. Der Drawer wurde geöffnet und „Veranstaltungen“ eingeklappt. Kennzahlen bleiben zweispaltig.
 - Atelier in Hell und Dunkel visuell geprüft. Die Mandantenansicht verwendet dieselbe Hülle; ihre Schreiboperationen bleiben serverseitig autorisiert.
 - Noch offen: Prüfung aller bestehenden Adminfachseiten mit echten Daten auf schmalem Gerät und Tastaturnavigation durch den gesamten Workspace. `vue-tsc` enthält weiterhin ältere repo-weite Fehler.
+
+## Übernahme auf Unterseiten
+
+Die Fachseiten behalten ihre bestehenden Datenflüsse und Bedienelemente. `assets/css/admin-shared.css` bündelt nun kompakte Karten, Tabellen, Formulare, Modale, Buttons und Statusmarken. `assets/css/admin-workspace.css` stellt die Atelier-Tokens bereit und passt auch gemeinsam genutzte `AppPanel`-Komponenten innerhalb des Adminbereichs an; der öffentliche Teil der App verwendet seine bisherigen Styles.
+
+Spezielle Oberflächen wurden dort angepasst, wo die gemeinsamen Regeln nicht ausreichen: Eventliste und Registrierung (`AdminEventsManager`), Eventdetails, externe Events, Turniersteuerung, Liga, Analyse, Tags, Banner sowie Benutzer, Spieler, Orte und Protokolle. Große Radien/Schatten und fest codierte helle Farben in diesen Bereichen wurden durch kompakte Abstände und Theme-Variablen ersetzt. Unterhalb von 1100 px nutzt die Eventliste im Desktop-Sidebarlayout eine Spalte.
+
+Die Dev-Vorschau zeigt zusätzlich ein Unterseitenmuster mit denselben Formular-, Tabellen- und Statusklassen. Es enthält nur Beispieldaten. Die noch ausstehende Sichtprüfung mit echten, angemeldeten Daten bleibt ein Freigabeschritt für jede Fachseite; das Muster beweist nicht den vollständigen Inhalt jeder Fachseite.
+
+Nach der Angleichung: `npm test` 398 bestanden/4 übersprungen, `npm run build` erfolgreich, `vue-tsc --noEmit` weiterhin 118 bestehende Fehler ohne neue Treffer in den bearbeiteten Adminseiten. Das Unterseitenmuster wurde in Atelier Hell/Dunkel und bei 375 px visuell geprüft.

@@ -720,20 +720,19 @@ onMounted(async () => {
 .events-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.7rem;
 }
 
 .event-card {
   background: var(--app-surface-0);
   border: 1px solid var(--app-border);
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 5px;
+  padding: 0.85rem;
   transition: all 0.2s;
-  box-shadow: var(--app-shadow-soft);
 }
 
 .event-card:hover {
-  box-shadow: var(--app-shadow-strong);
+  border-color: var(--app-surface-3);
 }
 
 .event-card.has-override {
@@ -749,9 +748,9 @@ onMounted(async () => {
 }
 
 .event-info h3 {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   color: var(--app-text-primary);
 }
 
@@ -778,28 +777,28 @@ onMounted(async () => {
 }
 
 .override-badge {
-  padding: 0.25rem 0.75rem;
+  padding: 0.18rem 0.45rem;
   background: var(--app-badge-info-bg);
   color: var(--app-badge-info-text);
-  border-radius: 9999px;
-  font-size: 0.875rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
   font-weight: 500;
 }
 
 .hidden-badge {
-  padding: 0.25rem 0.75rem;
+  padding: 0.18rem 0.45rem;
   background: var(--app-badge-error-bg);
   color: var(--app-badge-error-text);
-  border-radius: 9999px;
-  font-size: 0.875rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
   font-weight: 500;
 }
 
 .btn-toggle-hide {
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.6rem;
   border: 1px solid var(--app-border);
   background: var(--app-surface-1);
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.875rem;
@@ -824,10 +823,10 @@ onMounted(async () => {
 }
 
 .btn-edit {
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.6rem;
   border: 1px solid var(--app-border);
   background: var(--app-surface-1);
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.875rem;
@@ -870,9 +869,9 @@ onMounted(async () => {
 
 .event-details {
   background: var(--app-surface-1);
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+  padding: 0.7rem;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
   border: 1px solid var(--app-border);
 }
 
@@ -883,7 +882,7 @@ onMounted(async () => {
 }
 
 .override-form {
-  padding: 1.5rem;
+  padding: 0.85rem;
 }
 
 .error-message {

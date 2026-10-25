@@ -260,7 +260,7 @@ onMounted(loadVenues);
 
 .empty-state {
   text-align: center;
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 
 .action-row {
@@ -274,6 +274,6 @@ onMounted(loadVenues);
 }
 
 .venue-form {
-  padding: 1.5rem;
+  padding: 0.85rem;
 }
 </style>

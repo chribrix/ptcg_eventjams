@@ -472,6 +472,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import "~/assets/css/admin-shared.css";
+
 .info-item {
   display: flex;
   flex-direction: column;
@@ -480,20 +482,20 @@ onMounted(() => {
 
 .info-label {
   font-weight: 600;
-  color: #6b7280;
-  font-size: 0.875rem;
+  color: var(--app-text-muted);
+  font-size: 0.75rem;
 }
 
 .info-value {
-  color: #1f2937;
-  font-size: 1rem;
+  color: var(--app-text-primary);
+  font-size: 0.85rem;
 }
 
 .section-title {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 600;
-  margin: 0 0 1rem 0;
-  color: #1f2937;
+  margin: 0 0 0.65rem 0;
+  color: var(--app-text-primary);
 }
 
 .registrations-table {
@@ -503,57 +505,58 @@ onMounted(() => {
 }
 
 .registrations-table th {
-  background-color: #f9fafb;
-  padding: 0.75rem;
+  background-color: var(--app-surface-1);
+  padding: 0.55rem 0.65rem;
   text-align: left;
   font-weight: 600;
-  color: #374151;
-  border-bottom: 2px solid #e5e7eb;
+  color: var(--app-text-secondary);
+  border-bottom: 1px solid var(--app-border);
 }
 
 .registrations-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 0.55rem 0.65rem;
+  color: var(--app-text-primary);
+  border-bottom: 1px solid var(--app-border);
 }
 
 .registrations-table tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: var(--app-surface-1);
 }
 
 .status-badge {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .status-success {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: var(--app-badge-success-bg);
+  color: var(--app-badge-success-text);
 }
 
 .status-warning {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: var(--app-badge-warning-bg);
+  color: var(--app-badge-warning-text);
 }
 
 .status-danger {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: var(--app-badge-error-bg);
+  color: var(--app-badge-error-text);
 }
 
 .empty-state {
   text-align: center;
-  padding: 3rem;
-  color: #6b7280;
-  font-size: 1rem;
+  padding: 1.5rem;
+  color: var(--app-text-muted);
+  font-size: 0.85rem;
 }
 
 .status-neutral {
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: var(--app-surface-2);
+  color: var(--app-text-secondary);
 }
 
 .action-group {
@@ -565,9 +568,9 @@ onMounted(() => {
 .decklist-viewer {
   max-height: 60vh;
   overflow-y: auto;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
-  padding: 1rem;
+  background-color: var(--app-surface-1);
+  border-radius: 4px;
+  padding: 0.75rem;
 }
 
 .decklist-content {
@@ -576,7 +579,7 @@ onMounted(() => {
   white-space: pre-wrap;
   word-wrap: break-word;
   margin: 0;
-  color: #1f2937;
+  color: var(--app-text-primary);
 }
 
 .section-header {
@@ -586,6 +589,6 @@ onMounted(() => {
 }
 
 .space-y-6 > * + * {
-  margin-top: 1.5rem;
+  margin-top: 0.75rem;
 }
 </style>

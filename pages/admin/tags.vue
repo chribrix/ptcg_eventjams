@@ -508,13 +508,12 @@ const getSchemaFields = (tagType: TagType) => {
 
 <style scoped>
 .tags-admin {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .page-header {
-  margin-bottom: 2rem;
+  margin-bottom: 0.8rem;
 }
 
 .page-title {
@@ -530,45 +529,43 @@ const getSchemaFields = (tagType: TagType) => {
 }
 
 .admin-card {
-  background: var(--app-surface-1);
+  background: var(--app-surface-0);
   border: 1px solid var(--app-border);
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  box-shadow: var(--app-shadow-sm);
-  margin-bottom: 2rem;
+  border-radius: 5px;
+  padding: 0.85rem;
+  margin-bottom: 0.75rem;
 }
 
 .section-title {
-  font-size: 1.5rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: var(--app-text-primary);
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 /* Tag Types Grid */
 .tag-types-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.6rem;
 }
 
 .tag-type-card {
-  padding: 1.5rem;
-  background: var(--app-surface-2);
+  padding: 0.75rem;
+  background: var(--app-surface-1);
   border: 1px solid var(--app-border);
-  border-radius: 0.5rem;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .tag-type-card:hover {
   border-color: var(--app-accent);
-  box-shadow: var(--app-shadow-md);
 }
 
 .tag-type-card.active {
-  border-color: var(--app-button-blue-border);
-  background: var(--app-feedback-info-bg);
+  border-color: var(--app-accent);
+  background: var(--app-surface-2);
 }
 
 .tag-type-name {
@@ -595,10 +592,10 @@ const getSchemaFields = (tagType: TagType) => {
 }
 
 .schema-description {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.65rem;
   background: var(--app-surface-2);
-  border-radius: 0.375rem;
+  border-radius: 4px;
   border-left: 4px solid var(--app-button-blue);
 }
 
@@ -612,13 +609,13 @@ const getSchemaFields = (tagType: TagType) => {
 .field-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.55rem;
 }
 
 .field-item {
-  padding: 1rem;
+  padding: 0.65rem;
   border: 1px solid var(--app-border);
-  border-radius: 0.375rem;
+  border-radius: 4px;
   background: var(--app-surface-2);
 }
 
@@ -676,23 +673,23 @@ const getSchemaFields = (tagType: TagType) => {
 /* Tag Display Configuration */
 .config-description {
   color: var(--app-text-secondary);
-  margin-bottom: 1.5rem;
-  padding: 1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.65rem;
   background: var(--app-surface-2);
-  border-radius: 0.375rem;
+  border-radius: 4px;
   border-left: 4px solid var(--app-button-blue);
 }
 
 .tag-config-section {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 0.75rem;
 }
 
 .config-group {
-  padding: 1.5rem;
+  padding: 0.75rem;
   border: 1px solid var(--app-border);
-  border-radius: 0.5rem;
+  border-radius: 4px;
   background: var(--app-surface-2);
 }
 
@@ -715,17 +712,16 @@ const getSchemaFields = (tagType: TagType) => {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  padding: 0.75rem;
+  padding: 0.55rem;
   background: var(--app-surface-1);
   border: 1px solid var(--app-border);
-  border-radius: 0.375rem;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .tag-checkbox-item:hover:not(.always-shown) {
   border-color: var(--app-accent);
-  box-shadow: var(--app-shadow-sm);
 }
 
 .tag-checkbox-item.always-shown {
@@ -767,20 +763,20 @@ const getSchemaFields = (tagType: TagType) => {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  gap: 0.65rem;
 }
 
 .stat-card {
-  padding: 1.5rem;
-  background: var(--app-surface-2);
+  padding: 0.75rem;
+  background: var(--app-surface-1);
   border: 1px solid var(--app-border);
-  border-radius: 0.5rem;
+  border-radius: 4px;
   color: var(--app-text-primary);
   text-align: center;
 }
 
 .stat-value {
-  font-size: 2.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
@@ -794,7 +790,7 @@ const getSchemaFields = (tagType: TagType) => {
 .tags-usage-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  gap: 0.75rem;
 }
 
 .tag-category h3 {

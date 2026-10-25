@@ -503,7 +503,7 @@ await loadUsers();
 .filters-grid,
 .detail-grid {
   display: grid;
-  gap: 1rem;
+  gap: 0.7rem;
 }
 
 .filters-grid {
@@ -521,7 +521,7 @@ await loadUsers();
 }
 
 .filter-field .form-input {
-  min-height: 2.75rem;
+  min-height: 2.25rem;
 }
 
 .results-summary {
@@ -543,8 +543,8 @@ await loadUsers();
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
-  padding: 0.25rem 0.75rem;
+  border-radius: 3px;
+  padding: 0.18rem 0.45rem;
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -565,8 +565,8 @@ await loadUsers();
 }
 
 .feedback {
-  border-radius: 12px;
-  padding: 0.9rem 1rem;
+  border-radius: 4px;
+  padding: 0.65rem 0.75rem;
   font-weight: 600;
 }
 
@@ -584,8 +584,8 @@ await loadUsers();
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .pagination-status {
@@ -594,8 +594,8 @@ await loadUsers();
 
 .pagination-btn {
   border: 1px solid var(--app-border);
-  border-radius: 9999px;
-  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
   background: var(--app-surface-1);
   color: var(--app-text-secondary);
 }
@@ -610,13 +610,13 @@ await loadUsers();
 }
 
 .detail-actions {
-  margin-top: 1rem;
+  margin-top: 0.7rem;
 }
 
 .manual-password-form {
   display: grid;
   gap: 0.75rem;
-  margin-top: 1rem;
+  margin-top: 0.7rem;
 }
 
 .detail-list {
@@ -641,8 +641,8 @@ await loadUsers();
 .metadata-block {
   background: var(--app-surface-0);
   border: 1px solid var(--app-border);
-  border-radius: 12px;
-  padding: 1rem;
+  border-radius: 5px;
+  padding: 0.7rem;
 }
 
 .detail-panel.empty {
