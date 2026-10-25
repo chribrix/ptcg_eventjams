@@ -2,7 +2,7 @@ import prisma from "~/lib/prisma";
 import type { H3Event } from "h3";
 import { requireAuthUser } from "~/server/services/auth/authService";
 import { hasAdminRole } from "~/server/util/adminAccess";
-import type { TenantContext } from "~/server/contracts/moduleContracts";
+import type { TenantContext } from "~/contracts/moduleContracts";
 
 export const DEFAULT_TENANT_ID = "crows-and-owls";
 

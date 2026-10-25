@@ -8,6 +8,6 @@
 
 **Geplanter öffentlicher Vertrag:** `register`, `addTicket`, `updateTicket`, `cancel`, `joinWaitlist`, `claimOffer`, `getBooking`, `getCapacity`; Ereignisse `RegistrationChanged`, `TicketChanged`, `CapacityChanged`. Schreibbefehle erhalten Idempotenzschlüssel; konkurrierende Kapazitätsentscheidungen werden atomar getroffen.
 
-**Interaktion:** Identität liefert Actor, Tenant-Modul Berechtigung, Katalog Eventregeln und Fristen. Der erste gemeinsame [`EventRef`-Vertrag](../../server/contracts/README.md) unterscheidet eigene und externe Event-IDs bereits in den quellgebundenen Wartelistenaktionen. Decklistenmodul referenziert `ticketId`; Turnier erhält Teilnehmerzuordnung über expliziten Vertrag. Kein fremdes Modul ändert Buchungsstatus direkt.
+**Interaktion:** Identität liefert Actor, Tenant-Modul Berechtigung, Katalog Eventregeln und Fristen. Der erste gemeinsame [`EventRef`-Vertrag](../../contracts/README.md) unterscheidet eigene und externe Event-IDs bereits in den quellgebundenen Wartelistenaktionen. Decklistenmodul referenziert `ticketId`; Turnier erhält Teilnehmerzuordnung über expliziten Vertrag. Kein fremdes Modul ändert Buchungsstatus direkt.
 
 **Betrieb und Nachweis:** Lokal oder remote; bei Netzfehler wird eine wiederholte Registrierung nicht doppelt angelegt. Outbox/Inbox oder gleichwertige garantierte Zustellung für Statusereignisse; Benachrichtigung kann asynchron sein. Tests für Konkurrenz, Kapazität, Fristen, Mehrticket-Buchung, externe Events und Wartelisten-Claim; alte Routen bleiben während Migration erhalten.

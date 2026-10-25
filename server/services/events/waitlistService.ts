@@ -5,7 +5,7 @@ import {
   eventRefKey,
   type EventRef,
   type LegacyEventReference,
-} from "~/server/contracts/moduleContracts";
+} from "~/contracts/moduleContracts";
 import type { AuthenticatedPlayer } from "~/server/util/authenticatedPlayer";
 import {
   sendWaitlistRegistrationConfirmedEmail,
