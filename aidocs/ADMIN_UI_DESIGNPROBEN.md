@@ -38,3 +38,9 @@ Nach der Angleichung: `npm test` 398 bestanden/4 übersprungen, `npm run build` 
 Die Admin-Hülle setzt die Seitenaktion nun in dieselbe Zeile wie den Seitentitel; der Untertitel steht geschlossen darunter. Die Schriftgrößen für Seitentitel, Abschnittstitel, Eyebrows und Begleittexte sind in `assets/css/admin-workspace.css` zentral festgelegt. Die Dashboard-Abschnitte und die Eventhistorie verwenden diese Skala. Alle vier Kennzahlen haben dieselben Zeilen für Beschriftung, Wert und Aktion; insbesondere beginnt „Historie öffnen“ auf derselben Achse wie die anderen Links. Die Datenabfrage und Zielrouten bleiben unverändert.
 
 `npm run build` ist erfolgreich. Die Dev-Vorschau auf Port 3000 wurde nach einem Nuxt-Neustart im dunklen Atelier-Modus geprüft. Die echte Admin-Übersicht benötigt weiterhin eine angemeldete Sitzung; die Sichtprüfung ihrer Live-Daten steht daher noch aus.
+
+## Navigation vom 26. Oktober 2026
+
+Die doppelte Workspace-Leiste vor der Adminseite ist entfernt. „Administration“ steht als Abschnittsname direkt in der globalen Kopfzeile; auf schmalen Displays bleibt dafür das Logo sichtbar und der lange Markenname entfällt. Die Sidebar beginnt unmittelbar mit den einklappbaren Gruppen, ohne „Bereiche“-Überschrift. Sie ist am Desktop 260 px breit und hat größere Schrift und Ziele. Der mobile Drawer öffnet über „Bereiche“ in der Titelzeile der Adminseite. Die Navigationsziele und Gruppenlogik bleiben erhalten.
+
+Die Desktop-Vorschau wurde im dunklen Atelier-Modus auf Port 3000 geprüft. `npm run build` war erfolgreich; anschließend wurde der Dev-Server auf Port 3000 neu gestartet und die Vorschau erneut geladen.

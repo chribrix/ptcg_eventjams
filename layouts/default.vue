@@ -163,7 +163,7 @@ const { t } = useI18n();
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16 md:h-20">
           <!-- Left side - Logo/Brand -->
-          <div class="flex items-center space-x-4">
+          <div class="header-brand-group flex items-center space-x-4" :class="{ 'is-admin-brand': isAdminRoute }">
             <NuxtLink
               to="/"
               class="mobile-brand flex items-center space-x-3 app-text-primary transition-colors duration-200 hover:opacity-90"
@@ -175,6 +175,7 @@ const { t } = useI18n();
               />
               <span class="mobile-brand-title">ChrispyJams TCG Events</span>
             </NuxtLink>
+            <span v-if="isAdminRoute" class="header-section-label">Administration</span>
           </div>
 
           <!-- Right side - Navigation and Mobile Menu Button -->
@@ -411,6 +412,23 @@ const { t } = useI18n();
 <style scoped>
 .admin-route-shell {
   width: 100%;
+}
+
+.header-section-label {
+  border-left: 1px solid var(--app-border);
+  padding-left: 1rem;
+  color: var(--app-text-secondary);
+  font-size: .875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 1300px) {
+  .is-admin-brand .mobile-brand-title { display: none; }
+}
+
+@media (max-width: 767px) {
+  .header-section-label { padding-left: .7rem; }
 }
 
 /* Navigation link styles */

@@ -1,21 +1,10 @@
 <template>
   <section class="admin-page-layout" :data-design="design" @keydown.esc="mobileNavOpen = false">
     <div class="admin-frame">
-      <header class="workspace-bar">
-        <div class="workspace-identity">
-          <span class="workspace-mark" aria-hidden="true">CJ</span>
-          <span><span class="workspace-eyebrow">ChrispyJams / Workspace</span><strong>Administration</strong></span>
-        </div>
-        <button class="sidebar-mobile-toggle" type="button" :aria-expanded="mobileNavOpen" aria-controls="admin-sidebar" @click="mobileNavOpen = !mobileNavOpen">
-          <Bars3Icon v-if="!mobileNavOpen" aria-hidden="true" /><XMarkIcon v-else aria-hidden="true" /><span>Bereiche</span>
-        </button>
-        <span class="workspace-context">Plattformverwaltung</span>
-      </header>
-
       <div class="admin-workspace">
         <button v-if="mobileNavOpen" class="sidebar-backdrop" type="button" aria-label="Navigation schließen" @click="mobileNavOpen = false" />
         <aside id="admin-sidebar" class="admin-sidebar" :class="{ 'is-open': mobileNavOpen }" aria-label="Admin-Navigation">
-          <div class="sidebar-top"><div class="sidebar-caption">Bereiche</div><button class="sidebar-close" type="button" aria-label="Navigation schließen" @click="mobileNavOpen = false"><XMarkIcon aria-hidden="true" /></button></div>
+          <button class="sidebar-close" type="button" aria-label="Navigation schließen" @click="mobileNavOpen = false"><XMarkIcon aria-hidden="true" /></button>
           <nav aria-label="Adminbereiche">
             <section v-for="group in adminNavigationGroups" :key="group.id" class="sidebar-group">
               <button type="button" class="sidebar-group-trigger" :class="{ 'is-current': activeGroup === group.id }" :aria-expanded="expandedGroups.has(group.id)" :aria-controls="`admin-group-${group.id}`" @click="toggleGroup(group.id)">
@@ -35,6 +24,9 @@
             <p class="admin-heading-eyebrow">{{ activeGroupLabel }}</p>
             <div class="admin-heading-title-row">
               <h1>{{ title }}</h1>
+              <button class="sidebar-mobile-toggle" type="button" :aria-expanded="mobileNavOpen" aria-controls="admin-sidebar" @click="mobileNavOpen = !mobileNavOpen">
+                <Bars3Icon v-if="!mobileNavOpen" aria-hidden="true" /><XMarkIcon v-else aria-hidden="true" /><span>Bereiche</span>
+              </button>
               <div v-if="$slots.actions" class="admin-heading-actions"><slot name="actions" /></div>
             </div>
             <p v-if="subtitle" class="admin-heading-subtitle">{{ subtitle }}</p>
