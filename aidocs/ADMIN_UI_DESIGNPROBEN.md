@@ -32,3 +32,9 @@ Spezielle Oberflächen wurden dort angepasst, wo die gemeinsamen Regeln nicht au
 Die Dev-Vorschau zeigt zusätzlich ein Unterseitenmuster mit denselben Formular-, Tabellen- und Statusklassen. Es enthält nur Beispieldaten. Die noch ausstehende Sichtprüfung mit echten, angemeldeten Daten bleibt ein Freigabeschritt für jede Fachseite; das Muster beweist nicht den vollständigen Inhalt jeder Fachseite.
 
 Nach der Angleichung: `npm test` 398 bestanden/4 übersprungen, `npm run build` erfolgreich, `vue-tsc --noEmit` weiterhin 118 bestehende Fehler ohne neue Treffer in den bearbeiteten Adminseiten. Das Unterseitenmuster wurde in Atelier Hell/Dunkel und bei 375 px visuell geprüft.
+
+## Nacharbeit vom 26. Oktober 2026: Ausrichtung und Schriftgrößen
+
+Die Admin-Hülle setzt die Seitenaktion nun in dieselbe Zeile wie den Seitentitel; der Untertitel steht geschlossen darunter. Die Schriftgrößen für Seitentitel, Abschnittstitel, Eyebrows und Begleittexte sind in `assets/css/admin-workspace.css` zentral festgelegt. Die Dashboard-Abschnitte und die Eventhistorie verwenden diese Skala. Alle vier Kennzahlen haben dieselben Zeilen für Beschriftung, Wert und Aktion; insbesondere beginnt „Historie öffnen“ auf derselben Achse wie die anderen Links. Die Datenabfrage und Zielrouten bleiben unverändert.
+
+`npm run build` ist erfolgreich. Die Dev-Vorschau auf Port 3000 wurde nach einem Nuxt-Neustart im dunklen Atelier-Modus geprüft. Die echte Admin-Übersicht benötigt weiterhin eine angemeldete Sitzung; die Sichtprüfung ihrer Live-Daten steht daher noch aus.

@@ -32,12 +32,12 @@
 
         <div class="admin-main-column">
           <div v-if="title || subtitle || $slots.actions" class="admin-heading">
-            <div>
-              <p class="admin-heading-eyebrow">{{ activeGroupLabel }}</p>
+            <p class="admin-heading-eyebrow">{{ activeGroupLabel }}</p>
+            <div class="admin-heading-title-row">
               <h1>{{ title }}</h1>
-              <p v-if="subtitle" class="admin-heading-subtitle">{{ subtitle }}</p>
+              <div v-if="$slots.actions" class="admin-heading-actions"><slot name="actions" /></div>
             </div>
-            <div v-if="$slots.actions" class="admin-heading-actions"><slot name="actions" /></div>
+            <p v-if="subtitle" class="admin-heading-subtitle">{{ subtitle }}</p>
           </div>
           <main class="admin-page-content"><slot /></main>
         </div>
