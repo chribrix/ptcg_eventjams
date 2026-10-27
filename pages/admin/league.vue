@@ -393,7 +393,7 @@ onMounted(loadSeasons);
 .tabs button { border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--app-text-secondary); padding: .5rem .65rem; white-space: nowrap; cursor: pointer; }
 .tabs button.active { border-color: var(--app-accent); color: var(--app-text-primary); font-weight: 700; }
 .division-filter { display: inline-flex; border: 1px solid var(--app-border); border-radius: 6px; overflow: hidden; }
-.division-filter button { border: 0; border-right: 1px solid var(--app-border); padding: .5rem .7rem; background: var(--app-surface-1); color: var(--app-text-secondary); cursor: pointer; }.division-filter button:last-child { border-right: 0; }.division-filter button.active { background: var(--app-accent); color: var(--app-button-blue-text); }
+.division-filter button { border: 0; border-right: 1px solid var(--app-border); padding: .5rem .7rem; background: var(--app-surface-1); color: var(--app-text-secondary); cursor: pointer; }.division-filter button:last-child { border-right: 0; }.division-filter button.active { background: var(--app-accent); color: var(--app-bg-page); }
 .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
 .metrics div { border-left: 2px solid var(--app-accent); background: var(--app-surface-1); padding: .65rem; }
 .metrics span { color: var(--app-text-muted); display: block; font-size: .8rem; }.metrics strong { color: var(--app-text-primary); font-size: 1.5rem; }

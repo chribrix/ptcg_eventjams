@@ -1,6 +1,6 @@
 # Admin-UI: drei umschaltbare Richtungen
 
-Stand: 25. Oktober 2026 · Arbeitsdokument auf `codex/chrispyjams-architecture-rework`. Die Dev-Vorschau liegt unter `/admin-style-preview` und enthält ausschließlich Beispieldaten. Dort bleiben drei Richtungen über eine einklappbare Leiste und Toast vergleichbar. Im echten Adminbereich ist **Atelier** festgelegt. Seine Hell- und Dunkelpalette folgt dem bestehenden `html[data-theme]`-Mechanismus; alle Admin-Farbtokens und die Sidebar-Regeln stehen zentral in `assets/css/admin-workspace.css`, geladen über `assets/css/tailwind.css`. Die vier Hauptbereiche sind in einer Sidebar einklappbar, Unterseiten erscheinen darunter. Mobil öffnet ein „Bereiche“-Knopf dieselbe Navigation als Drawer.
+Stand: 27. Oktober 2026 · Arbeitsdokument auf `codex/chrispyjams-architecture-rework`. Die Dev-Vorschau liegt unter `/admin-style-preview` und enthält ausschließlich Beispieldaten. Dort bleiben drei Richtungen über eine einklappbare Leiste und Toast vergleichbar. Im echten Adminbereich ist **Atelier** festgelegt. Es erbt die Hell- und Dunkelpalette der globalen Kopfzeile aus `assets/css/tailwind.css`; die Admin-Aliase, Typografie und Sidebar-Regeln stehen in `assets/css/admin-workspace.css`. Die vier Hauptbereiche sind in einer Sidebar einklappbar, Unterseiten erscheinen darunter. Mobil öffnet ein „Bereiche“-Knopf dieselbe Navigation als Drawer.
 
 ## Baselines aus der Recherche
 
@@ -25,7 +25,7 @@ Das alte Bild zeigt 12 gleichgewichtige Punkte in einer langen linken Leiste, w�
 
 ## Übernahme auf Unterseiten
 
-Die Fachseiten behalten ihre bestehenden Datenflüsse und Bedienelemente. `assets/css/admin-shared.css` bündelt nun kompakte Karten, Tabellen, Formulare, Modale, Buttons und Statusmarken. `assets/css/admin-workspace.css` stellt die Atelier-Tokens bereit und passt auch gemeinsam genutzte `AppPanel`-Komponenten innerhalb des Adminbereichs an; der öffentliche Teil der App verwendet seine bisherigen Styles.
+Die Fachseiten behalten ihre bestehenden Datenflüsse und Bedienelemente. `assets/css/admin-shared.css` bündelt nun kompakte Karten, Tabellen, Formulare, Modale, Buttons und Statusmarken. `assets/css/admin-workspace.css` stellt die Admin-Aliase bereit und passt auch gemeinsam genutzte `AppPanel`-Komponenten innerhalb des Adminbereichs an; der öffentliche Teil der App verwendet seine bisherigen Styles.
 
 Spezielle Oberflächen wurden dort angepasst, wo die gemeinsamen Regeln nicht ausreichen: Eventliste und Registrierung (`AdminEventsManager`), Eventdetails, externe Events, Turniersteuerung, Liga, Analyse, Tags, Banner sowie Benutzer, Spieler, Orte und Protokolle. Große Radien/Schatten und fest codierte helle Farben in diesen Bereichen wurden durch kompakte Abstände und Theme-Variablen ersetzt. Unterhalb von 1100 px nutzt die Eventliste im Desktop-Sidebarlayout eine Spalte.
 
@@ -44,3 +44,7 @@ Die Admin-Hülle setzt die Seitenaktion nun in dieselbe Zeile wie den Seitentite
 Die doppelte Workspace-Leiste vor der Adminseite ist entfernt. „Administration“ steht als Abschnittsname direkt in der globalen Kopfzeile; auf schmalen Displays bleibt dafür das Logo sichtbar und der lange Markenname entfällt. Die Sidebar beginnt unmittelbar mit den einklappbaren Gruppen, ohne „Bereiche“-Überschrift. Sie ist am Desktop 260 px breit und hat größere Schrift und Ziele. Der mobile Drawer öffnet über „Bereiche“ in der Titelzeile der Adminseite. Die Navigationsziele und Gruppenlogik bleiben erhalten.
 
 Die Desktop-Vorschau wurde im dunklen Atelier-Modus auf Port 3000 geprüft. `npm run build` war erfolgreich; anschließend wurde der Dev-Server auf Port 3000 neu gestartet und die Vorschau erneut geladen.
+
+## Farbpalette vom 27. Oktober 2026
+
+Atelier überschreibt die globalen `--app-*`-Farben nicht mehr. Admin-Hintergrund, Karten, Sidebar, Text, Linien, Akzente und Buttons verwenden damit in beiden Themes exakt die bereits für die globale Kopfzeile definierten Tokens. Aktiv-/Entwurfsstatus nutzen die globalen Badge-Farben. Signal und Editorial behalten nur auf der Dev-Vergleichsseite eigene Paletten. Die Vorschau wurde in Hell und Dunkel visuell geprüft. `npm run build` war erfolgreich; der Dev-Server auf Port 3000 wurde danach neu gestartet.

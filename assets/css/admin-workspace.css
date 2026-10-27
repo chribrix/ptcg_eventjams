@@ -1,24 +1,7 @@
-/* Admin workspace: palette follows the existing html[data-theme] app theme.
-   Design variants are available only on the local comparison route. */
+/* Atelier inherits the app palette from tailwind.css, including light/dark mode.
+   Alternative palettes exist only on the local comparison route. */
 .admin-page-layout {
-  --app-bg-page: #eef2f1;
-  --app-surface-0: #ffffff;
-  --app-surface-1: #f8fbfa;
-  --app-surface-2: #e8f0ee;
-  --app-surface-3: #d6e4df;
-  --app-surface-elevated: var(--app-surface-1);
-  --app-border: #d4e1dc;
-  --app-text-primary: #172d2a;
-  --app-text-secondary: #425b56;
-  --app-text-muted: #637c75;
-  --app-accent: #087e72;
-  --app-accent-soft: #07675e;
-  --app-button-blue: var(--app-accent);
-  --app-button-blue-hover: #07675e;
-  --app-button-blue-border: var(--app-accent);
-  --app-button-blue-text: var(--app-bg-page);
   --app-shadow-soft: none;
-  --app-shadow-strong: 0 10px 30px rgba(13, 52, 46, .12);
   --admin-surface: var(--app-surface-0);
   --admin-surface-strong: var(--app-surface-1);
   --admin-border: var(--app-border);
@@ -31,10 +14,10 @@
   --admin-input: var(--app-surface-1);
   --admin-radius: 5px;
   --admin-radius-small: 3px;
-  --admin-status-active-bg: #d7f2e5;
-  --admin-status-active-text: #11613d;
-  --admin-status-draft-bg: #f7e7ca;
-  --admin-status-draft-text: #805009;
+  --admin-status-active-bg: var(--app-badge-success-bg);
+  --admin-status-active-text: var(--app-badge-success-text);
+  --admin-status-draft-bg: var(--app-badge-warning-bg);
+  --admin-status-draft-text: var(--app-badge-warning-text);
   --admin-font-page-title: clamp(1.5rem, 2.4vw, 2rem);
   --admin-font-section-title: 1.15rem;
   --admin-font-eyebrow: .68rem;
@@ -43,26 +26,6 @@
   background: var(--app-bg-page);
   color: var(--app-text-primary);
   padding: clamp(.65rem, 1.8vw, 1.3rem);
-}
-html[data-theme="dark"] .admin-page-layout[data-design="atelier"] {
-  --app-bg-page: #101817;
-  --app-surface-0: #192421;
-  --app-surface-1: #1d2b27;
-  --app-surface-2: #263b35;
-  --app-surface-3: #355148;
-  --app-surface-elevated: var(--app-surface-1);
-  --app-border: #355047;
-  --app-text-primary: #e4f0eb;
-  --app-text-secondary: #bdd2c9;
-  --app-text-muted: #91afa3;
-  --app-accent: #77d6bd;
-  --app-accent-soft: #9be5d1;
-  --app-button-blue-hover: #9be5d1;
-  --app-shadow-strong: 0 10px 30px rgba(0, 0, 0, .24);
-  --admin-status-active-bg: #244d3d;
-  --admin-status-active-text: #a8ebc9;
-  --admin-status-draft-bg: #50432b;
-  --admin-status-draft-text: #f5d58a;
 }
 .admin-page-layout[data-design="signal"] {
   --app-bg-page: #090f19; --app-surface-0: #111c2b; --app-surface-1: #172437;
@@ -107,7 +70,8 @@ html[data-theme="dark"] .admin-page-layout[data-design="atelier"] {
 .design-options { display:grid; grid-template-columns:repeat(3,1fr); gap:.3rem; }
 .design-options button { display:flex; align-items:center; justify-content:center; gap:.3rem; min-height:2.1rem; border:1px solid var(--app-border); border-radius:3px; background:var(--app-surface-1); color:var(--app-text-secondary); font-size:.7rem; font-weight:700; cursor:pointer; }
 .design-options button.selected { outline:2px solid var(--app-accent); outline-offset:-2px; color:var(--app-text-primary); }
-.design-swatch { width:.65rem; height:.65rem; border-radius:2px; background:#087e72; }
+.design-swatch { width:.65rem; height:.65rem; border-radius:2px; background:#006874; }
+html[data-theme="dark"] .design-swatch.atelier { background:#82d3e0; }
 .design-swatch.signal { background:#56dec7; }.design-swatch.editorial { background:#aa552c; }
 .admin-page-layout[data-design="editorial"] .admin-heading h1 { font-family:Georgia,serif; font-weight:600; }
 .admin-page-layout[data-design="editorial"] .admin-sidebar { border-radius:0; }
