@@ -301,8 +301,8 @@
                 @keydown.enter.prevent="openEventDetails(event)"
                 @keydown.space.prevent="openEventDetails(event)"
               >
-                <EventGameWatermark :game-type="event.gameType" />
                 <div class="event-list-card-main">
+                  <EventGameWatermark :game-type="event.gameType" />
                   <div class="event-list-card-primary">
                     <div
                       class="event-list-date"
@@ -1550,6 +1550,11 @@ watch(user, async () => {
   z-index: 1;
   display: grid;
   gap: 0.75rem;
+}
+
+.event-list-card-main > :not(.event-game-watermark) {
+  position: relative;
+  z-index: 1;
 }
 
 .event-list-card-primary {
