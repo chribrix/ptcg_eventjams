@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { normalizeAnalyticsPath } from "../../server/services/analytics/analyticsService";
+import { normalizeAnalyticsRangeDays } from "../../utils/analyticsRange";
 
 describe("analytics path normalization", () => {
   it("removes locale prefixes and query parameters", () => {
@@ -15,5 +16,16 @@ describe("analytics path normalization", () => {
 
   it("rejects malformed paths", () => {
     expect(normalizeAnalyticsPath("https://example.com/eventlist")).toBeNull();
+  });
+});
+
+describe("analytics date range", () => {
+  it("defaults to today and accepts the existing longer ranges", () => {
+    expect(normalizeAnalyticsRangeDays(undefined)).toBe(1);
+    expect(normalizeAnalyticsRangeDays("1")).toBe(1);
+    expect(normalizeAnalyticsRangeDays("7")).toBe(7);
+    expect(normalizeAnalyticsRangeDays(30)).toBe(30);
+    expect(normalizeAnalyticsRangeDays(90)).toBe(90);
+    expect(normalizeAnalyticsRangeDays("365")).toBe(1);
   });
 });

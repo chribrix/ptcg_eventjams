@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import type { H3Event } from "h3";
 import { getHeader, getRequestIP } from "h3";
 import prisma from "~/lib/prisma";
+import { normalizeAnalyticsRangeDays } from "~/utils/analyticsRange";
 
 export const ANALYTICS_EVENT_TYPES = [
   "page_view",
@@ -99,8 +100,8 @@ type BreakdownRow = { key: string; count: bigint | number };
 
 const asNumber = (value: bigint | number) => Number(value);
 
-export async function getAnalyticsOverview(days: number) {
-  const safeDays = [7, 30, 90].includes(days) ? days : 30;
+export async function getAnalyticsOverview(days: unknown = 1) {
+  const safeDays = normalizeAnalyticsRangeDays(days);
   const rangeStart = Prisma.sql`(
     (CURRENT_TIMESTAMP AT TIME ZONE ${TIME_ZONE})::date - (${safeDays}::int - 1)
   )`;

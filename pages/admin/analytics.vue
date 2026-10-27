@@ -2,8 +2,8 @@
   <AdminPageLayout title="Website-Analytics" subtitle="Anonyme Aufrufe und Aktionen auf deiner Website">
     <template #actions>
       <div class="range-switch" aria-label="Zeitraum wählen">
-        <button v-for="option in rangeOptions" :key="option" type="button" :class="{ active: selectedDays === option }" @click="selectedDays = option">
-          {{ option }} Tage
+        <button v-for="option in rangeOptions" :key="option" type="button" :class="{ active: selectedDays === option }" :aria-pressed="selectedDays === option" @click="selectedDays = option">
+          {{ option === 1 ? "Heute" : `${option} Tage` }}
         </button>
       </div>
     </template>
@@ -21,10 +21,10 @@
         <article class="summary-card"><span>Warteliste</span><strong>{{ formatNumber(analytics.summary.waitlistJoins) }}</strong><small>neu beigetreten</small></article>
       </section>
 
-      <AppPanel title="Tägliche Entwicklung" subtitle="Seitenaufrufe und anonyme Besucher im gewählten Zeitraum" compact>
+      <AppPanel :title="selectedDays === 1 ? 'Heute' : 'Tägliche Entwicklung'" :subtitle="selectedDays === 1 ? 'Seitenaufrufe und anonyme Besucher seit Mitternacht (Berlin)' : 'Seitenaufrufe und anonyme Besucher im gewählten Zeitraum'" compact>
         <div v-if="hasTraffic" class="chart-wrap">
           <div class="chart-legend" aria-hidden="true"><span><i class="views-dot" />Aufrufe</span><span><i class="visitors-dot" />Besucher</span></div>
-          <svg class="history-chart" viewBox="0 0 760 250" role="img" :aria-label="`Aufrufshistorie der letzten ${selectedDays} Tage`" preserveAspectRatio="none">
+          <svg class="history-chart" viewBox="0 0 760 250" role="img" :aria-label="selectedDays === 1 ? 'Seitenaufrufe und Besucher heute' : `Aufrufshistorie der letzten ${selectedDays} Tage`" preserveAspectRatio="none">
             <line v-for="y in [30, 80, 130, 180, 230]" :key="y" x1="20" :y1="y" x2="740" :y2="y" class="chart-grid" />
             <polyline :points="viewPoints" class="chart-line chart-line-views" />
             <polyline :points="visitorPoints" class="chart-line chart-line-visitors" />
@@ -33,7 +33,7 @@
               <circle :cx="pointX(index)" :cy="pointY(day.visitors)" r="3.5" class="chart-point chart-point-visitors"><title>{{ formatDate(day.date) }}: {{ day.visitors }} Besucher</title></circle>
             </g>
           </svg>
-          <div class="chart-labels"><span>{{ formatDate(analytics.daily[0]?.date) }}</span><span>{{ formatDate(analytics.daily[Math.floor(analytics.daily.length / 2)]?.date) }}</span><span>{{ formatDate(analytics.daily.at(-1)?.date) }}</span></div>
+          <div class="chart-labels"><span v-if="selectedDays === 1">Heute · {{ formatDate(analytics.daily[0]?.date) }}</span><template v-else><span>{{ formatDate(analytics.daily[0]?.date) }}</span><span>{{ formatDate(analytics.daily[Math.floor(analytics.daily.length / 2)]?.date) }}</span><span>{{ formatDate(analytics.daily.at(-1)?.date) }}</span></template></div>
         </div>
         <AppStatePanel v-else title="Noch keine Aufrufe" message="Neue öffentliche Seitenaufrufe erscheinen ab jetzt automatisch hier." />
       </AppPanel>
@@ -59,6 +59,8 @@
 </template>
 
 <script setup lang="ts">
+import { ANALYTICS_RANGE_DAYS, type AnalyticsRangeDays } from "~/utils/analyticsRange";
+
 type AnalyticsResponse = {
   rangeDays: number;
   summary: { pageViews: number; visitors: number; registrations: number; waitlistJoins: number };
@@ -70,8 +72,8 @@ type AnalyticsResponse = {
 definePageMeta({ layout: "default" });
 useHead({ title: "Website-Analytics – PTCG Event Jams" });
 
-const rangeOptions = [7, 30, 90] as const;
-const selectedDays = ref<(typeof rangeOptions)[number]>(30);
+const rangeOptions = ANALYTICS_RANGE_DAYS;
+const selectedDays = ref<AnalyticsRangeDays>(1);
 const { data: analytics, pending, error, refresh } = await useFetch<AnalyticsResponse>("/api/admin/analytics", {
   query: computed(() => ({ days: selectedDays.value })),
   watch: [selectedDays],
@@ -111,16 +113,18 @@ const pageLabel = (path: string) => ({
 </script>
 
 <style scoped>
-.range-switch { display: inline-flex; gap: 0.2rem; padding: 0.15rem; border: 1px solid var(--app-border); border-radius: 4px; background: var(--app-surface-1); }
-.range-switch button, .retry-button { border: 0; border-radius: 3px; padding: 0.38rem 0.55rem; background: transparent; color: var(--app-text-secondary); font-weight: 700; cursor: pointer; }
-.range-switch button.active, .retry-button { background: var(--app-accent); color: var(--app-bg-page); }
+.range-switch { display: inline-flex; flex-wrap: wrap; gap: 0.2rem; padding: 0.15rem; border: 1px solid var(--app-border); border-radius: var(--admin-control-radius); background: var(--app-surface-1); }
+.range-switch button { min-height: var(--admin-control-height); border: 0; border-radius: var(--admin-control-radius); padding: 0.5rem 0.75rem; background: transparent; color: var(--app-text-secondary); font: inherit; font-size: var(--admin-font-control); font-weight: 500; cursor: pointer; }
+.retry-button { border: 0; border-radius: var(--admin-control-radius); padding: 0.5rem 0.75rem; background: transparent; color: var(--app-text-secondary); font-weight: 500; cursor: pointer; }
+.range-switch button.active { color: var(--app-button-blue-text); background: linear-gradient(135deg, color-mix(in srgb, var(--app-button-blue) 84%, white), color-mix(in srgb, var(--app-button-green) 68%, var(--app-button-blue))); box-shadow: var(--app-shadow-soft); }
+.retry-button { background: var(--app-accent); color: var(--app-bg-page); }
 .summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
 .summary-card { display: flex; min-width: 0; flex-direction: column; gap: 0.15rem; padding: 0.7rem; border: 1px solid var(--app-border); border-radius: 5px; background: var(--app-surface-0); }
-.summary-card span { color: var(--app-text-secondary); font-size: 0.78rem; font-weight: 700; }
+.summary-card span { color: var(--app-text-secondary); font-size: var(--admin-font-body); font-weight: 700; }
 .summary-card strong { color: var(--app-text-primary); font-size: clamp(1.5rem, 5vw, 1.85rem); line-height: 1; }
-.summary-card small { overflow: hidden; color: var(--app-text-muted); font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
+.summary-card small { color: var(--app-text-muted); font-size: var(--admin-font-support); }
 .chart-wrap { min-width: 0; }
-.chart-legend { display: flex; justify-content: flex-end; gap: 1rem; color: var(--app-text-muted); font-size: 0.75rem; }
+.chart-legend { display: flex; justify-content: flex-end; gap: 1rem; color: var(--app-text-muted); font-size: var(--admin-font-support); }
 .chart-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
 .chart-legend i { width: 0.65rem; height: 0.65rem; border-radius: 999px; }
 .views-dot { background: var(--app-accent); }
@@ -131,15 +135,16 @@ const pageLabel = (path: string) => ({
 .chart-line-views, .chart-point-views { stroke: var(--app-accent); fill: var(--app-accent); }
 .chart-line-visitors, .chart-point-visitors { stroke: #a78bfa; fill: #a78bfa; }
 .chart-point { vector-effect: non-scaling-stroke; }
-.chart-labels { display: flex; justify-content: space-between; color: var(--app-text-muted); font-size: 0.72rem; }
+.chart-labels { display: flex; justify-content: space-between; color: var(--app-text-muted); font-size: var(--admin-font-support); }
 .detail-grid { display: grid; gap: 0.7rem; }
 .metric-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .metric-list li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid var(--app-border); }
 .metric-list li:last-child { border-bottom: 0; }
 .metric-list div { display: flex; min-width: 0; flex-direction: column; }
-.metric-list strong { color: var(--app-text-primary); font-size: 0.88rem; }
-.metric-list span { overflow: hidden; color: var(--app-text-muted); font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
+.metric-list strong { color: var(--app-text-primary); font-size: var(--admin-font-body); }
+.metric-list span { overflow: hidden; color: var(--app-text-muted); font-size: var(--admin-font-support); text-overflow: ellipsis; white-space: nowrap; }
 .metric-list b { flex-shrink: 0; color: var(--app-text-primary); font-size: 1.1rem; }
-.privacy-note { margin: 0; padding: 0 0.25rem; color: var(--app-text-muted); font-size: 0.74rem; line-height: 1.5; }
-@media (min-width: 700px) { .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; } .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.privacy-note { margin: 0; padding: 0 0.25rem; color: var(--app-text-muted); font-size: var(--admin-font-support); line-height: 1.5; }
+@media (min-width: 1201px) { .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem; } }
+@media (min-width: 700px) { .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
