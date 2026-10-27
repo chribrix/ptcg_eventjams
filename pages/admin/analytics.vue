@@ -24,15 +24,25 @@
       <AppPanel :title="selectedDays === 1 ? 'Heute' : 'Tägliche Entwicklung'" :subtitle="selectedDays === 1 ? 'Seitenaufrufe und anonyme Besucher seit Mitternacht (Berlin)' : 'Seitenaufrufe und anonyme Besucher im gewählten Zeitraum'" compact>
         <div v-if="hasTraffic" class="chart-wrap">
           <div class="chart-legend" aria-hidden="true"><span><i class="views-dot" />Aufrufe</span><span><i class="visitors-dot" />Besucher</span></div>
-          <svg class="history-chart" viewBox="0 0 760 250" role="img" :aria-label="selectedDays === 1 ? 'Seitenaufrufe und Besucher heute' : `Aufrufshistorie der letzten ${selectedDays} Tage`" preserveAspectRatio="none">
-            <line v-for="y in [30, 80, 130, 180, 230]" :key="y" x1="20" :y1="y" x2="740" :y2="y" class="chart-grid" />
-            <polyline :points="viewPoints" class="chart-line chart-line-views" />
-            <polyline :points="visitorPoints" class="chart-line chart-line-visitors" />
-            <g v-for="(day, index) in analytics.daily" :key="day.date">
-              <circle :cx="pointX(index)" :cy="pointY(day.pageViews)" r="4" class="chart-point chart-point-views"><title>{{ formatDate(day.date) }}: {{ day.pageViews }} Aufrufe</title></circle>
-              <circle :cx="pointX(index)" :cy="pointY(day.visitors)" r="3.5" class="chart-point chart-point-visitors"><title>{{ formatDate(day.date) }}: {{ day.visitors }} Besucher</title></circle>
-            </g>
-          </svg>
+          <div class="chart-stage">
+            <svg class="history-chart" viewBox="0 0 760 250" role="img" tabindex="0" :aria-label="chartAriaLabel" aria-describedby="chart-help" preserveAspectRatio="none" @pointermove="onChartPointerMove" @pointerdown="onChartPointerMove" @pointerleave="activeDayIndex = null" @focus="focusChart" @blur="activeDayIndex = null" @keydown="onChartKeydown">
+              <rect x="0" y="0" width="760" height="250" fill="transparent" />
+              <line v-for="y in [30, 80, 130, 180, 230]" :key="y" x1="20" :y1="y" x2="740" :y2="y" class="chart-grid" />
+              <polyline :points="viewPoints" class="chart-line chart-line-views" />
+              <polyline :points="visitorPoints" class="chart-line chart-line-visitors" />
+              <line v-if="activeDayIndex !== null" :x1="pointX(activeDayIndex)" y1="25" :x2="pointX(activeDayIndex)" y2="230" class="chart-guide" />
+            </svg>
+            <template v-if="displayDay && displayDayIndex !== null">
+              <span class="chart-focus-point chart-focus-views" :style="pointStyle(displayDayIndex, displayDay.pageViews)" aria-hidden="true" />
+              <span class="chart-focus-point chart-focus-visitors" :style="pointStyle(displayDayIndex, displayDay.visitors)" aria-hidden="true" />
+            </template>
+            <div v-if="activeDay && activeDayIndex !== null" class="chart-tooltip" :style="tooltipStyle(activeDayIndex)">
+              <strong>{{ formatDate(activeDay.date) }}</strong>
+              <span><i class="views-dot" />{{ formatNumber(activeDay.pageViews) }} Aufrufe</span>
+              <span><i class="visitors-dot" />{{ formatNumber(activeDay.visitors) }} Besucher</span>
+            </div>
+          </div>
+          <p id="chart-help" class="sr-only">Diagramm fokussieren und mit den Pfeiltasten durch die Tage wechseln.</p>
           <div class="chart-labels"><span v-if="selectedDays === 1">Heute · {{ formatDate(analytics.daily[0]?.date) }}</span><template v-else><span>{{ formatDate(analytics.daily[0]?.date) }}</span><span>{{ formatDate(analytics.daily[Math.floor(analytics.daily.length / 2)]?.date) }}</span><span>{{ formatDate(analytics.daily.at(-1)?.date) }}</span></template></div>
         </div>
         <AppStatePanel v-else title="Noch keine Aufrufe" message="Neue öffentliche Seitenaufrufe erscheinen ab jetzt automatisch hier." />
@@ -92,6 +102,45 @@ const pointY = (value: number) => 230 - (value / chartMax.value) * 200;
 const pointsFor = (key: "pageViews" | "visitors") => (analytics.value?.daily || []).map((day, index) => `${pointX(index)},${pointY(day[key])}`).join(" ");
 const viewPoints = computed(() => pointsFor("pageViews"));
 const visitorPoints = computed(() => pointsFor("visitors"));
+const activeDayIndex = ref<number | null>(null);
+watch(selectedDays, () => { activeDayIndex.value = null; });
+const activeDay = computed(() => activeDayIndex.value === null ? null : analytics.value?.daily[activeDayIndex.value] ?? null);
+const displayDayIndex = computed(() => activeDayIndex.value ?? (analytics.value?.daily.length === 1 ? 0 : null));
+const displayDay = computed(() => displayDayIndex.value === null ? null : analytics.value?.daily[displayDayIndex.value] ?? null);
+const chartAriaLabel = computed(() => activeDay.value
+  ? `${formatDate(activeDay.value.date)}: ${formatNumber(activeDay.value.pageViews)} Aufrufe, ${formatNumber(activeDay.value.visitors)} Besucher`
+  : selectedDays.value === 1 ? "Seitenaufrufe und Besucher heute" : `Aufrufshistorie der letzten ${selectedDays.value} Tage`);
+
+function onChartPointerMove(event: PointerEvent) {
+  const count = analytics.value?.daily.length || 0;
+  if (!count) return;
+  const bounds = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+  const x = ((event.clientX - bounds.left) / bounds.width) * 760;
+  activeDayIndex.value = count === 1 ? 0 : Math.max(0, Math.min(count - 1, Math.round(((x - 20) / 720) * (count - 1))));
+}
+
+function focusChart() {
+  activeDayIndex.value = Math.max(0, (analytics.value?.daily.length || 1) - 1);
+}
+
+function onChartKeydown(event: KeyboardEvent) {
+  const count = analytics.value?.daily.length || 0;
+  if (!count || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+  event.preventDefault();
+  if (event.key === "Home") activeDayIndex.value = 0;
+  else if (event.key === "End") activeDayIndex.value = count - 1;
+  else activeDayIndex.value = Math.max(0, Math.min(count - 1, (activeDayIndex.value ?? count - 1) + (event.key === "ArrowRight" ? 1 : -1)));
+}
+
+const pointStyle = (index: number, value: number) => ({ left: `${(pointX(index) / 760) * 100}%`, top: `${(pointY(value) / 250) * 100}%` });
+const tooltipStyle = (index: number) => {
+  const day = analytics.value?.daily[index];
+  const top = day ? (pointY(Math.max(day.pageViews, day.visitors)) / 250) * 100 + 8 : 15;
+  return {
+    left: `${Math.max(15, Math.min(85, (pointX(index) / 760) * 100))}%`,
+    top: `${Math.max(15, Math.min(60, top))}%`,
+  };
+};
 
 const actionLabels: Record<string, [string, string]> = {
   event_list_view: ["Eventliste angesehen", "Besucher prüfen verfügbare Events"],
@@ -129,12 +178,21 @@ const pageLabel = (path: string) => ({
 .chart-legend i { width: 0.65rem; height: 0.65rem; border-radius: 999px; }
 .views-dot { background: var(--app-accent); }
 .visitors-dot { background: #a78bfa; }
-.history-chart { width: 100%; height: 12rem; overflow: visible; }
+.chart-stage { position: relative; }
+.history-chart { display: block; width: 100%; height: 12rem; overflow: visible; cursor: crosshair; }
+.history-chart:focus-visible { outline: 2px solid var(--app-accent); outline-offset: 2px; }
 .chart-grid { stroke: var(--app-border); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .chart-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.chart-line-views, .chart-point-views { stroke: var(--app-accent); fill: var(--app-accent); }
-.chart-line-visitors, .chart-point-visitors { stroke: #a78bfa; fill: #a78bfa; }
-.chart-point { vector-effect: non-scaling-stroke; }
+.chart-line-views { stroke: var(--app-accent); }
+.chart-line-visitors { stroke: #a78bfa; }
+.chart-guide { stroke: var(--app-text-muted); stroke-width: 1; stroke-dasharray: 4 5; vector-effect: non-scaling-stroke; pointer-events: none; }
+.chart-focus-point { position: absolute; z-index: 1; width: 0.75rem; height: 0.75rem; border: 2px solid var(--app-surface-0); border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 1px var(--app-border); pointer-events: none; }
+.chart-focus-views { background: var(--app-accent); }
+.chart-focus-visitors { background: #a78bfa; }
+.chart-tooltip { position: absolute; z-index: 2; display: grid; gap: 0.2rem; min-width: 9rem; padding: 0.5rem 0.65rem; border: 1px solid var(--app-border); border-radius: var(--admin-control-radius); background: var(--app-surface-0); box-shadow: var(--app-shadow-soft); color: var(--app-text-primary); font-size: var(--admin-font-support); transform: translateX(-50%); pointer-events: none; }
+.chart-tooltip strong { font-size: var(--admin-font-body); }
+.chart-tooltip span { display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.chart-tooltip i { width: 0.55rem; height: 0.55rem; flex: none; border-radius: 50%; }
 .chart-labels { display: flex; justify-content: space-between; color: var(--app-text-muted); font-size: var(--admin-font-support); }
 .detail-grid { display: grid; gap: 0.7rem; }
 .metric-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
