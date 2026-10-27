@@ -41,7 +41,7 @@
   padding: 0.5rem 0.65rem;
   border: 1px solid var(--admin-border, rgba(148, 163, 184, 0.18));
   border-radius: 4px;
-  font-size: 0.84rem;
+  font-size: var(--admin-font-body, 1rem);
   background: var(--admin-input, rgba(15, 23, 42, 0.72));
   color: var(--admin-text, #e5eefb);
   transition: all 0.2s;
@@ -61,14 +61,14 @@
 
 /* Button Styles */
 .btn {
-  min-height: var(--admin-control-height, 2.25rem);
+  min-height: var(--admin-control-height, 2.4375rem);
   padding: 0.45rem 0.75rem;
   border: none;
   border-radius: var(--admin-control-radius, 0.5rem);
   font-family: inherit;
   font-size: var(--admin-font-control, 0.875rem);
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.5;
   cursor: pointer;
   transition: all 0.2s;
   display: inline-flex;
@@ -145,9 +145,9 @@
 
 .btn-sm,
 .btn-small {
-  min-height: var(--admin-control-height-small, 1.875rem);
-  padding: 0.3rem 0.55rem;
-  font-size: var(--admin-font-control-small, 0.75rem);
+  min-height: var(--admin-control-height-small, 2.4375rem);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--admin-font-control-small, 0.875rem);
 }
 
 /* Grid Layouts */
@@ -191,7 +191,7 @@
 }
 
 .stat-content h3 {
-  font-size: 0.875rem;
+  font-size: var(--admin-font-body, 1rem);
   font-weight: 500;
   color: var(--admin-muted, #94a3b8);
   margin: 0 0 0.25rem 0;
@@ -215,7 +215,7 @@
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: var(--admin-font-body, 1rem);
 }
 
 .admin-table thead {
@@ -248,7 +248,7 @@
 
 .form-group label {
   display: block;
-  font-size: 0.875rem;
+  font-size: var(--admin-font-body, 1rem);
   font-weight: 500;
   color: var(--admin-muted-soft, #cbd5e1);
   margin-bottom: 0.3rem;
@@ -372,7 +372,7 @@
 }
 
 .modal-header h2 {
-  font-size: 1.15rem;
+  font-size: var(--admin-font-section-title, 1.375rem);
   font-weight: 600;
   color: var(--admin-text-strong, #f8fafc);
   margin: 0;
@@ -426,7 +426,7 @@
   align-items: center;
   padding: 0.18rem 0.45rem;
   border-radius: 3px;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 500;
 }
 
@@ -455,7 +455,7 @@
   display: inline-block;
   padding: 0.18rem 0.45rem;
   border-radius: 3px;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   font-weight: 500;
 }
 
