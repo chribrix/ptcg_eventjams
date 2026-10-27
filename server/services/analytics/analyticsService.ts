@@ -7,6 +7,7 @@ import { normalizeAnalyticsRangeDays } from "~/utils/analyticsRange";
 
 export const ANALYTICS_EVENT_TYPES = [
   "page_view",
+  "interaction_click",
   "registration_completed",
   "waitlist_joined",
   "waitlist_confirmed",
@@ -117,7 +118,8 @@ export async function getAnalyticsOverview(days: unknown = 1) {
       prisma.$queryRaw<CountRow[]>(Prisma.sql`
         SELECT COUNT(DISTINCT visitor_hash) AS value
         FROM public.analytics_events
-        WHERE (occurred_at AT TIME ZONE ${TIME_ZONE})::date >= ${rangeStart}
+        WHERE event_type <> 'page_view'
+          AND (occurred_at AT TIME ZONE ${TIME_ZONE})::date >= ${rangeStart}
       `),
       prisma.$queryRaw<CountRow[]>(Prisma.sql`
         SELECT COUNT(*) AS value
@@ -142,7 +144,7 @@ export async function getAnalyticsOverview(days: unknown = 1) {
         SELECT
           days.day AS date,
           COUNT(events.id) FILTER (WHERE events.event_type = 'page_view') AS page_views,
-          COUNT(DISTINCT events.visitor_hash) AS visitors,
+          COUNT(DISTINCT events.visitor_hash) FILTER (WHERE events.event_type <> 'page_view') AS visitors,
           COUNT(events.id) FILTER (WHERE events.event_type = 'registration_completed') AS registrations
         FROM days
         LEFT JOIN public.analytics_events events
@@ -151,23 +153,11 @@ export async function getAnalyticsOverview(days: unknown = 1) {
         ORDER BY days.day ASC
       `),
       prisma.$queryRaw<BreakdownRow[]>(Prisma.sql`
-        SELECT
-          CASE
-            WHEN event_type = 'registration_completed' THEN 'registration_completed'
-            WHEN event_type = 'waitlist_joined' THEN 'waitlist_joined'
-            WHEN event_type = 'waitlist_confirmed' THEN 'waitlist_confirmed'
-            WHEN event_type = 'event_bookmarked' THEN 'event_bookmarked'
-            WHEN path = '/eventlist' THEN 'event_list_view'
-            WHEN path ~ '^/events/register/[^/]+$' THEN 'registration_form_view'
-            WHEN path ~ '^/events/[^/]+$' THEN 'event_detail_view'
-            WHEN path = '/dashboard' THEN 'dashboard_view'
-            WHEN path = '/' THEN 'landing_page_view'
-            ELSE 'other_page_view'
-          END AS key,
-          COUNT(*) AS count
+        SELECT event_type AS key, COUNT(*) AS count
         FROM public.analytics_events
-        WHERE (occurred_at AT TIME ZONE ${TIME_ZONE})::date >= ${rangeStart}
-        GROUP BY key
+        WHERE event_type IN ('registration_completed', 'waitlist_joined', 'waitlist_confirmed', 'event_bookmarked')
+          AND (occurred_at AT TIME ZONE ${TIME_ZONE})::date >= ${rangeStart}
+        GROUP BY event_type
         ORDER BY count DESC
       `),
       prisma.$queryRaw<BreakdownRow[]>(Prisma.sql`
@@ -177,9 +167,9 @@ export async function getAnalyticsOverview(days: unknown = 1) {
             WHEN path ~ '^/events/[^/]+$' THEN '/events/:id'
             ELSE path
           END AS key,
-          COUNT(*) AS count
+          COUNT(DISTINCT visitor_hash) AS count
         FROM public.analytics_events
-        WHERE event_type = 'page_view'
+        WHERE event_type <> 'page_view'
           AND (occurred_at AT TIME ZONE ${TIME_ZONE})::date >= ${rangeStart}
         GROUP BY key
         ORDER BY count DESC

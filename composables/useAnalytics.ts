@@ -1,4 +1,5 @@
 export type ClientAnalyticsEvent =
+  | "interaction_click"
   | "registration_completed"
   | "waitlist_joined"
   | "waitlist_confirmed"

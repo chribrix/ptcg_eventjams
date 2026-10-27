@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeAnalyticsPath } from "../../server/services/analytics/analyticsService";
+import { ANALYTICS_EVENT_TYPES, normalizeAnalyticsPath } from "../../server/services/analytics/analyticsService";
 import { normalizeAnalyticsRangeDays } from "../../utils/analyticsRange";
 
 describe("analytics path normalization", () => {
@@ -27,5 +27,13 @@ describe("analytics date range", () => {
     expect(normalizeAnalyticsRangeDays(30)).toBe(30);
     expect(normalizeAnalyticsRangeDays(90)).toBe(90);
     expect(normalizeAnalyticsRangeDays("365")).toBe(1);
+  });
+});
+
+describe("analytics interaction contract", () => {
+  it("accepts clicks while retaining the existing event types", () => {
+    expect(ANALYTICS_EVENT_TYPES).toContain("interaction_click");
+    expect(ANALYTICS_EVENT_TYPES).toContain("page_view");
+    expect(ANALYTICS_EVENT_TYPES).toContain("registration_completed");
   });
 });
