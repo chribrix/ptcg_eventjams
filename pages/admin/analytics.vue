@@ -16,8 +16,10 @@
     <template v-else-if="analytics">
       <section class="summary-grid" aria-label="Zusammenfassung">
         <article class="summary-card summary-card-primary"><span>Aktive Besucher</span><strong>{{ formatNumber(analytics.summary.visitors) }}</strong><small>mindestens ein Klick oder eine Aktion · pro Tag anonym gezählt</small></article>
-        <article class="summary-card"><span>Registrierungen</span><strong>{{ formatNumber(analytics.summary.registrations) }}</strong><small>erfolgreich abgeschlossen</small></article>
-        <article class="summary-card"><span>Warteliste</span><strong>{{ formatNumber(analytics.summary.waitlistJoins) }}</strong><small>neu beigetreten</small></article>
+        <article class="summary-card"><span>Kalenderklicks</span><strong>{{ formatNumber(analytics.summary.homeCalendarClicks) }}</strong><small>Eventkalender auf der Startseite</small></article>
+        <article class="summary-card"><span>Logins</span><strong>{{ formatNumber(analytics.summary.logins) }}</strong><small>erfolgreiche Anmeldungen</small></article>
+        <article class="summary-card"><span>Dashboard-Aufrufe</span><strong>{{ formatNumber(analytics.summary.dashboardViews) }}</strong><small>Seite /dashboard</small></article>
+        <article class="summary-card"><span>Eventliste-Aufrufe</span><strong>{{ formatNumber(analytics.summary.eventListViews) }}</strong><small>Seite /eventlist</small></article>
       </section>
 
       <AppPanel :title="selectedDays === 1 ? 'Heute' : 'Tägliche Entwicklung'" :subtitle="selectedDays === 1 ? 'Aktive Besucher seit Mitternacht (Berlin)' : 'Täglich aktive Besucher im gewählten Zeitraum'" compact>
@@ -69,7 +71,7 @@ import { ANALYTICS_RANGE_DAYS, type AnalyticsRangeDays } from "~/utils/analytics
 
 type AnalyticsResponse = {
   rangeDays: number;
-  summary: { pageViews: number; visitors: number; registrations: number; waitlistJoins: number };
+  summary: { pageViews: number; visitors: number; registrations: number; waitlistJoins: number; homeCalendarClicks: number; logins: number; dashboardViews: number; eventListViews: number };
   daily: Array<{ date: string; pageViews: number; visitors: number; registrations: number }>;
   actions: Array<{ key: string; count: number }>;
   topPages: Array<{ path: string; count: number }>;
@@ -189,6 +191,6 @@ const pageLabel = (path: string) => ({
 .metric-list span { overflow: hidden; color: var(--app-text-muted); font-size: var(--admin-font-support); text-overflow: ellipsis; white-space: nowrap; }
 .metric-list b { flex-shrink: 0; color: var(--app-text-primary); font-size: 1.1rem; }
 .privacy-note { margin: 0; padding: 0 0.25rem; color: var(--app-text-muted); font-size: var(--admin-font-support); line-height: 1.5; }
-@media (min-width: 1201px) { .summary-grid { grid-template-columns: 2fr 1fr 1fr; gap: 0.7rem; } .summary-card-primary { grid-column: auto; } }
+@media (min-width: 1201px) { .summary-grid { grid-template-columns: 1.5fr repeat(4, minmax(0, 1fr)); gap: 0.7rem; } .summary-card-primary { grid-column: auto; } }
 @media (min-width: 700px) { .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>

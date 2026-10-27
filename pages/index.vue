@@ -21,7 +21,7 @@
               Aktuelle Events
             </p>
           </div>
-          <div class="px-1.5 pb-2.5 sm:px-3 sm:pb-3">
+          <div class="px-1.5 pb-2.5 sm:px-3 sm:pb-3" @click.capture="trackHomeCalendarClick">
             <EventCalendarCard ref="calendarCardRef" :show-mobile-auth-cta="false" />
           </div>
         </article>
@@ -69,6 +69,7 @@ import {
 import EventCalendarCard from "~/components/landingPageCards/calendar/EventCalendarCard.vue";
 import MyEventsCompactPanel from "~/components/landingPageCards/dashboard/MyEventsCompactPanel.vue";
 import AdminEventQuickCreate from "~/components/AdminEventQuickCreate.vue";
+import { sendAnalyticsEvent } from "~/composables/useAnalytics";
 
 const { userName } = useAuth();
 const { t } = useI18n();
@@ -77,5 +78,9 @@ const calendarCardRef = ref<InstanceType<typeof EventCalendarCard> | null>(null)
 
 function onEventCreated() {
   calendarCardRef.value?.refresh();
+}
+
+function trackHomeCalendarClick(event: MouseEvent) {
+  if (event.isTrusted) sendAnalyticsEvent("home_calendar_click", { path: "/" });
 }
 </script>

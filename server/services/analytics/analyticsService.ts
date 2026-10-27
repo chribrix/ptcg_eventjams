@@ -8,6 +8,8 @@ import { normalizeAnalyticsRangeDays } from "~/utils/analyticsRange";
 export const ANALYTICS_EVENT_TYPES = [
   "page_view",
   "interaction_click",
+  "home_calendar_click",
+  "login_completed",
   "registration_completed",
   "waitlist_joined",
   "waitlist_confirmed",
@@ -98,6 +100,12 @@ type DailyRow = {
   registrations: bigint | number;
 };
 type BreakdownRow = { key: string; count: bigint | number };
+type RequestedMetricsRow = {
+  home_calendar_clicks: bigint | number;
+  logins: bigint | number;
+  dashboard_views: bigint | number;
+  event_list_views: bigint | number;
+};
 
 const asNumber = (value: bigint | number) => Number(value);
 
@@ -107,7 +115,7 @@ export async function getAnalyticsOverview(days: unknown = 1) {
     (CURRENT_TIMESTAMP AT TIME ZONE ${TIME_ZONE})::date - (${safeDays}::int - 1)
   )`;
 
-  const [pageViews, visitors, registrations, waitlistJoins, daily, actions, topPages] =
+  const [pageViews, visitors, registrations, waitlistJoins, daily, actions, topPages, requestedMetrics] =
     await Promise.all([
       prisma.$queryRaw<CountRow[]>(Prisma.sql`
         SELECT COUNT(*) AS value
@@ -175,6 +183,15 @@ export async function getAnalyticsOverview(days: unknown = 1) {
         ORDER BY count DESC
         LIMIT 8
       `),
+      prisma.$queryRaw<RequestedMetricsRow[]>(Prisma.sql`
+        SELECT
+          COUNT(*) FILTER (WHERE event_type = 'home_calendar_click' AND path = '/') AS home_calendar_clicks,
+          COUNT(*) FILTER (WHERE event_type = 'login_completed') AS logins,
+          COUNT(*) FILTER (WHERE event_type = 'page_view' AND path = '/dashboard') AS dashboard_views,
+          COUNT(*) FILTER (WHERE event_type = 'page_view' AND path = '/eventlist') AS event_list_views
+        FROM public.analytics_events
+        WHERE (occurred_at AT TIME ZONE ${TIME_ZONE})::date >= ${rangeStart}
+      `),
     ]);
 
   return {
@@ -184,6 +201,10 @@ export async function getAnalyticsOverview(days: unknown = 1) {
       visitors: asNumber(visitors[0]?.value || 0),
       registrations: asNumber(registrations[0]?.value || 0),
       waitlistJoins: asNumber(waitlistJoins[0]?.value || 0),
+      homeCalendarClicks: asNumber(requestedMetrics[0]?.home_calendar_clicks || 0),
+      logins: asNumber(requestedMetrics[0]?.logins || 0),
+      dashboardViews: asNumber(requestedMetrics[0]?.dashboard_views || 0),
+      eventListViews: asNumber(requestedMetrics[0]?.event_list_views || 0),
     },
     daily: daily.map((row) => ({
       date: row.date instanceof Date ? row.date.toISOString().slice(0, 10) : String(row.date),

@@ -1,5 +1,7 @@
 export type ClientAnalyticsEvent =
   | "interaction_click"
+  | "home_calendar_click"
+  | "login_completed"
   | "registration_completed"
   | "waitlist_joined"
   | "waitlist_confirmed"
@@ -38,4 +40,8 @@ export function useAnalytics() {
     track: (eventType: ClientAnalyticsEvent, eventId?: string | null) =>
       sendAnalyticsEvent(eventType, { eventId }),
   };
+}
+
+export function trackSuccessfulLogin() {
+  sendAnalyticsEvent("login_completed", { path: "/login" });
 }

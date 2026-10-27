@@ -36,4 +36,9 @@ describe("analytics interaction contract", () => {
     expect(ANALYTICS_EVENT_TYPES).toContain("page_view");
     expect(ANALYTICS_EVENT_TYPES).toContain("registration_completed");
   });
+
+  it("accepts the specifically requested calendar and successful-login signals", () => {
+    expect(ANALYTICS_EVENT_TYPES).toContain("home_calendar_click");
+    expect(ANALYTICS_EVENT_TYPES).toContain("login_completed");
+  });
 });

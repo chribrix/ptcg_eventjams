@@ -1,5 +1,7 @@
 type LoginStep = "email" | "method" | "password" | "passwordSetup" | "otp";
 
+import { trackSuccessfulLogin } from "~/composables/useAnalytics";
+
 export const useLoginWorkflow = () => {
   const route = useRoute();
   const runtimeConfig = useRuntimeConfig();
@@ -188,6 +190,7 @@ export const useLoginWorkflow = () => {
         throw sessionError;
       }
 
+      trackSuccessfulLogin();
       await navigateTo((route.query.redirect as string) || "/");
     } catch (err: any) {
       const msg: string =
@@ -310,6 +313,7 @@ export const useLoginWorkflow = () => {
       // best-effort only
     }
 
+    trackSuccessfulLogin();
     await navigateTo((route.query.redirect as string) || "/");
   };
 
@@ -411,6 +415,7 @@ export const useLoginWorkflow = () => {
         }
 
         hasPassword.value = true;
+        trackSuccessfulLogin();
         await navigateTo((route.query.redirect as string) || "/");
         return;
       }

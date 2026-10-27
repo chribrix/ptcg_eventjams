@@ -10,4 +10,6 @@
 
 Die Datenbank-Constraint erlaubt `interaction_click` ab Migration `20261027120000_add_analytics_interaction_click`; sie wurde auf der lokalen Dev-Datenbank angewendet.
 
+**Gezielte Kennzahlen:** `home_calendar_click` zählt jeden echten Klick innerhalb der Kalenderkomponente auf der Startseite (einschließlich Monatswechsel, Tagen, Kategorien und Eventdetails). `login_completed` wird ausschließlich nach erfolgreich gesetzter Session im Login-Workflow erfasst: Passwort, OTP oder direkter Login nach erstmaligem Passwortsetzen. Ein versendeter OTP-Code, Passwort-Reset und Registrierung zählen nicht als Login. `/dashboard` und `/eventlist` werden aus den vorhandenen `page_view`-Ereignissen gezählt. Alle vier Werte sind Ereignisanzahlen im gewählten Zeitraum, keine eindeutigen Personen. Sprachpräfixe werden bei den Pfaden normalisiert. Die neuen Ereignistypen sind ab Migration `20261027150000_add_analytics_key_interactions` zugelassen; ältere Kalenderklicks und Logins sind rückwirkend nicht rekonstruierbar.
+
 **Betrieb und Nachweis:** Heute mit Nitro deployt. Bei separatem Betrieb braucht der Dienst einen versionierten Tracking-/Auswertungsvertrag, eigene Datenhoheit, Ausfallverhalten und Tenant-Scope. `tests/unit/analyticsService.test.ts` prüft Pfadnormalisierung; Erfassungs- und Ausfalltests sind noch zu ergänzen.
