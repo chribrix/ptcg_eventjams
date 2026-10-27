@@ -34,3 +34,7 @@ export function getPokemonGameMarker(
   if (gameType === "go") return "G";
   return undefined;
 }
+
+export function getPokemonGameLabel(gameType: PokemonGameType): string {
+  return POKEMON_GAME_OPTIONS.find((option) => option.gameType === gameType)!.label;
+}

@@ -301,6 +301,7 @@
                 @keydown.enter.prevent="openEventDetails(event)"
                 @keydown.space.prevent="openEventDetails(event)"
               >
+                <EventGameWatermark :game-type="event.gameType" />
                 <div class="event-list-card-main">
                   <div class="event-list-card-primary">
                     <div
@@ -692,6 +693,13 @@ import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
 import { useEventBookmarks } from "~/composables/useEventBookmarks";
 import type { EventBookmarkDraft } from "~/utils/guestEventBookmarks";
 import { getEventColor } from "~/utils/eventColors";
+import EventGameWatermark from "~/components/events/EventGameWatermark.vue";
+import {
+  getPokemonGameType,
+  getPokemonGameTypeFromEventType,
+  getPokemonGameLabel,
+  type PokemonGameType,
+} from "~/types/eventGame";
 
 interface ExternalEvent {
   id: string;
@@ -745,6 +753,7 @@ interface UnifiedEvent {
   streetAddress?: string;
   description?: string;
   gameLabel?: string;
+  gameType?: PokemonGameType;
   priceLabel?: string;
   capacityLabel?: string;
   requiresDecklist: boolean;
@@ -1174,6 +1183,7 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
     type: event.type,
     icon: event.icon,
   });
+  const gameType = getPokemonGameTypeFromEventType(event.type);
   const hasLocalRegistration = Boolean(event.hasLocalRegistration);
   const internalLink = hasLocalRegistration
     ? `/events/register/${event.id}`
@@ -1206,7 +1216,8 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
     country: stripHtmlTags(event.country),
     streetAddress: stripHtmlTags(event.streetAddress || "") || undefined,
     description: undefined,
-    gameLabel: t("eventList.pokemonGame"),
+    gameLabel: gameType === "tcg" ? t("eventList.pokemonGame") : getPokemonGameLabel(gameType),
+    gameType,
     priceLabel: formatExternalPrice(event.cost),
     capacityLabel: undefined,
     requiresDecklist: false,
@@ -1250,6 +1261,8 @@ function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
     tagType: event.tagType,
   });
   const gameLabel = parsedTags?.game || formatGameLabel(event.tagType);
+  const gameType = getPokemonGameType(parsedTags?.game) ||
+    (event.tagType === "pokemon" ? "tcg" : undefined);
   const capacityLabel =
     typeof event.maxParticipants === "number"
       ? t("eventList.capacityRegistered", {
@@ -1284,6 +1297,7 @@ function normalizeCustomEvent(event: CustomEventResponse): UnifiedEvent {
     country: "",
     description: stripHtmlTags(event.description || "") || undefined,
     gameLabel,
+    gameType,
     priceLabel: formatCustomPrice(event.participationFee),
     capacityLabel,
     requiresDecklist: Boolean(event.requiresDecklist),
@@ -1532,6 +1546,8 @@ watch(user, async () => {
 }
 
 .event-list-card-main {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 0.75rem;
 }
@@ -1624,6 +1640,8 @@ watch(user, async () => {
 }
 
 .event-list-description {
+  position: relative;
+  z-index: 1;
   display: -webkit-box;
   margin: 0.75rem 0 0;
   overflow: hidden;
@@ -1635,6 +1653,8 @@ watch(user, async () => {
 }
 
 .event-list-card-footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;

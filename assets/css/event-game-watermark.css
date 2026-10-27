@@ -1,0 +1,44 @@
+/* Decorative game marks for public event cards. The app theme is set on html. */
+.event-game-watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0.75rem 1.25rem;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.event-game-watermark img {
+  display: block;
+  width: min(48%, 19rem);
+  max-height: 82%;
+  object-fit: contain;
+  opacity: 0.1;
+}
+
+.event-game-watermark .event-game-watermark__white-ink {
+  display: none;
+}
+
+html[data-theme="dark"] .event-game-watermark .event-game-watermark__dark-ink {
+  display: none;
+}
+
+html[data-theme="dark"] .event-game-watermark .event-game-watermark__white-ink {
+  display: block;
+}
+
+@media (max-width: 639px) {
+  .event-game-watermark {
+    justify-content: center;
+    padding-inline: 0.75rem;
+  }
+
+  .event-game-watermark img {
+    width: min(68%, 16rem);
+    opacity: 0.07;
+  }
+}

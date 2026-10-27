@@ -33,14 +33,15 @@
             <div
               v-for="event in events"
               :key="event.id"
-              class="mb-2 min-w-0 cursor-pointer rounded-lg border border-l-4 app-border app-surface-1 transition-all duration-200 hover:shadow-md last:mb-0"
+              class="relative mb-2 min-w-0 cursor-pointer overflow-hidden rounded-lg border border-l-4 app-border app-surface-1 transition-all duration-200 hover:shadow-md last:mb-0"
               :style="{
                 borderLeftColor: getEventBadgeStyles(event).backgroundColor,
               }"
               @click="toggleEventExpanded(event.id)"
             >
+              <EventGameWatermark :game-type="getEventGameType(event)" />
               <!-- Compact View -->
-              <div class="p-3 flex items-center justify-between gap-3">
+              <div class="relative z-10 p-3 flex items-center justify-between gap-3">
                 <div class="flex-1 min-w-0">
                   <div class="mb-1 flex min-w-0 items-center gap-1.5">
                     <span
@@ -88,7 +89,7 @@
               >
                 <div
                   v-if="expandedEvents.has(event.id)"
-                  class="px-3 pb-3 border-t app-border overflow-hidden"
+                  class="relative z-10 px-3 pb-3 border-t app-border overflow-hidden"
                   @click.stop
                 >
                   <div class="pt-3">
@@ -279,9 +280,11 @@ import {
 import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
 import { useEventBookmarks } from "~/composables/useEventBookmarks";
 import type { EventBookmarkDraft } from "~/utils/guestEventBookmarks";
+import EventGameWatermark from "~/components/events/EventGameWatermark.vue";
 import {
   getPokemonGameMarker,
   getPokemonGameType,
+  getPokemonGameTypeFromEventType,
   type PokemonGameType,
 } from "~/types/eventGame";
 const { t, locale } = useI18n();
@@ -589,11 +592,17 @@ const getEventTitle = (event: ParsedEvent): string => {
   return event.name || event.title || event.venue || "Event";
 };
 
-const getGameMarker = (event: ParsedEvent) => {
-  if (event.gameType) return getPokemonGameMarker(event.gameType);
-  if (event.tagType !== "pokemon" || !event.tags) return undefined;
-  return getPokemonGameMarker(getPokemonGameType(event.tags.game) || "tcg");
+const getEventGameType = (event: ParsedEvent): PokemonGameType | undefined => {
+  if (event.gameType) return event.gameType;
+  if (event.tagType === "pokemon") {
+    return getPokemonGameType(event.tags?.game) || "tcg";
+  }
+  if (!event.isCustomEvent) return getPokemonGameTypeFromEventType(event.type);
+  return undefined;
 };
+
+const getGameMarker = (event: ParsedEvent) =>
+  getPokemonGameMarker(getEventGameType(event));
 
 const getEventDate = (event: ParsedEvent): string => {
   if (isCustomEvent(event)) {
