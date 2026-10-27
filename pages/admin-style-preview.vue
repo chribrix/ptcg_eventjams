@@ -34,6 +34,10 @@
           </tbody>
         </table>
       </div>
+      <div class="preview-actions" aria-label="Beispielaktionen">
+        <button type="button" class="btn btn-secondary" @click="previewAction">Sekundär</button>
+        <button type="button" class="btn btn-primary" @click="previewAction">Primär</button>
+      </div>
     </section>
   </AdminPageLayout>
 </template>
@@ -42,6 +46,8 @@
 if (!import.meta.dev) throw createError({ statusCode: 404, statusMessage: "Not found" });
 definePageMeta({ layout: "default" });
 useHead({ title: "Admin Designvorschau – ChrispyJams" });
+const { showToast } = useToast();
+const previewAction = () => showToast("Designprobe: keine Daten geändert", "info", 2500);
 </script>
 
 <style scoped>
@@ -64,6 +70,7 @@ useHead({ title: "Admin Designvorschau – ChrispyJams" });
 .preview-type { color:var(--app-text-muted); font-size:.73rem; }
 .preview-subpage-kicker { margin:0 0 .15rem; color:var(--app-accent); font-size:.66rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
 .preview-subpage-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; }
+.preview-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:.5rem; margin-top:.65rem; }
 @media (max-width:560px) { .preview-subpage-fields { grid-template-columns:1fr; } }
 @media (max-width:720px) { .preview-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 </style>

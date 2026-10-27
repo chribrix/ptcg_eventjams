@@ -48,3 +48,7 @@ Die Desktop-Vorschau wurde im dunklen Atelier-Modus auf Port 3000 geprüft. `npm
 ## Farbpalette vom 27. Oktober 2026
 
 Atelier überschreibt die globalen `--app-*`-Farben nicht mehr. Admin-Hintergrund, Karten, Sidebar, Text, Linien, Akzente und Buttons verwenden damit in beiden Themes exakt die bereits für die globale Kopfzeile definierten Tokens. Aktiv-/Entwurfsstatus nutzen die globalen Badge-Farben. Signal und Editorial behalten nur auf der Dev-Vergleichsseite eigene Paletten. Die Vorschau wurde in Hell und Dunkel visuell geprüft. `npm run build` war erfolgreich; der Dev-Server auf Port 3000 wurde danach neu gestartet.
+
+## Kopfzeile als Button- und Schriftmaßstab
+
+Die bestehende globale Kopfzeile bleibt gestalterisch unverändert. Ihre Aktionsbuttons sind der Maßstab für Admin-Aktionen: 0,875 rem Schriftgröße, 0,5 rem Eckenradius, die vorhandenen `--app-button-*`-Farben, der weiche Schatten und für primäre Aktionen derselbe blau-grüne Verlauf. Sekundäre Aktionen verwenden die Oberflächen- und Rahmenfarben der App. Die Admin-Typografie und Kontrollhöhen stehen zentral in `assets/css/admin-workspace.css`; die gemeinsamen `.btn`-Regeln stehen in `assets/css/admin-shared.css`. Karten und Panels behalten ihre kompakteren Radien und Abstände. Die Dev-Vorschau zeigt einen primären und sekundären Beispielbutton zur direkten Gegenüberstellung mit der Kopfzeile. Hell und Dunkel wurden visuell geprüft.
