@@ -1,18 +1,21 @@
 import { z } from "zod";
 import { assertTomGuestAccessAttemptsAvailable, clearTomGuestAccessFailures, grantTomGuestAccess, recordTomGuestAccessFailure } from "~/server/services/events/tomGuestAccessService";
-import { matchesTomPlayerBirthDate, normalizeTomBirthDate } from "~/server/services/events/tomPlayerIdentity";
+import { matchesTomPlayerBirthDate, matchesTomPlayerBirthYear, normalizeTomBirthDate } from "~/server/services/events/tomPlayerIdentity";
 import { getTournamentTomState, recordTournamentPlayerAccess } from "~/server/services/events/tournamentTomStateService";
 
 const accessSchema = z.object({
   playerId: z.string().trim().regex(/^\d{4,12}$/),
-  birthDate: z.string().trim().refine((value) => {
-    const date = normalizeTomBirthDate(value);
-    return date !== null && date <= new Date().toISOString().slice(0, 10);
-  }),
-});
+  birthYear: z.coerce.number().int().min(1900).max(new Date().getFullYear()).optional(),
+  // Keep the previous request shape for already-open browser tabs during rollout.
+  birthDate: z.string().trim().optional(),
+}).refine((input) => input.birthYear !== undefined || (
+  !!input.birthDate &&
+  normalizeTomBirthDate(input.birthDate) !== null &&
+  normalizeTomBirthDate(input.birthDate)! <= new Date().toISOString().slice(0, 10)
+));
 
 const accessDeniedMessage =
-  "Deine Spieler-ID und dein Geburtsdatum konnten für dieses Turnier nicht gefunden werden. Bitte melde dich beim Veranstalter.";
+  "Deine Spieler-ID und dein Geburtsjahr konnten für dieses Turnier nicht gefunden werden. Bitte melde dich beim Veranstalter.";
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "eventId");
@@ -31,7 +34,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const tomPlayer = state.stateView.players.find(
-    (player) => player.userId === input.playerId && matchesTomPlayerBirthDate(player, input.birthDate),
+    (player) => player.userId === input.playerId && (input.birthYear !== undefined
+      ? matchesTomPlayerBirthYear(player, input.birthYear)
+      : matchesTomPlayerBirthDate(player, input.birthDate!)),
   );
   if (!tomPlayer) {
     recordTomGuestAccessFailure(attemptKey);

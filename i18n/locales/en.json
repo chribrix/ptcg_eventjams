@@ -738,7 +738,7 @@
     "points": "{count} pts",
     "currentRound": "Current Round",
     "guestAccessTitle": "Tournament access",
-    "guestAccessHelp": "Enter the Pokémon Player ID and date of birth used in the TOM registration. No account is needed.",
+    "guestAccessHelp": "Enter the Pokémon Player ID and birth year used in the TOM registration. No account is needed.",
     "playerId": "Pokémon Player ID",
     "birthDate": "Date of birth",
     "birthYear": "Birth year",

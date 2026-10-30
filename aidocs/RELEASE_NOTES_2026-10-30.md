@@ -10,6 +10,8 @@ Die vollständige Architekturplanung und die Prüftore stehen im [Architekturvor
 - **Turniere:** Unveröffentlichte TOM-Runden einschließlich Byes und Zwischenständen werden in der Spieleransicht nicht vorzeitig sichtbar. Ergebnismeldungen erhalten eine Request-ID, damit wiederholte Übertragungen sicherer behandelt werden können. Die Spielerantwort gibt keine unveröffentlichten TOM-Runden oder Geburtsdaten mehr zurück.
 - **QR-Zugang ohne Konto:** Der Turnier-Kurzlink öffnet die Spielerseite ohne Login. Gäste identifizieren sich mit Pokémon-Spieler-ID und vollständigem Geburtsdatum aus TOM; angemeldete Profile mit passender ID und passendem Geburtsjahr werden automatisch zugeordnet. Der Zugang gilt nur für das jeweilige freigegebene Turnier.
 
+**QR-Korrektur am 30. Oktober:** Der Gastzugang fragt jetzt wie vereinbart Pokémon-Spieler-ID und Geburtsjahr ab. Das vollständige Datum wird nicht mehr im Formular verlangt; bereits geöffnete Tabs mit dem bisherigen Request bleiben vorübergehend kompatibel.
+
 ## Administration
 
 - **Neue Oberfläche:** „Atelier“ ist die Admin-Gestaltung mit den bestehenden Farben der globalen Kopfzeile. Sie unterstützt Hell- und Dunkelmodus, kompaktere Elemente, einheitlichere Schrift- und Buttongrößen sowie eine größere, einklappbare Sidebar. Auf Mobilgeräten öffnet sich die Navigation als Drawer. Die Unterseiten wurden an gemeinsame CSS-Regeln angeglichen. Zwei weitere Gestaltungsrichtungen bleiben nur in der lokalen Vorschau unter `/admin-style-preview` zum Vergleich verfügbar.

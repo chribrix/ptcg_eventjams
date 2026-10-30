@@ -17,7 +17,7 @@ vi.mock("~/server/services/auth/authService", () => ({ resolveOptionalAuthUser: 
 vi.mock("~/server/services/events/tomGuestAccessService", () => ({ resolveTomGuestAccess: guestAccess }));
 vi.mock("~/server/util/authenticatedPlayer", () => ({ resolveAuthenticatedPlayerFactory: () => legacyPlayer }));
 
-import { matchesTomPlayerBirthDate, normalizeTomBirthDate, resolveTomPlayerIdentity } from "~/server/services/events/tomPlayerIdentity";
+import { matchesTomPlayerBirthDate, matchesTomPlayerBirthYear, normalizeTomBirthDate, resolveTomPlayerIdentity } from "~/server/services/events/tomPlayerIdentity";
 
 const players = [{ userId: "1234567", birthDate: "02/27/1996" }];
 
@@ -35,6 +35,12 @@ describe("TOM player identity", () => {
     expect(matchesTomPlayerBirthDate(players[0], "1996-02-28")).toBe(false);
     expect(normalizeTomBirthDate("02/30/1996")).toBeNull();
     expect(normalizeTomBirthDate("1996-02-30")).toBeNull();
+  });
+
+  it("compares the TOM birth year for QR access without requiring month or day", () => {
+    expect(matchesTomPlayerBirthYear(players[0], 1996)).toBe(true);
+    expect(matchesTomPlayerBirthYear(players[0], 1995)).toBe(false);
+    expect(matchesTomPlayerBirthYear({ userId: "1234567", birthDate: "02/30/1996" }, 1996)).toBe(false);
   });
 
   it("accepts an event-scoped guest cookie without an account", async () => {

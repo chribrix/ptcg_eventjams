@@ -16,8 +16,8 @@
             <input v-model.trim="guestPlayerId" inputmode="numeric" pattern="[0-9]*" required />
           </label>
           <label>
-            {{ t("tournamentPlayer.birthDate") }}
-            <input v-model="guestBirthDate" type="date" required />
+            {{ t("tournamentPlayer.birthYear") }}
+            <input v-model="guestBirthYear" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required />
           </label>
           <button class="btn btn-primary" :disabled="guestAccessLoading">
             {{ t("tournamentPlayer.unlock") }}
@@ -163,7 +163,7 @@ const guestAccessRequired = ref(false);
 const guestAccessLoading = ref(false);
 const guestAccessError = ref<string | null>(null);
 const guestPlayerId = ref("");
-const guestBirthDate = ref("");
+const guestBirthYear = ref("");
 const runData = ref<PlayerRun | null>(null);
 const matchArrivalKey = ref(0);
 const emojiReaction = ref("");
@@ -306,7 +306,7 @@ const unlockGuestAccess = async () => {
   try {
     await $fetch(`/api/tournaments/${eventId.value}/tom-bridge/guest-access`, {
       method: "POST",
-      body: { playerId: guestPlayerId.value, birthDate: guestBirthDate.value },
+      body: { playerId: guestPlayerId.value, birthYear: Number(guestBirthYear.value) },
     });
     const { login: _login, ...queryWithoutLogin } = route.query;
     await router.replace({ query: queryWithoutLogin });

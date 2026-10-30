@@ -38,9 +38,9 @@ describe("public TOM guest access", () => {
     });
   });
 
-  it("grants an account-free cookie only for the full matching date", async () => {
+  it("grants an account-free cookie for the matching birth year", async () => {
     vi.stubGlobal("getRouterParam", vi.fn(() => "event-1"));
-    vi.stubGlobal("readBody", vi.fn().mockResolvedValue({ playerId: "1234567", birthDate: "1996-02-27" }));
+    vi.stubGlobal("readBody", vi.fn().mockResolvedValue({ playerId: "1234567", birthYear: 1996 }));
     const result = await handler(event);
     expect(result).toMatchObject({ success: true, player: { userId: "1234567" } });
     expect(grantAccess).toHaveBeenCalledWith(event, "event-1", "1234567");
@@ -48,18 +48,25 @@ describe("public TOM guest access", () => {
     expect(recordAccess).toHaveBeenCalledWith("event-1", "1234567");
   });
 
-  it("rejects a wrong day without granting access", async () => {
+  it("rejects a wrong birth year without granting access", async () => {
     vi.stubGlobal("getRouterParam", vi.fn(() => "event-1"));
-    vi.stubGlobal("readBody", vi.fn().mockResolvedValue({ playerId: "1234567", birthDate: "1996-02-28" }));
+    vi.stubGlobal("readBody", vi.fn().mockResolvedValue({ playerId: "1234567", birthYear: 1995 }));
     await expect(handler(event)).rejects.toMatchObject({ statusCode: 401 });
     expect(grantAccess).not.toHaveBeenCalled();
     expect(recordFailure).toHaveBeenCalledWith("attempt-key");
   });
 
+  it("accepts the previous full-date request from an already-open tab", async () => {
+    vi.stubGlobal("getRouterParam", vi.fn(() => "event-1"));
+    vi.stubGlobal("readBody", vi.fn().mockResolvedValue({ playerId: "1234567", birthDate: "1996-02-27" }));
+    await expect(handler(event)).resolves.toMatchObject({ success: true });
+    expect(grantAccess).toHaveBeenCalledWith(event, "event-1", "1234567");
+  });
+
   it("keeps unreleased tournaments inaccessible", async () => {
     getState.mockResolvedValue({ record: { metadata: {} }, stateView: { players: [] } });
     vi.stubGlobal("getRouterParam", vi.fn(() => "event-1"));
-    vi.stubGlobal("readBody", vi.fn().mockResolvedValue({ playerId: "1234567", birthDate: "1996-02-27" }));
+    vi.stubGlobal("readBody", vi.fn().mockResolvedValue({ playerId: "1234567", birthYear: 1996 }));
     await expect(handler(event)).rejects.toMatchObject({ statusCode: 403 });
     expect(grantAccess).not.toHaveBeenCalled();
   });

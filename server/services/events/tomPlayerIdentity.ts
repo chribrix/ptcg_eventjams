@@ -25,6 +25,11 @@ export const matchesTomPlayerBirthDate = (player: TomPlayer, birthDate: string):
   return expected !== null && expected === normalizeTomBirthDate(birthDate);
 };
 
+export const matchesTomPlayerBirthYear = (player: TomPlayer, birthYear: number): boolean => {
+  const expected = normalizeTomBirthDate(player.birthDate);
+  return expected !== null && Number(expected.slice(0, 4)) === birthYear;
+};
+
 const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
 
 /** Resolve an event-scoped TOM identity without creating an account for QR guests. */
@@ -45,7 +50,7 @@ export const resolveTomPlayerIdentity = async (
     select: { id: true, playerId: true, supabaseId: true, name: true, email: true, birthYear: true },
   });
   const tomPlayer = players.find((entry) => entry.userId === profile?.playerId);
-  if (profile && tomPlayer && normalizeTomBirthDate(tomPlayer.birthDate)?.startsWith(`${profile.birthYear}-`)) {
+  if (profile && tomPlayer && matchesTomPlayerBirthYear(tomPlayer, profile.birthYear)) {
     return { tomUserId: tomPlayer.userId, player: profile };
   }
 
