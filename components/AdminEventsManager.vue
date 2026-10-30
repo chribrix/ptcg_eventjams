@@ -728,10 +728,22 @@
                       {{ t("admin.eventsManager.checkInHelp") }}
                     </p>
                   </div>
-                  <button
-                    @click="closeRegistrationsModal"
-                    class="events-manager-close-button rounded-lg border app-border p-2"
-                  >
+                  <div class="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      class="app-action-button app-action-secondary px-3 py-2 text-sm"
+                      :disabled="registrationPdfLoading"
+                      @click="exportRegistrationsPdf"
+                    >
+                      <span class="sm:hidden">{{ registrationPdfLoading ? "…" : "PDF" }}</span>
+                      <span class="hidden sm:inline">{{ registrationPdfLoading ? "PDF wird erstellt …" : "PDF exportieren" }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Registrierungen schließen"
+                      @click="closeRegistrationsModal"
+                      class="events-manager-close-button rounded-lg border app-border p-2"
+                    >
                     <svg
                       class="h-5 w-5"
                       fill="none"
@@ -745,8 +757,10 @@
                         d="M6 18L18 6M6 6l12 12"
                       />
                     </svg>
-                  </button>
+                    </button>
+                  </div>
                 </div>
+                <p v-if="registrationPdfError" class="mt-2 text-sm text-red-500" role="alert">{{ registrationPdfError }}</p>
 
                 <div class="registration-stats mt-2 grid grid-cols-3 gap-1.5 sm:mt-4 sm:gap-3">
                   <div class="registrations-stat-card">
@@ -936,7 +950,7 @@
                           <td class="font-medium app-text-primary">
                             {{ row.participantName }}
                           </td>
-                          <td>{{ row.birthYear }}</td>
+                          <td>{{ row.birthYear ?? "-" }}</td>
                           <td>
                             {{
                               row.bookerEmail ||
@@ -1437,6 +1451,7 @@ interface Ticket {
   status: string;
   decklist?: string | null;
   bringingDecklistOnsite?: boolean | null;
+  participantBirthYear?: number | null;
 }
 
 interface Registration {
@@ -1518,6 +1533,8 @@ const createEmptyManualParticipantForm = () => ({
 const manualParticipantForm = ref(createEmptyManualParticipantForm());
 const manualParticipantPending = ref(false);
 const manualParticipantError = ref("");
+const registrationPdfLoading = ref(false);
+const registrationPdfError = ref("");
 const loading = ref(true);
 const saving = ref(false);
 const formError = ref("");
@@ -1543,7 +1560,7 @@ interface TicketRow {
   participantPlayerId?: string | null;
   bookerEmail?: string;
   registeredAt: string;
-  birthYear: number;
+  birthYear: number | null;
   ticketStatus: string;
   decklist?: string | null;
   bringingDecklistOnsite?: boolean | null;
@@ -1557,8 +1574,8 @@ type TicketStatus =
   | "no-show"
   | "cancelled";
 
-const ticketRows = computed<TicketRow[]>(() =>
-  registrations.value.flatMap((reg) =>
+const toTicketRows = (items: Registration[]): TicketRow[] =>
+  items.flatMap((reg) =>
     (reg.tickets || []).map((t) => ({
       ticketId: t.id,
       registrationId: reg.id,
@@ -1566,14 +1583,15 @@ const ticketRows = computed<TicketRow[]>(() =>
       participantPlayerId: t.participantPlayerId,
       bookerEmail: reg.player.email,
       registeredAt: reg.registeredAt,
-      birthYear: reg.player.birthYear,
+      birthYear: t.participantBirthYear ?? (t.participantPlayerId === reg.player.playerId ? reg.player.birthYear : null),
       ticketStatus: t.status,
       decklist: t.decklist,
       bringingDecklistOnsite: t.bringingDecklistOnsite,
       registration: reg,
     })),
-  ),
-);
+  );
+
+const ticketRows = computed<TicketRow[]>(() => toTicketRows(registrations.value));
 
 const normalizeRegistrationSearch = (value?: string | number | null) =>
   String(value ?? "")
@@ -2154,11 +2172,44 @@ const deleteEvent = async (event: CustomEvent) => {
 const viewRegistrations = async (event: CustomEvent) => {
   try {
     registrationSearchTerm.value = "";
+    registrationPdfError.value = "";
     selectedEvent.value = event;
     await loadRegistrationsForSelectedEvent();
     showRegistrations.value = true;
   } catch (error) {
     console.error("Error loading registrations:", error);
+  }
+};
+
+const exportRegistrationsPdf = async () => {
+  const event = selectedEvent.value;
+  if (!event || registrationPdfLoading.value) return;
+  registrationPdfLoading.value = true;
+  registrationPdfError.value = "";
+  try {
+    // Refresh before printing so counts and checkboxes match the current server state.
+    const response = await $fetch<{ registrations: Registration[] }>(
+      `/api/admin/registrations?eventId=${encodeURIComponent(event.id)}`,
+    );
+    registrations.value = response.registrations || [];
+    const { downloadRegistrationPrintPdf } = await import("~/services/registrationPdfService");
+    await downloadRegistrationPrintPdf({
+      eventName: event.name,
+      eventDate: event.eventDate,
+      slots: event.maxParticipants,
+      rows: toTicketRows(registrations.value).map((row) => ({
+        playerId: row.participantPlayerId,
+        name: row.participantName,
+        email: row.bookerEmail,
+        birthYear: row.birthYear,
+        registeredAt: row.registeredAt,
+        checkedIn: row.ticketStatus === "attended",
+      })),
+    });
+  } catch {
+    registrationPdfError.value = "Der PDF-Export konnte nicht erstellt werden. Bitte versuche es erneut.";
+  } finally {
+    registrationPdfLoading.value = false;
   }
 };
 

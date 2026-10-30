@@ -52,6 +52,19 @@ export async function listAdminRegistrationsForEvent(eventId: string) {
     orderBy: { registeredAt: "asc" },
   });
 
+  const participantIds = [...new Set(registrations.flatMap((registration) =>
+    registration.tickets.map((ticket) => ticket.participantPlayerId).filter((id): id is string => !!id),
+  ))];
+  const participantProfiles = participantIds.length
+    ? await prisma.player.findMany({
+        where: { playerId: { in: participantIds } },
+        select: { playerId: true, birthYear: true },
+      })
+    : [];
+  const birthYearByPlayerId = new Map(
+    participantProfiles.map((player) => [player.playerId, player.birthYear]),
+  );
+
   const waitlistDelegate = (prisma as any).waitlistEntry;
   const waitlist = waitlistDelegate
     ? await waitlistDelegate.findMany({
@@ -80,6 +93,14 @@ export async function listAdminRegistrationsForEvent(eventId: string) {
       const primaryTicket = registration.tickets?.[0];
       return {
         ...registration,
+        tickets: registration.tickets.map((ticket) => ({
+          ...ticket,
+          participantBirthYear: ticket.participantPlayerId
+            ? birthYearByPlayerId.get(ticket.participantPlayerId) ?? null
+            : ticket.participantName === registration.player.name
+              ? registration.player.birthYear
+              : null,
+        })),
         decklist: primaryTicket?.decklist ?? null,
         bringingDecklistOnsite: primaryTicket?.bringingDecklistOnsite ?? false,
       };

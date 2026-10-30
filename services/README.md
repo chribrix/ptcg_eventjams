@@ -1,0 +1,7 @@
+# Browser-Services (heutige Codegrenze)
+
+`authSessionService.ts` ist die zentrale clientseitige Instanz für Sitzungserneuerung und Invalidierung. Der neue `registrationPdfService.ts` erstellt aus einem expliziten `RegistrationPrintInput` eine druckbare DIN-A4-Teilnehmerliste und lädt sie im Browser herunter. Er besitzt weder Registrierungsdaten noch eine eigene Berechtigung oder einen Server-Endpunkt.
+
+**Vertrag und Interaktion:** `createRegistrationPrintDocument(input)` baut ein pdfmake-Dokument; `downloadRegistrationPrintPdf(input)` lädt pdfmake erst beim Export und speichert die PDF. `AdminEventsManager.vue` holt unmittelbar davor die aktuelle, serverseitig admin-geschützte Registrierungsliste. Pro Ticket erscheint eine Zeile; der Bucher-E-Mail-Kontakt steht unter dem Teilnehmernamen. Teilnehmer-Geburtsjahre kommen aus dem Admin-Registrierungsservice. Datum und Uhrzeit verwenden die zentrale Event-Zeitzone aus `utils/eventDateTime.ts`.
+
+**Betrieb, Scope und Prüfung:** Der Export läuft im kombinierten Deployment vollständig im Browser. Bei später getrenntem Buchungsdienst bleibt der Admin-Lesevertrag die Quelle; der PDF-Service greift nicht auf dessen Datenbank zu. Die Admin-API prüft Zugriff und künftig Tenant-Scope serverseitig. Der Export enthält personenbezogene Daten und wird nicht geloggt oder als Serverdatei abgelegt. `tests/unit/adminRegistrationService.test.ts` prüft die Teilnehmerzuordnung; `scripts/create-registration-print-sample.ts` erzeugt einen synthetischen A4-Probedruck für die visuelle Prüfung von Umbrüchen und Seitenwechseln.

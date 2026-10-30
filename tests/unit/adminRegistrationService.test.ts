@@ -33,6 +33,9 @@ const tx = {
 
 const mockPrisma = {
   $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+  eventRegistration: { findMany: vi.fn() },
+  player: { findMany: vi.fn() },
+  waitlistEntry: { findMany: vi.fn() },
 };
 
 vi.mock("~/lib/prisma", () => ({
@@ -60,6 +63,35 @@ describe("adminRegistrationService", () => {
     tx.eventRegistration.create.mockResolvedValue({ id: "registration-1" });
     tx.registrationTicket.create.mockResolvedValue({ id: "ticket-1" });
     tx.waitlistEntry.updateMany.mockResolvedValue({ count: 0 });
+    mockPrisma.eventRegistration.findMany.mockResolvedValue([]);
+    mockPrisma.player.findMany.mockResolvedValue([]);
+    mockPrisma.waitlistEntry.findMany.mockResolvedValue([]);
+  });
+
+  it("uses each ticket participant's birth year for the registration list", async () => {
+    mockPrisma.eventRegistration.findMany.mockResolvedValue([{
+      id: "registration-1",
+      player: { playerId: "5124038", name: "Robert Müller", birthYear: 2000 },
+      tickets: [
+        { id: "ticket-1", participantPlayerId: "5124038", participantName: "Robert Müller" },
+        { id: "ticket-2", participantPlayerId: "7894561", participantName: "Anna Beispiel" },
+      ],
+    }]);
+    mockPrisma.player.findMany.mockResolvedValue([
+      { playerId: "5124038", birthYear: 2000 },
+      { playerId: "7894561", birthYear: 2008 },
+    ]);
+
+    const { listAdminRegistrationsForEvent } = await import(
+      "~/server/services/admin/adminRegistrationService"
+    );
+    const result = await listAdminRegistrationsForEvent("event-1");
+
+    expect(result.registrations[0]?.tickets.map((ticket) => ticket.participantBirthYear)).toEqual([2000, 2008]);
+    expect(mockPrisma.player.findMany).toHaveBeenCalledWith({
+      where: { playerId: { in: ["5124038", "7894561"] } },
+      select: { playerId: true, birthYear: true },
+    });
   });
 
   it("creates a player from the manual fields and registers them even without a free-slot check", async () => {
