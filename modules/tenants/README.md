@@ -13,6 +13,6 @@ Die Plattformadmin-UI kann weitere Läden als **Entwurf** anlegen, umbenennen un
 
 **Betrieb und Nachweis:** Lokal und remote derselbe Port; remote mit kurzlebigem signiertem Actor-Kontext, nie mit vom Client behaupteter Membership. Backfill für Crows & Owls vor dem zweiten Laden. Tests mit zwei Tenants, gleichen Event-/Ortsnamen und Cross-Tenant-Zugriffsversuchen; Health, Audit und Cache-Invalidierung für Membership-Änderungen dokumentieren.
 
-**Zwischenstand:** `prisma validate`, `prisma generate` und `tests/unit/tenantService.test.ts` sind grün. Migration gegen reale Daten, tenantbezogene API-Abfragen und die getrennte Bereitstellung stehen aus.
+**Zwischenstand:** `prisma validate`, `prisma generate` und `tests/unit/tenantService.test.ts` sind grün. Die additive Migration wurde auf Dev und am 30. Oktober 2026 auf Produktion mit Bestandsdaten angewandt; tenantbezogene API-Abfragen und die getrennte Bereitstellung stehen aus.
 
 **Rollout-Sperre:** Die additive Migration setzt für bestehende Schreibpfade vorübergehend `crows-and-owls` als Default. Alte globale Eindeutigkeiten für Orte, externe Overrides und Saison-Slugs gelten ebenfalls noch. Vor dem zweiten Tenant müssen neue Objekte ihre `tenantId` ausdrücklich aus dem serverseitig geprüften Kontext erhalten, alle Listen/Mutationen Scope prüfen und die Eindeutigkeiten tenantbezogen migriert werden.

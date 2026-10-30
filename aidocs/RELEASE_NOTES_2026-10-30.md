@@ -1,8 +1,8 @@
-# Release Notes – Architektur-Rework (unveröffentlicht)
+# Release Notes – Chrispyjams, 30. Oktober 2026
 
-Stand: 30. Oktober 2026 · Branch: `codex/chrispyjams-architecture-rework` · Änderungen ab `601f790` einschließlich des aktuellen Arbeitsstands.
+Produktiv auf `root@chrispyjams` seit 30. Oktober 2026 · ausgelieferter Commit: `07729e2` · Änderungen seit dem vorherigen Produktions-Commit `f935796`.
 
-Dies ist ein Entwurf für den aktuellen Entwicklungsstand, keine Ankündigung eines Produktiv-Releases. Die vollständige Architekturplanung und die Prüftore stehen im [Architekturvorschlag](CHRISPYJAMS_ARCHITEKTURVORSCHLAG.md) und [Implementierungsplan](architecture/IMPLEMENTATION_PLAN.md).
+Die vollständige Architekturplanung und die Prüftore stehen im [Architekturvorschlag](CHRISPYJAMS_ARCHITEKTURVORSCHLAG.md) und [Implementierungsplan](architecture/IMPLEMENTATION_PLAN.md).
 
 ## Für Nutzerinnen und Nutzer
 
@@ -19,17 +19,17 @@ Dies ist ein Entwurf für den aktuellen Entwicklungsstand, keine Ankündigung ei
 ## Architektur und Daten
 
 - Ein Architektur-Arbeitsdokument, ein Funktionsinventar und Modul-READMEs halten Zuständigkeiten, Schnittstellen und Prüftore fest. Das Ziel sind fachliche Module, die gemeinsam oder über Adapter separat betrieben werden können. **Separat deploybare Dienste sind noch nicht umgesetzt.**
-- Die additive Mandantengrundlage führt `Tenant`, Mitgliedschaften und `tenantId`-Zuordnungen ein. Bestehende eigene Events, Orte und die Liga-Saison der lokalen Entwicklungsdatenbank wurden Crows & Owls zugeordnet. Die Migration wurde dort angewendet und anhand der Bestandszahlen geprüft; eine Produktivmigration ist nicht erfolgt.
+- Die additive Mandantengrundlage führt `Tenant`, Mitgliedschaften und `tenantId`-Zuordnungen ein. Die Produktivmigration ordnete alle 51 bestehenden eigenen Events dem gültigen Crows-&-Owls-Mandanten zu. Weitere Läden bleiben Entwürfe.
 - Gemeinsame `EventRef`- und Actor-/Tenant-Kontexttypen machen Eventquelle und Berechtigungskontext expliziter. Erste Wartelistenaktionen verwenden die Eventquelle auch bei kollidierenden IDs. Bestehende öffentliche Routen mit bloßer Event-ID bleiben vorerst erhalten.
 - Neue Fehlerdiagnostik begrenzt gespeicherte Angaben auf sichere Felder; unerwartete Admin-API-Fehler geben keine internen Exception-Texte aus. Die League-Modelle sind wieder im Prisma-Schema abgebildet.
-- Für die neuen Analytics-Ereignisse wurden additive Datenbankmigrationen auf der lokalen Dev-Datenbank angewendet.
+- Die additiven Migrationen für Mandanten und Analytics wurden auf der Produktivdatenbank angewendet. `prisma migrate status` meldet 41 von 41 Migrationen aktuell.
 
-## Vor einer Freigabe offen
+## Noch offen
 
 - **Mehrmandantenbetrieb:** Alle fachlichen Listen und Mutationen müssen den Tenant serverseitig prüfen. Danach folgen Cross-Tenant-Tests, Anpassungen bestehender globaler Eindeutigkeiten und erst dann die Aktivierung eines zweiten Ladens. Der vorübergehende Crows-&-Owls-Default darf nicht zur dauerhaften Zuordnungsregel werden.
 - **Modulbetrieb:** Fachliche Ports, Remote-Adapter, Contract-Tests und ein separat deployter Pilot fehlen noch. Kalender, Buchung, Turnier, Liga und Decklisten laufen weiterhin in der gemeinsamen Nuxt/Nitro-Anwendung.
 - **Funktionsparität:** Weitere Integrations- und Browserprüfungen sind nötig, insbesondere Netzunterbrechung bei Ergebnismeldungen, bestehende Buchungs-/Wartelistenabläufe und authentisierte Admin-Unterseiten auf Mobilgeräten. Die repo-weite `vue-tsc`-Prüfung enthält laut letztem dokumentiertem Lauf noch 118 bestehende Fehler.
-- **Betrieb:** Historische Diagnoseeinträge und produktive Datenmigration sind gesondert zu prüfen. Die neuen Analytics-Zähler beginnen erst mit ihrer jeweiligen Erfassung; fehlende ältere Interaktionen werden nicht geschätzt.
+- **Betrieb:** Historische Diagnoseeinträge sind gesondert zu prüfen. Die neuen Analytics-Zähler beginnen erst mit ihrer jeweiligen Erfassung; fehlende ältere Interaktionen werden nicht geschätzt.
 - **QR-Gastzugang:** Die Versuchsdrosselung gilt derzeit je App-Prozess. Für mehrere Instanzen fehlt eine verteilte Drosselung; ein Browser-Test mit realem QR-Scan steht noch aus.
 
-Diese Notes werden vor einem tatsächlichen Release anhand des dann ausgelieferten Commits, der Zielumgebung und eines vollständigen Prüflaufs aktualisiert.
+**Release-Nachweis:** Vor dem Wechsel wurde ein geschützter Datenbank-Dump unter `/root/ptcg-backups/idp-pre-release-20261030-qr.dump` angelegt. Lokale Prüfung: 412 Tests bestanden, 4 übersprungen; Build erfolgreich; die Typprüfung hat weiterhin 118 bestehende Fehler. Nach dem Wechsel: Startseite lokal und öffentlich HTTP 200, öffentlicher QR-Kurzlink HTTP 200, gespeicherter Enrollment-Code HTTP 200, unbekannter Code 404, Spieler-API ohne Identität und Gastprüfung mit falschen Daten jeweils 401. Die App läuft auf Commit `07729e2`; ein realer QR-Scan mit gültigen TOM-Daten wurde nicht durchgeführt.
