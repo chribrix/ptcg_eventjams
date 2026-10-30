@@ -16,8 +16,8 @@
             <input v-model.trim="guestPlayerId" inputmode="numeric" pattern="[0-9]*" required />
           </label>
           <label>
-            {{ t("tournamentPlayer.birthYear") }}
-            <input v-model.trim="guestBirthYear" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required />
+            {{ t("tournamentPlayer.birthDate") }}
+            <input v-model="guestBirthDate" type="date" required />
           </label>
           <button class="btn btn-primary" :disabled="guestAccessLoading">
             {{ t("tournamentPlayer.unlock") }}
@@ -155,7 +155,6 @@ const eventId = computed(() => String(route.params.eventId || ""));
 const isQrDisplayRoute = computed(() => route.path.endsWith("/qr"));
 const viewerToken = computed(() => (typeof route.query.viewer === "string" ? route.query.viewer : ""));
 const isImpersonationView = computed(() => viewerToken.value.length > 0);
-const requiresTournamentLogin = computed(() => !isImpersonationView.value && route.query.login === "1");
 
 const loading = ref(false);
 const submitting = ref(false);
@@ -164,7 +163,7 @@ const guestAccessRequired = ref(false);
 const guestAccessLoading = ref(false);
 const guestAccessError = ref<string | null>(null);
 const guestPlayerId = ref("");
-const guestBirthYear = ref("");
+const guestBirthDate = ref("");
 const runData = ref<PlayerRun | null>(null);
 const matchArrivalKey = ref(0);
 const emojiReaction = ref("");
@@ -307,12 +306,15 @@ const unlockGuestAccess = async () => {
   try {
     await $fetch(`/api/tournaments/${eventId.value}/tom-bridge/guest-access`, {
       method: "POST",
-      body: { playerId: guestPlayerId.value, birthYear: guestBirthYear.value },
+      body: { playerId: guestPlayerId.value, birthDate: guestBirthDate.value },
     });
     const { login: _login, ...queryWithoutLogin } = route.query;
     await router.replace({ query: queryWithoutLogin });
     await loadRun();
-    startEventStream();
+    if (runData.value) {
+      startEventStream();
+      startPolling();
+    }
   } catch (err: any) {
     guestAccessError.value = err?.data?.statusMessage || t("tournamentPlayer.errorGuestAccess");
   } finally {
@@ -402,13 +404,11 @@ const stopEventStream = () => {
 };
 
 onMounted(async () => {
-  if (requiresTournamentLogin.value) {
-    guestAccessRequired.value = true;
-    return;
-  }
   await loadRun();
-  startEventStream();
-  startPolling();
+  if (runData.value) {
+    startEventStream();
+    startPolling();
+  }
 });
 
 onBeforeUnmount(() => {

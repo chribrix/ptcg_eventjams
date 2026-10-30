@@ -15,7 +15,7 @@
       <h2>Dein Pairing in drei Schritten</h2>
       <ol class="qr-steps">
         <li><span>1</span><div><strong>Scannen</strong><p>Öffne den QR Code mit deinem Handy.</p></div></li>
-        <li><span>2</span><div><strong>Anmelden</strong><p>Gib deine Pokémon Spieler ID und dein Geburtsjahr ein.</p></div></li>
+        <li><span>2</span><div><strong>Identifizieren</strong><p>Gib deine Pokémon-Spieler-ID und dein Geburtsdatum ein. Ein Chrispyjams-Konto ist nicht nötig.</p></div></li>
         <li><span>3</span><div><strong>Spielen</strong><p>Sieh Tisch und Gegner. Melde danach dein Ergebnis.</p></div></li>
       </ol>
       <p class="qr-note">Ein Ergebnis zählt erst, wenn beide Spieler dasselbe Ergebnis bestätigen.</p>

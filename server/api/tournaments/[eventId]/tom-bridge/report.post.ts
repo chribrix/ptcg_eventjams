@@ -1,10 +1,7 @@
 import prisma from "~/lib/prisma";
 import { z } from "zod";
 import { getTournamentTomState, submitPlayerMatchReport } from "~/server/services/events/tournamentTomStateService";
-import { resolveTomGuestAccess } from "~/server/services/events/tomGuestAccessService";
-import { resolveAuthenticatedPlayerFactory } from "~/server/util/authenticatedPlayer";
-
-const resolveAuthenticatedPlayer = resolveAuthenticatedPlayerFactory(prisma);
+import { resolveTomPlayerIdentity } from "~/server/services/events/tomPlayerIdentity";
 
 const reportSchema = z.object({
   requestId: z.string().uuid().optional(),
@@ -25,21 +22,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const guestTomUserId = resolveTomGuestAccess(event, eventId);
-  const player = guestTomUserId ? null : await resolveAuthenticatedPlayer(event);
   const payload = reportSchema.parse(await readBody(event));
   const tournamentState = await getTournamentTomState(eventId);
   if (!tournamentState || !(tournamentState.record.metadata as { tournamentReleasedAt?: string } | null)?.tournamentReleasedAt) {
     throw createError({ statusCode: 403, statusMessage: "Die Turnieransicht wurde noch nicht freigegeben." });
   }
 
-  if (!guestTomUserId) {
-    const registration = await prisma.eventRegistration.findFirst({
-      where: { customEventId: eventId, playerId: player!.id },
-      select: { id: true },
-    });
-    if (!registration) throw createError({ statusCode: 403, statusMessage: "You are not registered for this tournament" });
-  }
+  const { tomUserId } = await resolveTomPlayerIdentity(event, eventId, tournamentState.stateView.players);
 
   const customEvent = await prisma.customEvent.findUnique({
     where: { id: eventId },
@@ -54,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
   const report = await submitPlayerMatchReport({
     customEventId: eventId,
-    reporterUserId: guestTomUserId || player?.playerId || "",
+    reporterUserId: tomUserId,
     requestId: payload.requestId,
     roundNumber: payload.roundNumber,
     divisionCategory: payload.divisionCategory,

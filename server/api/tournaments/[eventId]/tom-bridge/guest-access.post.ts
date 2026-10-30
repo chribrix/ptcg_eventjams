@@ -1,19 +1,18 @@
 import { z } from "zod";
-import { grantTomGuestAccess } from "~/server/services/events/tomGuestAccessService";
+import { assertTomGuestAccessAttemptsAvailable, clearTomGuestAccessFailures, grantTomGuestAccess, recordTomGuestAccessFailure } from "~/server/services/events/tomGuestAccessService";
+import { matchesTomPlayerBirthDate, normalizeTomBirthDate } from "~/server/services/events/tomPlayerIdentity";
 import { getTournamentTomState, recordTournamentPlayerAccess } from "~/server/services/events/tournamentTomStateService";
 
 const accessSchema = z.object({
   playerId: z.string().trim().regex(/^\d{4,12}$/),
-  birthYear: z.coerce.number().int().min(1900).max(new Date().getFullYear()),
+  birthDate: z.string().trim().refine((value) => {
+    const date = normalizeTomBirthDate(value);
+    return date !== null && date <= new Date().toISOString().slice(0, 10);
+  }),
 });
 
 const accessDeniedMessage =
-  "Deine Spieler-ID und dein Geburtsjahr konnten für dieses Turnier nicht gefunden werden. Bitte melde dich beim Veranstalter.";
-
-const getBirthYear = (birthDate?: string) => {
-  const year = birthDate?.match(/(?:^|\/)((?:19|20)\d{2})$/)?.[1] || birthDate?.match(/^(?:19|20)\d{2}/)?.[0];
-  return year ? Number.parseInt(year, 10) : null;
-};
+  "Deine Spieler-ID und dein Geburtsdatum konnten für dieses Turnier nicht gefunden werden. Bitte melde dich beim Veranstalter.";
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "eventId");
@@ -24,6 +23,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: accessDeniedMessage });
   }
   const input = parsedInput.data;
+  const attemptKey = assertTomGuestAccessAttemptsAvailable(event, eventId, input.playerId);
   const state = await getTournamentTomState(eventId);
   if (!state) throw createError({ statusCode: 404, statusMessage: "No TOM state imported for this tournament" });
   if (!(state.record.metadata as { tournamentReleasedAt?: string } | null)?.tournamentReleasedAt) {
@@ -31,12 +31,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const tomPlayer = state.stateView.players.find(
-    (player) => player.userId === input.playerId && getBirthYear(player.birthDate) === input.birthYear,
+    (player) => player.userId === input.playerId && matchesTomPlayerBirthDate(player, input.birthDate),
   );
   if (!tomPlayer) {
+    recordTomGuestAccessFailure(attemptKey);
     throw createError({ statusCode: 401, statusMessage: accessDeniedMessage });
   }
 
+  clearTomGuestAccessFailures(attemptKey);
   grantTomGuestAccess(event, eventId, tomPlayer.userId);
   await recordTournamentPlayerAccess(eventId, tomPlayer.userId);
   return { success: true, player: { userId: tomPlayer.userId, displayName: tomPlayer.displayName } };

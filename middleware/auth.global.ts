@@ -32,6 +32,7 @@ export const createAuthRouteGuard = (
       "/register",
       "/events",
       "/eventlist",
+      "/e",
       "/magic-login",
       "/confirm",
       "/set-password",
@@ -43,6 +44,7 @@ export const createAuthRouteGuard = (
     const isPublicPath =
       publicPages.includes(applicationPath) ||
       applicationPath.startsWith("/events/") ||
+      applicationPath.startsWith("/e/") ||
       applicationPath.startsWith("/tournaments/");
 
     // Public pages should remain accessible without password-enforcement redirects.

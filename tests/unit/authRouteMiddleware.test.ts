@@ -18,7 +18,7 @@ describe("auth route middleware", () => {
     ).toBe("/login?redirect=%2Fbooking%2Fabc%3Ftab%3Dtickets");
   });
 
-  it.each(["/", "/en", "/en/events", "/en/events/event-1"])(
+  it.each(["/", "/en", "/en/events", "/en/events/event-1", "/e/ABCD23", "/en/e/ABCD23", "/en/tournaments/event-1"])(
     "keeps the public route %s accessible without authentication",
     async (path) => {
       const navigate = vi.fn();
