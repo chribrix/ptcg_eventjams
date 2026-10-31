@@ -26,6 +26,8 @@ Ein `MODULE_MODE=local|remote`-Schalter ist nur ein mögliches Implementierungsd
 
 ## Funktionsinventar: vor dem Umbau erfassen und erhalten
 
+Kalender-UI-Nachweis vom 31.10.2026: Die bisherige Startseitenansicht zeigte unabhängig vom aktiven Bereich 42 Zellen; beim ersten Pfeilklick wechselte sie von rollierend auf Monat. `rollingCalendarWindow` ersetzt diese Darstellung durch 28 aktive Tage in vollständigen Wochenzeilen, die am Monatswechsel geteilt werden. Der 1. folgt damit unmittelbar auf die neue Monatsüberschrift und bleibt in seiner Wochentagsspalte. Bestehende Eventprojektion, Kategorien, Filter und Detail-Popover bleiben angebunden. Unit-Test: `tests/unit/rollingCalendarWindow.test.ts`; manuelle Dev-Vorschau: `/calendar-preview` mit fester Oktober/November-Fixture. Server-API und getrennte Betriebsart sind von dieser Client-Darstellung nicht betroffen.
+
 Die Tabelle ist der Start der Paritätsliste. Vor Änderungen an einem Bereich werden konkrete Fälle, heutige API-Antworten, Berechtigungen, Datenzustände und UI-Erwartungen als Tests oder überprüfbare Fixtures festgehalten. Bestehende Tests sind Ausgangspunkt, kein alleiniger Paritätsnachweis.
 
 | Bereich | Bestehende Funktion, die erhalten bleiben muss | Ausgangspunkte | Nachweis vor Abschalten des alten Pfads |

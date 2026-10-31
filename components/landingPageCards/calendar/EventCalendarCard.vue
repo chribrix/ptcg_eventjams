@@ -49,23 +49,24 @@
 
         <div class="mt-1 w-full lg:mt-1">
           <div class="calendar-shell rounded-xl border app-border p-3 lg:p-4">
-            <div class="mb-2 flex items-center justify-between">
+            <div class="mb-2 flex items-center justify-between gap-2">
               <button
                 type="button"
                 class="calendar-month-shift inline-flex h-9 w-9 items-center justify-center rounded-lg lg:h-10 lg:w-10"
-                @click="shiftCustomCalendarMonth(-1)"
-                aria-label="Previous month"
+                @click="shiftCalendarWindow(-1)"
+                :aria-label="locale.startsWith('de') ? 'Vorherige vier Wochen' : 'Previous four weeks'"
               >
                 <ChevronLeftIcon class="h-5 w-5" />
               </button>
-              <p class="app-text-strong text-sm font-semibold lg:text-2xl">
-                {{ customCalendarMonthLabel }}
-              </p>
+              <div class="min-w-0 text-center">
+                <p class="app-text-strong text-sm font-semibold leading-tight sm:text-base lg:text-2xl">{{ calendarRangeLabel }}</p>
+                <p class="app-text-muted-soft mt-0.5 text-[10px] font-medium sm:text-xs">{{ calendarDateRangeLabel }}</p>
+              </div>
               <button
                 type="button"
                 class="calendar-month-shift inline-flex h-9 w-9 items-center justify-center rounded-lg lg:h-10 lg:w-10"
-                @click="shiftCustomCalendarMonth(1)"
-                aria-label="Next month"
+                @click="shiftCalendarWindow(1)"
+                :aria-label="locale.startsWith('de') ? 'Nächste vier Wochen' : 'Next four weeks'"
               >
                 <ChevronRightIcon class="h-5 w-5" />
               </button>
@@ -79,12 +80,17 @@
                 {{ weekday }}
               </span>
             </div>
-            <div class="grid grid-cols-7 gap-1 lg:gap-2">
+            <div v-for="(week, weekIndex) in customCalendarWeeks" :key="weekIndex">
+              <div v-if="week.sectionLabel" class="calendar-month-divider app-text-strong my-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider sm:text-sm">
+                <span>{{ week.sectionLabel }}</span><span class="h-px flex-1 bg-current opacity-30"></span>
+              </div>
+              <div class="grid grid-cols-7 gap-1 lg:gap-2" :class="weekIndex ? 'mt-1 lg:mt-2' : ''">
+              <template v-for="(day, dayIndex) in week.days" :key="day?.key ?? `empty-${weekIndex}-${dayIndex}`">
+              <span v-if="!day" aria-hidden="true"></span>
               <button
-                v-for="day in customCalendarDays"
-                :key="day.key"
+                v-else
                 type="button"
-                class="flex h-8 flex-col items-center justify-center rounded-md border text-[11px] font-semibold leading-none lg:h-12 lg:rounded-lg lg:text-base"
+                class="relative flex h-10 min-w-0 flex-col items-center justify-center rounded-md border text-xs font-semibold leading-none lg:h-12 lg:rounded-lg lg:text-base"
                 :class="customCalendarDayClass(day)"
                 :style="customCalendarDayStyle(day)"
                 :disabled="!day.isInteractive"
@@ -92,13 +98,16 @@
               >
                 <span
                   v-if="day.showMonthMarker"
-                  class="mb-0.5 text-[8px] font-bold uppercase tracking-[0.12em] opacity-75 lg:text-[10px]"
+                  class="mb-0.5 text-[8px] font-extrabold uppercase tracking-[0.08em] lg:text-[10px]"
                 >
                   {{ day.monthMarker }}
                 </span>
                 <span>{{ day.label }}</span>
               </button>
+              </template>
+              </div>
             </div>
+            <button v-if="!isCurrentWindow" type="button" class="app-text-secondary-soft mt-3 text-xs font-semibold underline underline-offset-2" @click="resetCalendarWindow">{{ locale.startsWith('de') ? 'Heute anzeigen' : 'Show today' }}</button>
           </div>
         </div>
 
@@ -207,6 +216,7 @@ import {
 import CalendarCategoryPill from "./CalendarCategoryPill.vue";
 import EventDetailsPopover from "./EventDetailsPopover.vue";
 import { EVENT_COLORS } from "~/utils/eventColors";
+import { getRollingCalendarWindow, shiftRollingCalendarWindow } from "~/utils/rollingCalendarWindow";
 import {
   getDateKeyInTimeZone,
   getUserTimeZone,
@@ -225,12 +235,14 @@ import {
   type UnifiedCalendarEvent,
 } from "~/utils/calendarEventUtils";
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     showMobileAuthCta?: boolean;
+    showcaseDate?: string;
   }>(),
   {
     showMobileAuthCta: true,
+    showcaseDate: "",
   },
 );
 
@@ -238,10 +250,11 @@ const { t, locale } = useI18n();
 const { userName } = useAuth();
 const userTimeZone = getUserTimeZone();
 
-const today = new Date();
+const today = props.showcaseDate && import.meta.dev
+  ? new Date(`${props.showcaseDate}T12:00:00`)
+  : new Date();
 const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 const todayKey = getDateKeyInTimeZone(new Date().toISOString(), userTimeZone);
-const rollingPreviewDays = 28;
 const miniCalendarWeekdays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const categoryPills = computed(() =>
   CALENDAR_CATEGORY_DEFINITIONS.map((category) => ({
@@ -271,8 +284,7 @@ const customEvents = ref<CustomCalendarEvent[]>([]);
 const isLoading = ref(false);
 const selectedDate = ref<string | null>(null);
 const selectedDateEvents = ref<UnifiedCalendarEvent[]>([]);
-const customCalendarMode = ref<"rolling" | "month">("rolling");
-const customCalendarMonthStart = ref<Date>(startOfMonth(today));
+const calendarAnchor = ref<Date>(today);
 const selectedEventType = ref<CalendarCategory | null>(null);
 const showTypeFilterModal = ref(false);
 const showNoEventsToast = ref(false);
@@ -295,6 +307,7 @@ const fetchCustomEvents = async () => {
 };
 
 onMounted(async () => {
+  if (props.showcaseDate && import.meta.dev) return;
   isLoading.value = true;
   try {
     await Promise.all([eventStore.fetchEvents(), fetchCustomEvents()]);
@@ -373,20 +386,27 @@ const getBackgroundForTypes = (types: CalendarEventType[]) => {
   return `linear-gradient(135deg, ${segments.join(", ")})`;
 };
 
-const customCalendarMonthLabel = computed(() =>
-  customCalendarMonthStart.value.toLocaleDateString(
-    locale.value.startsWith("de") ? "de-DE" : "en-US",
-    {
-      month: "long",
-      year: "numeric",
-    },
-  ),
-);
+const calendarWindow = computed(() => getRollingCalendarWindow(calendarAnchor.value));
+const isCurrentWindow = computed(() => calendarAnchor.value.toDateString() === today.toDateString());
+const calendarLocale = computed(() => locale.value.startsWith("de") ? "de-DE" : "en-US");
+const monthLabel = (date: Date) => date.toLocaleDateString(calendarLocale.value, { month: "long", year: "numeric" });
+const calendarRangeLabel = computed(() => {
+  const { start, end } = calendarWindow.value;
+  return start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()
+    ? monthLabel(start)
+    : start.getFullYear() === end.getFullYear()
+      ? `${start.toLocaleDateString(calendarLocale.value, { month: "long" })} → ${monthLabel(end)}`
+      : `${monthLabel(start)} → ${monthLabel(end)}`;
+});
+const calendarDateRangeLabel = computed(() => {
+  const { start, end } = calendarWindow.value;
+  const short = (date: Date) => date.toLocaleDateString(calendarLocale.value, { day: "numeric", month: "short" });
+  return `${short(start)} – ${short(end)} · ${locale.value.startsWith("de") ? "4 Wochen" : "4 weeks"}`;
+});
 
 type CustomCalendarDay = {
   key: string;
   label: string;
-  inMonth: boolean;
   isInteractive: boolean;
   hasEvents: boolean;
   dateKey: string | null;
@@ -401,46 +421,34 @@ const formatMonthMarker = (date: Date) =>
     { month: "short" },
   ).replace(".", "");
 
-const customCalendarDays = computed<CustomCalendarDay[]>(() => {
-  const monthStart = customCalendarMonthStart.value;
-  const rollingStart = startOfDay(today);
-  const rollingEnd = startOfDay(addDays(rollingStart, rollingPreviewDays));
-  const firstWeekday =
-    customCalendarMode.value === "month"
-      ? (monthStart.getDay() + 6) % 7
-      : (rollingStart.getDay() + 6) % 7;
-  const gridStart =
-    customCalendarMode.value === "month"
-      ? addDays(monthStart, -firstWeekday)
-      : addDays(rollingStart, -firstWeekday);
-  const days: CustomCalendarDay[] = [];
-
-  for (let i = 0; i < 42; i += 1) {
-    const date = addDays(gridStart, i);
+const showcaseTypes: Record<string, CalendarEventType[]> = {
+  "2026-10-31": ["cup", "challenge"], "2026-11-01": ["prerelease"],
+  "2026-11-06": ["challenge"], "2026-11-07": ["cup"],
+  "2026-11-13": ["challenge", "cup"], "2026-11-20": ["challenge"],
+  "2026-11-25": ["cup"],
+};
+const customCalendarWeeks = computed(() => calendarWindow.value.weeks.map((week) => ({
+  sectionLabel: week.sectionMonth ? monthLabel(week.sectionMonth) : null,
+  days: week.days.map((calendarDay, index): CustomCalendarDay | null => {
+    if (!calendarDay) return null;
+    const { date, inRange, isMonthStart } = calendarDay;
     const dateKey = getDateKeyInTimeZone(date.toISOString(), userTimeZone);
     const dayEvents = visibleEventsByDate.value.get(dateKey) || [];
-    const hasEvents = dayEvents.length > 0;
-    const isInActiveRange =
-      customCalendarMode.value === "month"
-        ? date.getMonth() === monthStart.getMonth()
-        : startOfDay(date) >= rollingStart && startOfDay(date) <= rollingEnd;
-    const isInteractive = isInActiveRange || hasEvents;
-
-    days.push({
-      key: `${dateKey}-${i}`,
+    const types = props.showcaseDate && import.meta.dev
+      ? showcaseTypes[dateKey] || []
+      : [...new Set(dayEvents.map((event) => event.type))];
+    return {
+      key: `${dateKey}-${index}`,
       label: String(date.getDate()),
-      inMonth: date.getMonth() === monthStart.getMonth(),
-      isInteractive,
-      hasEvents,
-      dateKey: hasEvents ? dateKey : null,
-      types: [...new Set(dayEvents.map((event) => event.type))],
-      showMonthMarker: date.getDate() === 1,
+      isInteractive: inRange || dayEvents.length > 0,
+      hasEvents: types.length > 0,
+      dateKey: dayEvents.length ? dateKey : null,
+      types,
+      showMonthMarker: isMonthStart,
       monthMarker: formatMonthMarker(date),
-    });
-  }
-
-  return days;
-});
+    };
+  }),
+})));
 
 // Build calendar attributes with automatic highlighting
 const calendarAttributes = computed(() => {
@@ -526,15 +534,10 @@ const customCalendarDayStyle = (day: CustomCalendarDay) => {
   };
 };
 
-const shiftCustomCalendarMonth = (offset: number) => {
-  if (customCalendarMode.value === "rolling") {
-    customCalendarMode.value = "month";
-  }
-  const next = new Date(customCalendarMonthStart.value);
-  next.setMonth(next.getMonth() + offset);
-  next.setDate(1);
-  customCalendarMonthStart.value = startOfMonth(next);
+const shiftCalendarWindow = (offset: number) => {
+  calendarAnchor.value = shiftRollingCalendarWindow(calendarAnchor.value, offset);
 };
+const resetCalendarWindow = () => { calendarAnchor.value = today; };
 
 const closeEventDetails = () => {
   selectedDate.value = null;
@@ -622,24 +625,6 @@ const toggleCategoryVisibility = (category: CalendarCategory) => {
     );
   }
 };
-
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function startOfDay(date: Date): Date {
-  const next = new Date(date);
-  next.setHours(0, 0, 0, 0);
-  return next;
-}
-
-function startOfMonth(date: Date): Date {
-  const next = new Date(date);
-  next.setDate(1);
-  return startOfDay(next);
-}
 
 defineExpose({
   refresh: fetchCustomEvents,
