@@ -5,11 +5,23 @@ import {
   getCustomCalendarEventType,
   getExternalCalendarEventType,
   isUpcomingCalendarEvent,
+  isLandingCalendarEventVisible,
+  LANDING_CALENDAR_CATEGORIES,
+  type CalendarCategory,
   normalizeCustomCalendarEvent,
   normalizeExternalCalendarEvent,
 } from "~/utils/calendarEventUtils";
 
 describe("calendarEventUtils", () => {
+  it("offers no Riftbound buttons while keeping Riftbound dates visible", () => {
+    expect(LANDING_CALENDAR_CATEGORIES.map(({ key }) => key)).toEqual([
+      "cup", "challenge", "custom", "prerelease",
+    ]);
+    const hidden = new Set<CalendarCategory>(["custom", "cup", "challenge", "prerelease"]);
+    expect(isLandingCalendarEventVisible({ type: "riftbound", isCustomEvent: false }, hidden)).toBe(true);
+    expect(isLandingCalendarEventVisible({ type: "custom", isCustomEvent: true }, hidden)).toBe(false);
+    expect(isLandingCalendarEventVisible({ type: "local", isCustomEvent: false }, hidden)).toBe(true);
+  });
   it("classifies external prerelease events via icon", () => {
     expect(
       getExternalCalendarEventType({

@@ -118,6 +118,23 @@ export const CALENDAR_CATEGORY_DEFINITIONS: CalendarCategoryDefinition[] = [
   },
 ];
 
+/** Landing-page controls; Riftbound events stay visible without a filter pill. */
+export const LANDING_CALENDAR_CATEGORIES = CALENDAR_CATEGORY_DEFINITIONS.filter(
+  (category) => category.key !== "riftbound",
+);
+
+export function isLandingCalendarEventVisible(
+  event: Pick<UnifiedCalendarEvent, "type" | "isCustomEvent">,
+  hiddenCategories: ReadonlySet<CalendarCategory>,
+): boolean {
+  if (event.type === "riftbound" || (event.type === "local" && !event.isCustomEvent)) {
+    return true;
+  }
+  return LANDING_CALENDAR_CATEGORIES.some(
+    (category) => !hiddenCategories.has(category.key) && eventMatchesCategory(event, category.key),
+  );
+}
+
 export function extractDateKey(dateTime: string): string {
   return dateTime.includes(" ") ? dateTime.split(" ")[0] : dateTime;
 }

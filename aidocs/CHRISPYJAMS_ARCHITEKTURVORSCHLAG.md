@@ -6,6 +6,8 @@ Stand: 30. Oktober 2026. **Arbeitsdokument** auf Branch `codex/chrispyjams-archi
 
 **Kalender-UI-Entscheidung, 31. Oktober 2026:** Der öffentliche Startseitenkalender zeigt ab einem Ankerdatum genau vier Wochen und navigiert in 28-Tage-Schritten. Kopfzeile und eine geteilte Woche am Monatswechsel setzen den 1. unter die neue Monatsüberschrift; die Wochentagsspalte bleibt korrekt. Die Regel gehört der zentralen Kalenderfenster-Utility; Eventprojektion und API-Verträge bleiben unverändert. Nachweis und Fixture stehen im Implementierungsplan und in der Katalog-README.
 
+**Kalenderkategorien, 31. Oktober 2026:** Die Startseite zeigt keinen Riftbound-Filter mehr, stellt Riftbound-Termine aber weiter dar. Der Filter für eigene Standard-Events ist nach dem einzigen aktiven Tenant „Crows & Owls“ benannt. Bei mehreren öffentlich sichtbaren Tenants wird eine tenantbezogene Katalogprojektion für den Namen nötig; die aktuelle Änderung betrifft nur die UI und ihre Sichtbarkeitsregel.
+
 ## Kurzentscheidung
 
 Chrispyjams erhält **klar abgegrenzte Fachmodule mit zwei Betriebsarten**: gemeinsam in einer Anwendung und, wo sinnvoll, als eigenständig deployte Dienste. Die Modulverträge sollen beide Aufrufarten unterstützen. Die Umstellung beginnt im gemeinsamen Deployment, damit Buchung, Warteliste, Turnierfreigabe und Decklistenstatus ohne zusätzliche Netzwerkrisiken entkoppelt werden können. Getrennte Deployments werden erst nach Vertrags-, Datenhoheits- und Integrationstests aktiviert; die Architektur darf sie dann nicht durch private Tabellenzugriffe oder interne Imports verhindern.

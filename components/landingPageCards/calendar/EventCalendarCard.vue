@@ -222,8 +222,9 @@ import {
   getUserTimeZone,
 } from "~/utils/eventDateTime";
 import {
-  CALENDAR_CATEGORY_DEFINITIONS,
+  LANDING_CALENDAR_CATEGORIES,
   eventMatchesCategory,
+  isLandingCalendarEventVisible,
   isUpcomingCalendarEvent,
   normalizeCustomCalendarEvent,
   normalizeExternalCalendarEvent,
@@ -257,7 +258,7 @@ const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 const todayKey = getDateKeyInTimeZone(new Date().toISOString(), userTimeZone);
 const miniCalendarWeekdays = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const categoryPills = computed(() =>
-  CALENDAR_CATEGORY_DEFINITIONS.map((category) => ({
+  LANDING_CALENDAR_CATEGORIES.map((category) => ({
     ...category,
     label: t(`calendarCard.categories.${category.key}`),
   })),
@@ -337,15 +338,9 @@ const isCategoryVisible = (category: CalendarCategory) =>
   !disabledCategories.value.has(category);
 
 const visibleCalendarEvents = computed(() =>
-  allCalendarEvents.value.filter((event) => {
-    if (event.type === "local" && !event.isCustomEvent) {
-      return true;
-    }
-
-    return categoryPills.value
-      .filter((category) => !disabledCategories.value.has(category.key))
-      .some((category) => eventMatchesCategory(event, category.key));
-  })
+  allCalendarEvents.value.filter((event) =>
+    isLandingCalendarEventVisible(event, disabledCategories.value),
+  )
 );
 
 const visibleEventsByDate = computed(() => {
