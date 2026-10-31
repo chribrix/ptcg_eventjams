@@ -60,7 +60,6 @@
               </button>
               <div class="min-w-0 text-center">
                 <p class="app-text-strong text-sm font-semibold leading-tight sm:text-base lg:text-2xl">{{ calendarRangeLabel }}</p>
-                <p class="app-text-muted-soft mt-0.5 text-[10px] font-medium sm:text-xs">{{ calendarDateRangeLabel }}</p>
               </div>
               <button
                 type="button"
@@ -393,12 +392,6 @@ const calendarRangeLabel = computed(() => {
       ? `${start.toLocaleDateString(calendarLocale.value, { month: "long" })} → ${monthLabel(end)}`
       : `${monthLabel(start)} → ${monthLabel(end)}`;
 });
-const calendarDateRangeLabel = computed(() => {
-  const { start, end } = calendarWindow.value;
-  const short = (date: Date) => date.toLocaleDateString(calendarLocale.value, { day: "numeric", month: "short" });
-  return `${short(start)} – ${short(end)} · ${locale.value.startsWith("de") ? "4 Wochen" : "4 weeks"}`;
-});
-
 type CustomCalendarDay = {
   key: string;
   label: string;
