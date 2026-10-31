@@ -1,80 +1,21 @@
-import { applyEventOverrides } from "./applyOverrides";
-import type { PokemonGameType } from "~/types/eventGame";
+import {
+  listPokedataCatalogEvents,
+  parsePokedataSearchQuery,
+  PokedataSearchInputError,
+} from "~/server/services/events/pokedataSearchService";
 
-interface ParsedEvent {
-  id: string;
-  title: string;
-  dateTime: string;
-  type: string;
-  venue: string;
-  location: string;
-  country: string;
-  link: string;
-  icon?: string;
-  time?: string;
-  cost?: string;
-  streetAddress?: string;
-  gameType: PokemonGameType;
-}
-
-export default defineEventHandler(
-  async (event): Promise<{ events: ParsedEvent[] }> => {
-    // Define cache key and TTL (18 hours)
-    const CACHE_KEY = "pokedata-detailed-events-v3-tcg-vgc";
-    const CACHE_TTL = 18 * 60 * 60 * 1000; // 18 hours in milliseconds
-
-    // Try to get cached data
-    const storage = useStorage("cache");
-    const cached = await storage.getItem<{
-      events: ParsedEvent[];
-      timestamp: number;
-    }>(CACHE_KEY);
-
-    // Return cached data if valid
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      // Set cache headers for client-side caching
-      setResponseHeader(
-        event,
-        "Cache-Control",
-        `public, max-age=${Math.floor(
-          (CACHE_TTL - (Date.now() - cached.timestamp)) / 1000
-        )}`
-      );
-      return { events: cached.events };
+export default defineEventHandler(async (event) => {
+  try {
+    const search = parsePokedataSearchQuery(getQuery(event));
+    const events = await listPokedataCatalogEvents(search);
+    setResponseHeader(event, "Cache-Control", "no-store");
+    return { events };
+  } catch (error) {
+    if (error instanceof PokedataSearchInputError) {
+      throw createError({ statusCode: 400, statusMessage: error.message });
     }
-
-    try {
-      // Fetch events from the main events API
-      const response = await $fetch<{
-        success: boolean;
-        events: ParsedEvent[];
-        totalFound: number;
-      }>("/api/events");
-
-      if (response.success && response.events) {
-        // Apply any admin overrides to the events (includes filtering hidden events)
-        const eventsWithOverrides = await applyEventOverrides(response.events);
-
-        // Cache the results
-        await storage.setItem(CACHE_KEY, {
-          events: eventsWithOverrides,
-          timestamp: Date.now(),
-        });
-
-        // Set cache headers for client-side caching
-        setResponseHeader(
-          event,
-          "Cache-Control",
-          `public, max-age=${Math.floor(CACHE_TTL / 1000)}`
-        );
-
-        return { events: eventsWithOverrides };
-      } else {
-        return { events: [] };
-      }
-    } catch (error) {
-      console.error("Error fetching detailed events:", error);
-      return { events: [] };
-    }
+    console.error("Detailed Pokedata event feed unavailable");
+    setResponseHeader(event, "Cache-Control", "no-store");
+    return { events: [] };
   }
-);
+});

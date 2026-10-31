@@ -3,6 +3,8 @@ import {
   createPokedataRequest,
   getPokedataGameType,
   mapPokedataEvent,
+  parsePokedataResponse,
+  fetchPokedataEvents,
 } from "~/server/services/events/pokedataService";
 
 describe("pokedataService", () => {
@@ -60,5 +62,27 @@ describe("pokedataService", () => {
       icon: "chall",
       cost: "10€",
     });
+  });
+
+  it("passes an empty state filter through and parses Pokedata's warning-prefixed JSON", () => {
+    expect(createPokedataRequest({ states: [] }).states).toBe("[]");
+    expect(parsePokedataResponse('<br /><b>Warning</b>: test<br />[{"guid":"one"}]')).toEqual([{ guid: "one" }]);
+    expect(() => parsePokedataResponse("<html>Unavailable</html>")).toThrow("invalid response");
+  });
+
+  it("reads all paginated table results without losing the second page", async () => {
+    const pages: number[] = [];
+    const fetcher = async (_url: unknown, options: RequestInit = {}) => {
+      const request = JSON.parse(String(options.body));
+      pages.push(request.page);
+      const records = request.page === 0
+        ? Array.from({ length: 100 }, (_, index) => ({ guid: `event-${index}`, date: "2026-11-01" }))
+        : [{ guid: "event-100", date: "2026-11-02" }];
+      return { ok: true, text: async () => JSON.stringify(records) } as Response;
+    };
+    const events = await fetchPokedataEvents({}, fetcher as typeof fetch);
+    expect(pages).toEqual([0, 1]);
+    expect(events).toHaveLength(101);
+    expect(events[100].id).toBe("event-100");
   });
 });

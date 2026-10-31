@@ -3,7 +3,9 @@ import {
   type PokemonGameType,
 } from "~/types/eventGame";
 
-export const POKEDATA_API_URL = "https://pokedata.ovh/events/tableapi/";
+export const POKEDATA_API_URL = "https://www.pokedata.ovh/events/tableapi/index_table.php";
+const PAGE_SIZE = 100;
+const MAX_PAGES = 50;
 
 export interface PokedataFilters {
   games?: PokemonGameType[];
@@ -35,6 +37,9 @@ export interface PokedataApiEvent {
   pokemon_url?: string;
   street_address?: string;
   guid?: string;
+  state?: string;
+  latitude?: number | string;
+  longitude?: number | string;
 }
 
 export interface PokedataCalendarEvent {
@@ -52,9 +57,18 @@ export interface PokedataCalendarEvent {
   cost?: string;
   streetAddress?: string;
   icon: string;
+  state?: string;
+  latitude?: number;
+  longitude?: number;
+  distanceKm?: number;
 }
 
 const enabled = (value: boolean) => (value ? "1" : "0");
+const coordinate = (value: number | string | undefined): number | undefined => {
+  if (value === undefined || value === "") return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
 
 export function createPokedataRequest(filters: PokedataFilters = {}) {
   const games = filters.games || ["tcg", "vgc"];
@@ -66,7 +80,7 @@ export function createPokedataRequest(filters: PokedataFilters = {}) {
     city: filters.city || "",
     shop: filters.shop || "",
     league: filters.league || "",
-    states: JSON.stringify(filters.states || ["Bavaria", "Bayern"]),
+    states: JSON.stringify(filters.states ?? ["Bavaria", "Bayern"]),
     postcode: filters.postcode || "",
     cups: enabled(includes("tcg")),
     challenges: enabled(includes("tcg")),
@@ -134,32 +148,48 @@ export function mapPokedataEvent(
     cost,
     streetAddress: event.street_address || "",
     icon: getPokedataEventIcon(type),
+    state: event.state || undefined,
+    latitude: coordinate(event.latitude),
+    longitude: coordinate(event.longitude),
   };
+}
+
+export function parsePokedataResponse(body: string): PokedataApiEvent[] {
+  // Pokedata sometimes prepends a PHP warning to an otherwise valid JSON array.
+  const arrayStart = body.indexOf("[");
+  if (arrayStart < 0 || (arrayStart > 0 && !body.slice(0, arrayStart).includes("<b>Warning</b>"))) {
+    throw new Error("Pokedata returned an invalid response");
+  }
+  let data: unknown;
+  try {
+    data = JSON.parse(body.slice(arrayStart));
+  } catch {
+    throw new Error("Pokedata returned an invalid response");
+  }
+  if (!Array.isArray(data)) throw new Error("Pokedata returned an invalid response");
+  return data as PokedataApiEvent[];
 }
 
 export async function fetchPokedataEvents(
   filters: PokedataFilters = {},
   fetcher: typeof fetch = fetch,
 ): Promise<PokedataCalendarEvent[]> {
-  const response = await fetcher(POKEDATA_API_URL, {
-    method: "POST",
-    body: JSON.stringify(createPokedataRequest(filters)),
-    headers: {
-      Accept: "application/json",
-      "Content-type": "application/json; charset=UTF-8",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Pokedata request failed with status ${response.status}`);
+  const events: PokedataCalendarEvent[] = [];
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const response = await fetcher(POKEDATA_API_URL, {
+      method: "POST",
+      body: JSON.stringify({ ...createPokedataRequest(filters), page }),
+      headers: {
+        Accept: "application/json",
+        "Content-type": "application/json; charset=UTF-8",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Pokedata request failed with status ${response.status}`);
+    }
+    const data = parsePokedataResponse(await response.text());
+    events.push(...data.map((item, index) => mapPokedataEvent(item, page * PAGE_SIZE + index)));
+    if (data.length < PAGE_SIZE) return events;
   }
-
-  const data: unknown = await response.json();
-  if (!Array.isArray(data)) {
-    throw new Error("Pokedata returned an invalid response");
-  }
-
-  return data.map((event, index) =>
-    mapPokedataEvent(event as PokedataApiEvent, index),
-  );
+  throw new Error("Pokedata response exceeded the configured page limit");
 }

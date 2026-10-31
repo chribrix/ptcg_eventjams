@@ -8,6 +8,8 @@ Stand: 30. Oktober 2026. **Arbeitsdokument** auf Branch `codex/chrispyjams-archi
 
 **Kalenderkategorien, 31. Oktober 2026:** Die Startseite zeigt keinen Riftbound-Filter mehr, stellt Riftbound-Termine aber weiter dar. Der Filter für eigene Standard-Events ist nach dem einzigen aktiven Tenant „Crows & Owls“ benannt. Bei mehreren öffentlich sichtbaren Tenants wird eine tenantbezogene Katalogprojektion für den Namen nötig; die aktuelle Änderung betrifft nur die UI und ihre Sichtbarkeitsregel.
 
+**Pokedata-Lesevertrag, 31. Oktober 2026:** Der Katalog bietet für externe Events optional Land, deutsches Bundesland und Koordinatenradius an. Ein paginierter Länder-Rohfeed wird zentral gecacht; Standortfilter arbeiten auf dieser Projektion, lokale Overrides werden nach dem Cache angewendet. Damit bleibt die Upstream-Last von individuellen Suchradien unabhängig. Bei einer separaten Katalogbereitstellung muss derselbe Query-Vertrag über den Transportadapter laufen und der Cache instanzübergreifend verfügbar sein. Die geprüften Pokedata-Eigenheiten und verbleibenden Provider-Grenzen stehen im Implementierungsplan.
+
 ## Kurzentscheidung
 
 Chrispyjams erhält **klar abgegrenzte Fachmodule mit zwei Betriebsarten**: gemeinsam in einer Anwendung und, wo sinnvoll, als eigenständig deployte Dienste. Die Modulverträge sollen beide Aufrufarten unterstützen. Die Umstellung beginnt im gemeinsamen Deployment, damit Buchung, Warteliste, Turnierfreigabe und Decklistenstatus ohne zusätzliche Netzwerkrisiken entkoppelt werden können. Getrennte Deployments werden erst nach Vertrags-, Datenhoheits- und Integrationstests aktiviert; die Architektur darf sie dann nicht durch private Tabellenzugriffe oder interne Imports verhindern.
