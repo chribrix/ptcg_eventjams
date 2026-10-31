@@ -1,10 +1,15 @@
 <template>
-  <AdminPageLayout title="Turniersteuerung" subtitle="Live-Workspace für ein gestartetes Turnier">
+  <AdminPageLayout title="Turniersteuerung" subtitle="Gestartete Turniere verwalten">
     <div class="tm-layout">
+      <AdminTournamentSelector
+        :events="events" :selected-event-id="selectedEventId"
+        v-model:search="tournamentSearch" :loading="listLoading" :error="listError"
+        @select="selectEvent"
+      />
       <section class="admin-card tm-control-panel">
         <div v-if="detailsLoading" class="tm-state">Loading tournament details...</div>
         <div v-else-if="detailsError" class="tm-error">{{ detailsError }}</div>
-        <div v-else-if="!selectedEvent" class="tm-state">Öffne ein Turnier über die Eventverwaltung, um die Turniersteuerung zu starten.</div>
+        <div v-else-if="!selectedEvent" class="tm-state">Wähle oben ein Turnier oder starte es in der Eventverwaltung.</div>
         <template v-else>
           <div class="tm-title-row">
             <div>
@@ -265,7 +270,7 @@
 <script setup lang="ts">
 // types
 
-type EventListEntry = { id: string; name: string; venue: string; eventDate: string; status: string; maxParticipants: number; _count?: { registrations: number } };
+type EventListEntry = { id: string; name: string; venue: string; eventDate: string; status: string; startedAt: string | null; ended: boolean };
 type SelectedEvent = { id: string; name: string; venue: string; eventDate: string; status: string };
 type TomPlayerView = { userId: string; displayName: string; birthDate?: string; divisions?: string[]; hasOpenedTournament?: boolean; decklist?: string | null };
 type TomMatchView = { tableNumber?: number; player1UserId?: string; player2UserId?: string; outcome: number; outcomeLabel: string; divisionCategory?: string };
@@ -312,6 +317,7 @@ type TomMetadata = {
 };
 
 const listLoading = ref(true);
+const listError = ref<string | null>(null);
 const detailsLoading = ref(false);
 const statusSaving = ref(false);
 const detailsError = ref<string | null>(null);
@@ -322,7 +328,6 @@ const selectedEvent = ref<SelectedEvent | null>(null);
 const tournamentSearch = ref("");
 const route = useRoute();
 const router = useRouter();
-const LAST_ACTIVE_TOURNAMENT_STORAGE_KEY = "cj-tournament-management-active-event";
 
 const tomStateLoaded = ref(false);
 const tomLoading = ref(false);
@@ -387,14 +392,6 @@ const roundsForActivePod = computed(() => {
 const roundIsCurrent = (round: TomRoundView) => round.matches.some((match) => match.outcome === 0);
 const roundIsComplete = (round: TomRoundView) => round.matches.length > 0 && round.matches.every((match) => match.outcome !== 0);
 
-const filteredEvents = computed(() => {
-  const query = tournamentSearch.value.trim().toLowerCase();
-  if (!query) return events.value;
-  return events.value.filter((entry) =>
-    `${entry.name} ${entry.venue}`.toLowerCase().includes(query),
-  );
-});
-
 const syncSelectedEventToQuery = async (eventId: string | null) => {
   const nextQuery = { ...route.query };
   if (eventId) {
@@ -407,19 +404,12 @@ const syncSelectedEventToQuery = async (eventId: string | null) => {
 
 const loadEvents = async () => {
   listLoading.value = true;
+  listError.value = null;
   try {
-    const response = await $fetch<{ events: EventListEntry[] }>("/api/admin/custom-events?page=1&limit=100");
+    const response = await $fetch<{ events: EventListEntry[] }>("/api/admin/tournaments/managed");
     events.value = response.events || [];
-    const queryEventId = typeof route.query.eventId === "string" ? route.query.eventId : null;
-    const initialEventId =
-      queryEventId && events.value.some((entry) => entry.id === queryEventId)
-        ? queryEventId
-        : selectedEventId.value && events.value.some((entry) => entry.id === selectedEventId.value)
-          ? selectedEventId.value
-          : events.value[0]?.id || null;
-    if (initialEventId) {
-      await selectEvent(initialEventId);
-    }
+  } catch (error: any) {
+    listError.value = error?.data?.statusMessage || "Turniere konnten nicht geladen werden.";
   } finally {
     listLoading.value = false;
   }
@@ -429,9 +419,12 @@ const selectEvent = async (eventId: string) => {
   if (!eventId) return;
   if (selectedEventId.value === eventId && selectedEvent.value) return;
   selectedEventId.value = eventId;
-  if (import.meta.client) {
-    window.localStorage.setItem(LAST_ACTIVE_TOURNAMENT_STORAGE_KEY, eventId);
-  }
+  selectedEvent.value = null;
+  tomStateFingerprint.value = null;
+  tomStateLoaded.value = false;
+  tomMetadata.value = null;
+  stopAdminStateStream();
+  stopAdminStatePolling();
   await syncSelectedEventToQuery(eventId);
   activeTomTab.value = "overview";
   userPinnedTab.value = "overview";
@@ -446,17 +439,14 @@ const selectEvent = async (eventId: string) => {
   startAdminStatePolling();
 };
 
-const onSelectEventChange = async () => {
-  if (!selectedEventId.value) return;
-  await selectEvent(selectedEventId.value);
-};
-
 const loadSelectedEventDetails = async () => {
   if (!selectedEventId.value) return;
+  const eventId = selectedEventId.value;
   detailsLoading.value = true;
   detailsError.value = null;
   try {
-    const response = await $fetch<{ success: boolean; event: SelectedEvent }>(`/api/admin/events/${selectedEventId.value}/details`);
+    const response = await $fetch<{ success: boolean; event: SelectedEvent }>(`/api/admin/events/${eventId}/details`);
+    if (selectedEventId.value !== eventId) return;
     if (!response.success) {
       detailsError.value = "Failed to load tournament details.";
       return;
@@ -464,7 +454,7 @@ const loadSelectedEventDetails = async () => {
     selectedEvent.value = response.event;
     await loadTomState();
   } catch (error: any) {
-    detailsError.value = error?.data?.statusMessage || "Failed to load tournament details.";
+    if (selectedEventId.value === eventId) detailsError.value = error?.data?.statusMessage || "Failed to load tournament details.";
   } finally {
     detailsLoading.value = false;
   }
@@ -658,6 +648,7 @@ const endTournament = async () => {
     await $fetch(`/api/admin/tournaments/${selectedEventId.value}/tom-bridge/end-tournament`, { method: "POST" });
     tomSuccessMessage.value = "Turnier beendet. Die Spieleransicht bleibt 24 Stunden als Rundenhistorie verfügbar.";
     await loadTomState();
+    await loadEvents();
   } catch (error: any) {
     tomStateError.value = error?.data?.statusMessage || "Turnier konnte nicht beendet werden.";
   } finally {
@@ -991,10 +982,15 @@ const statusClass = (status: string) => {
 
 onMounted(async () => {
   const eventId = typeof route.query.eventId === "string" ? route.query.eventId : null;
-  const lastActiveEventId = import.meta.client
-    ? window.localStorage.getItem(LAST_ACTIVE_TOURNAMENT_STORAGE_KEY)
-    : null;
-  if (eventId || lastActiveEventId) await selectEvent(eventId || lastActiveEventId!);
+  if (eventId) {
+    try {
+      await $fetch(`/api/admin/tournaments/${encodeURIComponent(eventId)}/management-start`, { method: "POST" });
+      await selectEvent(eventId);
+    } catch (error: any) {
+      detailsError.value = error?.data?.statusMessage || "Turnier konnte nicht geöffnet werden.";
+    }
+  }
+  await loadEvents();
   startNowTickTimer();
 });
 
@@ -1008,19 +1004,7 @@ onBeforeUnmount(() => {
 <style scoped>
 @import "~/assets/css/admin-shared.css";
 .tm-layout { display: grid; grid-template-columns: 1fr; gap: 0.7rem; }
-.tm-header { display: flex; justify-content: space-between; align-items: center; }
-.tm-selector-panel, .tm-control-panel { min-height: auto; }
-.tm-selector-controls { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(260px, 420px); gap: 0.6rem; }
-.tm-input, .tm-select {
-  width: 100%;
-  border: 1px solid var(--app-border);
-  border-radius: 4px;
-  padding: 0.5rem 0.65rem;
-  font-size: 0.9rem;
-  background: var(--app-surface-1);
-  color: var(--app-text-primary);
-}
-.tm-input:focus, .tm-select:focus { outline: none; border-color: var(--app-accent); box-shadow: 0 0 0 3px var(--app-focus-ring); }
+.tm-control-panel { min-height: auto; }
 .tm-title-row { display: flex; justify-content: space-between; gap: 0.65rem; align-items: flex-start; margin-bottom: 0.65rem; }
 .tm-title { margin: 0; font-size: 1.35rem; color: var(--app-text-primary); }
 .tm-subtitle { margin: 0.3rem 0 0; color: var(--app-text-muted); }
@@ -1071,7 +1055,4 @@ onBeforeUnmount(() => {
 .tm-success-inline { color: var(--app-feedback-success-text); margin-top: 0.6rem; font-size: 0.875rem; font-weight: 600; }
 .tm-meta { margin: 0 0 0.6rem; color: var(--app-text-muted); font-size: 0.85rem; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-@media (max-width: 960px) {
-  .tm-selector-controls { grid-template-columns: 1fr; }
-}
 </style>

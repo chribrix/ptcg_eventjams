@@ -8,7 +8,7 @@ Status: Zielgrenzen als Planungs-READMEs. Die Implementierung liegt noch überwi
 | Mandanten | [README](../../modules/tenants/README.md) | Additive Grundlage in `server/services/tenants`, Prisma-Modelle; bestehende Routen noch nicht vollständig gescoped. | Tenant, Mitgliedschaft, Orte, Tenant-Konfiguration. |
 | Kalender & Eventkatalog | [README](../../modules/catalog/README.md) | `server/services/events/pokedataService.ts`, `eventProjectionService.ts`, `server/services/admin/eventAdminService.ts`, `server/api/events*` | Events, Vorlagen, Quellenverknüpfung, Kalenderprojektion. |
 | Buchung & Warteliste | [README](../../modules/booking/README.md) | `server/api/events/[id]/register.post.ts`, `server/api/bookings`, `server/services/events/waitlistService.ts` | Registrierungen, Tickets, Warteliste. |
-| Turnier | [README](../../modules/tournament/README.md) | `server/services/events/tom*`, `tournamentTomStateService.ts`, `server/api/**/tom-bridge` | Turnierzustand, Pairings, Meldungen, Freigaben. |
+| Turnier | [README](../../modules/tournament/README.md) | `server/services/events/tom*`, `tournamentTomStateService.ts`, `tournamentManagementService.ts`, `server/api/**/tom-bridge`, `server/api/admin/tournaments/managed.get.ts` | Turnierzustand, Management-Startmarkierung, Pairings, Meldungen, Freigaben. |
 | Liga | [README](../../modules/league/README.md) | `server/services/league`, `server/api/admin/league`, `server/api/league` | Saisons, Wertungen, Ligateilnahmen. |
 | Decklisten | [README](../../modules/decklists/README.md) | `server/api/dashboard/decklist.put.ts`, `server/api/validate.post.ts`, `server/util/PTCGValidator.ts` | Einreichungen, Versionen, Prüfergebnisse. |
 

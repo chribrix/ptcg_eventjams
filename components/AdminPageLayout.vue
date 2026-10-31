@@ -57,7 +57,8 @@ import { computed, onMounted, ref, watch } from "vue";
 import { Bars3Icon, XMarkIcon, ChevronDownIcon } from "@heroicons/vue/24/outline";
 import { adminNavigationGroups, adminNavigationItems, type AdminNavGroup, type AdminNavItem } from "~/utils/adminNavigation";
 
-defineProps<{ title?: string; subtitle?: string }>();
+const props = defineProps<{ title?: string; subtitle?: string }>();
+useHead({ title: computed(() => props.title ? `${props.title} – ChrispyJams` : "Administration – ChrispyJams") });
 type AdminDesign = "atelier" | "signal" | "editorial";
 const designVariants: Array<{ id: AdminDesign; label: string }> = [
   { id: "atelier", label: "Atelier" },
@@ -73,13 +74,14 @@ const activeGroup = ref<AdminNavGroup>("overview");
 const route = useRoute();
 const { showToast } = useToast();
 const isPreviewRoute = computed(() => route.path === "/admin-style-preview");
+const isTournamentPreviewRoute = computed(() => isPreviewRoute.value && route.query.view === "tournament");
 const activeGroupLabel = computed(() => adminNavigationGroups.find((group) => group.id === activeGroup.value)?.label || "Administration");
 const isActive = (item: AdminNavItem) =>
-  (isPreviewRoute.value && item.to === "/admin") || (item.match?.(route.path) ?? route.path === item.to);
+  (isPreviewRoute.value && item.to === (isTournamentPreviewRoute.value ? "/admin/tournament-management" : "/admin")) || (!isPreviewRoute.value && (item.match?.(route.path) ?? route.path === item.to));
 const groupItems = (group: AdminNavGroup) => adminNavigationItems.filter((item) => item.group === group);
 
-watch(() => route.path, (path) => {
-  const current = adminNavigationItems.find((item) => item.match?.(path) ?? item.to === path);
+watch(() => [route.path, route.query.view], ([path]) => {
+  const current = adminNavigationItems.find((item) => isActive(item));
   if (current) {
     activeGroup.value = current.group;
     expandedGroups.value = new Set([...expandedGroups.value, current.group]);

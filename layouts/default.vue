@@ -14,6 +14,7 @@ import {
 } from "@heroicons/vue/24/outline";
 import siteLogo from "~/assets/images/logo.png";
 import { adminNavigationItems } from "~/utils/adminNavigation";
+import { pageTitleForPath } from "~/utils/pageTitle";
 
 // Mobile menu state
 const mobileMenuOpen = ref(false);
@@ -144,6 +145,7 @@ onBeforeUnmount(() => {
 });
 
 const route = useRoute();
+useHead({ title: computed(() => pageTitleForPath(route.path)) });
 
 const isAdminRoute = computed(() => route.path.startsWith("/admin"));
 

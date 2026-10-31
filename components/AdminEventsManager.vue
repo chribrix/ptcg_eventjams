@@ -39,113 +39,15 @@
           </h2>
 
           <div v-if="upcomingEvents.length > 0" class="grid gap-3 lg:grid-cols-2">
-            <AppEventCard
-              v-for="event in upcomingEvents"
-              :key="event.id"
-              bare
-              interactive
-              compact
-              @click="openEventDetails(event)"
-              @keydown.enter.prevent="openEventDetails(event)"
-              @keydown.space.prevent="openEventDetails(event)"
-            >
-              <div>
-                <div class="flex items-start justify-between gap-3">
-                  <div class="flex-1 min-w-0">
-                    <h3 class="events-manager-card-title">
-                      <span>{{ event.name }}</span>
-                      <span
-                        v-for="tag in getDisplayTags(event.tags, event.tagType)"
-                        :key="tag.label"
-                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                        :class="tag.badgeClass"
-                      >
-                        {{ tag.value }}
-                      </span>
-                    </h3>
-                    <div class="flex flex-col gap-1 text-sm app-text-secondary-soft">
-                      <div class="flex items-center gap-2">
-                        <svg
-                          class="w-4 h-4 flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <span>{{ formatCompactDate(event.eventDate) }}</span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <svg
-                          class="w-4 h-4 flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                        <span class="truncate">{{ event.venue }}</span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <svg
-                          class="w-4 h-4 flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                          />
-                        </svg>
-                        <span
-                          >{{ event._count?.registrations || 0 }} /
-                          {{ event.maxParticipants }}</span
-                        >
-                      </div>
-                      <button
-                        type="button"
-                        class="mt-2 inline-flex min-h-9 items-center rounded-lg border px-3 py-1.5 text-xs font-semibold app-btn-neutral"
-                        @click.stop="viewRegistrations(event)"
-                      >
-                        Registrierungen verwalten
-                      </button>
-                    </div>
-                  </div>
-                  <svg
-                    class="w-5 h-5 flex-shrink-0 app-icon-muted mt-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </AppEventCard>
+            <AdminEventManagementCard
+              v-for="event in upcomingEvents" :key="event.id"
+              :event="event" :date-label="formatDate(event.eventDate)"
+              :copied="copiedEventId === event.id"
+              @copy="copyRegistrationLink(event.id)"
+              @registrations="viewRegistrations(event)"
+              @edit="editEvent(event)"
+              @delete="deleteEvent(event)"
+            />
           </div>
           <div v-else class="text-center py-8 app-text-muted-soft">
             {{ t("admin.eventsManager.noUpcomingEvents") }}
@@ -202,80 +104,15 @@
             leave-to-class="max-h-0 opacity-0"
           >
             <div v-if="showCompletedEvents" class="grid gap-3 overflow-hidden lg:grid-cols-2">
-              <AppEventCard
-                v-for="event in completedEvents"
-                :key="event.id"
-                bare
-                interactive
-                compact
-                muted
-                @click="openEventDetails(event)"
-                @keydown.enter.prevent="openEventDetails(event)"
-                @keydown.space.prevent="openEventDetails(event)"
-              >
-                <div>
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="flex-1 min-w-0">
-                      <h3 class="events-manager-card-title app-text-secondary-soft">
-                        {{ event.name }}
-                      </h3>
-                      <div class="flex flex-col gap-1 text-sm app-text-muted-soft">
-                        <div class="flex items-center gap-2">
-                          <svg
-                            class="w-4 h-4 flex-shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                          <span>{{ formatCompactDate(event.eventDate) }}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                          <svg
-                            class="w-4 h-4 flex-shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                            />
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                          </svg>
-                          <span class="truncate">{{ event.venue }}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <svg
-                      class="w-5 h-5 flex-shrink-0 app-icon-muted mt-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </AppEventCard>
+              <AdminEventManagementCard
+                v-for="event in completedEvents" :key="event.id"
+                :event="event" :date-label="formatDate(event.eventDate)"
+                :copied="copiedEventId === event.id" muted
+                @copy="copyRegistrationLink(event.id)"
+                @registrations="viewRegistrations(event)"
+                @edit="editEvent(event)"
+                @delete="deleteEvent(event)"
+              />
             </div>
           </Transition>
         </div>
@@ -302,384 +139,6 @@
         />
       </svg>
     </button>
-
-    <!-- Event Details Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="transition-all duration-300 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition-all duration-200 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div
-          v-if="selectedEvent"
-          class="app-overlay fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-4"
-          @click="closeEventDetails"
-        >
-          <Transition
-            enter-active-class="transition-all duration-300 ease-out"
-            enter-from-class="translate-y-full sm:translate-y-0 sm:scale-95"
-            enter-to-class="translate-y-0 sm:scale-100"
-            leave-active-class="transition-all duration-200 ease-in"
-            leave-from-class="translate-y-0 sm:scale-100"
-            leave-to-class="translate-y-full sm:translate-y-0 sm:scale-95"
-          >
-            <div
-              class="app-modal-surface flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-2xl sm:max-w-2xl sm:rounded-2xl"
-              @click.stop
-            >
-              <!-- Modal Header -->
-              <div
-                class="flex items-start justify-between border-b app-border px-6 py-4"
-              >
-                <div class="flex-1">
-                  <h3 class="mb-2 text-xl font-bold app-text-primary">
-                    {{ selectedEvent.name }}
-                  </h3>
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span
-                      v-for="tag in getDisplayTags(
-                        selectedEvent.tags,
-                        selectedEvent.tagType,
-                      )"
-                      :key="tag.label"
-                      class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
-                      :class="tag.badgeClass"
-                    >
-                      {{ tag.value }}
-                    </span>
-                    <span
-                      class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
-                      :class="getStatusBadgeClass(selectedEvent.status)"
-                    >
-                      {{ selectedEvent.status }}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  @click="closeEventDetails"
-                  class="events-manager-close-button"
-                >
-                  <svg
-                    class="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <!-- Modal Body -->
-              <div class="flex-1 overflow-y-auto px-6 py-4">
-                <div class="space-y-4">
-                  <!-- Date and Time -->
-                  <div class="flex items-start gap-3">
-                    <svg
-                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <div>
-                      <p class="text-sm font-medium app-text-secondary-soft">
-                        {{ t("admin.eventsManager.dateTime") }}
-                      </p>
-                      <p class="text-sm app-text-primary">
-                        {{ formatDate(selectedEvent.eventDate) }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Venue -->
-                  <div class="flex items-start gap-3">
-                    <svg
-                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    <div>
-                      <p class="text-sm font-medium app-text-secondary-soft">
-                        {{ t("common.venue") }}
-                      </p>
-                      <p class="text-sm app-text-primary">
-                        {{ selectedEvent.venue }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Participants -->
-                  <div class="flex items-start gap-3">
-                    <svg
-                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
-                    <div>
-                      <p class="text-sm font-medium app-text-secondary-soft">
-                        {{ t("common.participants") }}
-                      </p>
-                      <p class="text-sm app-text-primary">
-                        {{ selectedEvent._count?.registrations || 0 }} /
-                        {{ selectedEvent.maxParticipants }}
-                        <span class="app-text-muted-soft">
-                          {{ t("admin.eventsManager.registered") }}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Fee -->
-                  <div
-                    v-if="selectedEvent.participationFee"
-                    class="flex items-start gap-3"
-                  >
-                    <svg
-                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <div>
-                      <p class="text-sm font-medium app-text-secondary-soft">
-                        {{ t("events.participationFee") }}
-                      </p>
-                      <p class="text-sm app-text-primary">
-                        {{ selectedEvent.participationFee }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Decklist Required -->
-                  <div
-                    v-if="selectedEvent.requiresDecklist"
-                    class="flex items-start gap-3"
-                  >
-                    <svg
-                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <div>
-                      <p class="text-sm font-medium app-text-secondary-soft">
-                        {{ t("admin.eventsManager.decklistLabel") }}
-                      </p>
-                      <p class="text-sm app-text-primary">
-                        {{ t("admin.eventsManager.decklistRequiredAfterRegistration") }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Description -->
-                  <div
-                    v-if="selectedEvent.description"
-                    class="flex items-start gap-3"
-                  >
-                    <svg
-                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <div>
-                      <p class="text-sm font-medium app-text-secondary-soft">
-                        {{ t("common.description") }}
-                      </p>
-                      <p class="text-sm app-text-primary">
-                        {{ selectedEvent.description }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Registration Link -->
-                  <div class="flex items-start gap-3">
-                    <svg
-                      class="w-5 h-5 app-icon-muted mt-0.5 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                      />
-                    </svg>
-                    <div class="flex-1">
-                      <p class="mb-1 text-sm font-medium app-text-secondary-soft">
-                        {{ t("admin.eventsManager.registrationLink") }}
-                      </p>
-                      <div class="flex gap-2">
-                        <input
-                          :value="getRegistrationUrl(selectedEvent.id)"
-                          readonly
-                          class="app-input app-input-readonly flex-1 px-3 py-2 text-sm"
-                          @click="($event.target as HTMLInputElement)?.select()"
-                        />
-                        <button
-                          @click="copyRegistrationLink(selectedEvent.id)"
-                          class="app-action-button px-3 py-2 text-sm"
-                          :class="{
-                            'app-action-success':
-                              copiedEventId === selectedEvent.id,
-                            'app-action-primary':
-                              copiedEventId !== selectedEvent.id,
-                          }"
-                        >
-                          {{
-                            copiedEventId === selectedEvent.id
-                              ? t("admin.eventsManager.copied")
-                              : t("admin.eventsManager.copy")
-                          }}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Modal Footer -->
-              <div
-                class="flex flex-wrap gap-2 border-t app-border px-6 py-4"
-              >
-                <NuxtLink
-                  :to="`/events/register/${selectedEvent.id}`"
-                  class="app-action-button app-action-primary flex-1 px-4 py-2 text-sm no-underline"
-                  target="_blank"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
-                  {{ t("admin.eventsManager.openRegistration") }}
-                </NuxtLink>
-                <button
-                  @click="viewRegistrations(selectedEvent)"
-                  class="app-action-button app-action-secondary flex-1 px-4 py-2 text-sm"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                  {{
-                    t("admin.eventsManager.registrationsCount", {
-                      count: selectedEvent._count?.registrations || 0,
-                    })
-                  }}
-                </button>
-                <NuxtLink
-                  v-if="!selectedEvent.isExternalEvent"
-                  :to="`/admin/tournament-management?eventId=${selectedEvent.id}`"
-                  class="app-action-button app-action-primary flex-1 px-4 py-2 text-sm no-underline"
-                >
-                  Turnier starten
-                </NuxtLink>
-                <template v-if="!selectedEvent.isExternalEvent">
-                  <button
-                    @click="editEvent(selectedEvent)"
-                    class="app-action-button app-action-secondary px-4 py-2 text-sm"
-                  >
-                    {{ t("common.edit") }}
-                  </button>
-                  <button
-                    @click="deleteEvent(selectedEvent)"
-                    class="app-action-button app-action-danger px-4 py-2 text-sm"
-                  >
-                    {{ t("common.delete") }}
-                  </button>
-                </template>
-                <template v-else>
-                  <NuxtLink
-                    to="/admin/external-events"
-                    class="app-action-button app-action-secondary px-4 py-2 text-sm no-underline"
-                  >
-                    {{ t("admin.eventsManager.manageInExternalEvents") }}
-                  </NuxtLink>
-                </template>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
 
     <!-- Registration Management Modal -->
     <Teleport to="body">
@@ -1400,12 +859,9 @@
 <script setup lang="ts">
 import {
   parseEventTags,
-  getEventTypeLabel,
-  getEventTypeBadgeClass,
   FORMAT_OPTIONS,
   type TagType,
 } from "~/types/eventTags";
-import { useTagDisplay } from "~/composables/useTagDisplay";
 import {
   isCompletedAdminEvent,
   isUpcomingAdminEvent,
@@ -1414,12 +870,10 @@ import {
   DEFAULT_EVENT_TIME_ZONE,
   formatDateInTimeZone,
   formatDateTimeLocalInput,
-  getDateKeyInTimeZone,
   getUserTimeZone,
   parseDateTimeLocalInput,
 } from "~/utils/eventDateTime";
 
-const { getDisplayTags } = useTagDisplay();
 const { t } = useI18n();
 
 interface CustomEvent {
@@ -1656,66 +1110,6 @@ const completedEvents = computed(() => {
   );
 });
 
-// Format compact date
-const formatCompactDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const timeZone = userTimeZone.value;
-  const dateKey = getDateKeyInTimeZone(date, timeZone);
-
-  // Check if today
-  if (dateKey === getDateKeyInTimeZone(now, timeZone)) {
-    return `Today, ${formatDateInTimeZone(
-      date,
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-      },
-      "en-US",
-      timeZone,
-    )}`;
-  }
-
-  // Check if tomorrow
-  if (dateKey === getDateKeyInTimeZone(tomorrow, timeZone)) {
-    return `Tomorrow, ${formatDateInTimeZone(
-      date,
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-      },
-      "en-US",
-      timeZone,
-    )}`;
-  }
-
-  // Otherwise show full date
-  return formatDateInTimeZone(
-    date,
-    {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    },
-    "en-US",
-    timeZone,
-  );
-};
-
-// Status badge classes
-const getStatusBadgeClass = (status: string): string => {
-  const classes = {
-    upcoming: "app-status-upcoming",
-    ongoing: "app-status-ongoing",
-    completed: "app-status-completed",
-    cancelled: "app-status-cancelled",
-  };
-  return classes[status as keyof typeof classes] || classes.upcoming;
-};
-
 const isTicketCheckedIn = (row: TicketRow): boolean =>
   row.ticketStatus === "attended";
 
@@ -1769,16 +1163,6 @@ const getTicketStatusLabel = (status: string): string => {
   };
 
   return labels[status] || status;
-};
-
-// Open event details modal
-const openEventDetails = (event: CustomEvent) => {
-  selectedEvent.value = event;
-};
-
-// Close event details modal
-const closeEventDetails = () => {
-  selectedEvent.value = null;
 };
 
 // Form data

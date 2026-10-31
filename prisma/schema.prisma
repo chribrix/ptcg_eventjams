@@ -188,6 +188,7 @@ model CustomEvent {
   registrations        EventRegistration[]
   waitlistEntries      WaitlistEntry[]
   tomState             TournamentTomState?
+  tournamentManagement TournamentManagementSession?
 
   @@index([tenantId])
   @@map("custom_events")
@@ -207,6 +208,15 @@ model TournamentTomState {
   customEvent       CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
 
   @@map("tournament_tom_states")
+  @@schema("public")
+}
+
+model TournamentManagementSession {
+  customEventId String      @id @map("custom_event_id")
+  startedAt     DateTime    @default(now()) @map("started_at")
+  customEvent   CustomEvent @relation(fields: [customEventId], references: [id], onDelete: Cascade)
+
+  @@map("tournament_management_sessions")
   @@schema("public")
 }
 
