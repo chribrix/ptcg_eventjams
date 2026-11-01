@@ -1,4 +1,6 @@
-# Öffentliche Eventdarstellung
+# Eventdarstellung und Formularadapter
+
+**Admin-Vorlagenformular, 01.11.2026:** `eventTemplateForm.ts` besitzt den kleinen Client-Vertrag für die Vorlagenauswahl im gemeinsamen Event-Erstellungsdialog: `AdminEventTemplate`, `templateToEventPrefill(template, timeZone, now)` und `searchEventTemplates(templates, query)`. Der Adapter berechnet den nächsten Wochentag mit Uhrzeit und die relative Anmeldefrist und fällt bei alten Vorlagen ohne `eventName` auf `name` als Eventtitel zurück. Die Suche normalisiert Groß-/Kleinschreibung und Akzente und sortiert Treffer stabil; die UI begrenzt die sichtbare Liste auf 30. Der Adapter speichert keine Daten und erteilt keine Rechte; POST/PUT/DELETE laufen ausschließlich über die admin-geschützte Vorlagen-API. Die Datenhoheit liegt beim Katalog, dokumentiert in [`modules/catalog/README.md`](../../modules/catalog/README.md). Im kombinierten und separaten Deployment benötigt die UI denselben Template-Lesevertrag. Nachweis: `tests/unit/eventTemplateForm.test.ts` und mobile Dialogprüfung mit 60 Vorlagen.
 
 `EventGameWatermark.vue` zeigt in öffentlichen Eventkarten ein dekoratives Logo für Pokémon TCG, VGC oder GO. Die Komponente erwartet den bereits fachlich bestimmten `PokemonGameType` aus `types/eventGame.ts`; unbekannte bzw. andere Spiele erhalten kein Wasserzeichen. Sie verändert keine Eventdaten und hat keine eigene API oder Berechtigung.
 

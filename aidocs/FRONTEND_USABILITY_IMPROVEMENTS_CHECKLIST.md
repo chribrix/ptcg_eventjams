@@ -169,6 +169,8 @@ This re-prioritizes the user-facing consolidation ahead of admin-facing work. Ad
 
 ## Phase 6 — Recurring event templates (requires backend design)
 
+**Überarbeitung am 01.11.2026:** Der bisherige große Vorlagenblock und das separate Bearbeiten-Modal wurden durch einen Button im Kalenderkopf und auswählbare kompakte Vorlagen im Event-Erstellungsdialog ersetzt. Die untenstehenden Häkchen dokumentieren die ursprüngliche Einführung; der aktuelle Ablauf und die additive `event_name`-Migration stehen in `modules/catalog/README.md` und im Architektur-Implementierungsplan. Die beiden früheren Testhinweise für Vorlage-Chip und Blitzsymbol sind durch Auswahl im Dialog sowie PUT/POST der Vorlagenaktionen abgelöst.
+
 **Goal:** "Set event → check/edit if necessary → go" for recurring local events, beyond one-off duplication.
 
 > **Delivered out of sequence** at explicit user request ("NUR FÜR ADMINS: Event anlegen button... Prefab Möglichkeit") before Phases 2–5 were authorized. Implemented on the landing page rather than under `/admin/events` — see implementation notes below.

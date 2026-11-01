@@ -1,5 +1,7 @@
 # Browser-Services (heutige Codegrenze)
 
+Die öffentliche Standortpräferenz `event_location_preference_v1` liegt dauerhaft im Browser-Local-Storage, unabhängig von der Auth-Session. `utils/clientAuthState.ts` bewahrt sie auch beim vollständigen Logout-Cleanup ausdrücklich auf. Nur eine neue Auswahl überschreibt sie; bei inkompatiblen Rollouts wird der Speicherschlüssel versioniert. Test: `tests/unit/clientAuthState.test.ts`.
+
 `authSessionService.ts` ist die zentrale clientseitige Instanz für Sitzungserneuerung und Invalidierung. Der neue `registrationPdfService.ts` erstellt aus einem expliziten `RegistrationPrintInput` eine druckbare DIN-A4-Teilnehmerliste und lädt sie im Browser herunter. Er besitzt weder Registrierungsdaten noch eine eigene Berechtigung oder einen Server-Endpunkt.
 
 **Vertrag und Interaktion:** `createRegistrationPrintDocument(input)` baut ein pdfmake-Dokument; `downloadRegistrationPrintPdf(input)` lädt pdfmake erst beim Export und speichert die PDF. `AdminEventsManager.vue` holt unmittelbar davor die aktuelle, serverseitig admin-geschützte Registrierungsliste. Pro Ticket erscheint eine Zeile; der Bucher-E-Mail-Kontakt steht unter dem Teilnehmernamen. Teilnehmer-Geburtsjahre kommen aus dem Admin-Registrierungsservice. Datum und Uhrzeit verwenden die zentrale Event-Zeitzone aus `utils/eventDateTime.ts`.

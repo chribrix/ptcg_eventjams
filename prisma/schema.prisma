@@ -224,6 +224,7 @@ model EventTemplate {
   id                            String    @id @default(cuid())
   tenantId                      String    @default("crows-and-owls") @map("tenant_id")
   name                          String
+  eventName                     String?   @map("event_name")
   venue                         String
   maxParticipants               Int       @map("max_participants")
   participationFee              Decimal?  @map("participation_fee") @db.Decimal(10, 2)

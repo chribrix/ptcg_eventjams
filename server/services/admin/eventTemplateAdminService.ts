@@ -9,7 +9,8 @@ type AdminActor = {
 };
 
 export const createEventTemplateInputSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
+  eventName: z.string().trim().min(1).optional(),
   venue: z.string().min(1),
   tagType: z.enum(["pokemon", "riftbound", "generic"]).default("pokemon"),
   tags: z.record(z.any()).optional(),

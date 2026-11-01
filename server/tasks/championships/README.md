@@ -1,0 +1,5 @@
+# Wöchentliche Meisterschafts-Synchronisierung
+
+`refresh.ts` ruft jeden Montag um 04:00 UTC den öffentlichen `getCachedChampionships({ force: true })`-Port auf. Der Task besitzt keine eigenen Daten und führt keine Nutzeraktion aus; die Meisterschaftsliste und ihre Cache-/Fehlerregeln gehören `server/services/events/championshipScheduleService.ts`. Die Ausführung erfolgt serverseitig über Nitro `scheduledTasks` im kombinierten Node-Deployment. Sie verwendet weder Nutzeridentität noch Tenant-Kontext, weil die offizielle Liste öffentlich und global ist. Der Task gibt nur die Anzahl geprüfter Events zurück und protokolliert keine Providerantworten oder personenbezogenen Daten.
+
+Im separaten Katalogbetrieb muss der Scheduler den öffentlichen Katalog-Refresh-Port aufrufen. Bei mehreren Serverinstanzen sind ein gemeinsamer Nitro-Storage und eine einzige koordinierte geplante Ausführung nötig. Ein erster Leser kann einen leeren Cache füllen; nach Fehlern gelten der 28-Tage-Rückfall und die eintägige Wiederholsperre. Nachweis: `tests/unit/championshipScheduleService.test.ts`, Nitro-Build und Prüfung der lokalen `/api/events/major`-Antwort.

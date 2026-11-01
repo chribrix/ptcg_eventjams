@@ -41,6 +41,7 @@ interface CalendarEvent {
 interface EventStore {
   events: ParsedEvent[]; // Cached external events from pokedata.ovh
   lastFetch: Date | null; // Timestamp of last successful fetch for cache invalidation
+  queryKey: string;
   isLoading: boolean; // Loading state for UI feedback
   error: string | null; // Error message if fetch fails
 }
@@ -48,9 +49,11 @@ interface EventStore {
 const eventStore = ref<EventStore>({
   events: [],
   lastFetch: null,
+  queryKey: "",
   isLoading: false,
   error: null,
 });
+let latestRequest = 0;
 
 /**
  * Composable for managing external Pokemon TCG events from pokedata.ovh
@@ -84,6 +87,7 @@ export const useEventStore = () => {
   function clearEvents(): void {
     eventStore.value.events = [];
     eventStore.value.lastFetch = null;
+    eventStore.value.queryKey = "";
     eventStore.value.error = null;
   }
 
@@ -91,9 +95,10 @@ export const useEventStore = () => {
    * Updates the store with new events and marks cache as fresh
    * @param events - Array of parsed events to cache
    */
-  function setEvents(events: ParsedEvent[]): void {
+  function setEvents(events: ParsedEvent[], queryKey = ""): void {
     eventStore.value.events = events;
     eventStore.value.lastFetch = new Date();
+    eventStore.value.queryKey = queryKey;
     eventStore.value.error = null;
   }
 
@@ -125,10 +130,12 @@ export const useEventStore = () => {
    * - Returns cached data if available and not expired
    * - Automatically fetches fresh data if cache is stale
    */
-  async function fetchEvents(force: boolean = false): Promise<ParsedEvent[]> {
+  async function fetchEvents(force: boolean = false, query: Record<string, string> = {}): Promise<ParsedEvent[]> {
+    const queryKey = new URLSearchParams(query).toString();
     // Return cached events if we have them and it's not a force refresh
     if (
       !force &&
+      eventStore.value.queryKey === queryKey &&
       eventStore.value.events.length > 0 &&
       eventStore.value.lastFetch
     ) {
@@ -142,12 +149,15 @@ export const useEventStore = () => {
 
     setLoading(true);
     setError("");
+    const requestId = ++latestRequest;
 
     try {
       // Add cache busting parameter to force fresh data
-      const cacheBuster = force ? `?_t=${Date.now()}` : "";
+      const params = new URLSearchParams(query);
+      if (force) params.set("_t", String(Date.now()));
+      const suffix = params.size ? `?${params.toString()}` : "";
       const response = await $fetch<{ events: ParsedEvent[] }>(
-        `/api/events/detailed${cacheBuster}`,
+        `/api/events/detailed${suffix}`,
         {
           // Disable caching for this request
           cache: "no-cache" as RequestCache,
@@ -156,7 +166,7 @@ export const useEventStore = () => {
 
 
       if (response?.events && Array.isArray(response.events)) {
-        setEvents(response.events);
+        if (requestId === latestRequest) setEvents(response.events, queryKey);
 
         return response.events;
       } else {
@@ -165,11 +175,11 @@ export const useEventStore = () => {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to fetch events";
-      setError(errorMessage);
+      if (requestId === latestRequest) setError(errorMessage);
       console.error("Error fetching events:", error);
       throw error;
     } finally {
-      setLoading(false);
+      if (requestId === latestRequest) setLoading(false);
     }
   }
 

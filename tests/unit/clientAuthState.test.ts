@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createClientAuthStateCleaner } from "../../utils/clientAuthState";
+import { EVENT_LOCATION_STORAGE_KEY } from "../../utils/eventLocationPreference";
 
 describe("client auth state cleaner", () => {
   it("removes only auth-related local storage keys when partial cleanup is requested", () => {
@@ -63,5 +64,25 @@ describe("client auth state cleaner", () => {
 
     expect(localStorageMock.clear).toHaveBeenCalledOnce();
     expect(sessionStorageMock.clear).toHaveBeenCalledOnce();
+  });
+
+  it("preserves the event location choice across logout cleanup", () => {
+    const entries = new Map([["supabase.auth.token", "secret"], [EVENT_LOCATION_STORAGE_KEY, '{"mode":"default"}']]);
+    const localStorageMock = {
+      get length() { return entries.size; },
+      key: (index: number) => [...entries.keys()][index] || null,
+      getItem: (key: string) => entries.get(key) || null,
+      setItem: (key: string, value: string) => { entries.set(key, value); },
+      clear: () => entries.clear(),
+      removeItem: (key: string) => { entries.delete(key); },
+    };
+    createClientAuthStateCleaner({
+      isClient: true,
+      localStorage: localStorageMock,
+      sessionStorage: { clear: vi.fn() },
+      getCookies: () => [],
+    })({ clearAllStorage: true });
+    expect(entries.get(EVENT_LOCATION_STORAGE_KEY)).toBe('{"mode":"default"}');
+    expect(entries.has("supabase.auth.token")).toBe(false);
   });
 });

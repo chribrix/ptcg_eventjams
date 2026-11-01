@@ -16,10 +16,52 @@
         {{ loadError }}
       </div>
 
-      <form v-else @submit.prevent="saveEvent" class="grid gap-4">
+      <form v-else @submit.prevent="saveEvent" class="grid min-w-0 gap-4">
         <div v-if="formError" class="app-feedback-danger rounded-lg p-3 text-sm">
           {{ formError }}
         </div>
+
+        <section v-if="!eventId && templates?.length" class="min-w-0" :aria-label="t('eventWorkspace.savedTemplatesTitle')">
+          <button
+            type="button"
+            class="app-border app-surface-1 flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left"
+            :aria-expanded="templatePickerOpen"
+            @click="toggleTemplatePicker"
+          >
+            <span class="min-w-0">
+              <span class="app-text-secondary-soft block text-[10px] font-bold uppercase tracking-wide">{{ t("eventWorkspace.savedTemplatesTitle") }}</span>
+              <span class="app-text-primary block truncate text-sm font-semibold">{{ selectedTemplate?.name || (selectedTemplateId ? templateName : t("eventWorkspace.chooseTemplate", { count: templates.length })) }}</span>
+            </span>
+            <ChevronDownIcon class="app-text-secondary-soft h-4 w-4 shrink-0 transition-transform" :class="templatePickerOpen ? 'rotate-180' : ''" />
+          </button>
+          <div v-if="templatePickerOpen" class="app-border app-surface-1 mt-1 min-w-0 rounded-lg border p-2">
+            <input
+              ref="templateSearchInput"
+              v-model="templateQuery"
+              type="search"
+              class="app-input w-full px-3 py-2 text-sm"
+              :placeholder="t('eventWorkspace.searchTemplates')"
+              :aria-label="t('eventWorkspace.searchTemplates')"
+            />
+            <p class="app-text-muted-soft mt-1 px-1 text-[11px]">{{ t("eventWorkspace.templateResults", { count: filteredTemplates.length }) }}</p>
+            <div class="mt-1 max-h-56 overflow-y-auto overscroll-contain">
+              <button
+                v-for="template in visibleTemplates"
+                :key="template.id"
+                type="button"
+                class="app-border block w-full min-w-0 rounded-md border-b px-2 py-2 text-left hover:bg-[var(--app-surface-2)]"
+                :class="selectedTemplateId === template.id ? 'ring-1 ring-[var(--app-accent)]' : ''"
+                :aria-pressed="selectedTemplateId === template.id"
+                @click="selectTemplate(template)"
+              >
+                <span class="app-text-primary block truncate text-sm font-semibold">{{ template.name }}</span>
+                <span class="app-text-secondary-soft block truncate text-xs">{{ template.eventName || template.name }} · {{ weekdayLabel(template.weekday) }} {{ template.eventTime }} · {{ template.venue }}</span>
+              </button>
+              <p v-if="!filteredTemplates.length" class="app-text-muted-soft px-2 py-3 text-sm">{{ t("eventWorkspace.noTemplateMatches") }}</p>
+            </div>
+            <p v-if="filteredTemplates.length > visibleTemplates.length" class="app-text-muted-soft px-1 pt-2 text-xs">{{ t("eventWorkspace.refineTemplateSearch", { count: visibleTemplates.length }) }}</p>
+          </div>
+        </section>
 
         <div>
           <label class="block text-sm font-semibold app-text-secondary-soft mb-2">
@@ -215,27 +257,28 @@
           </select>
         </div>
 
-        <div class="flex flex-wrap gap-3 pt-2">
-          <button
-            type="button"
-            @click="$emit('close')"
-            class="app-btn-neutral app-btn-md flex-1"
-          >
-            {{ t("common.cancel") }}
-          </button>
-          <button
-            type="button"
-            @click="saveAsTemplate"
-            :disabled="savingTemplate || !eventForm.eventDate"
-            class="app-btn-neutral app-btn-md flex-1 disabled:opacity-50"
-          >
-            <BookmarkIcon class="w-4 h-4" />
-            {{ savingTemplate ? t("eventWorkspace.savingTemplate") : t("eventWorkspace.saveAsTemplate") }}
-          </button>
+        <div class="app-border min-w-0 border-t pt-4">
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <label for="event-template-name" class="app-text-secondary-soft text-sm font-semibold">{{ t("eventWorkspace.templateName") }}</label>
+            <button v-if="selectedTemplateId" type="button" class="app-text-muted-soft text-xs underline underline-offset-2 hover:text-red-400" @click="deleteSelectedTemplate">{{ t("eventWorkspace.deleteTemplate") }}</button>
+          </div>
+          <input id="event-template-name" v-model="templateName" type="text" maxlength="120" class="app-input px-3 py-2" :placeholder="t('eventWorkspace.templateNamePlaceholder')" />
+          <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button type="button" class="app-btn-neutral app-btn-sm min-w-0 disabled:opacity-50" :disabled="savingTemplate || !selectedTemplateId || !eventForm.eventDate" @click="saveTemplate('update')">
+              {{ t("eventWorkspace.updateTemplate") }}
+            </button>
+            <button type="button" class="app-btn-neutral app-btn-sm min-w-0 disabled:opacity-50" :disabled="savingTemplate || !eventForm.eventDate" @click="saveTemplate('create')">
+              <BookmarkIcon class="h-4 w-4" />{{ t("eventWorkspace.createTemplate") }}
+            </button>
+          </div>
+        </div>
+
+        <div class="grid min-w-0 grid-cols-2 gap-2 pt-1">
+          <button type="button" @click="$emit('close')" class="app-btn-neutral app-btn-md min-w-0 px-2">{{ t("common.cancel") }}</button>
           <button
             type="submit"
             :disabled="saving"
-            class="app-btn-primary app-btn-md flex-1 disabled:opacity-50"
+            class="app-btn-primary app-btn-md min-w-0 px-2 disabled:opacity-50"
           >
             {{
               saving
@@ -252,7 +295,8 @@
 
 <script setup lang="ts">
 import { parseEventTags, FORMAT_OPTIONS, type TagType } from "~/types/eventTags";
-import { BookmarkIcon } from "@heroicons/vue/24/outline";
+import { BookmarkIcon, ChevronDownIcon } from "@heroicons/vue/24/outline";
+import { searchEventTemplates, templateToEventPrefill, type AdminEventTemplate } from "~/components/events/eventTemplateForm";
 import {
   formatDateInTimeZone,
   formatDateTimeLocalInput,
@@ -275,7 +319,7 @@ interface EventPrefill {
   name?: string;
   venue?: string;
   tagType?: TagType;
-  tags?: EventFormTags;
+  tags?: Partial<EventFormTags>;
   maxParticipants?: number;
   participationFee?: number;
   description?: string;
@@ -284,10 +328,10 @@ interface EventPrefill {
   registrationDeadline?: string;
 }
 
-const props = defineProps<{ eventId?: string; prefill?: EventPrefill }>();
+const props = defineProps<{ eventId?: string; prefill?: EventPrefill; templates?: AdminEventTemplate[] }>();
 const emit = defineEmits<{ close: []; saved: []; templateSaved: [] }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const { showToast } = useToast();
 
 interface EventFormState {
@@ -313,6 +357,14 @@ interface VenueDirectoryEntry {
 const loading = ref(true);
 const saving = ref(false);
 const savingTemplate = ref(false);
+const selectedTemplateId = ref<string | null>(null);
+const templateName = ref("");
+const templatePickerOpen = ref(false);
+const templateQuery = ref("");
+const templateSearchInput = ref<HTMLInputElement | null>(null);
+const selectedTemplate = computed(() => props.templates?.find((template) => template.id === selectedTemplateId.value) || null);
+const filteredTemplates = computed(() => searchEventTemplates(props.templates || [], templateQuery.value));
+const visibleTemplates = computed(() => filteredTemplates.value.slice(0, 30));
 const formError = ref("");
 const loadError = ref("");
 const userTimeZone = ref(getUserTimeZone());
@@ -504,8 +556,7 @@ async function loadEvent() {
   }
 }
 
-function applyPrefill() {
-  const p = props.prefill;
+function applyPrefill(p: EventPrefill | undefined = props.prefill) {
   eventForm.value = {
     name: p?.name || "",
     venue: p?.venue || "",
@@ -519,6 +570,28 @@ function applyPrefill() {
     requiresDecklist: p?.requiresDecklist ?? false,
     status: "upcoming",
   };
+}
+
+function weekdayLabel(weekday: number): string {
+  const day = new Date(Date.UTC(2023, 0, 1 + weekday));
+  return day.toLocaleDateString(locale.value.startsWith("de") ? "de-DE" : "en-US", { weekday: "short", timeZone: "UTC" });
+}
+
+function selectTemplate(template: AdminEventTemplate) {
+  selectedTemplateId.value = template.id;
+  templateName.value = template.name;
+  applyPrefill(templateToEventPrefill(template, userTimeZone.value));
+  formError.value = "";
+  templatePickerOpen.value = false;
+  templateQuery.value = "";
+}
+
+async function toggleTemplatePicker() {
+  templatePickerOpen.value = !templatePickerOpen.value;
+  if (templatePickerOpen.value) {
+    await nextTick();
+    templateSearchInput.value?.focus();
+  }
 }
 
 async function saveEvent() {
@@ -563,8 +636,17 @@ async function saveEvent() {
   }
 }
 
-async function saveAsTemplate() {
+async function saveTemplate(mode: "create" | "update") {
   if (!eventForm.value.eventDate) return;
+  if (mode === "update" && !selectedTemplateId.value) return;
+  if (!templateName.value.trim()) {
+    formError.value = t("eventWorkspace.templateNameRequired");
+    return;
+  }
+  if (!eventForm.value.name.trim() || !eventForm.value.venue.trim()) {
+    formError.value = t("eventWorkspace.templateFieldsRequired");
+    return;
+  }
 
   try {
     savingTemplate.value = true;
@@ -574,7 +656,7 @@ async function saveAsTemplate() {
     syncOrganizationFromVenue();
 
     const eventDate = parseDateTimeLocalInput(eventForm.value.eventDate, userTimeZone.value);
-    const weekday = eventDate.getDay();
+    const weekday = new Date(`${eventForm.value.eventDate.slice(0, 10)}T12:00:00Z`).getUTCDay();
     const eventTime = eventForm.value.eventDate.split("T")[1] || "18:00";
 
     let registrationDeadlineMinutesBefore: number | undefined;
@@ -586,10 +668,13 @@ async function saveAsTemplate() {
       );
     }
 
-    await $fetch("/api/admin/event-templates", {
-      method: "POST",
+    const saved = await $fetch<{ id: string }>(mode === "update"
+      ? `/api/admin/event-templates?id=${selectedTemplateId.value}`
+      : "/api/admin/event-templates", {
+      method: mode === "update" ? "PUT" : "POST",
       body: {
-        name: eventForm.value.name,
+        name: templateName.value.trim(),
+        eventName: eventForm.value.name.trim(),
         venue: eventForm.value.venue.trim(),
         tagType: eventForm.value.tagType,
         tags: {
@@ -608,13 +693,27 @@ async function saveAsTemplate() {
       },
     });
 
-    showToast(t("eventWorkspace.templateSaved"), "success");
+    if (mode === "create") selectedTemplateId.value = saved.id;
+    showToast(t(mode === "update" ? "eventWorkspace.templateUpdated" : "eventWorkspace.templateSaved"), "success");
     emit("templateSaved");
   } catch (err) {
     console.error("Error saving template:", err);
     formError.value = getRequestErrorMessage(err, t("eventWorkspace.templateSaveError"));
   } finally {
     savingTemplate.value = false;
+  }
+}
+
+async function deleteSelectedTemplate() {
+  if (!selectedTemplateId.value || !confirm(t("eventWorkspace.confirmDeleteTemplate", { name: templateName.value }))) return;
+  try {
+    await $fetch(`/api/admin/event-templates?id=${selectedTemplateId.value}`, { method: "DELETE" });
+    selectedTemplateId.value = null;
+    templateName.value = "";
+    showToast(t("eventWorkspace.templateDeleted"), "success");
+    emit("templateSaved");
+  } catch (err) {
+    formError.value = getRequestErrorMessage(err, t("eventWorkspace.templateDeleteError"));
   }
 }
 

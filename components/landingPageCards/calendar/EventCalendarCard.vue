@@ -48,6 +48,9 @@
         -->
 
         <div class="mt-1 w-full lg:mt-1">
+          <div v-if="!showcaseDate" class="mb-2 flex justify-end px-1">
+            <EventLocationFilter />
+          </div>
           <div class="calendar-shell rounded-xl border app-border p-3 lg:p-4">
             <div class="mb-2 flex items-center justify-between gap-2">
               <button
@@ -90,9 +93,10 @@
                 v-else
                 type="button"
                 class="relative flex h-10 min-w-0 flex-col items-center justify-center rounded-md border text-xs font-semibold leading-none lg:h-12 lg:rounded-lg lg:text-base"
-                :class="customCalendarDayClass(day)"
-                :style="customCalendarDayStyle(day)"
+                :class="[customCalendarDayClass(day), { 'major-outline': day.hasMajor, 'major-connect-left': day.majorConnectedLeft, 'major-connect-right': day.majorConnectedRight }]"
+                :style="[customCalendarDayStyle(day), day.majorColor ? { '--major-outline-color': day.majorColor } : {}]"
                 :disabled="!day.isInteractive"
+                :aria-label="day.majorLabel ? `${day.label}: ${day.majorLabel}` : undefined"
                 @click="day.dateKey ? onCustomDayClick(day.dateKey) : null"
               >
                 <span
@@ -112,6 +116,12 @@
 
         <!-- Legend -->
         <div class="mt-3 w-full lg:mt-4">
+          <div v-if="visibleMajorKinds.length" class="app-text-secondary-soft mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold sm:text-xs">
+            <span v-for="kind in visibleMajorKinds" :key="kind" class="inline-flex items-center gap-1.5">
+              <span class="h-3.5 w-3.5 rounded border-[3px]" :style="{ borderColor: MAJOR_EVENT_COLORS[kind] }" aria-hidden="true"></span>
+              <span>{{ t(`calendarCard.majorKinds.${kind}`) }}</span>
+            </span>
+          </div>
           <div
             class="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2 lg:gap-2.5"
           >
@@ -141,8 +151,9 @@
 
         <!-- Event Details Popover -->
         <EventDetailsPopover
-          v-if="selectedDateEvents.length > 0"
+          v-if="selectedDateEvents.length > 0 || selectedMajorEvents.length > 0"
           :events="selectedDateEvents"
+          :major-events="selectedMajorEvents"
           :formatted-date="formatSelectedDate"
           @close="closeEventDetails"
         />
@@ -207,15 +218,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/vue/24/outline";
 import CalendarCategoryPill from "./CalendarCategoryPill.vue";
+import EventLocationFilter from "~/components/events/EventLocationFilter.vue";
 import EventDetailsPopover from "./EventDetailsPopover.vue";
 import { EVENT_COLORS } from "~/utils/eventColors";
-import { getRollingCalendarWindow, shiftRollingCalendarWindow } from "~/utils/rollingCalendarWindow";
+import { eventLocationQuery, eventLocationQueryKey } from "~/utils/eventLocationPreference";
+import { getRollingCalendarDateKey, getRollingCalendarWindow, shiftRollingCalendarWindow } from "~/utils/rollingCalendarWindow";
+import { MAJOR_EVENT_COLORS, indexMajorEventsByDate, majorDaysConnect, primaryMajorEvent, type MajorCalendarEvent, type MajorEventKind } from "~/utils/majorCalendarEvents";
 import {
   getDateKeyInTimeZone,
   getUserTimeZone,
@@ -280,10 +294,15 @@ const dotColors: Record<CalendarEventType, string> = {
 };
 
 const eventStore = useEventStore();
+const { preference: locationPreference, initialize: initializeLocationPreference } = useEventLocationPreference();
+const locationReady = ref(false);
+let loadedLocationKey = "";
 const customEvents = ref<CustomCalendarEvent[]>([]);
+const majorEvents = ref<MajorCalendarEvent[]>([]);
 const isLoading = ref(false);
 const selectedDate = ref<string | null>(null);
 const selectedDateEvents = ref<UnifiedCalendarEvent[]>([]);
+const selectedMajorEvents = ref<MajorCalendarEvent[]>([]);
 const calendarAnchor = ref<Date>(today);
 const selectedEventType = ref<CalendarCategory | null>(null);
 const showTypeFilterModal = ref(false);
@@ -306,13 +325,38 @@ const fetchCustomEvents = async () => {
   }
 };
 
+const fetchMajorEvents = async () => {
+  try {
+    const response = await $fetch<{ events: MajorCalendarEvent[] }>("/api/events/major");
+    majorEvents.value = response.events || [];
+  } catch {
+    console.error("Failed to load major events");
+  }
+};
+
 onMounted(async () => {
   if (props.showcaseDate && import.meta.dev) return;
+  initializeLocationPreference();
+  loadedLocationKey = eventLocationQueryKey(locationPreference.value);
+  locationReady.value = true;
   isLoading.value = true;
   try {
-    await Promise.all([eventStore.fetchEvents(), fetchCustomEvents()]);
+    await Promise.all([eventStore.fetchEvents(false, eventLocationQuery(locationPreference.value)), fetchCustomEvents(), fetchMajorEvents()]);
   } catch (error) {
     console.error("Failed to load events:", error);
+  } finally {
+    isLoading.value = false;
+  }
+});
+
+watch(locationPreference, async () => {
+  if (!locationReady.value) return;
+  const nextKey = eventLocationQueryKey(locationPreference.value);
+  if (nextKey === loadedLocationKey) return;
+  loadedLocationKey = nextKey;
+  isLoading.value = true;
+  try {
+    await eventStore.fetchEvents(true, eventLocationQuery(locationPreference.value));
   } finally {
     isLoading.value = false;
   }
@@ -397,6 +441,12 @@ type CustomCalendarDay = {
   label: string;
   isInteractive: boolean;
   hasEvents: boolean;
+  hasMajor: boolean;
+  majorKind: MajorEventKind | null;
+  majorColor: string | null;
+  majorConnectedLeft: boolean;
+  majorConnectedRight: boolean;
+  majorLabel: string;
   dateKey: string | null;
   types: CalendarEventType[];
   showMonthMarker: boolean;
@@ -415,28 +465,53 @@ const showcaseTypes: Record<string, CalendarEventType[]> = {
   "2026-11-13": ["challenge", "cup"], "2026-11-20": ["challenge"],
   "2026-11-25": ["cup"],
 };
+const showcaseMajorEvents: MajorCalendarEvent[] = [
+  { id: "official-championship-en-us-events-regionals-2027-gdansk", title: "2027 Gdańsk Pokémon Regional Championships", kind: "regional", startDate: "2026-10-31", endDate: "2026-11-01", link: "https://championships.pokemon.com/en-us/events/regionals/2027/gdansk" },
+  { id: "official-championship-en-us-events-internationals-2027-sao-paulo", title: "2027 Pokémon Latin America International Championships", kind: "international", startDate: "2026-11-20", endDate: "2026-11-22", link: "https://championships.pokemon.com/en-us/events/internationals/2027/sao-paulo" },
+  { id: "official-championship-en-us-events-internationals-2027-london", title: "2027 Pokémon Europe International Championships", kind: "international", startDate: "2027-02-19", endDate: "2027-02-21", link: "https://championships.pokemon.com/en-us/events/internationals/2027/london" },
+];
+const majorEventsByDate = computed(() => indexMajorEventsByDate(props.showcaseDate && import.meta.dev ? showcaseMajorEvents : majorEvents.value));
 const customCalendarWeeks = computed(() => calendarWindow.value.weeks.map((week) => ({
   sectionLabel: week.sectionMonth ? monthLabel(week.sectionMonth) : null,
   days: week.days.map((calendarDay, index): CustomCalendarDay | null => {
     if (!calendarDay) return null;
     const { date, inRange, isMonthStart } = calendarDay;
-    const dateKey = getDateKeyInTimeZone(date.toISOString(), userTimeZone);
+    const dateKey = getRollingCalendarDateKey(date);
     const dayEvents = visibleEventsByDate.value.get(dateKey) || [];
+    const dayMajors = majorEventsByDate.value.get(dateKey) || [];
+    const primaryMajor = primaryMajorEvent(dayMajors);
+    const previous = week.days[index - 1];
+    const next = week.days[index + 1];
+    const adjacentMajor = (neighbor: typeof calendarDay | null | undefined) => neighbor
+      ? primaryMajorEvent(majorEventsByDate.value.get(getRollingCalendarDateKey(neighbor.date)) || [])
+      : null;
+    const previousMajor = adjacentMajor(previous);
+    const nextMajor = adjacentMajor(next);
     const types = props.showcaseDate && import.meta.dev
       ? showcaseTypes[dateKey] || []
       : [...new Set(dayEvents.map((event) => event.type))];
     return {
       key: `${dateKey}-${index}`,
       label: String(date.getDate()),
-      isInteractive: inRange || dayEvents.length > 0,
+      isInteractive: inRange || dayEvents.length > 0 || dayMajors.length > 0,
       hasEvents: types.length > 0,
-      dateKey: dayEvents.length ? dateKey : null,
+      hasMajor: dayMajors.length > 0,
+      majorKind: primaryMajor?.kind || null,
+      majorColor: primaryMajor ? MAJOR_EVENT_COLORS[primaryMajor.kind] : null,
+      majorConnectedLeft: primaryMajor && previousMajor ? majorDaysConnect([primaryMajor], [previousMajor]) : false,
+      majorConnectedRight: primaryMajor && nextMajor ? majorDaysConnect([primaryMajor], [nextMajor]) : false,
+      majorLabel: dayMajors.map((event) => event.title).join(", "),
+      dateKey: dayEvents.length || dayMajors.length ? dateKey : null,
       types,
       showMonthMarker: isMonthStart,
       monthMarker: formatMonthMarker(date),
     };
   }),
 })));
+const visibleMajorKinds = computed<MajorEventKind[]>(() => {
+  const kinds = new Set(customCalendarWeeks.value.flatMap((week) => week.days.map((day) => day?.majorKind).filter((kind): kind is MajorEventKind => Boolean(kind))));
+  return (["regional", "special", "international", "worlds"] as MajorEventKind[]).filter((kind) => kinds.has(kind));
+});
 
 // Build calendar attributes with automatic highlighting
 const calendarAttributes = computed(() => {
@@ -501,6 +576,7 @@ const onCustomDayClick = (dateKey: string) => {
   selectedDateEvents.value = visibleCalendarEvents.value.filter(
     (event) => event.start === dateKey,
   );
+  selectedMajorEvents.value = majorEventsByDate.value.get(dateKey) || [];
 };
 
 const customCalendarDayClass = (day: CustomCalendarDay) => {
@@ -530,6 +606,7 @@ const resetCalendarWindow = () => { calendarAnchor.value = today; };
 const closeEventDetails = () => {
   selectedDate.value = null;
   selectedDateEvents.value = [];
+  selectedMajorEvents.value = [];
 };
 
 const formatSelectedDate = computed(() => {
@@ -668,6 +745,41 @@ defineExpose({
 
 .calendar-event-day {
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+}
+
+.major-outline {
+  --major-bridge: 2px;
+  isolation: isolate;
+}
+
+.major-outline::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: -1px;
+  pointer-events: none;
+  border: 4px solid var(--major-outline-color, #a855f7);
+  border-radius: 8px;
+  filter: drop-shadow(0 1px 0 rgba(77, 22, 125, 0.25));
+}
+
+.major-connect-left::after {
+  left: calc(-1 * var(--major-bridge));
+  border-left: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.major-connect-right::after {
+  right: calc(-1 * var(--major-bridge));
+  border-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+@media (min-width: 1024px) {
+  .major-outline { --major-bridge: 4px; }
+  .major-outline::after { border-width: 5px; }
 }
 
 .calendar-mobile-register-cta,

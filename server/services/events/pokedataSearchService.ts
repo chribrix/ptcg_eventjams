@@ -1,10 +1,9 @@
 import prisma from "~/lib/prisma";
+import { GERMAN_STATES } from "~/utils/eventLocationPreference";
 import { applyExternalEventOverridesToFeed } from "./eventProjectionService";
 import { fetchPokedataEvents, type PokedataCalendarEvent, type PokedataFilters } from "./pokedataService";
+import { getCachedExternalEventFeed } from "./externalEventFeedCache";
 
-const FRESH_MS = 6 * 60 * 60 * 1000;
-const STALE_MS = 30 * 60 * 60 * 1000;
-const FAILURE_RETRY_MS = 15 * 60 * 1000;
 
 const STATE_NAMES: Record<string, string[]> = {
   "baden-württemberg": ["Baden-Württemberg", "Baden-Wurttemberg"],
@@ -43,7 +42,7 @@ export function parsePokedataSearchQuery(query: Record<string, unknown>): Pokeda
   }
   const stateInput = single(query.state) || null;
   const state = stateInput?.toLocaleLowerCase("de-DE") || null;
-  if (state && (country !== "DE" || !STATE_NAMES[state])) {
+  if (state && (country !== "DE" || !GERMAN_STATES.some((name) => name.toLocaleLowerCase("de-DE") === state) || !STATE_NAMES[state])) {
     throw new PokedataSearchInputError("state must be a German federal state");
   }
   const coordinateValues = [query.latitude, query.longitude, query.radius];
@@ -79,55 +78,17 @@ export function distanceKm(firstLat: number, firstLon: number, secondLat: number
   return 6371.0088 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
 }
 
-type CacheEntry = { timestamp: number; data: PokedataCalendarEvent[]; retryAfter?: number };
-type CacheStore = { getItem: (key: string) => Promise<unknown>; setItem: (key: string, value: CacheEntry) => Promise<unknown> };
-const inFlight = new Map<string, Promise<PokedataCalendarEvent[]>>();
-const failedUntil = new Map<string, number>();
-
 export async function getCachedPokedataEvents(
   search: PokedataSearch,
   dependencies: {
-    storage?: CacheStore;
+    storage?: { getItem: (key: string) => Promise<unknown>; setItem: (key: string, value: unknown) => Promise<unknown> };
     fetchEvents?: typeof fetchPokedataEvents;
     now?: () => number;
   } = {},
 ): Promise<PokedataCalendarEvent[]> {
   const { key, filters } = createPokedataFetchPlan(search);
-  const storage = dependencies.storage || useStorage("cache");
-  const now = dependencies.now || Date.now;
-  const cached = await storage.getItem(key) as CacheEntry | null;
-  if (cached && now() - cached.timestamp < FRESH_MS) return filterPokedataEvents(cached.data, search);
-  const retryAfter = Math.max(cached?.retryAfter || 0, failedUntil.get(key) || 0);
-  if (retryAfter > now()) {
-    if (cached && now() - cached.timestamp < STALE_MS) return filterPokedataEvents(cached.data, search);
-    throw new Error("Pokedata is temporarily unavailable");
-  }
-
-  let refresh = inFlight.get(key);
-  if (!refresh) {
-    refresh = (async () => {
-      const data = await (dependencies.fetchEvents || fetchPokedataEvents)(filters);
-      await storage.setItem(key, { data, timestamp: now() });
-      failedUntil.delete(key);
-      return data;
-    })();
-    inFlight.set(key, refresh);
-    void refresh.then(() => inFlight.delete(key), () => inFlight.delete(key));
-  }
-  try {
-    return filterPokedataEvents(await refresh, search);
-  } catch {
-    failedUntil.set(key, now() + FAILURE_RETRY_MS);
-    if (cached && now() - cached.timestamp < STALE_MS) {
-      try {
-        await storage.setItem(key, { ...cached, retryAfter: now() + FAILURE_RETRY_MS });
-      } catch {
-        // The stale entry remains usable in this request even if storage is unavailable.
-      }
-      return filterPokedataEvents(cached.data, search);
-    }
-    throw new Error("Pokedata is temporarily unavailable");
-  }
+  const data = await getCachedExternalEventFeed(key, () => (dependencies.fetchEvents || fetchPokedataEvents)(filters), dependencies);
+  return filterPokedataEvents(data, search);
 }
 
 export function filterPokedataEvents(events: PokedataCalendarEvent[], search: PokedataSearch): PokedataCalendarEvent[] {

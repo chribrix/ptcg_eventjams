@@ -30,6 +30,18 @@
             </button>
           </div>
           <div class="px-6 py-4 overflow-y-auto flex-1">
+            <a
+              v-for="major in majorEvents"
+              :key="major.id"
+              :href="major.link"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="app-surface-1 app-text-primary mb-2 block rounded-lg border border-l-[5px] app-border p-3 no-underline transition hover:brightness-110"
+              :style="{ borderLeftColor: MAJOR_EVENT_COLORS[major.kind] }"
+            >
+              <span class="block text-sm font-bold">{{ major.title }}</span>
+              <span class="app-text-secondary-soft mt-1 block text-xs">{{ formatMajorRange(major) }}</span>
+            </a>
             <div
               v-for="event in events"
               :key="event.id"
@@ -281,6 +293,7 @@ import { notifyEventBookmarksUpdated } from "~/utils/eventBookmarks";
 import { useEventBookmarks } from "~/composables/useEventBookmarks";
 import type { EventBookmarkDraft } from "~/utils/guestEventBookmarks";
 import EventGameWatermark from "~/components/events/EventGameWatermark.vue";
+import { MAJOR_EVENT_COLORS, type MajorCalendarEvent } from "~/utils/majorCalendarEvents";
 import {
   getPokemonGameMarker,
   getPokemonGameType,
@@ -325,10 +338,18 @@ interface CustomEvent {
 }
 
 // Props
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   events: ParsedEvent[];
+  majorEvents?: MajorCalendarEvent[];
   formattedDate: string;
-}>();
+}>(), { majorEvents: () => [] });
+
+const formatMajorRange = (event: MajorCalendarEvent) => {
+  const language = locale.value.startsWith("de") ? "de-DE" : "en-US";
+  const first = new Date(`${event.startDate}T12:00:00Z`).toLocaleDateString(language, { day: "numeric", month: "short" });
+  const last = new Date(`${event.endDate}T12:00:00Z`).toLocaleDateString(language, { day: "numeric", month: "short", year: "numeric" });
+  return `${first} – ${last}`;
+};
 
 // Emits
 const emit = defineEmits<{

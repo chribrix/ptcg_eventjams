@@ -35,6 +35,7 @@
       </AppPageHeader>
 
       <div class="px-2.5 py-3 sm:px-6 sm:py-5 lg:px-8">
+        <div class="mb-3 flex justify-end"><EventLocationFilter /></div>
         <p
           v-if="!user"
           class="mb-3 text-xs leading-5 app-text-secondary-soft sm:text-sm"
@@ -694,6 +695,8 @@ import { useEventBookmarks } from "~/composables/useEventBookmarks";
 import type { EventBookmarkDraft } from "~/utils/guestEventBookmarks";
 import { getEventColor } from "~/utils/eventColors";
 import EventGameWatermark from "~/components/events/EventGameWatermark.vue";
+import EventLocationFilter from "~/components/events/EventLocationFilter.vue";
+import { eventLocationQuery, eventLocationQueryKey } from "~/utils/eventLocationPreference";
 import {
   getPokemonGameType,
   getPokemonGameTypeFromEventType,
@@ -833,9 +836,23 @@ function handlePopState(): void {
 
 onMounted(async () => {
   window.addEventListener("popstate", handlePopState);
+  initializeLocationPreference();
+  loadedLocationKey = eventLocationQueryKey(locationPreference.value);
+  locationReady.value = true;
   await fetchEvents();
   await loadBookmarks();
   await fetchWaitlistStatuses();
+});
+
+const { preference: locationPreference, initialize: initializeLocationPreference } = useEventLocationPreference();
+const locationReady = ref(false);
+let loadedLocationKey = "";
+watch(locationPreference, () => {
+  if (!locationReady.value) return;
+  const nextKey = eventLocationQueryKey(locationPreference.value);
+  if (nextKey === loadedLocationKey) return;
+  loadedLocationKey = nextKey;
+  void fetchEvents();
 });
 
 onBeforeUnmount(() => {
@@ -866,7 +883,9 @@ const fetchEvents = async () => {
 
   try {
     const [externalResponse, customResponse] = await Promise.all([
-      $fetch<{ events: ExternalEvent[] }>("/api/events/detailed"),
+      $fetch<{ events: ExternalEvent[] }>("/api/events/detailed", {
+        query: eventLocationQuery(locationPreference.value),
+      }),
       $fetch<{ success: boolean; events: CustomEventResponse[] }>(
         "/api/events/custom",
       ),

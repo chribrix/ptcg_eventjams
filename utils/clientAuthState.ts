@@ -20,7 +20,9 @@ type ClearClientAuthStateOptions = {
   clearAllStorage?: boolean;
 };
 
-const PRESERVED_LOCAL_STORAGE_KEYS = ["guest_event_bookmarks_v1"] as const;
+import { EVENT_LOCATION_STORAGE_KEY } from "~/utils/eventLocationPreference";
+
+const PRESERVED_LOCAL_STORAGE_KEYS = ["guest_event_bookmarks_v1", EVENT_LOCATION_STORAGE_KEY] as const;
 
 export const createClientAuthStateCleaner = (
   dependencies: ClientAuthStateDependencies = {},

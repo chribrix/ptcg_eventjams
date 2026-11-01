@@ -3,23 +3,22 @@
     <LandingBanner />
 
     <section class="mx-auto w-full max-w-6xl px-1 pt-2 pb-6 sm:px-4 lg:px-6 lg:pt-3">
-      <AdminEventQuickCreate class="mb-4" @created="onEventCreated" />
-
       <div class="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <!-- Unified Calendar Card Template (from Mock B) -->
         <article class="app-hero-surface min-w-0 overflow-hidden rounded-[1.8rem]">
           <div class="px-4 pt-5 pb-1 sm:px-5">
-            <div class="flex items-center gap-2">
-              <CalendarDaysIcon class="h-5 w-5 app-icon-accent" />
-              <h2
-                class="text-[1.35rem] font-bold tracking-[0.01em] app-text-primary sm:text-[1.45rem]"
-              >
-                {{ t("landingPage.headline") }}
-              </h2>
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <CalendarDaysIcon class="h-5 w-5 shrink-0 app-icon-accent" />
+                  <h2 class="text-[1.35rem] font-bold tracking-[0.01em] app-text-primary sm:text-[1.45rem]">
+                    {{ t("landingPage.headline") }}
+                  </h2>
+                </div>
+                <p class="app-hero-eyebrow mt-1 text-xs font-medium uppercase tracking-[0.16em]">Aktuelle Events</p>
+              </div>
+              <AdminEventQuickCreate @created="onEventCreated" />
             </div>
-            <p class="app-hero-eyebrow mt-1 text-xs font-medium uppercase tracking-[0.16em]">
-              Aktuelle Events
-            </p>
           </div>
           <div class="px-1.5 pb-2.5 sm:px-3 sm:pb-3" @click.capture="trackHomeCalendarClick">
             <EventCalendarCard ref="calendarCardRef" :show-mobile-auth-cta="false" />

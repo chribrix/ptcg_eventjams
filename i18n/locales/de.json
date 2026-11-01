@@ -22,6 +22,7 @@
     "date": "Datum",
     "time": "Zeit",
     "venue": "Veranstaltungsort",
+    "description": "Beschreibung",
     "participants": "Teilnehmer",
     "participant": "Teilnehmer",
     "status": "Status",
@@ -149,6 +150,13 @@
     "noEventsTitle": "Keine Events gefunden",
     "noUpcomingType": "Keine bevorstehenden {type} gefunden.",
     "upcomingType": "Bevorstehende {type}",
+    "majorChampionships": "Meisterschaften (mehrtägig)",
+    "majorKinds": {
+      "regional": "Regional",
+      "special": "Special",
+      "international": "International",
+      "worlds": "Worlds"
+    },
     "categories": {
       "cup": "League Cups",
       "challenge": "League Challenges",
@@ -156,6 +164,32 @@
       "prerelease": "Prereleases",
       "riftbound": "Riftbound"
     }
+  },
+  "eventLocation": {
+    "button": "Ort: {place}",
+    "defaultPlace": "Bayern",
+    "nearbyPlace": "{place} · {radius} km",
+    "title": "Events in deiner Nähe finden",
+    "subtitle": "Wähle einmal deinen Ort. Du kannst ihn später über den Filter ändern.",
+    "postcodeTab": "Postleitzahl",
+    "deviceTab": "Mein Standort",
+    "stateTab": "Bundesland",
+    "country": "Land",
+    "countryDE": "Deutschland",
+    "countryAT": "Österreich",
+    "countryCH": "Schweiz",
+    "postcode": "Postleitzahl",
+    "postcodePlaceholder": "z. B. 84028",
+    "radius": "Umkreis: {radius} km",
+    "state": "Bundesland",
+    "applyPostcode": "Events finden",
+    "applyDevice": "Standort freigeben und übernehmen",
+    "applyState": "Bundesland übernehmen",
+    "useDefault": "Bei Bayern bleiben",
+    "saving": "Wird gesucht …",
+    "postcodeError": "Die Postleitzahl konnte nicht geprüft werden. Bitte prüfe sie oder versuche es später erneut.",
+    "deviceError": "Der Standort ist nicht verfügbar. Du kannst stattdessen eine Postleitzahl eingeben.",
+    "privacy": "Deine Auswahl bleibt auf diesem Gerät gespeichert, auch nach dem Abmelden. Events von Crows & Owls bleiben sichtbar."
   },
   "getStartedCard": {
     "title": "Loslegen",
@@ -425,6 +459,11 @@
     "adminQuickCreateTitle": "Event anlegen",
     "adminQuickCreateSubtitle": "Nur für Admins sichtbar",
     "savedTemplatesTitle": "Gespeicherte Vorlagen",
+    "chooseTemplate": "Vorlage wählen ({count})",
+    "searchTemplates": "Vorlagen suchen …",
+    "templateResults": "{count} Treffer",
+    "noTemplateMatches": "Keine passende Vorlage",
+    "refineTemplateSearch": "Es werden {count} Treffer gezeigt. Suche weiter eingrenzen.",
     "newEvent": "Neues Event",
     "createFromTemplate": "Nächstes Event erstellen",
     "saveAsTemplate": "Als Vorlage speichern",
@@ -439,7 +478,15 @@
     "eventTime": "Uhrzeit",
     "registrationDeadlineMinutesBefore": "Anmeldeschluss (Minuten vorher)",
     "templateUpdated": "Vorlage aktualisiert",
-    "templateUpdateError": "Vorlage konnte nicht aktualisiert werden"
+    "templateUpdateError": "Vorlage konnte nicht aktualisiert werden",
+    "templateName": "Vorlagenname",
+    "templateNamePlaceholder": "z. B. Freitags-Locals",
+    "templateNameRequired": "Bitte gib der Vorlage einen Namen.",
+    "templateFieldsRequired": "Eventname und Veranstaltungsort sind für eine Vorlage erforderlich.",
+    "createTemplate": "Neues Template anlegen",
+    "deleteTemplate": "Vorlage löschen",
+    "templateDeleted": "Vorlage gelöscht",
+    "templateDeleteError": "Vorlage konnte nicht gelöscht werden"
   },
   "waitlist": {
     "spotAvailable": "Ein Platz ist frei geworden!",

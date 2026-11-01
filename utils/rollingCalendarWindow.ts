@@ -7,6 +7,10 @@ const atMidnight = (date: Date) => new Date(date.getFullYear(), date.getMonth(),
 const addCalendarDays = (date: Date, count: number) =>
   new Date(date.getFullYear(), date.getMonth(), date.getDate() + count);
 
+/** A rolling-window Date represents a local calendar day, not an instant in UTC. */
+export const getRollingCalendarDateKey = (date: Date): string =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
 /** Exactly 28 active dates. A month boundary splits its week so day 1 follows the month heading. */
 export function getRollingCalendarWindow(anchor: Date): {
   start: Date;

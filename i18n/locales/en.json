@@ -22,6 +22,7 @@
     "date": "Date",
     "time": "Time",
     "venue": "Venue",
+    "description": "Description",
     "participants": "Participants",
     "participant": "Participant",
     "status": "Status",
@@ -141,6 +142,13 @@
     "noEventsTitle": "No Events Found",
     "noUpcomingType": "No upcoming {type} found.",
     "upcomingType": "Upcoming {type}",
+    "majorChampionships": "Championships (multiple days)",
+    "majorKinds": {
+      "regional": "Regional",
+      "special": "Special",
+      "international": "International",
+      "worlds": "Worlds"
+    },
     "categories": {
       "cup": "League Cups",
       "challenge": "League Challenges",
@@ -148,6 +156,32 @@
       "prerelease": "Prereleases",
       "riftbound": "Riftbound"
     }
+  },
+  "eventLocation": {
+    "button": "Location: {place}",
+    "defaultPlace": "Bavaria",
+    "nearbyPlace": "{place} · {radius} km",
+    "title": "Find events near you",
+    "subtitle": "Choose your location once. You can change it later using the filter.",
+    "postcodeTab": "Postal code",
+    "deviceTab": "My location",
+    "stateTab": "State",
+    "country": "Country",
+    "countryDE": "Germany",
+    "countryAT": "Austria",
+    "countryCH": "Switzerland",
+    "postcode": "Postal code",
+    "postcodePlaceholder": "e.g. 84028",
+    "radius": "Radius: {radius} km",
+    "state": "State",
+    "applyPostcode": "Find events",
+    "applyDevice": "Allow location and apply",
+    "applyState": "Apply state",
+    "useDefault": "Keep Bavaria",
+    "saving": "Searching …",
+    "postcodeError": "The postal code could not be checked. Please check it or try again later.",
+    "deviceError": "Your location is unavailable. You can enter a postal code instead.",
+    "privacy": "Your choice stays on this device, including after signing out. Crows & Owls events remain visible."
   },
   "getStartedCard": {
     "title": "Get Started",
@@ -417,6 +451,11 @@
     "adminQuickCreateTitle": "Create event",
     "adminQuickCreateSubtitle": "Visible to admins only",
     "savedTemplatesTitle": "Saved templates",
+    "chooseTemplate": "Choose template ({count})",
+    "searchTemplates": "Search templates…",
+    "templateResults": "{count} results",
+    "noTemplateMatches": "No matching template",
+    "refineTemplateSearch": "Showing {count} results. Narrow your search.",
     "newEvent": "New event",
     "createFromTemplate": "Create next event",
     "saveAsTemplate": "Save as template",
@@ -431,7 +470,15 @@
     "eventTime": "Time",
     "registrationDeadlineMinutesBefore": "Registration deadline (minutes before)",
     "templateUpdated": "Template updated",
-    "templateUpdateError": "Failed to update template"
+    "templateUpdateError": "Failed to update template",
+    "templateName": "Template name",
+    "templateNamePlaceholder": "e.g. Friday locals",
+    "templateNameRequired": "Give the template a name.",
+    "templateFieldsRequired": "Event name and venue are required for a template.",
+    "createTemplate": "Create new template",
+    "deleteTemplate": "Delete template",
+    "templateDeleted": "Template deleted",
+    "templateDeleteError": "Failed to delete template"
   },
   "waitlist": {
     "spotAvailable": "A spot has opened up!",

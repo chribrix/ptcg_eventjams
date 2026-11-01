@@ -24,7 +24,7 @@ export const createAuthRouteGuard = (
     const applicationPath = getApplicationRoutePath(to.path);
 
     // Public design fixture contains no live admin data and is available only on the dev server.
-    if (import.meta.dev && ["/admin-style-preview", "/calendar-preview"].includes(applicationPath)) return;
+    if (import.meta.dev && ["/admin-style-preview", "/calendar-preview", "/event-create-preview"].includes(applicationPath)) return;
 
     const publicPages = [
       "/",

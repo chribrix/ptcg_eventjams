@@ -2,6 +2,10 @@
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
+  nitro: {
+    experimental: { tasks: true },
+    scheduledTasks: { "0 4 * * 1": "championships:refresh" },
+  },
   devtools: {
     enabled:
       process.env.NODE_ENV !== "production" &&
