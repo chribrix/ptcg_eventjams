@@ -1,5 +1,7 @@
 # Chrispyjams: Ist-Architektur und Vorschlag zur Modularisierung
 
+**Geräte-Ortsname, 1. November 2026:** Der Standortfilter nutzt eine gekapselte, gecachte Reverse-Geocoding-Abfrage im Geo-Service, um eine freigegebene Geräteposition als Ortsname anzuzeigen. Bestehende Gerätepräferenzen werden ohne neue Standortberechtigung angereichert. Der lokale Präferenzschlüssel und die Suchparameter bleiben kompatibel; bei Provider-Ausfall bleibt das generische Label bestehen. Die gerundeten Koordinaten gehen nur für diese explizite Anzeige an den Ortsdienst und werden nicht geloggt.
+
 **Mobile Event-Wasserzeichen, 1. November 2026:** Die dekorativen Spielsymbole stehen in kompakten Eventzeilen nun auch auf schmalen Displays rechts und kleiner, mit Abstand zum Ausklapp-Pfeil. Der gemeinsame CSS-Vertrag für Kalender-Popover und Eventliste liegt in `assets/css/event-game-watermark.css`; Eventdaten und APIs ändern sich nicht.
 
 **Entfernungsanzeige, 1. November 2026:** Die vorhandenen externen Eventkoordinaten werden in Kalender- und Listenprojektionen erhalten. Bei gespeicherter PLZ oder Geräteposition zeigt die UI eine serverseitig berechnete Autofahrstrecke aus der FOSSGIS/OSRM-Routenmatrix; Ziele werden gebündelt und Ergebnisse gecacht. Der Haversine-Helfer bleibt allein für den Suchradius zuständig. Ohne strukturierte Koordinaten oder erreichbare Straße, insbesondere bei eigenen Events, wird keine Entfernung behauptet. Der Geo-Service besitzt den Routingvertrag und braucht bei separatem Betrieb gemeinsamen Cache und koordinierte Ratenbegrenzung.

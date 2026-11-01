@@ -165,6 +165,8 @@
     "subtitle": "Choose your location once. You can change it later using the filter.",
     "postcodeTab": "Postal code",
     "deviceTab": "My location",
+    "deviceWithPlace": "My location ({place})",
+    "devicePlaceInfo": "To find the place name, rounded coordinates are sent through our server to OpenStreetMap/Nominatim. Map data:",
     "stateTab": "State",
     "country": "Country",
     "countryDE": "Germany",

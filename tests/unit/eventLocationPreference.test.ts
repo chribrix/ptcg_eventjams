@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { eventLocationQuery, parseEventLocationPreference } from "~/utils/eventLocationPreference";
+import { eventLocationQuery, isGenericDeviceLocationLabel, parseEventLocationPreference } from "~/utils/eventLocationPreference";
 import { getRoadDistanceLabel, roadDistanceLabel } from "~/utils/eventDistance";
 
 describe("persistent event location preference", () => {
+  it("recognizes old generic device labels while preserving resolved place names", () => {
+    expect(isGenericDeviceLocationLabel("Mein Standort")).toBe(true);
+    expect(isGenericDeviceLocationLabel("My location")).toBe(true);
+    expect(isGenericDeviceLocationLabel("Vilsbiburg")).toBe(false);
+  });
   it("labels geocoded events for a saved postcode or device position only", () => {
     const origin = { mode: "nearby" as const, source: "postcode" as const, label: "Landshut", country: "DE" as const, latitude: 48.54, longitude: 12.15, radiusKm: 200 };
     const destination = { latitude: 48.54, longitude: 12.15 };

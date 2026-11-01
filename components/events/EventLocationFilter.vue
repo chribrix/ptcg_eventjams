@@ -64,6 +64,10 @@
 
         <p v-if="error" class="app-feedback-danger rounded-lg px-3 py-2 text-xs" role="alert">{{ error }}</p>
         <p class="app-text-muted-soft text-xs leading-relaxed">{{ t('eventLocation.privacy') }}</p>
+        <p v-if="mode === 'device'" class="app-text-muted-soft text-xs leading-relaxed">
+          {{ t('eventLocation.devicePlaceInfo') }}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" class="underline">© OpenStreetMap-Mitwirkende</a>
+        </p>
       </div>
       <template #footer>
         <div class="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-between">
@@ -82,11 +86,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { AdjustmentsHorizontalIcon, MapPinIcon } from "@heroicons/vue/24/outline";
-import { GERMAN_STATES, type PostcodeCountry, type PostcodeLocation } from "~/utils/eventLocationPreference";
+import { GERMAN_STATES, isGenericDeviceLocationLabel, type PostcodeCountry, type PostcodeLocation } from "~/utils/eventLocationPreference";
 
 const props = withDefaults(defineProps<{ autoPrompt?: boolean }>(), { autoPrompt: true });
 const { t } = useI18n();
-const { preference, initialize, save } = useEventLocationPreference();
+const { preference, initialize, save, enrichDevicePlace } = useEventLocationPreference();
 const open = ref(false);
 const busy = ref(false);
 const error = ref("");
@@ -105,13 +109,16 @@ const modes = [
 const buttonLabel = computed(() => {
   const current = preference.value;
   const place = current?.mode === "nearby"
-    ? t("eventLocation.nearbyPlace", { place: current.source === "device" ? t("eventLocation.deviceTab") : current.label, radius: current.radiusKm })
+    ? t("eventLocation.nearbyPlace", { place: current.source === "device"
+      ? isGenericDeviceLocationLabel(current.label) ? t("eventLocation.deviceTab") : t("eventLocation.deviceWithPlace", { place: current.label })
+      : current.label, radius: current.radiusKm })
     : current?.mode === "state" ? current.state : t("eventLocation.defaultPlace");
   return t("eventLocation.button", { place });
 });
 
 onMounted(() => {
   initialize();
+  void enrichDevicePlace();
   if (preference.value?.mode === "nearby") {
     mode.value = preference.value.source;
     country.value = preference.value.country;
@@ -156,6 +163,7 @@ async function apply() {
         navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }),
       );
       save({ mode: "nearby", source: "device", label: t("eventLocation.deviceTab"), country: country.value, latitude: Number(position.coords.latitude.toFixed(3)), longitude: Number(position.coords.longitude.toFixed(3)), radiusKm: radiusKm.value });
+      void enrichDevicePlace();
     }
     close();
   } catch {

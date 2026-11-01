@@ -26,6 +26,10 @@ export type EventLocationPreference =
       radiusKm: number;
     };
 
+export function isGenericDeviceLocationLabel(label: string): boolean {
+  return !label.trim() || label === "Mein Standort" || label === "My location";
+}
+
 export function parseEventLocationPreference(raw: string | null): EventLocationPreference | null {
   if (!raw) return null;
   try {

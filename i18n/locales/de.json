@@ -173,6 +173,8 @@
     "subtitle": "Wähle einmal deinen Ort. Du kannst ihn später über den Filter ändern.",
     "postcodeTab": "Postleitzahl",
     "deviceTab": "Mein Standort",
+    "deviceWithPlace": "Mein Standort ({place})",
+    "devicePlaceInfo": "Für den Ortsnamen wird die gerundete Position über unseren Server an OpenStreetMap/Nominatim gesendet. Kartendaten:",
     "stateTab": "Bundesland",
     "country": "Land",
     "countryDE": "Deutschland",

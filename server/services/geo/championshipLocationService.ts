@@ -1,4 +1,5 @@
 type Point = { latitude: number; longitude: number };
+import { requestNominatimJson } from "~/server/services/geo/nominatimRequestService";
 type Storage = { getItem: (key: string) => Promise<unknown>; setItem: (key: string, value: unknown) => Promise<unknown> };
 
 /** Approximate city centers for currently announced championships. */
@@ -18,8 +19,6 @@ const KNOWN_CITIES: Record<string, Point> = {
 const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const pending = new Map<string, Promise<Point | null>>();
-let queue: Promise<void> = Promise.resolve();
-let lastRequestAt = 0;
 
 export function knownChampionshipLocation(location: string): Point | null {
   return KNOWN_CITIES[location.trim().toLocaleLowerCase("en-US")] || null;
@@ -43,22 +42,10 @@ export async function resolveChampionshipLocation(location: string, dependencies
   let request = pending.get(key);
   if (!request) {
     request = (async () => {
-      const previous = queue;
-      let release!: () => void;
-      queue = new Promise<void>((resolve) => { release = resolve; });
-      await previous;
       try {
-        const waitMs = Math.max(0, 15000 - (now() - lastRequestAt));
-        if (waitMs) await new Promise((resolve) => setTimeout(resolve, waitMs));
-        lastRequestAt = now();
         const endpoint = process.env.CHAMPIONSHIP_GEOCODER_URL || "https://nominatim.openstreetmap.org/search";
         const url = `${endpoint}?format=jsonv2&limit=1&q=${encodeURIComponent(name)}`;
-        const response = await (dependencies.fetcher || fetch)(url, {
-          headers: { Accept: "application/json", "User-Agent": "Chrispyjams-Eventkalender/1.0 (championship city geocoding)" },
-          signal: AbortSignal.timeout(8000),
-        });
-        if (!response.ok) throw new Error("Championship geocoder unavailable");
-        const data = await response.json() as Array<{ lat?: string; lon?: string }>;
+        const data = await requestNominatimJson<Array<{ lat?: string; lon?: string }>>(url, "scheduled", dependencies);
         const latitude = Number(data?.[0]?.lat);
         const longitude = Number(data?.[0]?.lon);
         const point = data?.[0] && Number.isFinite(latitude) && Math.abs(latitude) <= 90 &&
@@ -67,8 +54,6 @@ export async function resolveChampionshipLocation(location: string, dependencies
         return point;
       } catch {
         return null;
-      } finally {
-        release();
       }
     })();
     pending.set(key, request);
