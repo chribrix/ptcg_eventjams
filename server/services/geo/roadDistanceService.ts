@@ -4,11 +4,17 @@ type Storage = { getItem: (key: string) => Promise<unknown>; setItem: (key: stri
 
 const CACHE_MS = 7 * 24 * 60 * 60 * 1000;
 const RETRY_MS = 15 * 60 * 1000;
+const PROVIDER_COOLDOWN_MS = 60 * 1000;
 const ROUTING_BASE_URL = "https://routing.openstreetmap.de/routed-car";
+class MatrixRejectedError extends Error {}
 let queue: Promise<void> = Promise.resolve();
 let lastUpstreamAt = 0;
 let queued = 0;
 let unavailableUntil = 0;
+
+export function roadDistanceRetryAfterSeconds(): number {
+  return Math.max(0, Math.ceil((unavailableUntil - Date.now()) / 1000));
+}
 
 export function validRoadPoint(value: unknown): value is Point {
   if (!value || typeof value !== "object") return false;
@@ -45,20 +51,37 @@ async function queryRoadMatrix(origin: Point, destinations: Point[], fetcher: ty
         headers: { Accept: "application/json", "User-Agent": "Chrispyjams-Eventkalender/1.0 (event routing distances)" },
         signal: AbortSignal.timeout(8000),
       });
-      if (!response.ok) throw new Error("Routing provider unavailable");
+      if (response.status === 400) throw new MatrixRejectedError("Routing matrix rejected coordinates");
+      if (!response.ok) throw new Error(`Routing provider HTTP ${response.status}`);
       const data = await response.json() as { code?: string; distances?: Array<Array<number | null>> };
+      if (data.code === "NoSegment" || data.code === "TooBig" || data.code === "NoRoute") {
+        throw new MatrixRejectedError(`Routing matrix rejected: ${data.code}`);
+      }
       if (data.code !== "Ok" || !Array.isArray(data.distances?.[0]) || data.distances[0].length !== destinations.length) {
         throw new Error("Routing provider returned invalid distances");
       }
       unavailableUntil = 0;
       return data.distances[0].map((meters) => typeof meters === "number" && Number.isFinite(meters) && meters >= 0 ? meters : null);
     } catch (error) {
-      unavailableUntil = now() + RETRY_MS;
+      if (!(error instanceof MatrixRejectedError)) unavailableUntil = now() + PROVIDER_COOLDOWN_MS;
       throw error;
     }
   } finally {
     queued--;
     release();
+  }
+}
+
+async function routeWithIsolation(origin: Point, destinations: Point[], fetcher: typeof fetch, now: () => number): Promise<Array<number | null>> {
+  try {
+    return await queryRoadMatrix(origin, destinations, fetcher, now);
+  } catch (error) {
+    if (!(error instanceof MatrixRejectedError)) throw error;
+    if (destinations.length === 1) return [null];
+    const midpoint = Math.floor(destinations.length / 2);
+    const first = await routeWithIsolation(origin, destinations.slice(0, midpoint), fetcher, now);
+    const second = await routeWithIsolation(origin, destinations.slice(midpoint), fetcher, now);
+    return [...first, ...second];
   }
 }
 
@@ -85,7 +108,7 @@ export async function getRoadDistances(
   });
   if (!missing.length) return result;
   try {
-    const routed = await queryRoadMatrix(origin, missing.map((index) => destinations[index]), fetcher, now);
+    const routed = await routeWithIsolation(origin, missing.map((index) => destinations[index]), fetcher, now);
     await Promise.all(missing.map(async (index, position) => {
       result[index] = routed[position];
       await storage.setItem(cacheKey(origin, destinations[index]), { updatedAt: now(), meters: routed[position] });

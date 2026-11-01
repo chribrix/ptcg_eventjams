@@ -1,4 +1,4 @@
-import { getRoadDistances, validRoadPoint } from "~/server/services/geo/roadDistanceService";
+import { getRoadDistances, roadDistanceRetryAfterSeconds, validRoadPoint } from "~/server/services/geo/roadDistanceService";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event) as { origin?: unknown; destinations?: unknown };
@@ -7,5 +7,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Invalid routing coordinates" });
   }
   setResponseHeader(event, "Cache-Control", "no-store");
-  return { meters: await getRoadDistances(body.origin, body.destinations) };
+  const meters = await getRoadDistances(body.origin, body.destinations);
+  return { meters, retryAfterSeconds: roadDistanceRetryAfterSeconds() };
 });

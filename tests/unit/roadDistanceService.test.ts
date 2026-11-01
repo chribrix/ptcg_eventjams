@@ -27,4 +27,23 @@ describe("road distance matrix", () => {
     expect(await getRoadDistances({ latitude: 48.54, longitude: 12.15 }, [{ latitude: 48.14, longitude: 11.58 }], { storage, fetcher: fetcher as unknown as typeof fetch })).toEqual([null]);
     expect(validRoadPoint({ latitude: 99, longitude: 12 })).toBe(false);
   });
+
+  it("keeps reachable destinations when one target makes the matrix fail", async () => {
+    const storage = { getItem: async () => null, setItem: async () => {} };
+    const fetcher = vi.fn(async (url: string) => {
+      if (url.includes(";11.58,48.14;12.15,48.675")) {
+        return { ok: false, status: 400, json: async () => ({ code: "NoSegment" }) } as Response;
+      }
+      if (url.includes(";12.15,48.675")) {
+        return { ok: false, status: 400, json: async () => ({ code: "NoSegment" }) } as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({ code: "Ok", distances: [[86000]] }) } as Response;
+    });
+    expect(await getRoadDistances(
+      { latitude: 48.54, longitude: 12.15 },
+      [{ latitude: 48.14, longitude: 11.58 }, { latitude: 48.675, longitude: 12.15 }],
+      { storage, fetcher: fetcher as unknown as typeof fetch },
+    )).toEqual([86000, null]);
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
 });
