@@ -17,6 +17,9 @@ export type MajorCalendarEvent = {
   startDate: string;
   endDate: string;
   link: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 const parseDateKey = (key: string) => {

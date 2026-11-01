@@ -1,5 +1,6 @@
 import { getCachedExternalEventFeed } from "./externalEventFeedCache";
 import type { MajorCalendarEvent, MajorEventKind } from "~/utils/majorCalendarEvents";
+import { knownChampionshipLocation, resolveChampionshipLocation } from "~/server/services/geo/championshipLocationService";
 
 export const CHAMPIONSHIP_SCHEDULE_URL = "https://championships.pokemon.com/api/events.json?locale=en-us";
 const CHAMPIONSHIP_ORIGIN = "https://championships.pokemon.com";
@@ -12,6 +13,7 @@ type OfficialChampionship = {
   type_s?: unknown;
   region_s?: unknown;
   year_s?: unknown;
+  eventLocation_s?: unknown;
 };
 
 const MONTHS: Record<string, number> = {
@@ -65,12 +67,16 @@ export function parseOfficialChampionships(payload: unknown): MajorCalendarEvent
     let link: URL;
     try { link = new URL(item.uRL_s, CHAMPIONSHIP_ORIGIN); } catch { continue; }
     if (link.origin !== CHAMPIONSHIP_ORIGIN || !link.pathname.startsWith("/en-us/events/")) continue;
+    const location = typeof item.eventLocation_s === "string" ? item.eventLocation_s.trim() : "";
+    const point = knownChampionshipLocation(location);
     events.push({
       id: `official-championship-${link.pathname.replace(/^\/|\/$/g, "").replace(/[^a-z0-9]+/gi, "-")}`,
       title: item.eventName_s,
       kind,
       ...range,
       link: link.toString(),
+      ...(location ? { location } : {}),
+      ...(point || {}),
     });
   }
   if (events.length === 0) throw new Error("Official championship schedule has no relevant events");
@@ -83,7 +89,12 @@ export async function fetchOfficialChampionships(fetcher: typeof fetch = fetch):
     signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) throw new Error(`Official championship schedule returned ${response.status}`);
-  return parseOfficialChampionships(await response.json());
+  const events = parseOfficialChampionships(await response.json());
+  return Promise.all(events.map(async (event) => {
+    if (!event.location || (event.latitude !== undefined && event.longitude !== undefined)) return event;
+    const point = await resolveChampionshipLocation(event.location);
+    return point ? { ...event, ...point } : event;
+  }));
 }
 
 /** One server-side schedule for every visitor and location preference. */
@@ -93,7 +104,7 @@ export function getCachedChampionships(dependencies: {
   now?: () => number;
   force?: boolean;
 } = {}): Promise<MajorCalendarEvent[]> {
-  return getCachedExternalEventFeed("championships:official:v1", () => (dependencies.fetchEvents || fetchOfficialChampionships)(), {
+  return getCachedExternalEventFeed("championships:official:v2", () => (dependencies.fetchEvents || fetchOfficialChampionships)(), {
     ...dependencies,
     policy: { freshMs: WEEK_MS, staleMs: 4 * WEEK_MS, retryMs: 24 * 60 * 60 * 1000 },
   });

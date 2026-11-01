@@ -33,12 +33,12 @@ html[data-theme="dark"] .event-game-watermark .event-game-watermark__white-ink {
 
 @media (max-width: 639px) {
   .event-game-watermark {
-    justify-content: center;
-    padding-inline: 0.75rem;
+    justify-content: flex-end;
+    padding-inline: 0.75rem 2.5rem;
   }
 
   .event-game-watermark img {
-    width: min(68%, 16rem);
+    width: min(38%, 8rem);
     opacity: 0.07;
   }
 }

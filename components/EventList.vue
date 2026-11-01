@@ -357,6 +357,7 @@
                             class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 app-text-muted sm:h-4 sm:w-4"
                           />
                           <span>{{ formatEventDate(event.date) }}</span>
+                          <span v-if="roadDistanceLabel(locationPreference, event)" class="whitespace-nowrap app-text-secondary-soft" :title="locale.startsWith('de') ? 'Ungefähre Fahrstrecke' : 'Approximate driving distance'">· {{ roadDistanceLabel(locationPreference, event) }}</span>
                         </div>
                         <div class="flex items-start gap-2">
                           <BuildingOfficeIcon
@@ -436,6 +437,11 @@
             </div>
           </section>
         </div>
+        <p v-if="locationPreference?.mode === 'nearby' && filteredEvents.some((event) => roadDistanceLabel(locationPreference, event))" class="app-text-muted-soft mt-3 text-[10px]">
+          {{ locale.startsWith('de') ? 'Fahrstrecken: FOSSGIS / OSRM · Kartendaten:' : 'Driving distances: FOSSGIS / OSRM · Map data:' }}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" class="underline">© OpenStreetMap-Mitwirkende</a>
+          · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer" class="underline">{{ locale.startsWith('de') ? 'Karte korrigieren' : 'Fix the map' }}</a>
+        </p>
       </div>
     </div>
 
@@ -716,6 +722,8 @@ interface ExternalEvent {
   link: string;
   cost?: string;
   streetAddress?: string;
+  latitude?: number;
+  longitude?: number;
   icon?: string;
   hasLocalRegistration?: boolean;
 }
@@ -754,6 +762,8 @@ interface UnifiedEvent {
   locationLabel: string;
   country: string;
   streetAddress?: string;
+  latitude?: number;
+  longitude?: number;
   description?: string;
   gameLabel?: string;
   gameType?: PokemonGameType;
@@ -845,6 +855,7 @@ onMounted(async () => {
 });
 
 const { preference: locationPreference, initialize: initializeLocationPreference } = useEventLocationPreference();
+const { label: roadDistanceLabel, load: loadRoadDistances } = useRoadDistances();
 const locationReady = ref(false);
 let loadedLocationKey = "";
 watch(locationPreference, () => {
@@ -1009,6 +1020,10 @@ const filteredEvents = computed(() => {
     return true;
   });
 });
+
+watch([locationPreference, filteredEvents], ([preference, events]) => {
+  void loadRoadDistances(preference, events);
+}, { immediate: true });
 
 const groupedEvents = computed(() => {
   const groups = new Map<
@@ -1234,6 +1249,8 @@ function normalizeExternalEvent(event: ExternalEvent): UnifiedEvent {
     locationLabel: locationParts.join(", "),
     country: stripHtmlTags(event.country),
     streetAddress: stripHtmlTags(event.streetAddress || "") || undefined,
+    latitude: event.latitude,
+    longitude: event.longitude,
     description: undefined,
     gameLabel: gameType === "tcg" ? t("eventList.pokemonGame") : getPokemonGameLabel(gameType),
     gameType,

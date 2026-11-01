@@ -14,6 +14,8 @@ interface ParsedEvent {
   date?: string;
   price?: string;
   href?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 /**

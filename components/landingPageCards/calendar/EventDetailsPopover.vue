@@ -30,18 +30,24 @@
             </button>
           </div>
           <div class="px-6 py-4 overflow-y-auto flex-1">
-            <a
+            <div
               v-for="major in majorEvents"
               :key="major.id"
-              :href="major.link"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="app-surface-1 app-text-primary mb-2 block rounded-lg border border-l-[5px] app-border p-3 no-underline transition hover:brightness-110"
+              class="app-surface-1 app-text-primary mb-2 rounded-lg border border-l-[5px] app-border p-3"
               :style="{ borderLeftColor: MAJOR_EVENT_COLORS[major.kind] }"
             >
-              <span class="block text-sm font-bold">{{ major.title }}</span>
-              <span class="app-text-secondary-soft mt-1 block text-xs">{{ formatMajorRange(major) }}</span>
-            </a>
+              <a :href="major.link" target="_blank" rel="noopener noreferrer" class="block text-sm font-bold hover:underline">{{ major.title }}</a>
+              <div class="app-text-secondary-soft mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                <span>{{ formatMajorRange(major) }}</span>
+                <span v-if="major.location">· {{ major.location }}</span>
+                <span v-if="roadDistanceLabel(locationPreference, major)" :title="locale.startsWith('de') ? 'Ungefähre Fahrstrecke zum Stadtzentrum' : 'Approximate driving distance to the city centre'">· {{ roadDistanceLabel(locationPreference, major) }}</span>
+              </div>
+              <a v-if="major.location" :href="getMajorMapsUrl(major)" target="_blank" rel="noopener noreferrer" class="app-btn-neutral mt-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold no-underline">
+                <MapIcon class="h-3.5 w-3.5" />
+                <span v-if="roadDistanceLabel(locationPreference, major)">{{ roadDistanceLabel(locationPreference, major) }} |</span>
+                <span>{{ t('eventPopover.routePlanner') }}</span>
+              </a>
+            </div>
             <div
               v-for="event in events"
               :key="event.id"
@@ -66,12 +72,16 @@
                       {{ getEventTitle(event) }}
                     </h4>
                   </div>
-                  <div class="flex items-center gap-2 text-xs app-text-secondary-soft">
+                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs app-text-secondary-soft">
                     <MapPinIcon class="w-3 h-3 flex-shrink-0" />
                     <span class="truncate">{{ getCityFromEvent(event) }}</span>
                     <span class="app-text-muted-soft">•</span>
                     <CalendarIcon class="w-3 h-3 flex-shrink-0" />
                     <span>{{ getCompactDate(event) }}</span>
+                    <template v-if="roadDistanceLabel(locationPreference, event)">
+                      <span class="app-text-muted-soft">·</span>
+                      <span class="whitespace-nowrap" :title="locale.startsWith('de') ? 'Ungefähre Fahrstrecke' : 'Approximate driving distance'">{{ roadDistanceLabel(locationPreference, event) }}</span>
+                    </template>
                   </div>
                 </div>
                 <svg
@@ -211,6 +221,7 @@
                         @click.stop
                       >
                         <MapIcon class="w-3.5 h-3.5 flex-shrink-0" />
+                        <span v-if="roadDistanceLabel(locationPreference, event)" :title="locale.startsWith('de') ? 'Ungefähre Fahrstrecke' : 'Approximate driving distance'">{{ roadDistanceLabel(locationPreference, event) }} |</span>
                         <span>{{ t("eventPopover.routePlanner") }}</span>
                       </a>
                       <NuxtLink
@@ -254,6 +265,11 @@
               </Transition>
             </div>
           </div>
+          <p v-if="locationPreference?.mode === 'nearby' && [...events, ...majorEvents].some((event) => roadDistanceLabel(locationPreference, event))" class="app-text-muted-soft px-6 pb-2 text-[10px]">
+            {{ locale.startsWith('de') ? 'Fahrstrecken: FOSSGIS / OSRM · Kartendaten:' : 'Driving distances: FOSSGIS / OSRM · Map data:' }}
+            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" class="underline">© OpenStreetMap-Mitwirkende</a>
+            · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer" class="underline">{{ locale.startsWith('de') ? 'Karte korrigieren' : 'Fix the map' }}</a>
+          </p>
           <!-- Back button at bottom -->
           <div
             class="px-6 py-4 border-t app-border app-surface-0 flex justify-end"
@@ -315,6 +331,8 @@ interface ParsedEvent {
   link: string;
   cost?: string;
   streetAddress?: string;
+  latitude?: number;
+  longitude?: number;
   icon?: string;
   isCustomEvent?: boolean;
   eventType?: string;
@@ -343,6 +361,15 @@ const props = withDefaults(defineProps<{
   majorEvents?: MajorCalendarEvent[];
   formattedDate: string;
 }>(), { majorEvents: () => [] });
+const { preference: locationPreference } = useEventLocationPreference();
+const { label: roadDistanceLabel, load: loadRoadDistances } = useRoadDistances();
+
+watch([locationPreference, () => props.events, () => props.majorEvents], ([preference, events, majors]) => {
+  void loadRoadDistances(preference, [...events, ...majors]);
+}, { immediate: true });
+
+const getMajorMapsUrl = (major: MajorCalendarEvent): string =>
+  `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(major.location || '')}`;
 
 const formatMajorRange = (event: MajorCalendarEvent) => {
   const language = locale.value.startsWith("de") ? "de-DE" : "en-US";

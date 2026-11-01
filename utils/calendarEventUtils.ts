@@ -38,6 +38,8 @@ export interface ExternalCalendarEvent {
   time?: string;
   cost?: string;
   streetAddress?: string;
+  latitude?: number;
+  longitude?: number;
   gameType?: PokemonGameType;
 }
 
@@ -69,6 +71,8 @@ export interface UnifiedCalendarEvent {
   time?: string;
   cost?: string;
   streetAddress?: string;
+  latitude?: number;
+  longitude?: number;
   icon?: string;
   isCustomEvent: boolean;
   isLocalRegistration?: boolean;
@@ -254,6 +258,8 @@ export function normalizeExternalCalendarEvent(
     time: event.time,
     cost: event.cost,
     streetAddress: event.streetAddress,
+    latitude: event.latitude,
+    longitude: event.longitude,
     icon: event.icon,
     gameType:
       event.gameType || getPokemonGameTypeFromEventType(event.type),

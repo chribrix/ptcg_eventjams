@@ -78,6 +78,8 @@ describe("calendarEventUtils", () => {
         title: "League Cup",
         dateTime: "2026-07-11T18:00:00.000Z",
         type: "League Cup",
+        latitude: 48.54,
+        longitude: 12.15,
         venue: "Test Store",
         location: "Munich",
         country: "DE",
@@ -87,6 +89,8 @@ describe("calendarEventUtils", () => {
     );
 
     expect(normalizedEvent.start).toBe("2026-07-11");
+    expect(normalizedEvent.latitude).toBe(48.54);
+    expect(normalizedEvent.longitude).toBe(12.15);
     expect(normalizedEvent.gameType).toBe("tcg");
   });
 

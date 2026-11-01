@@ -1,5 +1,6 @@
 import prisma from "~/lib/prisma";
 import { GERMAN_STATES } from "~/utils/eventLocationPreference";
+import { distanceKm } from "~/utils/eventDistance";
 import { applyExternalEventOverridesToFeed } from "./eventProjectionService";
 import { fetchPokedataEvents, type PokedataCalendarEvent, type PokedataFilters } from "./pokedataService";
 import { getCachedExternalEventFeed } from "./externalEventFeedCache";
@@ -69,14 +70,7 @@ export function createPokedataFetchPlan(search: PokedataSearch): { filters: Poke
   return { filters, key: `pokedata:raw:v4:${search.country}` };
 }
 
-export function distanceKm(firstLat: number, firstLon: number, secondLat: number, secondLon: number): number {
-  const radians = Math.PI / 180;
-  const dLat = (secondLat - firstLat) * radians;
-  const dLon = (secondLon - firstLon) * radians;
-  const haversine = Math.sin(dLat / 2) ** 2 +
-    Math.cos(firstLat * radians) * Math.cos(secondLat * radians) * Math.sin(dLon / 2) ** 2;
-  return 6371.0088 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
-}
+export { distanceKm } from "~/utils/eventDistance";
 
 export async function getCachedPokedataEvents(
   search: PokedataSearch,

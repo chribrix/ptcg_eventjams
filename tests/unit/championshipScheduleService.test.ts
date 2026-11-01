@@ -8,6 +8,7 @@ import {
 const item = (title: string, range: string, path: string, region = "europe", type = "regional") => ({
   eventName_s: title, displayDateRange_s: range, uRL_s: path,
   region_s: region, type_s: type, year_s: "2027",
+  eventLocation_s: title.includes("Stuttgart") ? "Stuttgart, Germany" : title.includes("Lisbon") ? "Lisbon, Portugal" : undefined,
 });
 
 describe("official championship schedule", () => {
@@ -26,6 +27,9 @@ describe("official championship schedule", () => {
       ["worlds", "2027-08-20", "2027-08-22"],
     ]);
     expect(events[0].link).toBe("https://championships.pokemon.com/en-us/events/regionals/2027/stuttgart");
+    expect(events[0].location).toBe("Stuttgart, Germany");
+    expect(events[0].latitude).toBeCloseTo(48.7758);
+    expect(events[0].longitude).toBeCloseTo(9.1829);
     expect(events[0].gameType).toBeUndefined();
   });
 
@@ -53,6 +57,6 @@ describe("official championship schedule", () => {
     fetchEvents.mockRejectedValueOnce(new Error("offline"));
     expect(await getCachedChampionships(dependencies)).toEqual(data);
     expect(fetchEvents).toHaveBeenCalledTimes(2);
-    expect(entries.has("championships:official:v1")).toBe(true);
+    expect(entries.has("championships:official:v2")).toBe(true);
   });
 });
