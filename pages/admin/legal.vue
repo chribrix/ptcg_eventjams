@@ -36,21 +36,39 @@
         <NuxtLink :to="`/${previewSlug}`" target="_blank">Öffentliche Seite öffnen ↗</NuxtLink>
       </aside>
     </div>
-    <p v-else role="alert">Die Entwürfe konnten nicht geladen werden.</p>
+    <div v-else class="legal-admin-card" role="alert">
+      <p>{{ loadError || 'Die Entwürfe konnten nicht geladen werden.' }}</p>
+      <button type="button" class="legal-template-button" @click="load">Erneut laden</button>
+    </div>
   </AdminPageLayout>
 </template>
 <script setup lang="ts">
 type LegalState = { operatorName: string; operatorAddress: string; operatorEmail: string; operatorContact: string; impressum: { body: string; published: boolean }; datenschutz: { body: string; published: boolean } };
 definePageMeta({ layout: "default" });
 const isPreview = import.meta.dev && useRoute().query.preview === "1";
-const { data, pending } = await useFetch<LegalState>("/api/admin/legal", { immediate: !isPreview });
 const { data: baseText } = await useFetch<{ impressum: string; datenschutz: string }>("/api/legal/base-text", { immediate: isPreview });
 const previewData: LegalState = { operatorName: "Beispiel Betreiber", operatorAddress: "Musterstraße 1\n12345 Beispielstadt", operatorEmail: "kontakt@example.org", operatorContact: "", impressum: { body: baseText.value?.impressum || "", published: false }, datenschutz: { body: baseText.value?.datenschutz || "", published: false } };
-const form = ref<LegalState | null>(isPreview ? previewData : data.value ? structuredClone(data.value) : null);
+const form = ref<LegalState | null>(isPreview ? previewData : null);
+const pending = ref(!isPreview);
+const loadError = ref("");
 const savedStatus = ref({ impressum: form.value?.impressum.published ?? false, datenschutz: form.value?.datenschutz.published ?? false });
 const previewSlug = ref<"impressum" | "datenschutz">("impressum");
 const saving = ref(false);
 const message = ref("");
+onMounted(() => { if (!isPreview) void load(); });
+async function load() {
+  pending.value = true;
+  loadError.value = "";
+  try {
+    const state = await $fetch<LegalState>("/api/admin/legal");
+    form.value = state;
+    savedStatus.value = { impressum: state.impressum.published, datenschutz: state.datenschutz.published };
+  } catch {
+    loadError.value = "Die Entwürfe konnten nicht geladen werden. Bitte Anmeldung prüfen und erneut versuchen.";
+  } finally {
+    pending.value = false;
+  }
+}
 function statusLabel(slug: "impressum" | "datenschutz") {
   const live = form.value?.[slug].published ?? false;
   if (live !== savedStatus.value[slug]) return live ? "Live nach Speichern" : "Offline nach Speichern";
