@@ -2,6 +2,7 @@ import type { H3Event } from "h3";
 import prisma from "~/lib/prisma";
 import { resolveOptionalAuthUser } from "~/server/services/auth/authService";
 import { resolveTomGuestAccess } from "~/server/services/events/tomGuestAccessService";
+import { getActivePrivacyVersion, hasPrivacyAcknowledgement } from "~/server/services/legal/privacyAcknowledgementService";
 import { resolveAuthenticatedPlayerFactory, type AuthenticatedPlayer } from "~/server/util/authenticatedPlayer";
 
 type TomPlayer = { userId: string; birthDate?: string };
@@ -38,9 +39,20 @@ export const resolveTomPlayerIdentity = async (
   eventId: string,
   players: TomPlayer[],
 ): Promise<{ tomUserId: string; player: AuthenticatedPlayer | null }> => {
+  const withPrivacy = async (tomUserId: string, player: AuthenticatedPlayer | null) => {
+    const version = await getActivePrivacyVersion();
+    if (version) {
+      const scope = player?.supabaseId ? "user" : "tournament";
+      const identity = player?.supabaseId || `${eventId}:${tomUserId}`;
+      if (!await hasPrivacyAcknowledgement(scope, identity, version)) {
+        throw createError({ statusCode: 428, statusMessage: "Bitte lies die Datenschutzerklärung und bestätige die Kenntnisnahme." });
+      }
+    }
+    return { tomUserId, player };
+  };
   const guestTomUserId = resolveTomGuestAccess(event, eventId);
   if (guestTomUserId && players.some((player) => player.userId === guestTomUserId)) {
-    return { tomUserId: guestTomUserId, player: null };
+    return withPrivacy(guestTomUserId, null);
   }
 
   const authUser = await resolveOptionalAuthUser(event);
@@ -51,7 +63,7 @@ export const resolveTomPlayerIdentity = async (
   });
   const tomPlayer = players.find((entry) => entry.userId === profile?.playerId);
   if (profile && tomPlayer && matchesTomPlayerBirthYear(tomPlayer, profile.birthYear)) {
-    return { tomUserId: tomPlayer.userId, player: profile };
+    return withPrivacy(tomPlayer.userId, profile);
   }
 
   // Preserve the existing account-and-registration path for older tournament links.
@@ -64,5 +76,5 @@ export const resolveTomPlayerIdentity = async (
   if (!player?.playerId || !players.some((entry) => entry.userId === player.playerId)) {
     throw createError({ statusCode: 403, statusMessage: "No Pokémon Player ID is linked to this tournament" });
   }
-  return { tomUserId: player.playerId, player };
+  return withPrivacy(player.playerId, player);
 };

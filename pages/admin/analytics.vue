@@ -1,5 +1,5 @@
 <template>
-  <AdminPageLayout title="Website-Analytics" subtitle="Anonyme Besucher mit mindestens einer Interaktion auf deiner Website">
+  <AdminPageLayout title="Website-Analytics" subtitle="Täglich pseudonym gezählte Besucher mit mindestens einer Interaktion">
     <template #actions>
       <div class="range-switch" aria-label="Zeitraum wählen">
         <button v-for="option in rangeOptions" :key="option" type="button" :class="{ active: selectedDays === option }" :aria-pressed="selectedDays === option" @click="selectedDays = option">
@@ -61,7 +61,7 @@
         </AppPanel>
       </div>
 
-      <p class="privacy-note">Datenschutz: Es werden weder Namen noch E-Mail-Adressen oder vollständige IP-Adressen gespeichert. Aktive Besucher werden über einen täglich wechselnden anonymen Hash gezählt; dieselbe Person kann an mehreren Tagen mehrfach zählen. Adminseiten und Bots sind ausgeschlossen.</p>
+      <p class="privacy-note">Datenschutz: Analytics speichert keine Namen, E-Mail-Adressen oder vollständigen IP-Adressen. Aktive Besucher werden über einen täglich wechselnden pseudonymen Hash gezählt; dieselbe Person kann an mehreren Tagen mehrfach zählen. Logins werden ohne Besucher-Hash gezählt. Einzelereignisse werden nach 30 Tagen gelöscht. Adminseiten und Bots sind ausgeschlossen.</p>
     </template>
   </AdminPageLayout>
 </template>
@@ -80,7 +80,7 @@ type AnalyticsResponse = {
 definePageMeta({ layout: "default" });
 useHead({ title: "Website-Analytics – PTCG Event Jams" });
 
-const rangeOptions = ANALYTICS_RANGE_DAYS;
+const rangeOptions = ANALYTICS_RANGE_DAYS.filter((days) => days <= 30);
 const selectedDays = ref<AnalyticsRangeDays>(1);
 const { data: analytics, pending, error, refresh } = await useFetch<AnalyticsResponse>("/api/admin/analytics", {
   query: computed(() => ({ days: selectedDays.value })),

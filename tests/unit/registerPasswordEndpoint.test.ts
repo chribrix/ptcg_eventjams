@@ -1,6 +1,10 @@
 // @vitest-environment node
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+vi.mock("~/server/services/legal/privacyAcknowledgementService", () => ({
+  requireCurrentPrivacyVersion: vi.fn().mockResolvedValue(null),
+  recordPrivacyAcknowledgement: vi.fn().mockResolvedValue(undefined),
+}));
 
 const createError = (error: { statusCode: number; statusMessage: string }) => {
   const err = new Error(error.statusMessage) as Error & {

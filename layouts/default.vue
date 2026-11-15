@@ -154,12 +154,13 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <div class="min-h-screen app-bg-page overflow-x-hidden">
+  <div class="min-h-screen app-bg-page overflow-x-hidden flex flex-col">
     <!-- Impersonation Banner -->
     <ImpersonationBanner />
 
     <!-- Toast Container -->
     <ToastContainer />
+    <LegalPrivacyAcknowledgement />
 
     <header class="app-surface-0 shadow-lg border-b app-border">
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -408,10 +409,17 @@ const { t } = useI18n();
         <slot />
       </div>
     </main>
+    <footer class="site-legal-footer" aria-label="Rechtliche Informationen">
+      <span>ChrispyJams</span>
+      <nav aria-label="Rechtliches"><NuxtLink to="/impressum">Impressum</NuxtLink><NuxtLink to="/datenschutz">Datenschutz</NuxtLink></nav>
+    </footer>
   </div>
 </template>
 
 <style scoped>
+.site-legal-footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 1.3rem max(1rem, calc((100vw - 1280px) / 2)); border-top: 1px solid var(--app-border); background: var(--app-surface-0); color: var(--app-text-secondary); font-size: .85rem; }
+.site-legal-footer nav { display: flex; gap: 1.2rem; }
+.site-legal-footer a:hover { color: var(--app-accent); text-decoration: underline; }
 .admin-route-shell {
   width: 100%;
 }

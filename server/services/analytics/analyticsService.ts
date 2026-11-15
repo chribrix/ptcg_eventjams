@@ -81,7 +81,8 @@ export async function recordAnalyticsEvent(event: H3Event, input: AnalyticsInput
   }
 
   const occurredAt = new Date();
-  const visitorHash = dailyVisitorHash(event, occurredAt);
+  // A successful login is counted, but never linked to a visitor fingerprint.
+  const visitorHash = input.eventType === "login_completed" ? null : dailyVisitorHash(event, occurredAt);
   await prisma.$executeRaw(Prisma.sql`
     INSERT INTO public.analytics_events
       (id, occurred_at, event_type, path, visitor_hash, event_id, metadata)

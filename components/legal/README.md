@@ -1,0 +1,3 @@
+# Darstellung der Rechtsseiten
+
+`LegalDocument.vue` stellt öffentlich veröffentlichte Rechtstexte oder einen Admin-Entwurf in der Vorschau dar. Vertrag: Slug, Publikationsstatus, Betreiberangaben und Klartext-Inhalt. `##` markiert eine Überschrift; übriger Text wird von Vue escaped und niemals als HTML ausgeführt. Die Komponente besitzt keine Daten und keine Autorisierung. Öffentliche Daten liefert `server/services/legal`; der Admin darf nur über die geschützte API speichern. Im kombinierten und getrennten Deployment bleibt das Lese-DTO gleich. Mobile und breite Sichtprüfung erfolgt über die lokalen Vorschauen; Veröffentlichungsvalidierung wird serverseitig getestet.

@@ -6,6 +6,7 @@ import {
   normalizePreferredLoginMethod,
 } from "~/server/util/playerProvisioning";
 import { resolveOptionalAuthUser } from "~/server/services/auth/authService";
+import { recordPrivacyAcknowledgement, requireCurrentPrivacyVersion } from "~/server/services/legal/privacyAcknowledgementService";
 
 // Ensures the logged-in auth user has a canonical local Player row.
 //
@@ -58,9 +59,15 @@ export const createEnsurePlayerHandler = (
       throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
     }
 
-    const body = await readBody<{
+    type EnsurePlayerBody = {
       preferredLoginMethod?: "password" | "otp";
-    }>(event).catch(() => ({}));
+      privacyNoticeVersion?: string;
+      privacyAcknowledged?: boolean;
+    };
+    const body: EnsurePlayerBody = await readBody<EnsurePlayerBody>(event).catch(() => ({}));
+    const activePrivacyVersion = body.privacyAcknowledged === true
+      ? await requireCurrentPrivacyVersion(body.privacyNoticeVersion)
+      : null;
     const provisioningInput = getProvisionPlayerInputFromAuthUser(user, {
       preferredLoginMethod: normalizePreferredLoginMethod(
         body.preferredLoginMethod || "otp",
@@ -76,6 +83,7 @@ export const createEnsurePlayerHandler = (
     }
 
     const player = await provisionPlayer(prisma, provisioningInput);
+    await recordPrivacyAcknowledgement("user", user.id, activePrivacyVersion);
 
     return {
       success: true,

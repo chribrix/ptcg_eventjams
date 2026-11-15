@@ -146,9 +146,14 @@
         </div>
       </template>
 
+      <label v-if="privacyVersion" class="flex items-start gap-3 text-sm app-text-secondary leading-relaxed">
+        <input v-model="privacyAcknowledged" type="checkbox" required class="mt-1 shrink-0" />
+        <span>Ich habe die <NuxtLink to="/datenschutz" target="_blank" class="app-link underline">Datenschutzerklärung</NuxtLink> zur Kenntnis genommen.</span>
+      </label>
+
       <button
         type="submit"
-        :disabled="isLoading"
+        :disabled="isLoading || !privacyLoaded"
         class="app-action-button app-action-primary w-full px-6 py-3"
       >
         <div class="flex items-center justify-center space-x-2">
@@ -246,6 +251,9 @@ const showPasswordConfirm = ref(false);
 const linkSent = ref(false);
 const isLoading = ref(false);
 const error = ref("");
+const privacyVersion = ref<string | null>(null);
+const privacyAcknowledged = ref(false);
+const privacyLoaded = ref(false);
 const runtimeConfig = useRuntimeConfig();
 const route = useRoute();
 const { t } = useI18n();
@@ -269,6 +277,10 @@ onMounted(() => {
   if (emailParam) {
     email.value = emailParam;
   }
+  $fetch<{ version: string | null }>("/api/legal/privacy-version").then((result) => {
+    privacyVersion.value = result.version;
+    privacyLoaded.value = true;
+  }).catch(() => { error.value = "Datenschutzhinweise konnten nicht geladen werden. Bitte lade die Seite neu."; });
 });
 
 const validatePlayerId = (event: Event): void => {
@@ -320,7 +332,7 @@ const verifyOtpRegistration = async () => {
     headers: {
       Authorization: `Bearer ${data.session.access_token}`,
     },
-    body: { preferredLoginMethod: "otp" },
+    body: { preferredLoginMethod: "otp", privacyNoticeVersion: privacyVersion.value, privacyAcknowledged: privacyAcknowledged.value },
   });
 
   try {
@@ -333,8 +345,12 @@ const verifyOtpRegistration = async () => {
 };
 
 const submitForm = async () => {
+  if (!privacyLoaded.value) return;
+  if (privacyVersion.value && !privacyAcknowledged.value) {
+    error.value = "Bitte nimm die Datenschutzerklärung zur Kenntnis.";
+    return;
+  }
   isLoading.value = true;
-  linkSent.value = false;
   error.value = "";
 
   if (registerMethod.value === "password") {
@@ -348,6 +364,17 @@ const submitForm = async () => {
       isLoading.value = false;
       return;
     }
+  }
+
+  if (registerMethod.value === "otp" && linkSent.value) {
+    try {
+      await verifyOtpRegistration();
+    } catch (err: any) {
+      error.value = err?.data?.statusMessage || err?.statusMessage || err?.message || t("registerForm.errorOtpVerificationFailed");
+    } finally {
+      isLoading.value = false;
+    }
+    return;
   }
 
   // First, check if a player account already exists with this email
@@ -410,21 +437,6 @@ const submitForm = async () => {
   }
   let signUpError: { message?: string } | null = null;
 
-  if (registerMethod.value === "otp" && linkSent.value) {
-    try {
-      await verifyOtpRegistration();
-      return;
-    } catch (err: any) {
-      signUpError = {
-        message:
-          err?.data?.statusMessage ||
-          err?.statusMessage ||
-          err?.message ||
-          t("registerForm.errorOtpVerificationFailed"),
-      };
-    }
-  }
-
   if (registerMethod.value === "password") {
     try {
       await $fetch("/api/auth/register-password", {
@@ -434,6 +446,8 @@ const submitForm = async () => {
           password: password.value,
           name: name.value,
           playerId: playerId.value || undefined,
+          privacyNoticeVersion: privacyVersion.value,
+          privacyAcknowledged: privacyAcknowledged.value,
         },
       });
     } catch (err: any) {

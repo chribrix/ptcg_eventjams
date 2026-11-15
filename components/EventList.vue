@@ -611,6 +611,7 @@
                   </div>
                 </div>
 
+                <EventsEventRoleNotice :mode="selectedEvent.externalLink && !selectedEvent.internalLink ? 'external' : 'local'" class="mt-4" />
                 <div class="mt-4 flex flex-col gap-3">
                   <button
                     v-if="shouldShowBookmark(selectedEvent)"

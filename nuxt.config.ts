@@ -2,9 +2,10 @@
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-05-15",
+  buildDir: process.env.CHRISPYJAMS_BUILD_DIR || ".nuxt",
   nitro: {
     experimental: { tasks: true },
-    scheduledTasks: { "0 4 * * 1": "championships:refresh" },
+    scheduledTasks: { "0 4 * * 1": "championships:refresh", "20 3 * * *": "analytics:retention" },
   },
   devtools: {
     enabled:
@@ -135,10 +136,6 @@ export default defineNuxtConfig({
         {
           rel: "shortcut icon",
           href: "/favicon-32.png?v=3",
-        },
-        {
-          rel: "stylesheet",
-          href: "https://fonts.googleapis.com/icons?family=Material+Icons",
         },
       ],
     },

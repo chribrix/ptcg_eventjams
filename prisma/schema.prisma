@@ -311,7 +311,7 @@ model AnalyticsEvent {
   occurredAt  DateTime @default(now()) @map("occurred_at") @db.Timestamptz(3)
   eventType   String   @map("event_type")
   path        String
-  visitorHash String   @map("visitor_hash") @db.Char(64)
+  visitorHash String?  @map("visitor_hash") @db.Char(64)
   eventId     String?  @map("event_id")
   metadata    Json     @default("{}") @db.JsonB
 

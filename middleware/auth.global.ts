@@ -18,18 +18,20 @@ export const createAuthRouteGuard = (
     ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
   const isClient = dependencies.isClient ?? import.meta.client;
 
-  return async (to: { path: string; fullPath?: string }) => {
+  return async (to: { path: string; fullPath?: string; query?: Record<string, unknown> }) => {
     const { user, ensureValidSession } = getAuth();
     const loginRedirect = buildLoginRedirectPath(to);
     const applicationPath = getApplicationRoutePath(to.path);
 
     // Public design fixture contains no live admin data and is available only on the dev server.
-    if (import.meta.dev && ["/admin-style-preview", "/calendar-preview", "/event-create-preview"].includes(applicationPath)) return;
+    if (import.meta.dev && (["/admin-style-preview", "/calendar-preview", "/event-create-preview", "/legal-visual-preview"].includes(applicationPath) || (applicationPath === "/admin/legal" && to.query?.preview === "1"))) return;
 
     const publicPages = [
       "/",
       "/login",
       "/register",
+      "/impressum",
+      "/datenschutz",
       "/events",
       "/eventlist",
       "/e",

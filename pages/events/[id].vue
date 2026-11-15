@@ -113,6 +113,8 @@
           </div>
         </div>
 
+        <EventsEventRoleNotice mode="local" />
+
         <!-- Registration Section -->
         <div class="app-panel rounded-2xl p-5 sm:p-6 lg:p-8">
           <div v-if="user" class="space-y-4">

@@ -19,7 +19,11 @@
             {{ t("tournamentPlayer.birthYear") }}
             <input v-model="guestBirthYear" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required />
           </label>
-          <button class="btn btn-primary" :disabled="guestAccessLoading">
+          <label v-if="privacyVersion" class="tm-privacy-check">
+            <input v-model="guestPrivacyAcknowledged" type="checkbox" required />
+            <span>Ich habe die <NuxtLink to="/datenschutz" target="_blank">Datenschutzerklärung</NuxtLink> zur Kenntnis genommen.</span>
+          </label>
+          <button class="btn btn-primary" :disabled="guestAccessLoading || !privacyLoaded">
             {{ t("tournamentPlayer.unlock") }}
           </button>
         </form>
@@ -164,6 +168,9 @@ const guestAccessLoading = ref(false);
 const guestAccessError = ref<string | null>(null);
 const guestPlayerId = ref("");
 const guestBirthYear = ref("");
+const privacyVersion = ref<string | null>(null);
+const guestPrivacyAcknowledged = ref(false);
+const privacyLoaded = ref(false);
 const runData = ref<PlayerRun | null>(null);
 const matchArrivalKey = ref(0);
 const emojiReaction = ref("");
@@ -288,7 +295,7 @@ const loadRun = async (silent = false) => {
     guestAccessRequired.value = false;
   } catch (err: any) {
     const status = err?.response?.status || err?.status || err?.statusCode || err?.data?.statusCode;
-    if (!isImpersonationView.value && (status === 401 || status === 403)) {
+    if (!isImpersonationView.value && (status === 401 || status === 403 || status === 428)) {
       guestAccessRequired.value = true;
       if (!silent) error.value = null;
     } else if (!silent) {
@@ -300,13 +307,14 @@ const loadRun = async (silent = false) => {
 };
 
 const unlockGuestAccess = async () => {
-  if (!eventId.value) return;
+  if (!eventId.value || !privacyLoaded.value) return;
+  if (privacyVersion.value && !guestPrivacyAcknowledged.value) return;
   guestAccessLoading.value = true;
   guestAccessError.value = null;
   try {
     await $fetch(`/api/tournaments/${eventId.value}/tom-bridge/guest-access`, {
       method: "POST",
-      body: { playerId: guestPlayerId.value, birthYear: Number(guestBirthYear.value) },
+      body: { playerId: guestPlayerId.value, birthYear: Number(guestBirthYear.value), privacyNoticeVersion: privacyVersion.value, privacyAcknowledged: guestPrivacyAcknowledged.value },
     });
     const { login: _login, ...queryWithoutLogin } = route.query;
     await router.replace({ query: queryWithoutLogin });
@@ -404,6 +412,12 @@ const stopEventStream = () => {
 };
 
 onMounted(async () => {
+  try {
+    privacyVersion.value = (await $fetch<{ version: string | null }>("/api/legal/privacy-version")).version;
+    privacyLoaded.value = true;
+  } catch {
+    guestAccessError.value = "Datenschutzhinweise konnten nicht geladen werden. Bitte lade die Seite neu.";
+  }
   await loadRun();
   if (runData.value) {
     startEventStream();
@@ -433,6 +447,9 @@ onBeforeUnmount(() => {
 .tm-guest-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.75rem; align-items: end; }
 .tm-guest-form label { display: grid; gap: 0.3rem; font-weight: 700; color: var(--app-text-secondary); }
 .tm-guest-form input { border: 1px solid var(--app-border); border-radius: 10px; padding: 0.65rem 0.75rem; background: var(--app-surface-0); color: var(--app-text-primary); font: inherit; }
+.tm-guest-form .tm-privacy-check { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: .6rem; font-size: .9rem; line-height: 1.45; }
+.tm-privacy-check input { width: auto; flex: none; margin-top: .25rem; }
+.tm-privacy-check a { color: var(--app-accent); text-decoration: underline; }
 .tm-match-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .tm-match-fact { display: grid; gap: 0.2rem; padding: 0.95rem 1rem; border-radius: 12px; background: var(--app-surface-2); border: 1px solid var(--app-border); }
 .tm-match-fact span, .tm-opponent span { color: var(--app-text-muted); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }

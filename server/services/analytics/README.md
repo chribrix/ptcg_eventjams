@@ -1,5 +1,7 @@
 # Analytics-Service (heutige Codegrenze)
 
+**Aufbewahrung und Login, 06.11.2026:** `analyticsRetentionService.ts` löscht Einzelereignisse nach 30 Tagen in begrenzten Batches; der tägliche Nitro-Task `analytics:retention` beginnt mit dem Release des App-Containers. Die Adminauswertung für 90 Tage bleibt als API-Option kompatibel, enthält nach dem ersten Löschlauf aber nur noch Daten der letzten 30 Tage. `login_completed` erhält nach Migration `20261106120000_analytics_login_without_visitor_hash` keinen Besucher-Hash mehr und zählt nur noch erfolgreiche Logins. Die Migration entfernt auch die Hashes historischer Login-Ereignisse. Der Task loggt nur die Anzahl gelöschter Zeilen. Separater Betrieb braucht einen eigenen Scheduler und dieselbe Datenhoheit.
+
 `analyticsService.ts` erfasst zugelassene First-Party-Ereignisse und berechnet aggregierte Ansichten. Er filtert API-/Adminpfade und bekannte automatisierte Clients. Der Besucherbezug ist ein täglich rotierender HMAC-Hash, kein gespeicherter Roh-IP-Wert.
 
 **Daten und Interaktion:** Eigentümer ist `AnalyticsEvent`. Öffentliche Trackingroute und Adminauswertung nutzen diesen Service. Tenant-Zuordnung existiert noch nicht; bei Mandantenansichten sind Scope und Aufbewahrung gesondert festzulegen. `SUPABASE_SERVICE_ROLE_KEY` wird nicht als Hash-Salt verwendet. In Produktion braucht der Hash `ANALYTICS_SALT` oder die vorhandene `NUXT_SESSION_PASSWORD`-Konfiguration; ohne beide wird nicht erfasst.

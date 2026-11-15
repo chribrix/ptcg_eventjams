@@ -1,12 +1,14 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { playerFindUnique, registrationFindFirst, optionalAuth, guestAccess, legacyPlayer } = vi.hoisted(() => ({
+const { playerFindUnique, registrationFindFirst, optionalAuth, guestAccess, legacyPlayer, activePrivacyVersion, hasPrivacyAcknowledgement } = vi.hoisted(() => ({
   playerFindUnique: vi.fn(),
   registrationFindFirst: vi.fn(),
   optionalAuth: vi.fn(),
   guestAccess: vi.fn(),
   legacyPlayer: vi.fn(),
+  activePrivacyVersion: vi.fn(),
+  hasPrivacyAcknowledgement: vi.fn(),
 }));
 
 vi.mock("~/lib/prisma", () => ({ default: {
@@ -15,6 +17,7 @@ vi.mock("~/lib/prisma", () => ({ default: {
 } }));
 vi.mock("~/server/services/auth/authService", () => ({ resolveOptionalAuthUser: optionalAuth }));
 vi.mock("~/server/services/events/tomGuestAccessService", () => ({ resolveTomGuestAccess: guestAccess }));
+vi.mock("~/server/services/legal/privacyAcknowledgementService", () => ({ getActivePrivacyVersion: activePrivacyVersion, hasPrivacyAcknowledgement }));
 vi.mock("~/server/util/authenticatedPlayer", () => ({ resolveAuthenticatedPlayerFactory: () => legacyPlayer }));
 
 import { matchesTomPlayerBirthDate, matchesTomPlayerBirthYear, normalizeTomBirthDate, resolveTomPlayerIdentity } from "~/server/services/events/tomPlayerIdentity";
@@ -27,6 +30,9 @@ describe("TOM player identity", () => {
     guestAccess.mockReturnValue(null);
     optionalAuth.mockResolvedValue(null);
     playerFindUnique.mockResolvedValue(null);
+    activePrivacyVersion.mockResolvedValue(null);
+    hasPrivacyAcknowledgement.mockResolvedValue(false);
+    vi.stubGlobal("createError", (options: object) => Object.assign(new Error("Required"), options));
   });
 
   it("compares the complete calendar date, including TOM's US date format", () => {
@@ -56,6 +62,13 @@ describe("TOM player identity", () => {
     expect(await resolveTomPlayerIdentity({} as any, "event-1", players)).toEqual({ tomUserId: "1234567", player: profile });
     expect(registrationFindFirst).not.toHaveBeenCalled();
     expect(legacyPlayer).not.toHaveBeenCalled();
+  });
+
+  it("blocks Pairings for a guest cookie without the current acknowledgement", async () => {
+    guestAccess.mockReturnValue("1234567");
+    activePrivacyVersion.mockResolvedValue("current");
+    await expect(resolveTomPlayerIdentity({} as any, "event-1", players)).rejects.toMatchObject({ statusCode: 428 });
+    expect(hasPrivacyAcknowledgement).toHaveBeenCalledWith("tournament", "event-1:1234567", "current");
   });
 
   it("does not auto-accept an account with a different birth year", async () => {

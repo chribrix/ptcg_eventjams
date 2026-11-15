@@ -2,12 +2,15 @@ import { z } from "zod";
 import { assertTomGuestAccessAttemptsAvailable, clearTomGuestAccessFailures, grantTomGuestAccess, recordTomGuestAccessFailure } from "~/server/services/events/tomGuestAccessService";
 import { matchesTomPlayerBirthDate, matchesTomPlayerBirthYear, normalizeTomBirthDate } from "~/server/services/events/tomPlayerIdentity";
 import { getTournamentTomState, recordTournamentPlayerAccess } from "~/server/services/events/tournamentTomStateService";
+import { recordPrivacyAcknowledgement, requireCurrentPrivacyVersion } from "~/server/services/legal/privacyAcknowledgementService";
 
 const accessSchema = z.object({
   playerId: z.string().trim().regex(/^\d{4,12}$/),
   birthYear: z.coerce.number().int().min(1900).max(new Date().getFullYear()).optional(),
   // Keep the previous request shape for already-open browser tabs during rollout.
   birthDate: z.string().trim().optional(),
+  privacyNoticeVersion: z.string().optional(),
+  privacyAcknowledged: z.boolean().optional(),
 }).refine((input) => input.birthYear !== undefined || (
   !!input.birthDate &&
   normalizeTomBirthDate(input.birthDate) !== null &&
@@ -42,6 +45,9 @@ export default defineEventHandler(async (event) => {
     recordTomGuestAccessFailure(attemptKey);
     throw createError({ statusCode: 401, statusMessage: accessDeniedMessage });
   }
+
+  const privacyVersion = await requireCurrentPrivacyVersion(input.privacyAcknowledged === true ? input.privacyNoticeVersion : null);
+  await recordPrivacyAcknowledgement("tournament", `${eventId}:${tomPlayer.userId}`, privacyVersion);
 
   clearTomGuestAccessFailures(attemptKey);
   grantTomGuestAccess(event, eventId, tomPlayer.userId);

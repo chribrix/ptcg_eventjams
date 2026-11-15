@@ -1,0 +1,39 @@
+## Verantwortliche Stelle
+
+Name, ladungsfähige Anschrift und E-Mail-Adresse der für diese Website verantwortlichen Stelle stehen oben. Für Fragen zum Datenschutz nutze bitte diese Kontaktdaten.
+
+## Bereitstellung und technische Protokolle
+
+Beim Aufruf der Website fallen technisch erforderliche Verbindungsdaten wie IP-Adresse, Zeitpunkt und angeforderte Seite beim Hosting an. Hostinganbieter, Speicherdauer und gegebenenfalls weitere Empfänger: [[BITTE ERGÄNZEN]].
+
+## Konten und Anmeldung
+
+Für Anmeldung und Sitzungen nutzt ChrispyJams Supabase Auth. Das Profil kann Name, E-Mail-Adresse, Geburtsjahr, Spieler-ID und freiwillige Kontaktangaben enthalten. Authentifizierungsdaten werden für die Kontofunktion verarbeitet; Passwörter werden nicht in der ChrispyJams-Datenbank gespeichert. Die Kenntnisnahme dieser Datenschutzhinweise wird mit Fassung und Zeitpunkt vermerkt. Anbieter, Datenstandort, Rechtsgrundlagen und Löschfristen: [[BITTE ERGÄNZEN]].
+
+## Veranstaltungskalender und Anmeldung
+
+ChrispyJams stellt auch Termine Dritter dar. Bei einer Anmeldung über ChrispyJams werden die im Formular eingegebenen Daten, Buchungs- und Wartelistenstatus sowie gegebenenfalls Decklisten verarbeitet. Je nach gewählter Sichtbarkeit können Teilnehmernamen in Listen erscheinen. Wartelisten-Nachrichten werden per E-Mail über einen SMTP-Dienst versendet. Eine mögliche Teilnahmegebühr wird nur vor Ort vom jeweiligen Veranstalter erhoben; über diese Website findet keine Zahlung statt. Veranstalter und weitere Empfänger, E-Mail-Anbieter, Rechtsgrundlagen und Löschfristen: [[BITTE ERGÄNZEN]].
+
+## Turnier, Pairings und Liga
+
+Für digitale Turnieransichten werden Spielerzuordnung, Paarungen, Tische, Ergebnisse und Ranglisten verarbeitet. TOM-Daten können vom Veranstalter importiert werden. Für einen Gastzugang werden Spieler-ID und Geburtsjahr zur Zuordnung abgeglichen; ein signiertes, eventbezogenes Zugangscookie gilt bis zu 48 Stunden. Die Kenntnisnahme dieser Hinweise wird bei der Freischaltung mit Fassung und Zeitpunkt vermerkt. Sichtbarkeit, weitere Empfänger, Rechtsgrundlagen und Löschfristen: [[BITTE ERGÄNZEN]].
+
+## Einstellungen und Standort
+
+Sprache, Farbschema, Filter und eine Gast-Merkliste können lokal im Browser gespeichert werden. Bei freiwilliger Standortwahl werden gerundete Koordinaten für die Umkreissuche verwendet; zur Ortsauflösung wird OpenStreetMap Nominatim serverseitig angefragt. Angaben zu Empfängern, Rechtsgrundlagen und Löschung: [[BITTE ERGÄNZEN]].
+
+## Cookies und lokaler Speicher
+
+Für Anmeldung und Sitzung werden technisch erforderliche Authentifizierungs-Cookies verwendet. Der QR-Gastzugang nutzt ein signiertes, eventbezogenes Cookie. Eine Sprachpräferenz kann als Cookie gespeichert werden. Darstellungs- und Filtereinstellungen sowie die Gast-Merkliste liegen im lokalen Browserspeicher. Diese Funktionen dienen der angeforderten Nutzung und den gewählten Einstellungen. Konkrete Cookie-Namen, Speicherfristen und Rechtsgrundlagen: [[BITTE ERGÄNZEN]].
+
+## Eigene Reichweitenmessung
+
+ChrispyJams zählt Seitenaufrufe und ausgewählte Aktionen mit einer eigenen Analytics-Funktion. Zur Unterscheidung von Besuchen wird ein täglich wechselnder HMAC-Wert aus IP-Adresse und User-Agent gebildet. Dieser Wert ist pseudonym und erlaubt keine unmittelbare Zuordnung zu einem Namen. Ein Login wird nur als Ereignis ohne Benutzerkennung oder Besucher-Hash gezählt. Einzelereignisse werden nach 30 Tagen gelöscht. Rechtsgrundlage und Widerspruchsmöglichkeit: [[BITTE ERGÄNZEN]].
+
+## Externe Angebote und Links
+
+Links zu externen Eventseiten und Kartenangeboten führen erst beim Anklicken zu deren Anbietern. Auf einzelnen Turnierseiten können externe Bilddateien geladen werden. Anbieter, Empfänger und Übermittlungen: [[BITTE ERGÄNZEN]].
+
+## Rechte und Beschwerde
+
+Du kannst Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung verlangen sowie unter den gesetzlichen Voraussetzungen widersprechen. Du kannst dich außerdem bei einer Datenschutzaufsichtsbehörde beschweren. Für Anfragen nutze die oben genannte E-Mail-Adresse. Weitere Angaben zu Rechtsgrundlagen, Aufbewahrung und zuständiger Behörde: [[BITTE ERGÄNZEN]].

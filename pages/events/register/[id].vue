@@ -166,6 +166,8 @@
             </div>
           </div>
 
+          <EventsEventRoleNotice mode="local" class="mt-6" />
+
           <div
             v-if="event.requiresDecklist"
             class="mt-6 p-3 bg-amber-900/30 border border-amber-700/50 rounded-lg"

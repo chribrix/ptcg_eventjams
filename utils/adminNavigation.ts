@@ -10,6 +10,7 @@ import {
   BuildingStorefrontIcon,
   TrophyIcon,
   PresentationChartLineIcon,
+  DocumentTextIcon,
 } from "@heroicons/vue/24/outline";
 
 export type AdminNavItem = {
@@ -113,6 +114,12 @@ export const adminNavigationItems: AdminNavItem[] = [
     icon: Cog6ToothIcon,
     group: "system",
     match: (path) => path.startsWith("/admin/settings/banner"),
+  },
+  {
+    label: "Rechtliche Seiten",
+    to: "/admin/legal",
+    icon: DocumentTextIcon,
+    group: "system",
   },
   {
     label: "Protokolle",

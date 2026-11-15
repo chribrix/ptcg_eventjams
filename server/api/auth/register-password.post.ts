@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { createSupabaseServerClient } from "~/server/util/createSupabaseServerClient";
 import { PrismaClient } from "@prisma/client";
 import { ensurePlayerForAuthUser } from "~/server/util/playerProvisioning";
+import { recordPrivacyAcknowledgement, requireCurrentPrivacyVersion } from "~/server/services/legal/privacyAcknowledgementService";
 
 type RegisterPasswordDependencies = {
   getRuntimeConfig?: typeof useRuntimeConfig;
@@ -28,11 +29,13 @@ export const createRegisterPasswordHandler = (
 
   return defineEventHandler(async (event) => {
     const config = getRuntimeConfig();
-    const { email, password, name, playerId } = await readBody<{
+    const { email, password, name, playerId, privacyNoticeVersion, privacyAcknowledged } = await readBody<{
       email?: string;
       password?: string;
       name?: string;
       playerId?: string;
+      privacyNoticeVersion?: string;
+      privacyAcknowledged?: boolean;
     }>(event);
 
     if (!email || !password || !name) {
@@ -76,6 +79,7 @@ export const createRegisterPasswordHandler = (
     let createdUserId: string | null = null;
 
     try {
+      const activePrivacyVersion = await requireCurrentPrivacyVersion(privacyAcknowledged === true ? privacyNoticeVersion : null);
       const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email: normalizedEmail,
         password: pepperedPassword,
@@ -118,6 +122,7 @@ export const createRegisterPasswordHandler = (
         playerId: normalizedPlayerId,
         preferredLoginMethod: "password",
       });
+      await recordPrivacyAcknowledgement("user", data.user.id, activePrivacyVersion);
 
       return {
         success: true,
