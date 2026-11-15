@@ -1,6 +1,6 @@
 # Chrispyjams: Ist-Architektur und Vorschlag zur Modularisierung
 
-**Produktionsrelease 15.11.2026:** Die Legal- und Analytics-Funktionen wurden im kombinierten Docker-Betrieb auf `root@chrispyjams` aktualisiert. Die additive Migration entfernt alte Login-Besucher-Hashes und erlaubt künftig leere Hashes für diese Ereignisse. Der Deploy-Aufruf für einmalige Prisma-Migrationen und die lockfilegetreue Docker-Installation wurden nach einem Produktionsbefund korrigiert. Prüfergebnisse und noch offene Betriebskontrollen stehen im Implementierungsplan.
+**Produktionsrelease 15.11.2026:** Die Legal- und Analytics-Funktionen wurden im kombinierten Docker-Betrieb auf `root@chrispyjams` aktualisiert. Die additive Migration entfernt alte Login-Besucher-Hashes und erlaubt künftig leere Hashes für diese Ereignisse. Der Deploy-Aufruf für einmalige Prisma-Migrationen und die Docker-Installation mit Lockfile wurden nach Produktionsbefunden korrigiert. Prüfergebnisse und noch offene Betriebskontrollen stehen im Implementierungsplan.
 
 **Legal-Liveschalter, 13.11.2026:** Impressum und Datenschutzhinweise nutzen weiterhin je einen `published`-Status. Die Servervalidierung erlaubt nun private, auch unvollständige Entwürfe und prüft Betreiberpflichtfelder erst beim Aktivieren eines Liveschalters. Die öffentliche Projektion gibt bei ausgeschaltetem Schalter keine Betreiber- oder Textfelder aus. Siehe Legal-Service-README und Implementierungsplan.
 
