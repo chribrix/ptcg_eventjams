@@ -8,7 +8,7 @@ WORKDIR /app
 COPY prisma/ /app/prisma/
 
 COPY package.json package-lock.json* ./
-RUN npm install --frozen-lockfile
+RUN npm ci --no-audit --no-fund
 
 # Rebuild the source code only when needed
 FROM base AS builder

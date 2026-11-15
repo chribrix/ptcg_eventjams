@@ -9,7 +9,7 @@ echo "==========================================="
 docker compose --profile prod up -d postgres
 docker compose --profile prod build --no-cache app
 echo "Applying database migrations before app restart..."
-docker compose --profile prod run --rm --no-deps app npx prisma migrate deploy
+docker compose --profile prod run --rm --no-deps --entrypoint npx app prisma migrate deploy
 docker compose --profile prod up -d --no-deps app
 
 echo ""
