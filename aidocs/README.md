@@ -20,6 +20,8 @@ A web application for hosting and managing Pokémon Trading Card Game (PTCG) eve
 
 Authentication setup for the current email OTP flow is documented in `AUTH_SUPABASE_OTP_SETUP.md`.
 
+The staged migration of Supabase Auth users to an EU project is planned in `SUPABASE_EU_MIGRATION_PLAN.md` (not executed).
+
 Admin role migration to Supabase metadata is documented in `AUTH_SUPABASE_ADMIN_MIGRATION.md`.
 
 Admin panel rework planning and acceptance criteria are documented in `ADMIN_PANEL_REWORK_CHECKLIST.md`.

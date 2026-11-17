@@ -1,5 +1,7 @@
 # Chrispyjams: Ist-Architektur und Vorschlag zur Modularisierung
 
+**Supabase-EU-Migrationsplanung, 17.11.2026:** Die bestehende Auth-Nutzerbasis kann mit unveränderten UUIDs, Passwort-Hashes und Admin-Metadaten in ein neues EU-Projekt umziehen. Die eigene PostgreSQL-Fachdatenbank bleibt separat. Der ausführbare Plan mit Bestandsaufnahme, isolierter Probe, Schreibstopp, Cutover und Rückweg steht in `aidocs/SUPABASE_EU_MIGRATION_PLAN.md`. Die Migration ist nicht gestartet.
+
 **Produktionsrelease 15.11.2026:** Die Legal- und Analytics-Funktionen wurden im kombinierten Docker-Betrieb auf `root@chrispyjams` aktualisiert. Die additive Migration entfernt alte Login-Besucher-Hashes und erlaubt künftig leere Hashes für diese Ereignisse. Der Deploy-Aufruf für einmalige Prisma-Migrationen und die Docker-Installation mit Lockfile wurden nach Produktionsbefunden korrigiert. Prüfergebnisse und noch offene Betriebskontrollen stehen im Implementierungsplan.
 
 **Legal-Liveschalter, 13.11.2026:** Impressum und Datenschutzhinweise nutzen weiterhin je einen `published`-Status. Die Servervalidierung erlaubt nun private, auch unvollständige Entwürfe und prüft Betreiberpflichtfelder erst beim Aktivieren eines Liveschalters. Die öffentliche Projektion gibt bei ausgeschaltetem Schalter keine Betreiber- oder Textfelder aus. Siehe Legal-Service-README und Implementierungsplan.
